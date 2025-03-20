@@ -1,0 +1,315 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{d4c7d81b-7a6e-4e73-9018-3025f8e5077c}</ProjectGuid>
+    <RootNamespace>ConsoleApplication15</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Atlas.cpp" />
+    <ClCompile Include="ComponentManager.cpp" />
+    <ClCompile Include="Components.cpp" />
+    <ClCompile Include="core\Error.cpp" />
+    <ClCompile Include="core\Result.cpp" />
+    <ClCompile Include="EntityRetrieval.cpp" />
+    <ClCompile Include="GlyphAtlas.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Core.cpp" />
+    <ClCompile Include="Ecs.cpp" />
+    <ClCompile Include="EntityManager.cpp" />
+    <ClCompile Include="EntityRelationships.cpp" />
+    <ClCompile Include="SDLite.cpp" />
+    <ClCompile Include="SDLUtils.cpp" />
+    <ClCompile Include="SkylinePacker.cpp" />
+    <ClCompile Include="SpriteSeriesAtlas.cpp" />
+    <ClCompile Include="Systems.cpp" />
+    <ClCompile Include="TTraits.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Atlas.h" />
+    <ClInclude Include="ComponentManager.h" />
+    <ClInclude Include="Components.h" />
+    <ClInclude Include="Core.h" />
+    <ClInclude Include="core\Error.h" />
+    <ClInclude Include="core\Result.h" />
+    <ClInclude Include="deps\include\sol\abort.hpp" />
+    <ClInclude Include="deps\include\sol\assert.hpp" />
+    <ClInclude Include="deps\include\sol\as_args.hpp" />
+    <ClInclude Include="deps\include\sol\as_returns.hpp" />
+    <ClInclude Include="deps\include\sol\base_traits.hpp" />
+    <ClInclude Include="deps\include\sol\bind_traits.hpp" />
+    <ClInclude Include="deps\include\sol\bytecode.hpp" />
+    <ClInclude Include="deps\include\sol\call.hpp" />
+    <ClInclude Include="deps\include\sol\compatibility.hpp" />
+    <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h" />
+    <ClInclude Include="deps\include\sol\compatibility\compat-5.3.h" />
+    <ClInclude Include="deps\include\sol\compatibility\compat-5.4.h" />
+    <ClInclude Include="deps\include\sol\compatibility\lua_version.hpp" />
+    <ClInclude Include="deps\include\sol\config.hpp" />
+    <ClInclude Include="deps\include\sol\coroutine.hpp" />
+    <ClInclude Include="deps\include\sol\debug.hpp" />
+    <ClInclude Include="deps\include\sol\demangle.hpp" />
+    <ClInclude Include="deps\include\sol\deprecate.hpp" />
+    <ClInclude Include="deps\include\sol\detail\build_version.hpp" />
+    <ClInclude Include="deps\include\sol\dump_handler.hpp" />
+    <ClInclude Include="deps\include\sol\ebco.hpp" />
+    <ClInclude Include="deps\include\sol\environment.hpp" />
+    <ClInclude Include="deps\include\sol\epilogue.hpp" />
+    <ClInclude Include="deps\include\sol\error.hpp" />
+    <ClInclude Include="deps\include\sol\error_handler.hpp" />
+    <ClInclude Include="deps\include\sol\forward.hpp" />
+    <ClInclude Include="deps\include\sol\forward_as.hpp" />
+    <ClInclude Include="deps\include\sol\forward_detail.hpp" />
+    <ClInclude Include="deps\include\sol\function.hpp" />
+    <ClInclude Include="deps\include\sol\function_result.hpp" />
+    <ClInclude Include="deps\include\sol\function_types.hpp" />
+    <ClInclude Include="deps\include\sol\function_types_core.hpp" />
+    <ClInclude Include="deps\include\sol\function_types_overloaded.hpp" />
+    <ClInclude Include="deps\include\sol\function_types_stateful.hpp" />
+    <ClInclude Include="deps\include\sol\function_types_stateless.hpp" />
+    <ClInclude Include="deps\include\sol\function_types_templated.hpp" />
+    <ClInclude Include="deps\include\sol\inheritance.hpp" />
+    <ClInclude Include="deps\include\sol\in_place.hpp" />
+    <ClInclude Include="deps\include\sol\load_result.hpp" />
+    <ClInclude Include="deps\include\sol\lua_table.hpp" />
+    <ClInclude Include="deps\include\sol\lua_value.hpp" />
+    <ClInclude Include="deps\include\sol\make_reference.hpp" />
+    <ClInclude Include="deps\include\sol\metatable.hpp" />
+    <ClInclude Include="deps\include\sol\object.hpp" />
+    <ClInclude Include="deps\include\sol\object_base.hpp" />
+    <ClInclude Include="deps\include\sol\optional.hpp" />
+    <ClInclude Include="deps\include\sol\optional_implementation.hpp" />
+    <ClInclude Include="deps\include\sol\overload.hpp" />
+    <ClInclude Include="deps\include\sol\packaged_coroutine.hpp" />
+    <ClInclude Include="deps\include\sol\pairs_iterator.hpp" />
+    <ClInclude Include="deps\include\sol\pointer_like.hpp" />
+    <ClInclude Include="deps\include\sol\policies.hpp" />
+    <ClInclude Include="deps\include\sol\prologue.hpp" />
+    <ClInclude Include="deps\include\sol\property.hpp" />
+    <ClInclude Include="deps\include\sol\protect.hpp" />
+    <ClInclude Include="deps\include\sol\protected_function.hpp" />
+    <ClInclude Include="deps\include\sol\protected_function_result.hpp" />
+    <ClInclude Include="deps\include\sol\protected_handler.hpp" />
+    <ClInclude Include="deps\include\sol\proxy_base.hpp" />
+    <ClInclude Include="deps\include\sol\raii.hpp" />
+    <ClInclude Include="deps\include\sol\reference.hpp" />
+    <ClInclude Include="deps\include\sol\resolve.hpp" />
+    <ClInclude Include="deps\include\sol\sol.hpp" />
+    <ClInclude Include="deps\include\sol\stack.hpp" />
+    <ClInclude Include="deps\include\sol\stack\detail\pairs.hpp" />
+    <ClInclude Include="deps\include\sol\stack_check.hpp" />
+    <ClInclude Include="deps\include\sol\stack_check_get.hpp" />
+    <ClInclude Include="deps\include\sol\stack_check_get_qualified.hpp" />
+    <ClInclude Include="deps\include\sol\stack_check_get_unqualified.hpp" />
+    <ClInclude Include="deps\include\sol\stack_check_qualified.hpp" />
+    <ClInclude Include="deps\include\sol\stack_check_unqualified.hpp" />
+    <ClInclude Include="deps\include\sol\stack_core.hpp" />
+    <ClInclude Include="deps\include\sol\stack_field.hpp" />
+    <ClInclude Include="deps\include\sol\stack_get.hpp" />
+    <ClInclude Include="deps\include\sol\stack_get_qualified.hpp" />
+    <ClInclude Include="deps\include\sol\stack_get_unqualified.hpp" />
+    <ClInclude Include="deps\include\sol\stack_guard.hpp" />
+    <ClInclude Include="deps\include\sol\stack_iterator.hpp" />
+    <ClInclude Include="deps\include\sol\stack_pop.hpp" />
+    <ClInclude Include="deps\include\sol\stack_probe.hpp" />
+    <ClInclude Include="deps\include\sol\stack_proxy.hpp" />
+    <ClInclude Include="deps\include\sol\stack_proxy_base.hpp" />
+    <ClInclude Include="deps\include\sol\stack_push.hpp" />
+    <ClInclude Include="deps\include\sol\stack_reference.hpp" />
+    <ClInclude Include="deps\include\sol\state.hpp" />
+    <ClInclude Include="deps\include\sol\state_handling.hpp" />
+    <ClInclude Include="deps\include\sol\state_view.hpp" />
+    <ClInclude Include="deps\include\sol\string_view.hpp" />
+    <ClInclude Include="deps\include\sol\table.hpp" />
+    <ClInclude Include="deps\include\sol\table_core.hpp" />
+    <ClInclude Include="deps\include\sol\table_iterator.hpp" />
+    <ClInclude Include="deps\include\sol\table_proxy.hpp" />
+    <ClInclude Include="deps\include\sol\thread.hpp" />
+    <ClInclude Include="deps\include\sol\tie.hpp" />
+    <ClInclude Include="deps\include\sol\traits.hpp" />
+    <ClInclude Include="deps\include\sol\trampoline.hpp" />
+    <ClInclude Include="deps\include\sol\tuple.hpp" />
+    <ClInclude Include="deps\include\sol\types.hpp" />
+    <ClInclude Include="deps\include\sol\unicode.hpp" />
+    <ClInclude Include="deps\include\sol\unique_usertype_traits.hpp" />
+    <ClInclude Include="deps\include\sol\unreachable.hpp" />
+    <ClInclude Include="deps\include\sol\unsafe_function.hpp" />
+    <ClInclude Include="deps\include\sol\unsafe_function_result.hpp" />
+    <ClInclude Include="deps\include\sol\userdata.hpp" />
+    <ClInclude Include="deps\include\sol\usertype.hpp" />
+    <ClInclude Include="deps\include\sol\usertype_container.hpp" />
+    <ClInclude Include="deps\include\sol\usertype_container_launch.hpp" />
+    <ClInclude Include="deps\include\sol\usertype_core.hpp" />
+    <ClInclude Include="deps\include\sol\usertype_proxy.hpp" />
+    <ClInclude Include="deps\include\sol\usertype_storage.hpp" />
+    <ClInclude Include="deps\include\sol\usertype_traits.hpp" />
+    <ClInclude Include="deps\include\sol\utility\is_integer.hpp" />
+    <ClInclude Include="deps\include\sol\utility\to_string.hpp" />
+    <ClInclude Include="deps\include\sol\variadic_args.hpp" />
+    <ClInclude Include="deps\include\sol\variadic_results.hpp" />
+    <ClInclude Include="deps\include\sol\version.hpp" />
+    <ClInclude Include="deps\include\sol\wrapper.hpp" />
+    <ClInclude Include="Ecs.h" />
+    <ClInclude Include="EntityManager.h" />
+    <ClInclude Include="EntityRelationships.h" />
+    <ClInclude Include="EntityRetrieval.h" />
+    <ClInclude Include="GlyphAtlas.h" />
+    <ClInclude Include="SDLite.h" />
+    <ClInclude Include="SDLUtils.h" />
+    <ClInclude Include="SkylinePacker.h" />
+    <ClInclude Include="SpriteSeriesAtlas.h" />
+    <ClInclude Include="Systems.h" />
+    <ClInclude Include="TTraits.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="sprites\knight\walk_anim\knight_walk_0.png" />
+    <Image Include="sprites\knight\walk_anim\knight_walk_1.png" />
+    <Image Include="sprites\knight\walk_anim\knight_walk_2.png" />
+    <Image Include="sprites\knight\walk_anim\knight_walk_3.png" />
+    <Image Include="sprites\knight\walk_anim\knight_walk_4.png" />
+    <Image Include="sprites\knight\walk_anim\knight_walk_5.png" />
+    <Image Include="sprites\knight\walk_anim\knight_walk_6.png" />
+    <Image Include="sprites\knight\walk_anim\knight_walk_7.png" />
+    <Image Include="sprites\knight\walk_anim\knight_walk_8.png" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
