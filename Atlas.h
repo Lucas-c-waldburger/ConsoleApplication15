@@ -1,6 +1,7 @@
 #pragma once
 #include "SDLite.h"
 #include "Core.h"
+#include "core/Handle.h"
 
 template <typename T> struct AtlasInfo;
 
@@ -10,7 +11,8 @@ class Atlas
 public:
 	using AtlasInfo = AtlasInfo<Derived>;
 
-	Atlas() { handle_ = Handle<Derived>::Create(); }
+	Atlas() = default;
+	Atlas(const Handle<Derived>& handle) : handle_(handle) {}
 	~Atlas() { if (atlasTexture_) { SDL_DestroyTexture(atlasTexture_); } }
 
 	SDL_Texture* GetAtlasTexture() { return atlasTexture_; }

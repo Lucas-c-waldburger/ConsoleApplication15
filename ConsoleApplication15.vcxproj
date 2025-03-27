@@ -147,14 +147,24 @@
     <ClCompile Include="ComponentManager.cpp" />
     <ClCompile Include="Components.cpp" />
     <ClCompile Include="core\Error.cpp" />
+    <ClCompile Include="events\EventBuffer.cpp" />
+    <ClCompile Include="core\Logger.cpp" />
     <ClCompile Include="core\Result.cpp" />
     <ClCompile Include="EntityRetrieval.cpp" />
+    <ClCompile Include="events\EventDistributionSystem.cpp" />
     <ClCompile Include="GlyphAtlas.cpp" />
+    <ClCompile Include="HandleManager.cpp" />
+    <ClCompile Include="inputs\GameController.cpp" />
+    <ClCompile Include="inputs\GameControllerEvents.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Core.cpp" />
     <ClCompile Include="Ecs.cpp" />
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="EntityRelationships.cpp" />
+    <ClCompile Include="Monitoring.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Scripting.cpp" />
+    <ClCompile Include="ScriptManager.cpp" />
     <ClCompile Include="SDLite.cpp" />
     <ClCompile Include="SDLUtils.cpp" />
     <ClCompile Include="SkylinePacker.cpp" />
@@ -164,11 +174,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Atlas.h" />
+    <ClInclude Include="components\BaseComponent.h" />
     <ClInclude Include="ComponentManager.h" />
     <ClInclude Include="Components.h" />
+    <ClInclude Include="components\ComponentRegistry.h" />
     <ClInclude Include="Core.h" />
+    <ClInclude Include="core\Aliases.h" />
     <ClInclude Include="core\Error.h" />
+    <ClInclude Include="events\EventBuffer.h" />
+    <ClInclude Include="core\Handle.h" />
+    <ClInclude Include="core\Logger.h" />
+    <ClInclude Include="core\maths.h" />
     <ClInclude Include="core\Result.h" />
+    <ClInclude Include="core\TerminalUtils.h" />
     <ClInclude Include="deps\include\sol\abort.hpp" />
     <ClInclude Include="deps\include\sol\assert.hpp" />
     <ClInclude Include="deps\include\sol\as_args.hpp" />
@@ -290,7 +308,17 @@
     <ClInclude Include="EntityManager.h" />
     <ClInclude Include="EntityRelationships.h" />
     <ClInclude Include="EntityRetrieval.h" />
+    <ClInclude Include="events\EventDistributionSystem.h" />
     <ClInclude Include="GlyphAtlas.h" />
+    <ClInclude Include="HandleManager.h" />
+    <ClInclude Include="core\Registries.h" />
+    <ClInclude Include="inputs\GameController.h" />
+    <ClInclude Include="inputs\GameControllerEvents.h" />
+    <ClInclude Include="inputs\GameControllerStateComponent.h" />
+    <ClInclude Include="Monitoring.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="Scripting.h" />
+    <ClInclude Include="ScriptManager.h" />
     <ClInclude Include="SDLite.h" />
     <ClInclude Include="SDLUtils.h" />
     <ClInclude Include="SkylinePacker.h" />
@@ -308,6 +336,9 @@
     <Image Include="sprites\knight\walk_anim\knight_walk_6.png" />
     <Image Include="sprites\knight\walk_anim\knight_walk_7.png" />
     <Image Include="sprites\knight\walk_anim\knight_walk_8.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="scripts\test.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

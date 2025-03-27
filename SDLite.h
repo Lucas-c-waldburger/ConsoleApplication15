@@ -9,7 +9,6 @@
 #include <functional>
 #include <vector>
 #include <cassert>
-#include <sol/sol.hpp>
 
 namespace SDLite
 {
@@ -263,18 +262,15 @@ namespace SDLite
 	class AppScripts
 	{
 	public:
-		friend Status Start(WindowArgs);
-		friend Status MainLoop();
+		//void AddScript(std::string scr)
+		//{
+		//	lua_.script(std::move(scr));
+		//}
 
-		void AddScript(std::string scr)
-		{
-			lua_.script(std::move(scr));
-		}
-
-		sol::function operator[](std::string_view nm)
-		{
-			return lua_[nm];
-		}
+		//sol::function operator[](std::string_view nm)
+		//{
+		//	return lua_[nm];
+		//}
 
 		//template <typename T>    
 		//void RegisterType()
@@ -288,9 +284,7 @@ namespace SDLite
 		//}
 
 	private:
-
-
-		sol::state lua_;
+		//sol::state lua_;
 	};
 
 	class CanvasObject
@@ -459,7 +453,6 @@ namespace SDLite
 		AppRenderer renderer_;
 		AppCanvas canvas_;
 		AppEvents events_;
-		AppScripts scripts_;
 	};
 
 #define TRY_RET_APP_MEMBER(appMember) do { \
@@ -487,11 +480,6 @@ namespace SDLite
 		TRY_RET_APP_MEMBER(events_);
 	}
 
-	static AppScripts& Scripts()
-	{
-		TRY_RET_APP_MEMBER(scripts_);
-	}
-
 	static Status Start(WindowArgs winArgs={})
 	{
 		auto fail = []() { return Status{ SDL_GetError(), Status::Response::Exit }; };
@@ -513,8 +501,6 @@ namespace SDLite
 		{
 			return rendStatus;
 		}
-
-		App::app_->scripts_.lua_.open_libraries(sol::lib::base);
 
 		return {};
 	}

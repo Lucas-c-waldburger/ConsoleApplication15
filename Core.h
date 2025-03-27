@@ -1,8 +1,7 @@
 #pragma once
 #include <iostream>
 #include <cassert>
-
-template <typename...> struct TypeList {};
+#include "components/BaseComponent.h"
 
 using Entity_t = uint32_t;
 
@@ -13,28 +12,28 @@ static constexpr size_t kInvalidIndex = kMaxEntities + 1;
 
 using ComponentSignature = uint64_t;
 
-struct ComponentBitFactory
-{
-    template <typename T> friend struct BaseComponent;
-private:
-    static uint64_t GetNextComponentBit()
-    {
-        static uint64_t bitCounter = 1;
-        uint64_t bit = bitCounter;
-        bitCounter <<= 1;
-
-        return bit;
-    }
-};
-
-template <typename Derived>
-struct BaseComponent
-{
-    static inline const uint64_t componentBit = ComponentBitFactory::GetNextComponentBit();
-};
-
-template <typename T>
-concept ComponentType = std::same_as<std::remove_cvref_t<decltype(T::componentBit)>, uint64_t>;
+//struct ComponentBitFactory
+//{
+//    template <typename T> friend struct BaseComponent;
+//private:
+//    static uint64_t GetNextComponentBit()
+//    {
+//        static uint64_t bitCounter = 1;
+//        uint64_t bit = bitCounter;
+//        bitCounter <<= 1;
+//
+//        return bit;
+//    }
+//};
+//
+//template <typename Derived>
+//struct BaseComponent
+//{
+//    static inline const uint64_t componentBit = ComponentBitFactory::GetNextComponentBit();
+//};
+//
+//template <typename T>
+//concept ComponentType = std::same_as<std::remove_cvref_t<decltype(T::componentBit)>, uint64_t>;
 
 template <typename T>
 struct Exclude
@@ -82,58 +81,41 @@ static void ForEachInTuple(Tup&& tup, Fn&& fn)
         std::make_index_sequence<std::tuple_size<std::remove_cvref_t<Tup>>::value>{});
 }
 
-template <typename T>
-class Handle
-{
-public:
-    Handle() : value_(kInvalid), gen_(kInvalid) {}
-
-    static Handle Create() { return Handle{ handleCounter++, genCounter }; }
-    static Handle MakeEmpty() { return Handle{}; }
-
-    bool IsValid() const { return value_ != kInvalid && gen_ == genCounter; }
-    size_t GetHash() const noexcept { return value_ * 31 + gen_; }
-
-    auto operator<=>(const Handle&) const = default;
-
-    static void NextGen() { ++genCounter; }
-
-private:
-    static int handleCounter;
-    static int genCounter;
-    static constexpr int kInvalid = -1; 
-
-    Handle(int val, int gen) : value_(val), gen_(gen) {}
-    static void ResetAll() { handleCounter = 0; ++genCounter; }
-
-    int value_;
-    int gen_;
-};
-
-template <typename T> int Handle<T>::handleCounter = 0;
-template <typename T> int Handle<T>::genCounter = 0;
-
-namespace std {
-    template <typename T>
-    struct hash<Handle<T>> {
-        size_t operator()(const Handle<T>& handle) const noexcept {
-            return handle.GetHash();
-        }
-    };
-}
-
-template <typename T>
-static constexpr Handle<T> kEmptyHandle = Handle<T>::MakeEmpty();
-
 template <typename T> requires std::is_arithmetic_v<T>
 struct Dimensions
 {
     T w = static_cast<T>(0);
     T h = static_cast<T>(0);
+
+    constexpr bool operator==(const Dimensions&) const = default;
 };
 
+template <typename T>
+struct Range
+{
+    T min;
+    T max;
+};
 
+template <typename T>
+struct DataRecord
+{
+    T last;
+    T now;
 
+    void Update(T newVal)
+    {
+        last = std::move(now);
+        now = std::move(newVal);
+    }
+};
+
+template <typename T>
+struct HandedPair
+{
+    T left;
+    T right;
+};
 
 static constexpr int GetNextPowerOfTwo(int x)
 {
@@ -147,3 +129,5 @@ static constexpr int GetNextPowerOfTwo(int x)
 
     return x + 1;
 }
+
+

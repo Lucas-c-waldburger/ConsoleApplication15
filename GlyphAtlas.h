@@ -28,6 +28,9 @@ struct AtlasInfo<GlyphAtlas>
 class GlyphAtlas : public Atlas<GlyphAtlas>
 {
 public:
+    GlyphAtlas() = default;
+    GlyphAtlas(const Handle<GlyphAtlas>& handle) : Atlas(handle) {}
+
 	bool Load(SDL_Renderer* renderer, AtlasInfo args)
 	{
         atlasInfo_ = std::move(args);
@@ -86,6 +89,9 @@ public:
         }
 
         atlasTexture_ = SDL_CreateTextureFromSurface(renderer, atlasSurface);
+        assert(atlasTexture_);
+
+        SDL_SetTextureBlendMode(atlasTexture_, SDL_BLENDMODE_BLEND);
 
         SDL_FreeSurface(atlasSurface);
         TTF_CloseFont(font);
@@ -128,7 +134,7 @@ private:
         {
             if (TTF_GlyphMetrics(font, c, nullptr, nullptr, nullptr, nullptr, &adv) == 0)
             {
-                glyphMap_[c] = { .advance = adv };
+                glyphMap_[c] = { .character = c, .advance = adv };
 
                 maxDims.w = std::max(maxDims.w, adv);
             }

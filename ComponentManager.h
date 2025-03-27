@@ -1,5 +1,6 @@
 #pragma once
 #include "Components.h"
+#include "components/ComponentRegistry.h"
 #include <array>
 #include <vector>
 #include <cassert>
@@ -82,7 +83,7 @@ private:
     std::array<uint16_t, kMaxEntities> isEntityHoldsComponentIndex_;
 };
 
-struct ActiveState : BaseComponent<ActiveState> {};
+struct ActiveState : BaseComponent<ActiveState, 0> {};
 
 template <typename> class ComponentManagerTemplate;
 

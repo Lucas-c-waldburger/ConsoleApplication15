@@ -4,7 +4,23 @@
 #include "SDLUtils.h"
 #include "GlyphAtlas.h"
 #include "core/Result.h"
+#include "core/Aliases.h"
+#include "core/maths.h"
 #include <span>
+
+template <typename T> struct Sentinel;
+
+template <typename T> static constexpr T sentinel_v = Sentinel<T>::value;
+
+template <typename T> requires (std::is_arithmetic_v<T> && std::is_signed_v<T>)
+struct Sentinel<T> { static constexpr T value = std::numeric_limits<T>::min(); };
+
+template <typename T>
+struct Sentinel<Dimensions<T>>
+{
+	static constexpr Dimensions<T> value = { sentinel_v<T>, sentinel_v<T> };
+};
+
 
 
 class RenderSystem
@@ -17,7 +33,7 @@ public:
 		SDL_Renderer* renderer = nullptr;
 		GlyphAtlas& glyphAtlas;
 		std::string_view text;
-		float scale = 0.0f;
+		SDL_FPoint scale = { 0.0f, 0.0f };
 		int numNewlines = 0;
 		int startY = 0;
 		int startX = 0;
@@ -80,8 +96,8 @@ public:
 				auto& glyphAtlas = atlasIt->second;
 
 				const int numNewlines = std::count(textData->text.begin(), textData->text.end(), '\n');
-				const int totalHeight = (glyphAtlas.GetAtlasInfo().fontHeight * transform.scale) * 
-										 numNewlines + 1;
+				const int totalHeight = (glyphAtlas.GetAtlasInfo().fontHeight * transform.scale.y) * 
+										(numNewlines + 1);
 
 				RenderGlyphsArgs args{
 					.renderer = renderer,
@@ -91,6 +107,14 @@ public:
 					.numNewlines = numNewlines,
 					.startY = static_cast<int>(spatial.position.y - (totalHeight / 2.0f))
 				};
+
+				if (textData->scaleToFit)
+				{
+					float toFit = GetScaleToFitFactor(args, totalHeight, renderRect.w, renderRect.h);
+
+					args.scale.x *= toFit;
+					args.scale.y *= toFit;
+				}
 
 				switch (textData->align)
 				{
@@ -119,26 +143,38 @@ public:
 	}
 	
 	template <typename T> requires (std::same_as<T, SpriteSeriesAtlas> || std::same_as<T, GlyphAtlas>)
-	Result<Handle<T>> LoadAtlas(SDL_Renderer* renderer, AtlasInfo<T> atlasInfo)
+	Result<Handle<T>> LoadAtlas(SDL_Renderer* renderer, HandleManager& handleManager, AtlasInfo<T> atlasInfo)
 	{
-		return Handle<T>::Create();
 		if constexpr (std::same_as<T, SpriteSeriesAtlas>)
 		{
-			return LoadAtlasImpl(renderer, std::move(atlasInfo), spriteSeriesAtlases_);
+			return LoadAtlasImpl(renderer, handleManager, std::move(atlasInfo), spriteSeriesAtlases_);
 		}
 		else
 		{
-			return LoadAtlasImpl(renderer, std::move(atlasInfo), glyphAtlases_);
+			return LoadAtlasImpl(renderer, handleManager, std::move(atlasInfo), glyphAtlases_);
 		} 
+	}
+
+	template <typename T> requires (std::same_as<T, SpriteSeriesAtlas> || std::same_as<T, GlyphAtlas>)
+	T* GetAtlas(const Handle<T>& handle)
+	{
+		if constexpr (std::same_as<T, SpriteSeriesAtlas>)
+		{
+			return GetAtlasImpl(handle, spriteSeriesAtlases_);
+		}
+		else
+		{
+			return GetAtlasImpl(handle, glyphAtlases_);
+		}
 	}
 
 private:
 	template <typename T>
-	static Result<Handle<T>> LoadAtlasImpl(SDL_Renderer* renderer, AtlasInfo<T>&& atlasInfo, 
-										   std::unordered_map<Handle<T>, T>& atlasMap)
+	static Result<Handle<T>> LoadAtlasImpl(SDL_Renderer* renderer, HandleManager& handleManager, 
+										   AtlasInfo<T>&& atlasInfo, std::unordered_map<Handle<T>, T>& atlasMap)
 	{
 		
-		T atlas{};
+		T atlas{ handleManager.GetHandle<T>() };
 
 		auto handle = atlas.GetHandle();
 
@@ -155,8 +191,42 @@ private:
 		}
 
 		return handle;
+	}
 
-		return Handle<T>::Create();
+	template <typename T>
+	static T* GetAtlasImpl(const Handle<T>& handle, std::unordered_map<Handle<T>, T>& atlasMap)
+	{
+		auto it = atlasMap.find(handle);
+		return (it != atlasMap.end()) ? &it->second : nullptr;
+	}
+
+	static float GetScaleToFitFactor(const RenderGlyphsArgs& args, int totalHeight,
+									 int boundingWidth, int boundingHeight)
+	{
+		auto glyphs = args.glyphAtlas.GetGlyphsForString(args.text);
+		assert(glyphs.size() == args.text.size());
+
+		int currentPos = 0;
+		int longestRowWidth = 0;
+		for (int i = 0; i <= args.numNewlines; i++)
+		{
+			size_t newlinePos = args.text.find_first_of('\n', currentPos);
+			newlinePos = (std::min(newlinePos, args.text.length()));
+
+			int rowWidth = std::accumulate(
+				glyphs.begin() + currentPos,
+				glyphs.begin() + newlinePos,
+				0, [scale = args.scale.x](int sum, const auto& glyph) {
+					return sum + (glyph.advance * scale);
+				});
+
+			longestRowWidth = std::max(longestRowWidth, rowWidth);
+
+			currentPos = newlinePos + 1;
+		}
+		
+		return std::min(boundingWidth / static_cast<float>(longestRowWidth),
+						boundingHeight / static_cast<float>(totalHeight));
 	}
 
 	template <Alignment>
@@ -181,13 +251,13 @@ private:
 			auto glyph = args.glyphAtlas[args.text[i]];
 			assert(glyph.character != kInvalidChar);
 
-			SDL_Rect dest = { xPos, yPos, glyph.atlasRect.w * args.scale,
-										  glyph.atlasRect.h * args.scale };
+			SDL_Rect dest = { xPos, yPos, glyph.atlasRect.w * args.scale.x,
+										  glyph.atlasRect.h * args.scale.y };
 
 			SDL_RenderCopy(args.renderer, args.glyphAtlas.GetAtlasTexture(), 
 						   &glyph.atlasRect, &dest);
 
-			xPos += glyph.advance * args.scale;
+			xPos += glyph.advance * args.scale.x;
 		}
 	}
 
@@ -210,14 +280,14 @@ private:
 			auto glyph = args.glyphAtlas[args.text[i]];
 			assert(glyph.character != kInvalidChar);
 
-			xPos -= glyph.advance * args.scale;
-
-			SDL_Rect dest = { xPos - (glyph.atlasRect.w * args.scale), yPos,
-							  glyph.atlasRect.w * args.scale,
-							  glyph.atlasRect.h * args.scale };
+			SDL_Rect dest = { xPos - (glyph.atlasRect.w * args.scale.x), yPos,
+							  glyph.atlasRect.w * args.scale.x,
+							  glyph.atlasRect.h * args.scale.y };
 
 			SDL_RenderCopy(args.renderer, args.glyphAtlas.GetAtlasTexture(),
 						   &glyph.atlasRect, &dest);
+
+			xPos -= glyph.advance * args.scale.x;
 		}
 	}
 
@@ -232,12 +302,12 @@ private:
 		for (int i = 0; i <= args.numNewlines; i++)
 		{
 			size_t newlinePos = args.text.find_first_of('\n', currentPos);
-			newlinePos = (std::min(newlinePos, args.text.length() - 1));
+			newlinePos = (std::min(newlinePos, args.text.length()));
 
 			int rowWidth = std::accumulate(
 				glyphs.begin() + currentPos,
 				glyphs.begin() + newlinePos,
-				0, [scale = args.scale](int sum, const auto& glyph) {
+				0, [scale = args.scale.x](int sum, const auto& glyph) {
 					return sum + (glyph.advance * scale);
 				});
 
@@ -248,16 +318,16 @@ private:
 				auto& glyph = glyphs[j];
 				assert(glyph.character != kInvalidChar);
 
-				SDL_Rect dest = { xPos , yPos, glyph.atlasRect.w * args.scale,
-											   glyph.atlasRect.h * args.scale };
+				SDL_Rect dest = { xPos , yPos, glyph.atlasRect.w * args.scale.x,
+											   glyph.atlasRect.h * args.scale.y };
 
 				SDL_RenderCopy(args.renderer, args.glyphAtlas.GetAtlasTexture(),
 							   &glyph.atlasRect, &dest);
 
-				xPos += glyph.advance * args.scale;
+				xPos += glyph.advance * args.scale.x;
 			}
 
-			yPos += args.glyphAtlas.GetAtlasInfo().fontHeight * args.scale;
+			yPos += args.glyphAtlas.GetAtlasInfo().fontHeight * args.scale.y;
 			currentPos = newlinePos + 1;
 		}
 	}

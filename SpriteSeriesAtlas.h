@@ -13,6 +13,26 @@ struct SpriteInfo
 	SDL_Rect atlasRect = { 0, 0, 0, 0 };
 };
 
+struct SeriesInfo
+{
+	std::string seriesName;
+	size_t size;
+
+	bool operator==(const SeriesInfo&) const = default;
+};
+
+namespace std {
+	template <>
+	struct hash<SeriesInfo> {
+		size_t operator()(const SeriesInfo& si) const noexcept {
+			auto h1 = std::hash<std::string>{}(si.seriesName);
+			auto h2 = std::hash<size_t>{}(si.size);
+			return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+		}
+	};
+}
+
+
 class SpriteSeriesAtlas;
 
 template <>
@@ -30,6 +50,9 @@ struct AtlasInfo<SpriteSeriesAtlas>
 class SpriteSeriesAtlas : public Atlas<SpriteSeriesAtlas>
 {
 public:
+	SpriteSeriesAtlas() = default;
+	SpriteSeriesAtlas(const Handle<SpriteSeriesAtlas>& handle) : Atlas(handle) {}
+
 	bool Load(SDL_Renderer* renderer, AtlasInfo args)
 	{
 		assert(renderer);
@@ -119,6 +142,7 @@ public:
 					return false;
 				}
 
+				
 				spriteSeriesMap_[seriesName].emplace_back(std::move(spriteInfo));
 
 				SDL_FreeSurface(surface);
@@ -137,6 +161,8 @@ public:
 
 			return false;
 		}
+
+		SDL_SetTextureBlendMode(atlasTexture_, SDL_BLENDMODE_BLEND);
 
 		return true;
 	}

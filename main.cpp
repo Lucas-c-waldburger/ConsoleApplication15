@@ -5,8 +5,17 @@
 #include <string>
 #include "SDLite.h"
 #include "Systems.h"
+#include "Scripting.h"
+#include "Monitoring.h"
+#include "inputs/GameControllerEvents.h"
 
-static constexpr std::string_view kSpritesPath = R"(C:\Users\Lucas\source\repos\ConsoleApplication15\sprites)";
+//// TODO
+// rethink handle manager being yet another tuple map
+// maybe make componentBit non-constexpr implemenation again
+
+
+
+static constexpr std::string_view kSpritesPath = R"(sprites)";
 static constexpr std::string_view kWalkSeriesName = "walk";
 
 static SpriteSeriesAtlas::AtlasInfo MakeKnightAtlasInfo()
@@ -29,18 +38,15 @@ static SpriteSeriesAtlas::AtlasInfo MakeKnightAtlasInfo()
     return knightAtlasInfo;
 }
 
-
 int main(int argc, char* argv[]) 
 {
+    Logger::StartSession();
+
     SDLite::Start();
 
-    //static constexpr const char* kFontPath = 
-    //    R"(C:\Windows\WinSxS\amd64_microsoft-windows-font-truetype-arial_31bf3856ad364e35_10.0.19041.1_none_28747db34cb89a67\arial.ttf)";
-
-    //GlyphAtlas glyphAtlas{};
-
-    //glyphAtlas.Load(SDLite::Renderer(), { .fontPath = kFontPath, .fontSize = 48, .fontColor = {51, 255, 196, 255} });
-
+    static constexpr const char* kFontPath = 
+        R"(C:\Windows\WinSxS\amd64_microsoft-windows-font-truetype-arial_31bf3856ad364e35_10.0.19041.1_none_28747db34cb89a67\arial.ttf)";
+    
     //static constexpr std::string_view kTestText = "Bubba is fat and it's becoming a problem";
     //auto glyphs = glyphAtlas.GetGlyphsForString(kTestText);
 
@@ -80,12 +86,17 @@ int main(int argc, char* argv[])
     //rect.color = { .values = { 0, 0, 0, 255 }, .option = SDLite::Color::Fill };
 
     //auto rectPtr = SDLite::Canvas().AddObject(std::move(rect));
+    HandleManager handleManager{};
 
     Entity entA = ECS::CreateEntity();
 
     RenderSystem renderSys{};
-    auto handleResult = renderSys.LoadAtlas(SDLite::Renderer(), MakeKnightAtlasInfo());
+    auto handleResult = renderSys.LoadAtlas(SDLite::Renderer(), handleManager, MakeKnightAtlasInfo());
     assert(handleResult.Success());
+
+    auto spriteAtlas = renderSys.GetAtlas(*handleResult);
+    assert(spriteAtlas);
+    SDL_Rect spriteRect = spriteAtlas->GetSprite(kWalkSeriesName, 0).atlasRect;
 
     entA.AddComponent(Renderable{
         .renderData = Renderable::Sprite{
@@ -93,29 +104,99 @@ int main(int argc, char* argv[])
             .seriesName = std::string{kWalkSeriesName},
             .currentIndex = 0
         },
-        .drawOrder = 0 
+        .drawOrder = 0  
         }
     );
-
-    entA.AddComponent(Spatial{
+    auto& spatialA = entA.AddComponent(Spatial{
         .position = SDL_FPoint{ SDLite::kWindowWidth / 2.0f, SDLite::kWindowHeight / 2.0f },
-        .dimensions = Dimensions<float>{200, 200}
+        .dimensions = {static_cast<float>(spriteRect.w), static_cast<float>(spriteRect.h)}
         }
     );
+    auto& tfA = entA.AddComponent(Transform{});
+    ////
+    //auto entB = ECS::CreateEntity();
 
-    entA.AddComponent(Transform{});
+    //auto textHandleResult = renderSys.LoadAtlas(SDLite::Renderer(), handleManager,
+    //    GlyphAtlas::AtlasInfo{.fontPath = kFontPath, .fontSize = 48, .fontColor = { 0, 0, 0, 255 }});
 
+    //assert(textHandleResult.Success());
+
+    //entB.AddComponent(Renderable{
+    //    .renderData = Renderable::Text{
+    //        .sourceAtlas = *textHandleResult,
+    //        .text = "I'm a cute bug\nwith a big sword",
+    //        .align = Renderable::Text::Alignment::Left,
+    //        .scaleToFit = false
+    //    },
+    //    .drawOrder = 0
+    //    }
+    //);
+    //auto& bSpatial = entB.AddComponent(Spatial{
+    //    .position = SDL_FPoint{ SDLite::kWindowWidth / 2.0f, SDLite::kWindowHeight / 2.0f - 200.0f },
+    //    .dimensions = { 600, 300 }
+    //    }
+    //);
+    //auto& bTf = entB.AddComponent(Transform{});
+
+    // LUA //
+    //auto lua = Lua::GetInstance<SDL_FPoint, Dimensions<float>, Spatial, Transform>();
+    //
+    //lua.SetScript({ .name = "scripts\\test.lua", .scriptType = Lua::ScriptType::File });
+    //
+    //lua["spatial"] = &spatialA;
+    //lua["transform"] = &tfA;
+    //
+    //ASSERT_RESULT(lua.Run());
+    //
+    //FileMonitor fileMonitor{ "scripts\\test.lua" }; 
+    //
+    //fileMonitor.AddObserver([&lua]() {
+    //    auto runResult = lua.Run();
+    //    if (!runResult.Success())
+    //    {
+    //        std::cerr << runResult.GetError();
+    //        return ReturnSignal::StopObserving;
+    //    }
+    //    return ReturnSignal::KeepObserving;
+    //});
+    //
+    //fileMonitor.Start();
+
+    EventBuffer<64> eventBuffer{};
+    GameControllerEventHandler eventDistributionSystem{};
+
+    SDL_Event ev;
     while (true)
     {
-        if (!SDLite::Events().Process())
+        while (SDL_PollEvent(&ev))
+        {
+            eventBuffer.Push(ev);
+        }
+        if (!eventDistributionSystem.Update(eventBuffer))
         {
             break;
         }
 
+        //if (!SDLite::Events().Process())
+        //{
+        //    break;
+        //}
+
+        //fileMonitor.Run(GetDeltaTime());
+        //if (fileMonitor.Check())
+        //{
+        //    lua.Run();
+        //}
+
         SDLite::Renderer().Clear();
 
-        renderSys.Update(SDLite::Renderer());
+        //SDL_Rect tfRect = MakeTransformedRect(bSpatial, bTf);
 
+        //SDL_SetRenderDrawColor(SDLite::Renderer(), 255, 0, 0, 255);
+        //SDL_RenderDrawRect(SDLite::Renderer(), &tfRect);
+        //SDL_SetRenderDrawColor(SDLite::Renderer(), 0xFF, 0xFF, 0xFF, 0xFF);
+
+        renderSys.Update(SDLite::Renderer());
 
         //SDLite::Canvas().Draw(SDLite::Renderer());
 
@@ -137,6 +218,8 @@ int main(int argc, char* argv[])
 
         SDLite::Renderer().Show();
     }
+
+    Logger::EndSession();
 
     SDLite::Exit();
 

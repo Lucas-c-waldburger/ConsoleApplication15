@@ -3,6 +3,7 @@
 #include "EntityRelationships.h"
 #include "EntityRetrieval.h"
 #include <cassert>
+#include <functional>
 
 class ECS;
 
@@ -20,6 +21,7 @@ public:
     template <ComponentType...Ts> requires (!RelationalComponentType<Ts> && ...) std::tuple<Ts&...> GetComponents();
 
     template <ComponentType T> bool HasComponent() const;
+    template <ComponentType...Ts> bool HasComponents() const;
 
     void SetParent(const Entity& requestedParent);
     void RemoveParent();
@@ -36,6 +38,10 @@ private:
     Entity_t id_ = kInvalidEntity;
     ECS* ecs_ = nullptr;
 };
+
+template <ComponentType T>
+using ComponentFilter = bool(*)(const T&);
+//using ComponentFilter = std::function<bool(const T&)>;
 
 class ECS
 {
@@ -54,6 +60,14 @@ public:
         auto& ecs = ECS::Get();
 
         return Entity{ ECS::Get().CreateEntity_t(), ecs };
+    }
+
+    template <ComponentType T>
+    static std::vector<Entity> GetAllEntitiesWith(ComponentFilter<T>&& filter)
+    {
+        auto& ecs = ECS::Get();
+
+        return ecs.GetAllEntitiesWithInternal<T>(std::forward<ComponentFilter<T>>(filter));
     }
 
     template <typename...Ts>
@@ -116,19 +130,36 @@ private:
         return std::tie(componentManager_.GetComponent<Ts>(entity)...);
     }
 
-    //template <typename T, ComponentType...Ts> requires (!RelationalComponentType<T> && 
-    //                                                   (!RelationalComponentType<Ts> && ...) && 
-    //                                                   (std::derived_from<T, Ts> && ...))
-    //std::vector<T*> GetComponentsUpcastTo(Entity_t)
-    //{
-    //    std::vector<T*> componentsUpcasted;
-    //    componentsUpcasted.reserve()
-    //}
-
     template <ComponentType T>
     bool HasComponent(Entity_t entity) const
     {
         return componentManager_.GetSignature(entity) & T::componentBit;
+    }
+
+    template <typename T>
+    std::vector<Entity> GetAllEntitiesWithInternal(ComponentFilter<T>&& filter)
+    {
+        std::vector<Entity> result;
+
+        auto activeEntities = entityManager_.GetActiveEntities();
+        for (const auto& ent : activeEntities)
+        {
+            const uint64_t entitySig = componentManager_.GetSignature(ent);
+
+            if ((entitySig & T::componentBit) == 0)
+            {
+                continue;
+            }
+
+            if (!(filter && filter(componentManager_.GetComponent<T>(ent))))
+            {
+                continue;
+            }
+
+            result.emplace_back(ent, *this);
+        }
+
+        return result;
     }
 
     template <typename...Ts>
@@ -271,6 +302,15 @@ inline bool Entity::HasComponent() const
     assert(id_ != kInvalidEntity);
 
     return ecs_->HasComponent<T>(id_);
+}
+
+template<ComponentType ...Ts>
+inline bool Entity::HasComponents() const
+{
+    assert(ecs_);
+    assert(id_ != kInvalidEntity);
+
+    return (ecs_->HasComponent<Ts>(id_) && ...);
 }
 
 
