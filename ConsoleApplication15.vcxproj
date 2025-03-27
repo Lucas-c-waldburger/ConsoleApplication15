@@ -164,7 +164,6 @@
     <ClCompile Include="Monitoring.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Scripting.cpp" />
-    <ClCompile Include="ScriptManager.cpp" />
     <ClCompile Include="SDLite.cpp" />
     <ClCompile Include="SDLUtils.cpp" />
     <ClCompile Include="SkylinePacker.cpp" />
@@ -318,7 +317,6 @@
     <ClInclude Include="Monitoring.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Scripting.h" />
-    <ClInclude Include="ScriptManager.h" />
     <ClInclude Include="SDLite.h" />
     <ClInclude Include="SDLUtils.h" />
     <ClInclude Include="SkylinePacker.h" />

@@ -213,7 +213,7 @@ template <> static void RegisterLuaUserType<Handle<SpriteSeriesAtlas>>(sol::stat
 		[](const Handle<SpriteSeriesAtlas>& lhs, const Handle<SpriteSeriesAtlas>& rhs) {
 			return lhs != rhs;
 	};
-}
+}\\
 
 
 // COMPONENTS
