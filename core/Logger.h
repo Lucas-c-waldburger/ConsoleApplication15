@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <format>
 #include "TerminalUtils.h"
 
 class LogLevel
@@ -115,3 +116,9 @@ private:
 #define LOG_WARNING(...) Logger::Log(LogLevel::WARNING, __VA_ARGS__)
 #define LOG_ERROR(...) Logger::Log(LogLevel::ERROR, __VA_ARGS__)
 #define LOG_CRITICAL(...) Logger::Log(LogLevel::CRITICAL, __VA_ARGS__)
+
+#define LOG_DEBUG_FMT(fmtStr, ...) Logger::Log(LogLevel::DEBUG, std::format(fmtStr, __VA_ARGS__))
+#define LOG_INFO_FMT(fmtStr, ...) Logger::Log(LogLevel::INFO, std::format(fmtStr, __VA_ARGS__))
+#define LOG_WARNING_FMT(fmtStr, ...) Logger::Log(LogLevel::WARNING, std::format(fmtStr, __VA_ARGS__))
+#define LOG_ERROR_FMT(fmtStr, ...) Logger::Log(LogLevel::ERROR, std::format(fmtStr, __VA_ARGS__))
+#define LOG_CRITICAL_FMT(fmtStr, ...) Logger::Log(LogLevel::CRITICAL, std::format(fmtStr, __VA_ARGS__))

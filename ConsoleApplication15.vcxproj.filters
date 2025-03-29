@@ -18,67 +18,43 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SDLite.cpp">
+    <ClCompile Include="sdl\SDLite.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Ecs.cpp">
+    <ClCompile Include="ecs\Ecs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core.cpp">
+    <ClCompile Include="ecs\EntityRelationships.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TTraits.cpp">
+    <ClCompile Include="systems\RenderSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ComponentManager.cpp">
+    <ClCompile Include="ecs\EntityRetrieval.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Components.cpp">
+    <ClCompile Include="sdl\SDLUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EntityManager.cpp">
+    <ClCompile Include="atlas\GlyphAtlas.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EntityRelationships.cpp">
+    <ClCompile Include="atlas\SpriteSeriesAtlas.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Systems.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="EntityRetrieval.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SDLUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GlyphAtlas.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SpriteSeriesAtlas.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SkylinePacker.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Atlas.cpp">
+    <ClCompile Include="atlas\SkylinePacker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="core\Error.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="core\Result.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HandleManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Scripting.cpp">
+    <ClCompile Include="scripting\LuaTypesRegistry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Monitoring.cpp">
+    <ClCompile Include="core\Monitoring.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="inputs\GameController.cpp">
@@ -90,10 +66,25 @@
     <ClCompile Include="core\Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="events\EventDistributionSystem.cpp">
+    <ClCompile Include="events\EventSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="events\EventBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="atlas\AtlasManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scripting\ScriptManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\PhysicsSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="inputs\InputDataCache.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scripting\Lua.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -449,49 +440,46 @@
     <ClInclude Include="deps\include\sol\wrapper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SDLite.h">
+    <ClInclude Include="sdl\SDLite.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Ecs.h">
+    <ClInclude Include="ecs\Ecs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core.h">
+    <ClInclude Include="core\commonObjects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TTraits.h">
+    <ClInclude Include="core\TypeUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ComponentManager.h">
+    <ClInclude Include="ecs\ComponentManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Components.h">
+    <ClInclude Include="ecs\EntityManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EntityManager.h">
+    <ClInclude Include="ecs\EntityRelationships.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EntityRelationships.h">
+    <ClInclude Include="systems\RenderSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Systems.h">
+    <ClInclude Include="ecs\EntityRetrieval.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EntityRetrieval.h">
+    <ClInclude Include="sdl\SDLUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SDLUtils.h">
+    <ClInclude Include="atlas\GlyphAtlas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GlyphAtlas.h">
+    <ClInclude Include="atlas\SpriteSeriesAtlas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SpriteSeriesAtlas.h">
+    <ClInclude Include="atlas\SkylinePacker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SkylinePacker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Atlas.h">
+    <ClInclude Include="atlas\Atlas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\Result.h">
@@ -500,28 +488,19 @@
     <ClInclude Include="core\Error.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HandleManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="core\Registries.h">
+    <ClInclude Include="core\HandleFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\Handle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="core\Aliases.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="core\maths.h">
+    <ClInclude Include="scripting\LuaTypesRegistry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Scripting.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Monitoring.h">
+    <ClInclude Include="core\Monitoring.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\BaseComponent.h">
@@ -539,49 +518,109 @@
     <ClInclude Include="events\EventBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inputs\GameControllerStateComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="core\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\TerminalUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\EventDistributionSystem.h">
+    <ClInclude Include="events\EventSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\AtlasManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\ScriptManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\TypeDomain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\PhysicsSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\ScriptInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\GameControllerInputStates.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\InputDataCache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ecs\EntityT.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\PhysicsComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\TransformComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\RenderableComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\TagsComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\ScriptComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\GameControllerStateComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\ForceAccumulatorComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\SpatialComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\RelationComponents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\ColliderComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\ComponentConcepts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\Lua.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\ActiveStateComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="sprites\knight\walk_anim\knight_walk_0.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="sprites\knight\walk_anim\knight_walk_1.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_1.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="sprites\knight\walk_anim\knight_walk_2.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_2.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="sprites\knight\walk_anim\knight_walk_3.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_3.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="sprites\knight\walk_anim\knight_walk_4.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_4.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="sprites\knight\walk_anim\knight_walk_5.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_5.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="sprites\knight\walk_anim\knight_walk_6.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_6.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="sprites\knight\walk_anim\knight_walk_7.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_7.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="sprites\knight\walk_anim\knight_walk_8.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_8.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="scripts\test.lua" />
+    <Text Include="resources\scripts\test.lua" />
   </ItemGroup>
 </Project>

@@ -1,25 +1,25 @@
 #pragma once
-#include "BaseComponent.h"
+#include "ActiveStateComponent.h";
+#include "ColliderComponent.h"
+#include "ForceAccumulatorComponent.h"
+#include "GameControllerStateComponent.h"
+#include "PhysicsComponent.h"
+#include "RelationComponents.h"
+#include "RenderableComponent.h"
+#include "ScriptComponent.h"
+#include "SpatialComponent.h"
+#include "TagsComponent.h"
+#include "TransformComponent.h"
 
-struct Spatial;
-struct Transform;
-struct Physics;
-struct Parent;
-struct Children;
-struct Tags;
-struct Renderable;
-struct Collider;
-struct GameControllerState;
-struct ForceAccumulator;
-
-using ComponentRegistry = TypeList<
-    Spatial,
-    Transform,
-    Physics,
-    Parent,
-    Children,
-    Tags,
-    Renderable,
-    Collider,
-    GameControllerState
->;
+#define COMPONENT_REGISTRY \
+    Spatial, \
+    Transform, \
+    Physics, \
+    Parent, \
+    Children, \
+    Tags, \
+    Renderable, \
+    Collider, \
+    GameControllerState, \
+    ForceAccumulator, \
+    Script 

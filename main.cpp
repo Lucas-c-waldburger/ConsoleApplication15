@@ -3,19 +3,22 @@
 #include <variant>
 #include <exception>
 #include <string>
-#include "SDLite.h"
-#include "Systems.h"
-#include "Scripting.h"
-#include "Monitoring.h"
-#include "inputs/GameControllerEvents.h"
+#include "sdl/SDLite.h"
+#include "systems/RenderSystem.h"
+#include "scripting/ScriptManager.h"
+#include "core/Monitoring.h"
+#include "events/EventSystem.h"
+#include "ecs/ECS.h"
+#include "atlas/AtlasManager.h"
 
 //// TODO
 // rethink handle manager being yet another tuple map
 // maybe make componentBit non-constexpr implemenation again
 
+static constexpr const char* kFontPath =
+R"(C:\Windows\WinSxS\amd64_microsoft-windows-font-truetype-arial_31bf3856ad364e35_10.0.19041.1_none_28747db34cb89a67\arial.ttf)";
 
-
-static constexpr std::string_view kSpritesPath = R"(sprites)";
+static constexpr std::string_view kSpritesPath = R"(resources/sprites)";
 static constexpr std::string_view kWalkSeriesName = "walk";
 
 static SpriteSeriesAtlas::AtlasInfo MakeKnightAtlasInfo()
@@ -41,66 +44,22 @@ static SpriteSeriesAtlas::AtlasInfo MakeKnightAtlasInfo()
 int main(int argc, char* argv[]) 
 {
     Logger::StartSession();
-
     SDLite::Start();
-
-    static constexpr const char* kFontPath = 
-        R"(C:\Windows\WinSxS\amd64_microsoft-windows-font-truetype-arial_31bf3856ad364e35_10.0.19041.1_none_28747db34cb89a67\arial.ttf)";
-    
-    //static constexpr std::string_view kTestText = "Bubba is fat and it's becoming a problem";
-    //auto glyphs = glyphAtlas.GetGlyphsForString(kTestText);
-
-    //SpriteSeriesAtlas spriteSeriesAtlas{};
-
-    //spriteSeriesAtlas.Load(SDLite::Renderer(), MakeKnightAtlasInfo());
-
-    //auto firstSprite = spriteSeriesAtlas.GetSprite(kWalkSeriesName, 0);
-
-    //SDLite::Scripts().AddScript(R"(
-    //    function add(a, b)
-    //        return a + b
-    //    end
-    //)");
-
-
-    //sol::state lua;
-    //lua.open_libraries(sol::lib::base);
-
-    //// Run a Lua script that returns a value
-    //lua.script(R"(
-    //    function add(a, b)
-    //        return a + b
-    //    end
-    //)");
-
-    //// Call the Lua function and get the result
-    //sol::function add = lua["add"];
-    //int result = add(3, 4);  // Calling Lua function 'add' with arguments 3 and 4
-
-    //std::cout << "Result from Lua: " << result << std::endl;
-    //SDLite::Rectangle rect{};
-    //rect.x = 200;
-    //rect.y = 200;
-    //rect.w = 100; 
-    //rect.h = 100;
-    //rect.color = { .values = { 0, 0, 0, 255 }, .option = SDLite::Color::Fill };
-
-    //auto rectPtr = SDLite::Canvas().AddObject(std::move(rect));
-    HandleManager handleManager{};
-
+      
     Entity entA = ECS::CreateEntity();
 
-    RenderSystem renderSys{};
-    auto handleResult = renderSys.LoadAtlas(SDLite::Renderer(), handleManager, MakeKnightAtlasInfo());
-    assert(handleResult.Success());
+    impl::AtlasStore atlasStore{};
+    auto spriteHandleResult = atlasStore.LoadAtlas(SDLite::Renderer(), MakeKnightAtlasInfo());
+    assert(spriteHandleResult.Success());
 
-    auto spriteAtlas = renderSys.GetAtlas(*handleResult);
+    auto spriteAtlas = atlasStore.GetAtlas(*spriteHandleResult);
     assert(spriteAtlas);
+
     SDL_Rect spriteRect = spriteAtlas->GetSprite(kWalkSeriesName, 0).atlasRect;
 
     entA.AddComponent(Renderable{
         .renderData = Renderable::Sprite{
-            .sourceAtlas = *handleResult,
+            .sourceAtlas = *spriteHandleResult,
             .seriesName = std::string{kWalkSeriesName},
             .currentIndex = 0
         },
@@ -162,25 +121,18 @@ int main(int argc, char* argv[])
     //
     //fileMonitor.Start();
 
-    EventBuffer<64> eventBuffer{};
-    GameControllerEventHandler eventDistributionSystem{};
+    RenderSystem renderSys{};
+    EventSystem eventSystem{};
 
     SDL_Event ev;
     while (true)
     {
-        while (SDL_PollEvent(&ev))
-        {
-            eventBuffer.Push(ev);
-        }
-        if (!eventDistributionSystem.Update(eventBuffer))
+        if (!eventSystem.Poll(ev))
         {
             break;
         }
 
-        //if (!SDLite::Events().Process())
-        //{
-        //    break;
-        //}
+        eventSystem.DistributeEvents();
 
         //fileMonitor.Run(GetDeltaTime());
         //if (fileMonitor.Check())
@@ -196,7 +148,7 @@ int main(int argc, char* argv[])
         //SDL_RenderDrawRect(SDLite::Renderer(), &tfRect);
         //SDL_SetRenderDrawColor(SDLite::Renderer(), 0xFF, 0xFF, 0xFF, 0xFF);
 
-        renderSys.Update(SDLite::Renderer());
+        renderSys.Update(SDLite::Renderer(), atlasStore);
 
         //SDLite::Canvas().Draw(SDLite::Renderer());
 

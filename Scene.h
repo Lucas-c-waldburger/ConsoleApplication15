@@ -1,13 +1,15 @@
-#pragma once
-#include "core/Aliases.h"
-
-class Scene
-{
-public:
-
-
-
-private:
-	HandleManager handleManager_; 
-};
-
+//#pragma once
+//#include "AtlasManager.h"
+//#include "ScriptingSystem.h"
+//
+//class Scene
+//{
+//public:
+//
+//
+//
+//private:
+//	AtlasStore atlasStore_;
+//	ScriptManager scriptManager_;
+//};
+//

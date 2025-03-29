@@ -2,8 +2,6 @@
 #include "Error.h"
 #include "Logger.h"
 
-struct Void {};
-
 template <typename T>
 class Result
 {
@@ -113,6 +111,12 @@ private:
             Logger::Get().Log(LogLevel::ERROR, (result).GetError()); \
             std::exit(EXIT_FAILURE); \
         } \
+    } \
+} while(0)
+
+#define LOG_IF_ERROR(result) do { \
+    if (!(result).Success()) { \
+        Logger::Get().Log(LogLevel::ERROR, (result).GetError()); \
     } \
 } while(0)
 

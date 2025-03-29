@@ -1,7 +1,6 @@
 #pragma once
 #include <array>
-
-union SDL_Event;
+#include <SDL.h>
 
 class EventBuffer
 {
