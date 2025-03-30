@@ -3,7 +3,7 @@
 #include "../scripting/ScriptInfo.h"
 #include "../core/TypeDomain.h"
 
-struct Script : public BaseComponent<Script, 11>
+struct Script : public BaseComponent<Script, 10>
 {
     ScriptInfo activeScript;
     TypeDomain systemDomain;

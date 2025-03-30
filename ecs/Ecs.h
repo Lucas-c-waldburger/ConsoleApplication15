@@ -40,9 +40,13 @@ private:
     ECS* ecs_ = nullptr;
 };
 
+
+//using ComponentFilter = bool(*)(const T&);
 template <ComponentType T>
-using ComponentFilter = bool(*)(const T&);
-//using ComponentFilter = std::function<bool(const T&)>;
+using ComponentFilter = std::function<bool(const T&)>;
+
+template <ComponentType...Ts>
+using ComponentsFilter = std::function<bool(const Ts&...)>;
 
 class ECS
 {
@@ -63,12 +67,20 @@ public:
         return Entity{ ECS::Get().CreateEntity_t(), ecs };
     }
 
-    template <ComponentType T>
-    static std::vector<Entity> GetAllEntitiesWith(ComponentFilter<T>&& filter)
+    //template <ComponentType T>
+    //static std::vector<Entity> GetAllEntitiesWith(ComponentFilter<T>&& filter)
+    //{
+    //    auto& ecs = ECS::Get();
+
+    //    return ecs.GetAllEntitiesWithInternal<T>(std::forward<ComponentFilter<T>>(filter));
+    //}
+
+    template <ComponentType...Ts, typename Filter>
+    static std::vector<Entity> GetAllEntitiesWith(Filter&& filter)
     {
         auto& ecs = ECS::Get();
 
-        return ecs.GetAllEntitiesWithInternal<T>(std::forward<ComponentFilter<T>>(filter));
+        return ecs.GetAllEntitiesWithInternalFiltered<Ts...>(std::forward<Filter>(filter));
     }
 
     template <typename...Ts>
@@ -148,22 +160,49 @@ private:
         return componentManager_.GetSignature(entity) & T::componentBit;
     }
 
-    template <typename T>
-    std::vector<Entity> GetAllEntitiesWithInternal(ComponentFilter<T>&& filter)
+    //template <typename T>
+    //std::vector<Entity> GetAllEntitiesWithInternal(ComponentFilter<T>&& filter)
+    //{
+    //    std::vector<Entity> result;
+
+    //    auto activeEntities = entityManager_.GetActiveEntities();
+    //    for (const auto& ent : activeEntities)
+    //    {
+    //        const uint64_t entitySig = componentManager_.GetSignature(ent);
+
+    //        if ((entitySig & T::componentBit) == 0)
+    //        {
+    //            continue;
+    //        }
+
+    //        if (!(filter && filter(componentManager_.GetComponent<T>(ent))))
+    //        {
+    //            continue;
+    //        }
+
+    //        result.emplace_back(ent, *this);
+    //    }
+
+    //    return result;
+    //}
+
+    template <ComponentType...Ts, typename Filter>
+    std::vector<Entity> GetAllEntitiesWithInternalFiltered(Filter&& filter)
     {
         std::vector<Entity> result;
+        const uint64_t mask = (Ts::componentBit | ...);
 
         auto activeEntities = entityManager_.GetActiveEntities();
         for (const auto& ent : activeEntities)
         {
             const uint64_t entitySig = componentManager_.GetSignature(ent);
 
-            if ((entitySig & T::componentBit) == 0)
+            if ((entitySig & mask) != mask) 
             {
                 continue;
             }
 
-            if (!(filter && filter(componentManager_.GetComponent<T>(ent))))
+            if (!(filter && std::invoke(filter, componentManager_.GetComponent<Ts>(ent)...)))
             {
                 continue;
             }
@@ -192,14 +231,14 @@ private:
             }
         };
 
-        const uint64_t includeMask = (makeMasks.template operator() < Ts > () | ...);
+        const uint64_t includeMask = (makeMasks.template operator()<Ts>() | ...);
 
         auto activeEntities = entityManager_.GetActiveEntities();
         for (const auto& ent : activeEntities)
         {
             const uint64_t entitySig = componentManager_.GetSignature(ent);
 
-            if (((entitySig & includeMask) == 0) || (entitySig & excludeMask))
+            if (((entitySig & includeMask) != includeMask) || (entitySig & excludeMask))
             {
                 continue;
             }

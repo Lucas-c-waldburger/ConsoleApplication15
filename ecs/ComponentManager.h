@@ -79,6 +79,17 @@ public:
         return components_[cmpIndex];
     }
 
+    const T& GetComponent(Entity_t entity) const
+    {
+        assert(entity < kMaxEntities);
+
+        const uint16_t cmpIndex = isEntityHoldsComponentIndex_[entity];
+
+        assert(cmpIndex != invalidIndex);
+
+        return components_[cmpIndex];
+    }
+
 private:
     std::vector<T> components_;
     std::vector<Entity_t> isComponentIndexHoldsEntity_;
@@ -113,6 +124,17 @@ public:
 
     template <ComponentType T>
     T& GetComponent(Entity_t entity)
+    {
+        assert(entity < kMaxEntities);
+        assert(isEntityHoldsSignature_[entity] & T::componentBit);
+
+        auto& entry = GetEntry<T>();
+
+        return entry.GetComponent(entity);
+    }
+
+    template <ComponentType T>
+    const T& GetComponent(Entity_t entity) const
     {
         assert(entity < kMaxEntities);
         assert(isEntityHoldsSignature_[entity] & T::componentBit);

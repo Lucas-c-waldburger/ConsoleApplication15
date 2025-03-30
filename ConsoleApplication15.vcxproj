@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="atlas\AtlasManager.cpp" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="core\Error.cpp" />
     <ClCompile Include="events\EventBuffer.cpp" />
     <ClCompile Include="core\Logger.cpp" />
@@ -167,14 +168,16 @@
     <ClCompile Include="atlas\SpriteSeriesAtlas.cpp" />
     <ClCompile Include="systems\RenderSystem.cpp" />
     <ClCompile Include="systems\PhysicsSystem.cpp" />
+    <ClCompile Include="systems\util\QuadTree.cpp" />
+    <ClCompile Include="systems\util\SpatialHashGrid.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="atlas\Atlas.h" />
     <ClInclude Include="atlas\AtlasManager.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="components\ActiveStateComponent.h" />
     <ClInclude Include="components\BaseComponent.h" />
     <ClInclude Include="components\ColliderComponent.h" />
-    <ClInclude Include="components\ForceAccumulatorComponent.h" />
     <ClInclude Include="components\GameControllerStateComponent.h" />
     <ClInclude Include="components\PhysicsComponent.h" />
     <ClInclude Include="components\RelationComponents.h" />
@@ -336,6 +339,8 @@
     <ClInclude Include="systems\RenderSystem.h" />
     <ClInclude Include="systems\PhysicsSystem.h" />
     <ClInclude Include="core\TypeUtils.h" />
+    <ClInclude Include="systems\util\QuadTree.h" />
+    <ClInclude Include="systems\util\SpatialHashGrid.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png" />

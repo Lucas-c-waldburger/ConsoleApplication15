@@ -87,6 +87,15 @@
     <ClCompile Include="scripting\Lua.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="systems\util\QuadTree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\util\SpatialHashGrid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -569,9 +578,6 @@
     <ClInclude Include="components\GameControllerStateComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\ForceAccumulatorComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="components\SpatialComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -588,6 +594,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\ActiveStateComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\util\QuadTree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\util\SpatialHashGrid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

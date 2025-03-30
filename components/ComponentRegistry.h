@@ -1,7 +1,6 @@
 #pragma once
 #include "ActiveStateComponent.h";
 #include "ColliderComponent.h"
-#include "ForceAccumulatorComponent.h"
 #include "GameControllerStateComponent.h"
 #include "PhysicsComponent.h"
 #include "RelationComponents.h"
@@ -21,5 +20,4 @@
     Renderable, \
     Collider, \
     GameControllerState, \
-    ForceAccumulator, \
     Script 

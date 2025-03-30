@@ -1,28 +1,14 @@
 #pragma once
-//#include "../ecs/Ecs.h"
-//#include "../ScriptingSystem.h"
+#include "../scripting/ScriptManager.h"
 
 class PhysicsSystem
 {
 public:
+	void Update(float deltaTime);
 
 
 private:
-	//void RunEntityScripts(ScriptManager& scriptManager)
-	//{
-	//	auto entities = ECS::GetAllEntitiesWith<Script, Physics>();
-
-	//	for (auto& entity : entities)
-	//	{
-	//		auto& script = entity.GetComponent<Script>();
-	//		if (script.systemDomain != typeid(PhysicsSystem))
-	//		{
-	//			continue;
-	//		}
-
-	//		LOG_IF_ERROR(scriptManager.RunScript(script.activeScript.name));
-	//	}
-	//}
+	void RunEntityScripts(ScriptManager& scriptManager);
 };
 
 

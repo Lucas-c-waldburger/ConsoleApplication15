@@ -69,20 +69,19 @@ template <> static void RegisterLuaUserType<Force>(sol::state& lua)
 {
 	lua.new_usertype<Force>("Force", "vector", &Force::vector, "duration", &Force::duration);
 }
-
+template <> static void RegisterLuaUserType<AccumulatedForces>(sol::state& lua)
+{
+	lua.new_usertype<AccumulatedForces>("AccumulatedForces", "normed",
+		&AccumulatedForces::normed, "max", &AccumulatedForces::max);
+}
 
 // COMPONENTS
-template <> static void RegisterLuaUserType<ForceAccumulator>(sol::state& lua)
-{
-	lua.new_usertype<ForceAccumulator>("ForceAccumulator", "forces",
-		&ForceAccumulator::forces, "maxForce", &ForceAccumulator::maxForce);
-}
 
 template <> static void RegisterLuaUserType<Physics>(sol::state& lua)
 {
 	lua.new_usertype<Physics>("Physics", "velocity", &Physics::velocity,
 		"acceleration", &Physics::acceleration, "mass", &Physics::mass, 
-		"drag", &Physics::drag, "forceAccumulator", &Physics::forceAccumulator);
+		"drag", &Physics::drag, "gravity", &Physics::gravity, "forces", &Physics::forces);
 }
 template <> static void RegisterLuaUserType<Spatial>(sol::state& lua)
 {
