@@ -31,6 +31,7 @@ public:
 
     void Destroy();
     bool IsValid() const;
+    Entity_t GetID() const { return id_; }
 
     bool operator==(const Entity& rhs) const { return id_ == rhs.id_; }
     bool operator==(const Entity_t& entT) const { return id_ == entT; }
@@ -361,7 +362,7 @@ inline bool Entity::HasComponent() const
     return ecs_->HasComponent<T>(id_);
 }
 
-template<ComponentType ...Ts>
+template<ComponentType...Ts>
 inline bool Entity::HasComponents() const
 {
     assert(ecs_);

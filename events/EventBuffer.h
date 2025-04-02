@@ -13,7 +13,7 @@ public:
 	size_t Size() const { return size_; }
 
 private:
-	std::array<SDL_Event, kMaxSize> events_;
+	std::array<SDL_Event, kMaxSize> events_{};
 	int headIndex_ = 0;
 	int size_ = 0;
 };

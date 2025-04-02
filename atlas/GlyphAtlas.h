@@ -20,9 +20,9 @@ template <>
 struct AtlasInfo<GlyphAtlas>
 {
     std::string fontPath;
-    int fontSize;
-    SDL_Color fontColor;
-    int fontHeight;
+    int fontSize = 0;
+    SDL_Color fontColor = { 0, 0, 0, 255 };
+    int fontHeight = 0;
 };
 
 class GlyphAtlas : public Atlas<GlyphAtlas>

@@ -40,7 +40,7 @@ SDL_Event EventBuffer::Pop()
 		assert(size_ == 0);
 
 		// we may be somewhere else in the array, set to 0 so
-		// next event drain is consistent
+		// easier to reckon actual event ordering
 		headIndex_ = 0;
 
 		SDL_Event sentinel{ .type = SDL_POLLSENTINEL };

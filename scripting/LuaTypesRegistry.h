@@ -74,6 +74,34 @@ template <> static void RegisterLuaUserType<AccumulatedForces>(sol::state& lua)
 	lua.new_usertype<AccumulatedForces>("AccumulatedForces", "normed",
 		&AccumulatedForces::normed, "max", &AccumulatedForces::max);
 }
+template <> static void RegisterLuaUserType<SDL_GameControllerButton>(sol::state& lua)
+{
+	lua.new_enum("GameControllerButton",
+		"Invalid", SDL_CONTROLLER_BUTTON_INVALID,
+		"A", SDL_CONTROLLER_BUTTON_A,
+		"B", SDL_CONTROLLER_BUTTON_B,
+		"X", SDL_CONTROLLER_BUTTON_X,
+		"Y", SDL_CONTROLLER_BUTTON_Y,
+		"Back", SDL_CONTROLLER_BUTTON_BACK,
+		"Guide", SDL_CONTROLLER_BUTTON_GUIDE,
+		"Start", SDL_CONTROLLER_BUTTON_START,
+		"LeftStick", SDL_CONTROLLER_BUTTON_LEFTSTICK,
+		"RightStick", SDL_CONTROLLER_BUTTON_RIGHTSTICK,
+		"LeftShoulder", SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
+		"RightShoulder", SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
+		"DpadUp", SDL_CONTROLLER_BUTTON_DPAD_UP,
+		"DpadDown", SDL_CONTROLLER_BUTTON_DPAD_DOWN,
+		"DpadLeft", SDL_CONTROLLER_BUTTON_DPAD_LEFT,
+		"DpadRight", SDL_CONTROLLER_BUTTON_DPAD_RIGHT,
+		"Misc1", SDL_CONTROLLER_BUTTON_MISC1, 
+		"Paddle1", SDL_CONTROLLER_BUTTON_PADDLE1,
+		"Paddle2", SDL_CONTROLLER_BUTTON_PADDLE2,
+		"Paddle3", SDL_CONTROLLER_BUTTON_PADDLE3,
+		"Paddle4", SDL_CONTROLLER_BUTTON_PADDLE4,
+		"Touchpad", SDL_CONTROLLER_BUTTON_TOUCHPAD,
+		"Max", SDL_CONTROLLER_BUTTON_MAX
+	);
+}
 
 // COMPONENTS
 
@@ -106,12 +134,37 @@ template <> static void RegisterLuaUserType<Children>(sol::state& lua)
 	lua.new_usertype<Children>("Children", "childEntities", &Children::childEntities);
 }
 
+// GAME CONTROLLER
+template <> static void RegisterLuaUserType<AxisInputState>(sol::state& lua)
+{
+	lua.new_usertype<AxisInputState>("AxisInputState", 
+		"value", &AxisInputState::value, "timestamp", &AxisInputState::timestamp, 
+		"state", &AxisInputState::state, "stateDuration", &AxisInputState ::stateDuration);
+}
+template <> static void RegisterLuaUserType<ButtonInputState>(sol::state& lua)
+{
+	lua.new_usertype<ButtonInputState>("ButtonInputState", 
+		"button", &ButtonInputState::button, "timestamp", &ButtonInputState::timestamp,
+		"state", &ButtonInputState::state, "stateDuration", &ButtonInputState::stateDuration);
+}
+template <> static void RegisterLuaUserType<HandedPair<AxisInputState>>(sol::state& lua)
+{
+	lua.new_usertype<HandedPair<AxisInputState>>("HandedPair<AxisInputState>", 
+		"left", &HandedPair<AxisInputState>::left, "right", &HandedPair<AxisInputState>::right);
+}
+template <> static void RegisterLuaUserType<GameControllerState>(sol::state& lua)
+{
+	lua.new_usertype<GameControllerState>("GameControllerState", 
+		"joystickID", &GameControllerState::joystickID, "axisInput", &GameControllerState::axisInput,
+		"buttonInput", &GameControllerState::buttonInput);
+}
+
 // RENDERABLE
 template <> static void RegisterLuaUserType<Renderable::Text::Alignment>(sol::state& lua)
 {
 	using Alignment = Renderable::Text::Alignment;
-	lua.new_enum("Renderable::Text::Alignment", "Left", Alignment::Left, 
-		"Right", Alignment::Right, "Center", Alignment::Center);
+	lua.new_enum("Renderable::Text::Alignment", 
+		"Left", Alignment::Left, "Right", Alignment::Right, "Center", Alignment::Center);
 }
 template <> static void RegisterLuaUserType<Renderable::Text>(sol::state& lua)
 {

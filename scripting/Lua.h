@@ -33,8 +33,8 @@ public:
 		RegisterUserTypeListDetail<T>::Call(lua_);
 	}
 
-	void SetScript(ScriptInfo scriptInfo) { scriptInfo_ = std::move(scriptInfo); }
-	const ScriptInfo& GetScript() const { return scriptInfo_; }
+	void SetScriptInfo(ScriptInfo scriptInfo) { scriptInfo_ = std::move(scriptInfo); }
+	const ScriptInfo& GetScriptInfo() const { return scriptInfo_; }
 
 	Result<Void> Run();
 

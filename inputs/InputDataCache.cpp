@@ -20,7 +20,7 @@ void InputDataCache::UpdateSkippedInputs()
 			break;
 		}
 
-		inputData.stateDuration = now - inputData.timestamp;
+		inputData.stateDuration = static_cast<uint32_t>(now) - inputData.timestamp;
 	};
 
 	for (uint8_t i = 0; i < inputUpdatedTracker.size(); i++)

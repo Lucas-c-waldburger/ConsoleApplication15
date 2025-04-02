@@ -18,7 +18,7 @@ void RenderGlyphsAligned<Alignment::Left>(const RenderSystem::RenderGlyphsArgs& 
 	int xPos = args.startX;
 	int yPos = args.startY;
 
-	for (int i = 0; i < args.text.size(); i++)
+	for (size_t i = 0; i < args.text.size(); i++)
 	{
 		if (args.text[i] == '\n')
 		{
@@ -31,13 +31,13 @@ void RenderGlyphsAligned<Alignment::Left>(const RenderSystem::RenderGlyphsArgs& 
 		auto glyph = args.glyphAtlas->GetGlyph(args.text[i]);
 		assert(glyph.character != kInvalidChar);
 
-		SDL_Rect dest = { xPos, yPos, glyph.atlasRect.w * args.scale.x,
-										glyph.atlasRect.h * args.scale.y };
+		SDL_Rect dest = { xPos, yPos, static_cast<int>(glyph.atlasRect.w * args.scale.x),
+									  static_cast<int>(glyph.atlasRect.h * args.scale.y) };
 
 		SDL_RenderCopy(args.renderer, args.glyphAtlas->GetAtlasTexture(),
 			&glyph.atlasRect, &dest);
 
-		xPos += glyph.advance * args.scale.x;
+		xPos += static_cast<int>(glyph.advance * args.scale.x);
 	}
 }
 
@@ -60,14 +60,14 @@ void RenderGlyphsAligned<Alignment::Right>(const RenderSystem::RenderGlyphsArgs&
 		auto glyph = args.glyphAtlas->GetGlyph(args.text[i]);
 		assert(glyph.character != kInvalidChar);
 
-		SDL_Rect dest = { xPos - (glyph.atlasRect.w * args.scale.x), yPos,
-							glyph.atlasRect.w * args.scale.x,
-							glyph.atlasRect.h * args.scale.y };
+		SDL_Rect dest = { xPos - static_cast<int>(glyph.atlasRect.w * args.scale.x), yPos,
+						  static_cast<int>(glyph.atlasRect.w * args.scale.x),
+						  static_cast<int>(glyph.atlasRect.h * args.scale.y) };
 
 		SDL_RenderCopy(args.renderer, args.glyphAtlas->GetAtlasTexture(),
 			&glyph.atlasRect, &dest);
 
-		xPos -= glyph.advance * args.scale.x;
+		xPos -= static_cast<int>(glyph.advance * args.scale.x);
 	}
 }
 
@@ -88,26 +88,26 @@ void RenderGlyphsAligned<Alignment::Center>(const RenderSystem::RenderGlyphsArgs
 			glyphs.begin() + currentPos,
 			glyphs.begin() + newlinePos,
 			0, [scale = args.scale.x](int sum, const auto& glyph) {
-				return sum + (glyph.advance * scale);
+				return sum + static_cast<int>(glyph.advance * scale);
 			});
 
-		int xPos = args.startX - (rowWidth / 2.0f);
+		int xPos = args.startX - static_cast<int>(rowWidth / 2.0f);
 
-		for (int j = currentPos; j < newlinePos; j++)
+		for (size_t j = currentPos; j < newlinePos; j++)
 		{
 			auto& glyph = glyphs[j];
 			assert(glyph.character != kInvalidChar);
 
-			SDL_Rect dest = { xPos , yPos, glyph.atlasRect.w * args.scale.x,
-											glyph.atlasRect.h * args.scale.y };
+			SDL_Rect dest = { xPos , yPos, static_cast<int>(glyph.atlasRect.w * args.scale.x),
+										   static_cast<int>(glyph.atlasRect.h * args.scale.y) };
 
 			SDL_RenderCopy(args.renderer, args.glyphAtlas->GetAtlasTexture(),
 				&glyph.atlasRect, &dest);
 
-			xPos += glyph.advance * args.scale.x;
+			xPos += static_cast<int>(glyph.advance * args.scale.x);
 		}
 
-		yPos += args.glyphAtlas->GetAtlasInfo().fontHeight * args.scale.y;
+		yPos += static_cast<int>(args.glyphAtlas->GetAtlasInfo().fontHeight * args.scale.y);
 		currentPos = newlinePos + 1;
 	}
 }
@@ -181,7 +181,8 @@ void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasS
 			}
 
 			const int numNewlines = std::count(textData->text.begin(), textData->text.end(), '\n');
-			const int totalHeight = (glyphAtlas->GetAtlasInfo().fontHeight * transform.scale.y) *
+			const int totalHeight = 
+				static_cast<int>(glyphAtlas->GetAtlasInfo().fontHeight * transform.scale.y) *
 				(numNewlines + 1);
 
 			RenderGlyphsArgs args{
@@ -214,7 +215,7 @@ void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasS
 				break;
 
 			case Alignment::Center:
-				args.startX = spatial.position.x;
+				args.startX = static_cast<int>(spatial.position.x);
 				RenderGlyphsAligned<Alignment::Center>(args);
 				break;
 			}

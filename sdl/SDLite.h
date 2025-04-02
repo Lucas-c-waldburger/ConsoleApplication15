@@ -502,6 +502,8 @@ namespace SDLite
 			return rendStatus;
 		}
 
+		SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "best", SDL_HINT_OVERRIDE);
+
 		return {};
 	}
 

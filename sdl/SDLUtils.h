@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL.h>
+#include <concepts>
 
 static SDL_Color GetRenderDrawColor(SDL_Renderer* renderer)
 {
@@ -27,3 +28,9 @@ static double GetDeltaTime()
 
     return delta;
 };
+
+template <typename T>
+concept SDLPointType = std::same_as<T, SDL_Point> || std::same_as<T, SDL_FPoint>;
+
+template <typename T>
+concept SDLRectType = std::same_as<T, SDL_Rect> || std::same_as<T, SDL_FRect>;

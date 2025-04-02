@@ -6,6 +6,7 @@
 
 enum class ReturnSignal 
 { 
+    Unknown,
     KeepObserving, 
     StopObserving, 
     Pause 
@@ -49,7 +50,7 @@ private:
 class FileChangeMonitor
 {
 public:
-    FileChangeMonitor() : lastCheckTime_(std::chrono::system_clock::now()) {}
+    FileChangeMonitor() : lastCheckTime_(std::chrono::system_clock::now()), checkInterval_(1000) {}
     FileChangeMonitor(std::string filePath, long long intervalMs = 1000) :
         filePath_(std::move(filePath)), checkInterval_(intervalMs),
         lastCheckTime_(std::chrono::system_clock::now()) {}

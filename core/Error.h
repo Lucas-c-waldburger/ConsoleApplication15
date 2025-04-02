@@ -21,7 +21,6 @@ private:
 };
 
 static std::ostream& operator<<(std::ostream& os, const std::source_location& l);
-static std::ostream& operator<<(std::ostream& os, const Error& err);
 
 #define MAKE_ERROR(msg) Error{std::source_location::current(), msg}
 #define MAKE_ERROR_FMT(msg, ...) Error{std::source_location::current(), std::format(msg, __VA_ARGS__)}

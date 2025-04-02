@@ -9,7 +9,6 @@ bool EventSystem::Poll(SDL_Event& ev)
 		{
 			return false;
 		}
-
 		eventBuffer_.Push(ev);
 	}
 
@@ -32,11 +31,13 @@ void EventSystem::DistributeEvents()
 		case SDL_CONTROLLERDEVICEADDED:
 		case SDL_CONTROLLERDEVICEREMOVED:
 			gameControllerHandler_.HandleDeviceEvent(ev);
+			break;
 
 		case SDL_CONTROLLERAXISMOTION:
 		case SDL_CONTROLLERBUTTONDOWN:
 		case SDL_CONTROLLERBUTTONUP:
 			gameControllerHandler_.HandleInputEvent(ev);
+			break;
 
 		default:
 			break;

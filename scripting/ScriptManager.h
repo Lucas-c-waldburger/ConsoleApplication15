@@ -1,13 +1,23 @@
 #pragma once
 #include "Lua.h"
 #include <unordered_map>
+#include <functional>
+
+struct ScriptInstance
+{
+	using Setup = std::function<void(Lua&)>;
+	ScriptInfo scriptInfo;
+	Setup setupFn;
+};
 
 class ScriptManager
 {
 public:
 	template <typename...Ts, typename...Libs>
-	void RegisterScript(ScriptInfo info, Libs&&...libs)
+	void RegisterScript(ScriptInstance instance, Libs&&...libs)
 	{
+		auto& [info, setup] = instance;
+
 		if (scriptMap_.contains(info.name))
 		{
 			LOG_WARNING("Overwriting script with name: \"", info.name, '"');
@@ -16,12 +26,18 @@ public:
 		auto& lua = scriptMap_[info.name];
 
 		lua = Lua::GetInstance<Ts...>(std::forward<Libs>(libs)...);
-		lua.SetScript(std::move(info));
+
+		lua.SetScriptInfo(std::move(info));
+
+		if (setup)
+		{
+			setup(lua);
+		}
 	}
 
 	void RegisterScript(Lua&& lua)
 	{
-		const std::string& scriptName = lua.GetScript().name;
+		const std::string& scriptName = lua.GetScriptInfo().name;
 
 		if (scriptMap_.contains(scriptName))
 		{

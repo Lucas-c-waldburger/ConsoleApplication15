@@ -145,6 +145,7 @@
   <ItemGroup>
     <ClCompile Include="atlas\AtlasManager.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="components\util\EventObserverUtils.cpp" />
     <ClCompile Include="core\Error.cpp" />
     <ClCompile Include="events\EventBuffer.cpp" />
     <ClCompile Include="core\Logger.cpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="components\ActiveStateComponent.h" />
     <ClInclude Include="components\BaseComponent.h" />
     <ClInclude Include="components\ColliderComponent.h" />
+    <ClInclude Include="components\EventObserverComponent.h" />
     <ClInclude Include="components\GameControllerStateComponent.h" />
     <ClInclude Include="components\PhysicsComponent.h" />
     <ClInclude Include="components\RelationComponents.h" />
@@ -187,12 +189,16 @@
     <ClInclude Include="components\TagsComponent.h" />
     <ClInclude Include="components\TransformComponent.h" />
     <ClInclude Include="components\ComponentConcepts.h" />
+    <ClInclude Include="components\util\EventObserverUtils.h" />
     <ClInclude Include="ecs\ComponentManager.h" />
     <ClInclude Include="components\ComponentRegistry.h" />
     <ClInclude Include="core\commonObjects.h" />
     <ClInclude Include="core\Error.h" />
     <ClInclude Include="core\TypeDomain.h" />
     <ClInclude Include="ecs\EntityT.h" />
+    <ClInclude Include="events\CustomEventData.h" />
+    <ClInclude Include="events\CustomEventDataRegistry.h" />
+    <ClInclude Include="events\CustomEvents.h" />
     <ClInclude Include="events\EventBuffer.h" />
     <ClInclude Include="core\Handle.h" />
     <ClInclude Include="core\Logger.h" />
@@ -326,6 +332,7 @@
     <ClInclude Include="inputs\GameControllerEvents.h" />
     <ClInclude Include="inputs\GameControllerInputStates.h" />
     <ClInclude Include="inputs\InputDataCache.h" />
+    <ClInclude Include="core\ScopedInvoker.h" />
     <ClInclude Include="scripting\Lua.h" />
     <ClInclude Include="core\Monitoring.h" />
     <ClInclude Include="Scene.h" />
@@ -355,6 +362,9 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\scripts\test.lua" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="resources\scripts\game_controller_test.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

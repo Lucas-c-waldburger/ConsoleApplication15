@@ -99,24 +99,31 @@ private:
     mutable uint8_t status_;
 };
 
-#define ASSERT_RESULT(result) do { \
-    if constexpr (std::is_lvalue_reference_v<decltype((result))>) { \
-        if (!(result).Success()) { \
-            Logger::Get().Log(LogLevel::ERROR, (result).GetError()); \
+#define ASSERT_RESULT(result_1) do { \
+    if constexpr (std::is_lvalue_reference_v<decltype((result_1))>) { \
+        if (!(result_1).Success()) { \
+            Logger::Get().Log(LogLevel::ERROR, (result_1).GetError()); \
             std::exit(EXIT_FAILURE); \
         } \
     } else { \
-        auto asrt_res_tmp__ = (result); \
+        auto asrt_res_tmp__ = (result_1); \
         if (!asrt_res_tmp__.Success()) { \
-            Logger::Get().Log(LogLevel::ERROR, (result).GetError()); \
+            Logger::Get().Log(LogLevel::ERROR, asrt_res_tmp__.GetError()); \
             std::exit(EXIT_FAILURE); \
         } \
     } \
 } while(0)
 
-#define LOG_IF_ERROR(result) do { \
-    if (!(result).Success()) { \
-        Logger::Get().Log(LogLevel::ERROR, (result).GetError()); \
+#define LOG_IF_ERROR(result_2) do { \
+    if constexpr (std::is_lvalue_reference_v<decltype((result_2))>) { \
+        if (!(result_2).Success()) { \
+            Logger::Log(LogLevel::ERROR, (result_2).GetError()); \
+        } \
+    } else { \
+        auto lg_if_err_tmp__ = (result_2); \
+        if (!lg_if_err_tmp__.Success()) { \
+            Logger::Log(LogLevel::ERROR, lg_if_err_tmp__.GetError()); \
+        } \
     } \
 } while(0)
 

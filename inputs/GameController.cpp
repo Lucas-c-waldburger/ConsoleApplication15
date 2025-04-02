@@ -31,6 +31,11 @@ bool GameController::IsConnected() const
 
 Result<SDL_JoystickID> GameController::ConnectImpl(Sint32 deviceIndex)
 {
+	if (IsConnected()) 
+	{
+		Disconnect();
+	}
+
 	controller_ = SDL_GameControllerOpen(deviceIndex);
 	if (!controller_)
 	{

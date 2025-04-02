@@ -1,6 +1,7 @@
 #pragma once
 #include "ActiveStateComponent.h";
 #include "ColliderComponent.h"
+#include "EventObserverComponent.h"
 #include "GameControllerStateComponent.h"
 #include "PhysicsComponent.h"
 #include "RelationComponents.h"
@@ -20,4 +21,6 @@
     Renderable, \
     Collider, \
     GameControllerState, \
-    Script 
+    Script, \
+    EventObserver
+

@@ -1,0 +1,1 @@
+print(gameControllerState.axisInput.left)

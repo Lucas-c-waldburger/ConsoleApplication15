@@ -1,6 +1,57 @@
 #include "GameControllerEvents.h"
 #include "../ecs/Ecs.h"
+#include "../events/CustomEventDataRegistry.h"
+#include "../core/ScopedInvoker.h"
 #include <cassert>
+
+namespace
+{
+Result<Void> NotifyControllerConnected(SDL_JoystickID newConnection)
+{
+	auto entities = ECS::GetAllEntitiesWith<EventObserver>([](const EventObserver& events) {
+		auto it = events.eventCallbacks.find(GameControllerConnected::GetEventType());
+
+		return it != events.eventCallbacks.end() && 
+			   it->second.func && 
+			   it->second.status != ReturnSignal::Pause;
+	});
+
+	if (entities.empty())
+	{
+		return Void{};
+	}
+
+	auto connectedEv = CustomEvents::MakeNewEvent(GameControllerConnected{ .joystickID = newConnection });
+	ScopedInvoker cleanup{[&connectedEv]() {
+		LOG_IF_ERROR(CustomEvents::FreeEvent<GameControllerConnected>(connectedEv));
+	}};
+
+	assert(connectedEv.user.data1 != nullptr);
+
+	for (auto& entity : entities)
+	{
+		auto& events = entity.GetComponent<EventObserver>();
+		auto& [func, status] = events.eventCallbacks[GameControllerConnected::GetEventType()];
+
+		status = func(connectedEv, entity);
+		if (status == ReturnSignal::StopObserving)
+		{
+			events.eventCallbacks.erase(GameControllerConnected::GetEventType());
+		}
+	}
+
+	return Void{};
+}
+
+} // unnamed namespace
+
+GameControllerEventHandler::~GameControllerEventHandler()
+{
+	for (auto& [_, controllerInputPair] : activeControllers_)
+	{
+		controllerInputPair.first.Disconnect();
+	}
+}
 
 void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev)
 {
@@ -73,7 +124,9 @@ void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
 		newAxisInput.timestamp = ev.caxis.timestamp;
 
 		auto& xOrY = getAxisValue(ev.caxis.axis, newAxisInput);
-		xOrY = (ev.caxis.value > GameController::kAxisDeadzone) ? ev.caxis.value : 0;
+
+		bool inDeadzone = (std::abs(ev.caxis.value) <= GameController::kAxisDeadzone);
+		xOrY = (inDeadzone) ? 0.0f : static_cast<float>(ev.caxis.value);
 
 		auto& lastInput = activeControllers_[ev.caxis.which].second.cachedControllerState.axisInput;
 		auto& lastInputSide = getAxisInputSide(ev.caxis.axis, lastInput);
@@ -156,6 +209,17 @@ void GameControllerEventHandler::UpdateEntities()
 
 		controllerState = it->second.second.cachedControllerState;
 	}
+}
+
+std::set<SDL_JoystickID> GameControllerEventHandler::GetConnectedControllerIDs() const
+{
+	std::set<SDL_JoystickID> availableIDs{};
+	for (const auto& [id, _] : activeControllers_)
+	{
+		availableIDs.insert(id);
+	}
+
+	return availableIDs;
 }
 
 std::ostream& operator<<(std::ostream& os, const GameControllerState::State& st)

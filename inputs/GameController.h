@@ -10,7 +10,6 @@ public:
 	static constexpr int kAxisMax = 32768;
 
 	GameController() = default;
-	~GameController() { Disconnect(); }
 
 	Result<SDL_JoystickID> Connect(Sint32 deviceIndex);
 	Result<SDL_JoystickID> ConnectFirstAvailable();

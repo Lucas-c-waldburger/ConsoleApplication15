@@ -4,16 +4,16 @@
 #include <exception>
 #include <string>
 #include "sdl/SDLite.h"
+#include "sdl/SDLUtils.h"
 #include "systems/RenderSystem.h"
 #include "scripting/ScriptManager.h"
 #include "core/Monitoring.h"
 #include "events/EventSystem.h"
 #include "ecs/ECS.h"
-#include "atlas/AtlasManager.h"
+#include "atlas/AtlasManager.h" 
+#include "systems/PhysicsSystem.h"
+#include "events/CustomEventDataRegistry.h"
 
-//// TODO
-// rethink handle manager being yet another tuple map
-// maybe make componentBit non-constexpr implemenation again
 
 static constexpr const char* kFontPath =
 R"(C:\Windows\WinSxS\amd64_microsoft-windows-font-truetype-arial_31bf3856ad364e35_10.0.19041.1_none_28747db34cb89a67\arial.ttf)";
@@ -41,12 +41,109 @@ static SpriteSeriesAtlas::AtlasInfo MakeKnightAtlasInfo()
     return knightAtlasInfo;
 }
 
+static ScriptInstance MakeComponentEditScript(Spatial& spatial, Transform& tf)
+{
+    ScriptInstance instance{};
+
+    instance.scriptInfo = { 
+        .name = "component test", 
+        .scriptType = ScriptType::File, 
+        .path = "resources\\scripts\\test.lua" 
+    };
+
+    instance.setupFn = [&spatial, &tf](Lua& lua) {
+        lua["spatial"] = &spatial;
+        lua["transform"] = &tf;
+    };
+
+    return instance;
+}
+
+static void InitGameControllerInputTest(ScriptManager& scriptManager)
+{
+    auto entity = ECS::CreateEntity();
+    auto& controllerState = entity.AddComponent(GameControllerState{});
+
+    ScriptInstance instance{};
+
+    instance.scriptInfo = {
+        .name = "game controller test",
+        .scriptType = ScriptType::File,
+        .path = "resources\\scripts\\game_controller_test.lua"
+    };
+
+    instance.setupFn = [&controllerState](Lua& lua) {
+        lua["gameControllerState"] = &controllerState;
+    };
+
+    scriptManager.RegisterScript<
+        SDL_FPoint,
+        SDL_GameControllerButton,
+        HandedPair<AxisInputState>,
+        AxisInputState,
+        ButtonInputState,
+        GameControllerState>(std::move(instance));
+}
+
+static void SetKnightControllerConnectedCallback(EventObserver& knightEvents)
+{
+    knightEvents.eventCallbacks[GameControllerConnected::GetEventType()].func =
+    [](const SDL_Event& ev, Entity& self) -> ReturnSignal 
+    {
+        assert(ev.type == GameControllerConnected::GetEventType());
+
+        if (!self.IsValid())
+        {
+            LOG_WARNING("Entity was invalid");
+            return ReturnSignal::StopObserving;
+        }
+        if (!self.HasComponent<GameControllerState>())
+        {
+            LOG_WARNING("Entity did not have GameControllerState component");
+            return ReturnSignal::StopObserving;
+        }
+
+        auto& controllerState = self.GetComponent<GameControllerState>();
+        if (controllerState.joystickID != GameController::kInvalidJoystickID)
+        {
+            LOG_WARNING("Entity already had a joystick id marked valid");
+            return ReturnSignal::StopObserving;
+        }
+
+        const auto* castEv = CustomEvents::GetEventData<GameControllerConnected>(ev);
+        if (!castEv)
+        {
+            return ReturnSignal::StopObserving;
+        }
+
+        controllerState.joystickID = castEv->joystickID;
+        LOG_INFO("Entity attached to new controller connection!");
+
+        return ReturnSignal::Pause;
+    };
+}
+
+static void UpdateControllerForce(Entity& entity)
+{
+    assert((entity.HasComponents<Physics, GameControllerState>()));
+
+    auto [phys, gc] = entity.GetComponents<Physics, GameControllerState>();
+
+    SDL_FPoint normed = {
+        gc.axisInput.left.value.x / phys.forces.max,
+        gc.axisInput.left.value.y / phys.forces.max
+    };
+
+    phys.forces.normed.push_back(Force{ .vector = normed, .duration = 0 });
+}
+
 int main(int argc, char* argv[]) 
 {
     Logger::StartSession();
     SDLite::Start();
+    ASSERT_RESULT(RegisterCustomEventDataTypes<TypeList<CUSTOM_EVENT_DATA_REGISTRY>>());
       
-    Entity entA = ECS::CreateEntity();
+    Entity knight = ECS::CreateEntity();
 
     impl::AtlasStore atlasStore{};
     auto spriteHandleResult = atlasStore.LoadAtlas(SDLite::Renderer(), MakeKnightAtlasInfo());
@@ -57,7 +154,7 @@ int main(int argc, char* argv[])
 
     SDL_Rect spriteRect = spriteAtlas->GetSprite(kWalkSeriesName, 0).atlasRect;
 
-    entA.AddComponent(Renderable{
+    auto& knightRenderable = knight.AddComponent(Renderable{
         .renderData = Renderable::Sprite{
             .sourceAtlas = *spriteHandleResult,
             .seriesName = std::string{kWalkSeriesName},
@@ -66,12 +163,21 @@ int main(int argc, char* argv[])
         .drawOrder = 0  
         }
     );
-    auto& spatialA = entA.AddComponent(Spatial{
+    auto& knightSpatial = knight.AddComponent(Spatial{
         .position = SDL_FPoint{ SDLite::kWindowWidth / 2.0f, SDLite::kWindowHeight / 2.0f },
         .dimensions = {static_cast<float>(spriteRect.w), static_cast<float>(spriteRect.h)}
         }
     );
-    auto& tfA = entA.AddComponent(Transform{});
+    auto& knightTransform = knight.AddComponent(Transform{});
+    auto& knightPhysics = knight.AddComponent(Physics{
+        .mass = 10.0f,
+        .forces{ .max = GameController::kAxisMax }
+        }
+    );
+    auto& knightControllerState = knight.AddComponent(GameControllerState{});
+    auto& knightEvents = knight.AddComponent(EventObserver{});
+    SetKnightControllerConnectedCallback(knightEvents);
+
     ////
     //auto entB = ECS::CreateEntity();
 
@@ -122,9 +228,21 @@ int main(int argc, char* argv[])
     //fileMonitor.Start();
 
     RenderSystem renderSys{};
+    PhysicsSystem physSystem{};
+    ScriptManager scriptManager{};
     EventSystem eventSystem{};
 
+
+
+    //scriptManager.RegisterScript<SDL_FPoint, Dimensions<float>, Spatial, Transform>(
+    //    MakeComponentEditScript(knightSpatial, knightTransform)
+    //);
+    //InitGameControllerInputTest(scriptManager);
+
+    //FileChangeMonitor fileMonitor{ "resources\\scripts\\game_controller_test.lua" };
+
     SDL_Event ev;
+    SDL_GameControllerEventState(SDL_ENABLE);
     while (true)
     {
         if (!eventSystem.Poll(ev))
@@ -142,11 +260,19 @@ int main(int argc, char* argv[])
 
         SDLite::Renderer().Clear();
 
+        //if (fileMonitor.FileDidChange())
+        //{
+        //    LOG_IF_ERROR(scriptManager.RunScript("game controller test"));
+        //}
+
         //SDL_Rect tfRect = MakeTransformedRect(bSpatial, bTf);
 
         //SDL_SetRenderDrawColor(SDLite::Renderer(), 255, 0, 0, 255);
         //SDL_RenderDrawRect(SDLite::Renderer(), &tfRect);
         //SDL_SetRenderDrawColor(SDLite::Renderer(), 0xFF, 0xFF, 0xFF, 0xFF);
+
+        UpdateControllerForce(knight);
+        physSystem.Update(GetDeltaTime());
 
         renderSys.Update(SDLite::Renderer(), atlasStore);
 
