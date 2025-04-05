@@ -8,20 +8,18 @@ public:
 	template <CustomEventDataType T>
 	static SDL_Event MakeNewEvent(T&& evData, Sint32 code = 0)
 	{
-		SDL_Event ev{
-			.type = T::GetEventType(),
-			.user.code = code,
-			.user.data1 = nullptr,
-			.user.data2 = nullptr
-		};
-
+		SDL_Event ev{};
+		ev.type = T::GetEventType();
+		ev.user.data1 = nullptr;
+		ev.user.data2 = nullptr;
+	
 		if (ev.type == kInvalidEventType)
 		{
 			LOG_WARNING("Invalid event type for template arg, did you register it?");
 			return ev;
 		}
 
-		ev.user.data1 = new T{ std::forward<T>(eventData) };
+		ev.user.data1 = new T{ std::forward<T>(evData) };
 
 		return ev;
 	}

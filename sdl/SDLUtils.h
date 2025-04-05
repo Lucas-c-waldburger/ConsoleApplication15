@@ -21,8 +21,8 @@ static double GetDeltaTime()
 
     uint64_t now = SDL_GetPerformanceCounter();
 
-    double delta = static_cast<double>((now - last) * 1000.0 / 
-                   static_cast<double>(SDL_GetPerformanceFrequency()));
+    double delta = static_cast<double>(now - last) / 
+                   static_cast<double>(SDL_GetPerformanceFrequency());
 
     last = now;
 

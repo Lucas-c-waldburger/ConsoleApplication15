@@ -1,39 +1,43 @@
 #pragma once
 #include "../EventObserverComponent.h"
-#include "../../events/CustomEventData.h"
+#include "../../events/CustomEvents.h"
 #include "../../ecs/Ecs.h"
 
-template<CustomEventDataType T>
-static ReturnSignal TryNotifyEntity(Entity& entity)
+template <CustomEventDataType T>
+Result<Void> SendEventNotification(T&& eventData, Sint32 code = 0)
 {
 	if (T::GetEventType() == kInvalidEventType)
 	{
-		LOG_WARNING("Custom event did not have valid event type. Did you register it?");
-		return ReturnSignal::Unknown;
+		return MAKE_ERROR("Custom event did not have valid event type. Did you register it?");
 	}
-	if (!entity.HasComponent<EventObserver>())
+
+	auto entities = ECS::GetAllEntitiesWith<EventObserver>([](const EventObserver& events) {
+		auto it = events.eventCallbacks.find(T::GetEventType());
+
+		return it != events.eventCallbacks.end() &&
+			   it->second.func &&
+			   it->second.status != ReturnSignal::Pause;
+		});
+
+	if (entities.empty())
 	{
-		LOG_WARNING("Entity did not have event observer component");
-		return ReturnSignal::Unknown;
+		return Void{};
 	}
 
-	auto& events = entity.GetComponent<EventObserver>();
+	auto newEv = CustomEvents::MakeNewEvent(std::forward<T>(eventData), code);
+	assert(newEv.user.data1);
 
-	auto it = events.eventCallbacks.find(T::GetEventType());
-	if (it == events.eventCallbacks.end())
+	for (auto& entity : entities)
 	{
-		LOG_WARNING("Entity is not observing this event type");
-		return ReturnSignal::Unknown;
+		auto& events = entity.GetComponent<EventObserver>();
+		auto& [func, status] = events.eventCallbacks[T::GetEventType()];
+
+		status = func(newEv, entity);
+		if (status == ReturnSignal::StopObserving)
+		{
+			events.eventCallbacks.erase(T::GetEventType());
+		}
 	}
 
-	auto& [func, status] = it->second;
-
-	status = func(connectedEv, entity);
-	if (status == ReturnSignal::StopObserving)
-	{
-		events.eventCallbacks.erase(GameControllerConnected::GetEventType());
-		return ReturnSignal::StopObserving;
-	}
-
-	return status;
+	return CustomEvents::FreeEvent<T>(newEv);
 }

@@ -48,7 +48,7 @@
     <ClCompile Include="core\Error.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Scene.cpp">
+    <ClCompile Include="Hooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="scripting\LuaTypesRegistry.cpp">
@@ -97,6 +97,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="components\util\EventObserverUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\Fixtures.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="inputs\GameControllerInputStates.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="components\util\GameControllerStateUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ComponentTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\Premades.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -506,7 +521,7 @@
     <ClInclude Include="core\Handle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Scene.h">
+    <ClInclude Include="Hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scripting\LuaTypesRegistry.h">
@@ -626,6 +641,21 @@
     <ClInclude Include="components\util\EventObserverUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="test\Fixtures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Conversions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\util\GameControllerStateUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ComponentTests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\Premades.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -661,5 +691,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\scripts\game_controller_test.lua" />
+    <None Include="resources\scripts\physics_test.lua" />
   </ItemGroup>
 </Project>

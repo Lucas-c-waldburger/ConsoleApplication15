@@ -146,6 +146,7 @@
     <ClCompile Include="atlas\AtlasManager.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="components\util\EventObserverUtils.cpp" />
+    <ClCompile Include="components\util\GameControllerStateUtils.cpp" />
     <ClCompile Include="core\Error.cpp" />
     <ClCompile Include="events\EventBuffer.cpp" />
     <ClCompile Include="core\Logger.cpp" />
@@ -154,13 +155,14 @@
     <ClCompile Include="atlas\GlyphAtlas.cpp" />
     <ClCompile Include="inputs\GameController.cpp" />
     <ClCompile Include="inputs\GameControllerEvents.cpp" />
+    <ClCompile Include="inputs\GameControllerInputStates.cpp" />
     <ClCompile Include="inputs\InputDataCache.cpp" />
     <ClCompile Include="scripting\Lua.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ecs\Ecs.cpp" />
     <ClCompile Include="ecs\EntityRelationships.cpp" />
     <ClCompile Include="core\Monitoring.cpp" />
-    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Hooks.cpp" />
     <ClCompile Include="scripting\LuaTypesRegistry.cpp" />
     <ClCompile Include="scripting\ScriptManager.cpp" />
     <ClCompile Include="sdl\SDLite.cpp" />
@@ -171,6 +173,9 @@
     <ClCompile Include="systems\PhysicsSystem.cpp" />
     <ClCompile Include="systems\util\QuadTree.cpp" />
     <ClCompile Include="systems\util\SpatialHashGrid.cpp" />
+    <ClCompile Include="test\ComponentTests.cpp" />
+    <ClCompile Include="test\Fixtures.cpp" />
+    <ClCompile Include="test\Premades.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="atlas\Atlas.h" />
@@ -190,6 +195,8 @@
     <ClInclude Include="components\TransformComponent.h" />
     <ClInclude Include="components\ComponentConcepts.h" />
     <ClInclude Include="components\util\EventObserverUtils.h" />
+    <ClInclude Include="components\util\GameControllerStateUtils.h" />
+    <ClInclude Include="core\Conversions.h" />
     <ClInclude Include="ecs\ComponentManager.h" />
     <ClInclude Include="components\ComponentRegistry.h" />
     <ClInclude Include="core\commonObjects.h" />
@@ -335,7 +342,7 @@
     <ClInclude Include="core\ScopedInvoker.h" />
     <ClInclude Include="scripting\Lua.h" />
     <ClInclude Include="core\Monitoring.h" />
-    <ClInclude Include="Scene.h" />
+    <ClInclude Include="Hooks.h" />
     <ClInclude Include="scripting\ScriptInfo.h" />
     <ClInclude Include="scripting\LuaTypesRegistry.h" />
     <ClInclude Include="scripting\ScriptManager.h" />
@@ -348,6 +355,9 @@
     <ClInclude Include="core\TypeUtils.h" />
     <ClInclude Include="systems\util\QuadTree.h" />
     <ClInclude Include="systems\util\SpatialHashGrid.h" />
+    <ClInclude Include="test\ComponentTests.h" />
+    <ClInclude Include="test\Fixtures.h" />
+    <ClInclude Include="test\Premades.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png" />
@@ -365,6 +375,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\scripts\game_controller_test.lua" />
+    <None Include="resources\scripts\physics_test.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -9,6 +9,12 @@ bool EventSystem::Poll(SDL_Event& ev)
 		{
 			return false;
 		}
+
+		//if (ev.type == SDL_CONTROLLERAXISMOTION)
+		//{
+		//	LOG_ERROR("Controller Axis Motion Event from SDL_PollEvents!");
+		//}
+
 		eventBuffer_.Push(ev);
 	}
 
@@ -17,14 +23,16 @@ bool EventSystem::Poll(SDL_Event& ev)
 
 void EventSystem::DistributeEvents()
 {
-	if (eventBuffer_.Empty())
-	{
-		return;
-	}
+	//if (eventBuffer_.Empty())
+	//{
+	//	return;
+	//}
 
 	while (!eventBuffer_.Empty())
 	{
 		auto ev = eventBuffer_.Pop();
+		assert(ev.type != SDL_POLLSENTINEL);
+		//LOG_WARNING_FMT("Event Buffer Size: {}", eventBuffer_.Size());
 
 		switch (ev.type)
 		{
@@ -37,12 +45,13 @@ void EventSystem::DistributeEvents()
 		case SDL_CONTROLLERBUTTONDOWN:
 		case SDL_CONTROLLERBUTTONUP:
 			gameControllerHandler_.HandleInputEvent(ev);
+			//LOG_WARNING("Axis Event Handled!");
 			break;
 
 		default:
 			break;
 		}
 	}
-
+	//LOG_WARNING("Done Distributing Events");
 	gameControllerHandler_.UpdateEntities();
 }

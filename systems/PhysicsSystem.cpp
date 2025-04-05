@@ -13,6 +13,8 @@ SDL_FPoint ResolveAccumulatedForces(AccumulatedForces& forces, float deltaTime)
 	{
 		netForce.x += it->vector.x;
 		netForce.y += it->vector.y;
+		//netForce.x += it->vector.x * (std::min(it->duration, deltaTime) / deltaTime);
+		//netForce.y += it->vector.y * (std::min(it->duration, deltaTime) / deltaTime);
 
 		it->duration -= deltaTime;
 		if (it->duration <= 0)
@@ -25,9 +27,6 @@ SDL_FPoint ResolveAccumulatedForces(AccumulatedForces& forces, float deltaTime)
 		}
 	}
 
-	netForce.x *= forces.max;
-	netForce.y *= forces.max;
-
 	return netForce;
 }
 
@@ -36,12 +35,20 @@ void ApplyForces(Physics& physics, float deltaTime) // UpdateAcceleration?
 {
 	SDL_FPoint netForce = ResolveAccumulatedForces(physics.forces, deltaTime);
 
-	physics.acceleration.y += physics.gravity;
+	netForce.y += (physics.gravity * physics.forces.max);
+
+	netForce.x *= physics.forces.max;
+	netForce.y *= physics.forces.max;
 
 	assert(physics.mass >= 0.01f);
 
-	physics.acceleration.x += netForce.x / physics.mass;
-	physics.acceleration.y += netForce.y / physics.mass;
+	physics.acceleration.x = netForce.x / physics.mass;
+	physics.acceleration.y = netForce.y / physics.mass;// + physics.gravity;
+
+	//physics.acceleration.x = (netForce.x / physics.mass) * deltaTime;
+	//physics.acceleration.y = (netForce.y / physics.mass) * deltaTime;
+
+	//physics.acceleration.y += physics.gravity;
 }
 
 void ApplyAcceleration(Physics& physics, float deltaTime)
@@ -52,8 +59,19 @@ void ApplyAcceleration(Physics& physics, float deltaTime)
 
 void ApplyDrag(Physics& physics, float deltaTime)
 {
-	physics.velocity.x *= 1.0f - (physics.drag / physics.mass * deltaTime);
-	physics.velocity.y *= 1.0f - (physics.drag / physics.mass * deltaTime);
+	float dragFactor = 1.0f - (physics.drag * deltaTime);
+	physics.velocity.x *= dragFactor;
+	physics.velocity.y *= dragFactor;
+
+	//float dragCoefficient = physics.drag / physics.mass;
+	//physics.velocity.x *= 1.0f - (dragCoefficient * deltaTime);
+	//physics.velocity.y *= 1.0f - (dragCoefficient * deltaTime);
+
+	//physics.velocity.x *= 1.0f - (physics.drag / physics.mass * deltaTime);
+	//physics.velocity.y *= 1.0f - (physics.drag / physics.mass * deltaTime);
+	 
+	//physics.velocity.x *= physics.drag;
+	//physics.velocity.y *= physics.drag;
 }
 
 void UpdatePosition(Spatial& spatial, Physics& physics, float deltaTime)
@@ -85,7 +103,7 @@ void PhysicsSystem::Update(float deltaTime)
 
 		UpdatePosition(spatial, physics, deltaTime);
 
-
+		// TODO: handle collisions here
 	}
 }
 

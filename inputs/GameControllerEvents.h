@@ -15,10 +15,9 @@ public:
 	void HandleInputEvent(const SDL_Event& ev);
 	void UpdateEntities();
 
-	std::set<SDL_JoystickID> GetConnectedControllerIDs() const;
-
 private:
 	std::unordered_map<SDL_JoystickID, std::pair<GameController, InputDataCache>> activeControllers_;
+	AxisInputState tracking_{};
 };
 
 std::ostream& operator<<(std::ostream& os, const GameControllerState::State& st);

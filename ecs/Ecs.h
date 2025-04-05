@@ -25,7 +25,7 @@ public:
     template <ComponentType...Ts> bool HasComponents() const;
 
     void SetParent(const Entity& requestedParent);
-    void RemoveParent();
+    void RemoveParent(); 
     bool AddChild(const Entity& requestedChild);
     bool RemoveChild(const Entity& requestedChild);
 

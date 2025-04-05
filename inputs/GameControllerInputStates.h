@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL.h>
+#include <iostream>
 
 struct AxisInputState
 {
@@ -16,3 +17,6 @@ struct ButtonInputState
     uint8_t state = 0;
     uint32_t stateDuration = 0;
 };
+
+std::ostream& operator<<(std::ostream& os, const AxisInputState& inp);
+std::ostream& operator<<(std::ostream& os, const ButtonInputState& inp);

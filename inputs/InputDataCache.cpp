@@ -48,5 +48,5 @@ void InputDataCache::UpdateSkippedInputs()
 uint8_t InputDataCache::GetAxisIndexForEnum(uint8_t axisEnum)
 {
 	return (axisEnum == SDL_CONTROLLER_AXIS_LEFTX ||
-		axisEnum == SDL_CONTROLLER_AXIS_LEFTY) ? LeftAxisIndex : RightAxisIndex;
+			axisEnum == SDL_CONTROLLER_AXIS_LEFTY) ? LeftAxisIndex : RightAxisIndex;
 }

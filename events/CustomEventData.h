@@ -5,44 +5,21 @@
 
 static constexpr uint32_t kInvalidEventType = static_cast<uint32_t>(-1);
 
-template <typename Derived>
-struct CustomEventData
-{
-	template <typename T>
-	friend Result<Void> RegisterCustomEventDataTypes();
-
-	using EventData = Derived;
-	static uint32_t GetEventType() { return eventType; }
-private:
-	static inline uint32_t eventType = kInvalidEventType;
-};
-
-// concept
-namespace detail {
-
+// forward decl for concept
 template <typename T>
-struct is_custom_event_data_type : std::false_type {};
-
-template <typename T>
-struct is_custom_event_data_type<CustomEventData<T>> : std::true_type {};
-
-} // detail
-
-template <typename T>
-static constexpr bool is_custom_event_data_type_v = detail::is_custom_event_data_type<T>::value;
+struct CustomEventData;
 
 template <typename T>
 concept CustomEventDataType = std::derived_from<T, CustomEventData<T>>;
 
-
-// registration
+// registration impl
 namespace detail {
 
 template <typename T>
 struct register_custom_event_data_types;
 
 template <CustomEventDataType...Ts>
-struct register_custom_event_data_types<TypeList<Ts...>> 
+struct register_custom_event_data_types<TypeList<Ts...>>
 {
 	static Result<Void> Call()
 	{
@@ -58,9 +35,12 @@ struct register_custom_event_data_types<TypeList<Ts...>>
 		}
 
 		uint32_t evTypeCounter = newEvType;
-		((Ts::eventType = ((Ts::eventType != kInvalidEventType) ? evTypeCounter++ : Ts::eventType)), ...);
+		((Ts::eventType = ((Ts::eventType == kInvalidEventType) ? evTypeCounter++ : Ts::eventType)), ...);
 
-		if (newEvType != )
+		if (evTypeCounter != newEvType + sizeof...(Ts))
+		{
+			return MAKE_ERROR("One or more events already had a valid event type assigned");
+		}
 
 		return Void{};
 	}
@@ -68,6 +48,20 @@ struct register_custom_event_data_types<TypeList<Ts...>>
 
 } // detail
 
+// def
+template <typename Derived>
+struct CustomEventData
+{
+	template <typename TList>
+	friend struct detail::register_custom_event_data_types;
+
+	using EventData = Derived;
+	static uint32_t GetEventType() { return eventType; }
+private:
+	static inline uint32_t eventType = kInvalidEventType;
+};
+
+// actual registration
 template <typename T>
 static Result<Void> RegisterCustomEventDataTypes()
 {

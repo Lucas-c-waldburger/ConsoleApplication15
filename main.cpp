@@ -13,6 +13,8 @@
 #include "atlas/AtlasManager.h" 
 #include "systems/PhysicsSystem.h"
 #include "events/CustomEventDataRegistry.h"
+#include "test/Fixtures.h"
+
 
 
 static constexpr const char* kFontPath =
@@ -107,7 +109,7 @@ static void SetKnightControllerConnectedCallback(EventObserver& knightEvents)
         if (controllerState.joystickID != GameController::kInvalidJoystickID)
         {
             LOG_WARNING("Entity already had a joystick id marked valid");
-            return ReturnSignal::StopObserving;
+            return ReturnSignal::Pause;
         }
 
         const auto* castEv = CustomEvents::GetEventData<GameControllerConnected>(ev);
@@ -130,11 +132,18 @@ static void UpdateControllerForce(Entity& entity)
     auto [phys, gc] = entity.GetComponents<Physics, GameControllerState>();
 
     SDL_FPoint normed = {
-        gc.axisInput.left.value.x / phys.forces.max,
-        gc.axisInput.left.value.y / phys.forces.max
+        gc.axisInput.left.value.x / static_cast<float>(GameController::kAxisMax) * phys.forces.max,
+        gc.axisInput.left.value.y / static_cast<float>(GameController::kAxisMax) * phys.forces.max
     };
 
     phys.forces.normed.push_back(Force{ .vector = normed, .duration = 0 });
+
+    //LOG_INFO_FMT("[ {}, {} ]", normed.x, normed.y);
+    //if (normed.x > 0.0f || normed.y > 0.0f)
+    //{
+    //    LOG_INFO_FMT("From UpdateControllerForce: [ {}, {} ]", normed.x, normed.y);
+    //    phys.forces.normed.push_back(Force{ .vector = normed, .duration = 0 });
+    //}
 }
 
 int main(int argc, char* argv[]) 
@@ -170,8 +179,8 @@ int main(int argc, char* argv[])
     );
     auto& knightTransform = knight.AddComponent(Transform{});
     auto& knightPhysics = knight.AddComponent(Physics{
-        .mass = 10.0f,
-        .forces{ .max = GameController::kAxisMax }
+        .mass = 5.0f,
+        .forces{ .max = 50.0f }
         }
     );
     auto& knightControllerState = knight.AddComponent(GameControllerState{});
@@ -229,10 +238,13 @@ int main(int argc, char* argv[])
 
     RenderSystem renderSys{};
     PhysicsSystem physSystem{};
-    ScriptManager scriptManager{};
+    //ScriptManager scriptManager{};
     EventSystem eventSystem{};
 
+    HookManager::EnableHooks(HookPoint::ALL);
 
+    auto physFixture = ScriptFixture::GetInstance::PhysicsEditor(knight);
+    assert(physFixture);
 
     //scriptManager.RegisterScript<SDL_FPoint, Dimensions<float>, Spatial, Transform>(
     //    MakeComponentEditScript(knightSpatial, knightTransform)
@@ -242,7 +254,6 @@ int main(int argc, char* argv[])
     //FileChangeMonitor fileMonitor{ "resources\\scripts\\game_controller_test.lua" };
 
     SDL_Event ev;
-    SDL_GameControllerEventState(SDL_ENABLE);
     while (true)
     {
         if (!eventSystem.Poll(ev))
@@ -252,12 +263,6 @@ int main(int argc, char* argv[])
 
         eventSystem.DistributeEvents();
 
-        //fileMonitor.Run(GetDeltaTime());
-        //if (fileMonitor.Check())
-        //{
-        //    lua.Run();
-        //}
-
         SDLite::Renderer().Clear();
 
         //if (fileMonitor.FileDidChange())
@@ -265,34 +270,23 @@ int main(int argc, char* argv[])
         //    LOG_IF_ERROR(scriptManager.RunScript("game controller test"));
         //}
 
-        //SDL_Rect tfRect = MakeTransformedRect(bSpatial, bTf);
-
-        //SDL_SetRenderDrawColor(SDLite::Renderer(), 255, 0, 0, 255);
-        //SDL_RenderDrawRect(SDLite::Renderer(), &tfRect);
-        //SDL_SetRenderDrawColor(SDLite::Renderer(), 0xFF, 0xFF, 0xFF, 0xFF);
-
         UpdateControllerForce(knight);
-        physSystem.Update(GetDeltaTime());
+
+        Hook::Set<HookPoint::PrePhysicsUpdate>();
+
+        physSystem.Update(static_cast<float>(GetDeltaTime()));
+
+        Hook::Set<HookPoint::PostPhysicsUpdate>();
+
+        auto& [x, y] = knightSpatial.position;
+        if (x < 0.0f) { x = 0.0f; }
+        if (x > static_cast<float>(SDLite::kWindowWidth)) { x = static_cast<float>(SDLite::kWindowWidth); }
+        if (y < 0.0f) { y = 0.0f; }
+        if (y > static_cast<float>(SDLite::kWindowHeight)) { y = static_cast<float>(SDLite::kWindowHeight); }
+
+        //LOG_DEBUG_FMT("Knight Position: [ {}, {} ]", knightSpatial.position.x, knightSpatial.position.y);
 
         renderSys.Update(SDLite::Renderer(), atlasStore);
-
-        //SDLite::Canvas().Draw(SDLite::Renderer());
-
-        //int xPos = 0;
-        //for (const auto& glyph : glyphs)
-        //{
-        //    SDL_Rect dest = { xPos, 0, glyph.atlasRect.w, glyph.atlasRect.h };
-
-        //    SDL_RenderCopy(SDLite::Renderer(), glyphAtlas.GetAtlasTexture(), &glyph.atlasRect, &dest);
-
-        //    xPos += glyph.advance;
-        //}
-
-        //SDL_Rect destRect = firstSprite.atlasRect;
-        //destRect.x = 0;
-        //destRect.y = 0;
-
-        //SDL_RenderCopy(SDLite::Renderer(), spriteSeriesAtlas.GetAtlasTexture(), &firstSprite.atlasRect, &destRect);
 
         SDLite::Renderer().Show();
     }
