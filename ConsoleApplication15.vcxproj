@@ -375,7 +375,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\scripts\game_controller_test.lua" />
-    <None Include="resources\scripts\physics_test.lua" />
+    <None Include="resources\scripts\test_physics.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

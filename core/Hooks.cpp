@@ -51,7 +51,13 @@ std::unique_ptr<HookPoint>& Hooks::GetHookPointImpl(HookPoint::Identifier ident)
 {
 	assert(ident < hookList_.size());
 
-	return hookList_[ident];
+	auto& hookPoint = hookList_[ident];
+	if (!hookPoint)
+	{
+		hookPoint = std::make_unique<HookPoint>();
+	}
+
+	return hookPoint;
 }
 
 Hooks& Hooks::Get()

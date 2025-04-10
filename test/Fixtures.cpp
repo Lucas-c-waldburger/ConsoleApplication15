@@ -16,25 +16,25 @@ std::unique_ptr<ScriptFixture> ScriptFixture::GetInstance::PhysicsEditor(Entity&
 
 	// TODO: make Lua class interfacey like ScriptManager to not make 
 	// working with a single Lua a pain in the ass
-	ScriptInstance instance{};
+	ScriptInstance scriptInstance{};
 
-	instance.scriptInfo = {
+	scriptInstance.scriptInfo = {
 		.name = kPhysEditScriptName,
 		.scriptType = ScriptType::File,
 		.path = std::format(kScriptsPathFmt, kPhysEditScriptFile)
 	};
 
-	instance.setupFn = [&phys](Lua& lua) {
+	scriptInstance.setupFn = [&phys](Lua& lua) {
 		lua["physics"] = &phys;
 	};
 
-	auto fixture = std::make_unique<ScriptFixture>();
+	auto fixture = std::unique_ptr<ScriptFixture>(new ScriptFixture{});
 
 	fixture->scriptName_ = kPhysEditScriptName;
-	fixture->fileMonitor_.SetFilePath(instance.scriptInfo.path);
-	fixture->lua_.SetScriptInfo(std::move(instance.scriptInfo));
+	fixture->fileMonitor_.SetFilePath(scriptInstance.scriptInfo.path);
 
-	instance.setupFn(fixture->lua_);
+	fixture->lua_.SetScriptInfo(std::move(scriptInstance.scriptInfo));
+	scriptInstance.setupFn(fixture->lua_);
 
 	auto& hookPoint = Hooks::GetHookPoint(HookPoint::PrePhysicsUpdate);
 	assert(hookPoint);
@@ -45,7 +45,7 @@ std::unique_ptr<ScriptFixture> ScriptFixture::GetInstance::PhysicsEditor(Entity&
 		RunOnFileChange(*fixture); 
 	});
 
-	OpenInVsCode(fixture->scriptName_);
+	OpenInVsCode(kPhysEditScriptFile);
 
 	return fixture;
 }
@@ -65,6 +65,8 @@ void ScriptFixture::TearDown()
 	{
 		hookPoint->Detach(attachmentHandle_);
 	}
+
+	//fileMonitor_.
 }
 
 void ScriptFixture::OpenInVsCode(std::string_view scriptName)
@@ -72,13 +74,19 @@ void ScriptFixture::OpenInVsCode(std::string_view scriptName)
 	namespace fs = std::filesystem;
 
 	std::string scriptPath = std::format(kScriptsPathFmt, scriptName);
-	if (!fs::exists(scriptPath))
+
+	fs::path source = __FILE__;
+	auto base = source.parent_path().parent_path();
+	base /= scriptPath;
+
+	//std::string scriptPath = std::format(kScriptsPathFmt, scriptName);
+	if (!fs::exists(base))
 	{
-		LOG_WARNING_FMT("No script with name '{}' found inside scripts directory");
+		LOG_WARNING_FMT("No script with name '{}' found inside scripts directory", scriptName);
 		return;
 	}
 
-	std::string command = std::format(kVsCodePathFmt, scriptPath);
+	std::string command = std::format(kVsCodePathFmt, base.string());
 
 	system(command.c_str());
 }

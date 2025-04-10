@@ -4,6 +4,7 @@
 #include <thread>
 #include "../scripting/ScriptManager.h"
 #include "../core/Monitoring.h"
+#include "../core/Hooks.h"
 
 class Entity;
 
@@ -12,7 +13,7 @@ class ScriptFixture
 public:
 	static constexpr std::string_view kVsCodePathFmt = 
 		R"(C:\Users\Lucas\AppData\Local\Programs\Microsoft VS Code\Code.exe\ {})";
-	static constexpr std::string_view kScriptsPathFmt = R"(..\..\resources\scripts\{})";
+	static constexpr std::string_view kScriptsPathFmt = R"(resources\scripts\{})";
 
 	friend class GetInstance;
 
@@ -27,6 +28,10 @@ public:
 		static void RunOnFileChange(ScriptFixture& fixture);
 	};
 
+	~ScriptFixture() { TearDown(); }
+
+	void TearDown();
+
 	const std::string& GetScriptName() const { return scriptName_; }
 
 private:
@@ -37,6 +42,8 @@ private:
 	Lua lua_;
 	FileChangeMonitor fileMonitor_;
 	std::string scriptName_;
+	HookPoint::Identifier hookPointIdent_;
+	Handle<HookPoint::Attachment> attachmentHandle_;
 };
 
 

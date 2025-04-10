@@ -9,7 +9,7 @@
 
 class HookPoint
 {
-private:
+public:
 	friend class Hooks;
 
 	struct Attachment
@@ -18,11 +18,6 @@ private:
 		std::function<void()> callback;
 	};
 
-	void RunAttached();
-
-	std::vector<Attachment> attachments_;
-
-public:
 	enum Identifier : size_t
 	{
 		SDLEventLoop,
@@ -37,6 +32,11 @@ public:
 	Handle<Attachment> Attach(Fn&& fn);
 
 	void Detach(Handle<Attachment>& handle);
+
+private:
+	void RunAttached();
+
+	std::vector<Attachment> attachments_;
 };
 
 class Hooks
