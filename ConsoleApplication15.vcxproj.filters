@@ -48,7 +48,7 @@
     <ClCompile Include="core\Error.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Hooks.cpp">
+    <ClCompile Include="core\Hooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="scripting\LuaTypesRegistry.cpp">
@@ -521,7 +521,7 @@
     <ClInclude Include="core\Handle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Hooks.h">
+    <ClInclude Include="core\Hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scripting\LuaTypesRegistry.h">

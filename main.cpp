@@ -8,6 +8,7 @@
 #include "systems/RenderSystem.h"
 #include "scripting/ScriptManager.h"
 #include "core/Monitoring.h"
+#include "core/Hooks.h"
 #include "events/EventSystem.h"
 #include "ecs/ECS.h"
 #include "atlas/AtlasManager.h" 
@@ -241,8 +242,6 @@ int main(int argc, char* argv[])
     //ScriptManager scriptManager{};
     EventSystem eventSystem{};
 
-    HookManager::EnableHooks(HookPoint::ALL);
-
     auto physFixture = ScriptFixture::GetInstance::PhysicsEditor(knight);
     assert(physFixture);
 
@@ -265,18 +264,13 @@ int main(int argc, char* argv[])
 
         SDLite::Renderer().Clear();
 
-        //if (fileMonitor.FileDidChange())
-        //{
-        //    LOG_IF_ERROR(scriptManager.RunScript("game controller test"));
-        //}
-
         UpdateControllerForce(knight);
 
-        Hook::Set<HookPoint::PrePhysicsUpdate>();
+        Hooks::SetHookPoint(HookPoint::PrePhysicsUpdate);
 
         physSystem.Update(static_cast<float>(GetDeltaTime()));
 
-        Hook::Set<HookPoint::PostPhysicsUpdate>();
+        Hooks::SetHookPoint(HookPoint::PostPhysicsUpdate);
 
         auto& [x, y] = knightSpatial.position;
         if (x < 0.0f) { x = 0.0f; }

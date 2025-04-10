@@ -5,7 +5,7 @@
 #include "Handle.h"
 #include "TypeUtils.h"
 
-
+/* HandleTs pack tells us which Handle types this factory is capable of producing */
 template <typename...HandleTs> //requires pack_types_unique_v<HandleTs...>
 class HandleFactory
 {

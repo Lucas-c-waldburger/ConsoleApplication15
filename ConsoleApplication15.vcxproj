@@ -162,7 +162,7 @@
     <ClCompile Include="ecs\Ecs.cpp" />
     <ClCompile Include="ecs\EntityRelationships.cpp" />
     <ClCompile Include="core\Monitoring.cpp" />
-    <ClCompile Include="Hooks.cpp" />
+    <ClCompile Include="core\Hooks.cpp" />
     <ClCompile Include="scripting\LuaTypesRegistry.cpp" />
     <ClCompile Include="scripting\ScriptManager.cpp" />
     <ClCompile Include="sdl\SDLite.cpp" />
@@ -342,7 +342,7 @@
     <ClInclude Include="core\ScopedInvoker.h" />
     <ClInclude Include="scripting\Lua.h" />
     <ClInclude Include="core\Monitoring.h" />
-    <ClInclude Include="Hooks.h" />
+    <ClInclude Include="core\Hooks.h" />
     <ClInclude Include="scripting\ScriptInfo.h" />
     <ClInclude Include="scripting\LuaTypesRegistry.h" />
     <ClInclude Include="scripting\ScriptManager.h" />

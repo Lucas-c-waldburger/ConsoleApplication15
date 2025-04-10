@@ -3,6 +3,8 @@
 #include <SDL.h>
 #include <queue>
 
+// TODO: re-implement original EventBuffer
+
 //class EventBuffer
 //{
 //public:
