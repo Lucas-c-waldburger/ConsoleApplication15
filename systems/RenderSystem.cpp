@@ -128,18 +128,23 @@ static SDL_Rect MakeTransformedRect(const Spatial& spatial, const Transform& tf)
 } // unnamed namespace
 
 
+// TODO: Decide what to do about entities w/o transform
 void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasStore)
 {
-	auto entities = ECS::GetAllEntitiesWith<Spatial, Transform, Renderable>();
+	auto entities = ECS::GetAllEntitiesWith<Spatial, Renderable>();
 
 	std::sort(entities.begin(), entities.end(), [](const Entity& lhs, const Entity& rhs) {
 		return lhs.GetComponent<Renderable>().drawOrder <
-			rhs.GetComponent<Renderable>().drawOrder;
+			   rhs.GetComponent<Renderable>().drawOrder;
 		});
 
 	for (auto& entity : entities)
 	{
-		auto [renderable, spatial, transform] = entity.GetComponents<Renderable, Spatial, Transform>();
+		auto& renderable = entity.GetComponent<Renderable>();
+		auto& spatial = entity.GetComponent<Spatial>();
+
+		Transform transform = (entity.HasComponent<Transform>()) ?
+			entity.GetComponent<Transform>() : Transform{};
 
 		SDL_Rect renderRect = MakeTransformedRect(spatial, transform);
 
@@ -155,7 +160,7 @@ void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasS
 			}
 
 			SDL_Rect srcRect = spriteAtlas->GetSprite(spriteData->seriesName,
-				spriteData->currentIndex).atlasRect;
+													  spriteData->currentIndex).atlasRect;
 			if (srcRect.w == 0 || srcRect.h == 0)
 			{
 				std::cerr << "SpriteInfo not found for sprite { seriesName : " << spriteData->seriesName
@@ -182,8 +187,7 @@ void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasS
 
 			const int numNewlines = std::count(textData->text.begin(), textData->text.end(), '\n');
 			const int totalHeight = 
-				static_cast<int>(glyphAtlas->GetAtlasInfo().fontHeight * transform.scale.y) *
-				(numNewlines + 1);
+				static_cast<int>(glyphAtlas->GetAtlasInfo().fontHeight * transform.scale.y) * (numNewlines + 1);
 
 			RenderGlyphsArgs args{
 				.renderer = renderer,
@@ -219,6 +223,17 @@ void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasS
 				RenderGlyphsAligned<Alignment::Center>(args);
 				break;
 			}
+		}
+
+		// TODO: Add fill/line option for how to draw
+		else if (auto geometryData = std::get_if<Renderable::Geometry>(&renderable.renderData))
+		{
+			auto origColor = GetRenderDrawColor(renderer);
+			SetRenderDrawColor(renderer, geometryData->color);
+
+			SDL_RenderFillRect(renderer, &renderRect);
+
+			SetRenderDrawColor(renderer, origColor);
 		}
 
 		else

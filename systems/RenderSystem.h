@@ -29,6 +29,7 @@ private:
 		int startY = 0;
 		int startX = 0;
 	};
+
 	static float GetScaleToFitFactor(const RenderGlyphsArgs& args, int totalHeight,
 									 int boundingWidth, int boundingHeight);
 };

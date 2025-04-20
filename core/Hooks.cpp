@@ -1,21 +1,5 @@
 #include "Hooks.h"
-
-void HookPoint::Detach(Handle<HookPoint::Attachment>& handle)
-{
-	if (!Hooks::Get().handleFactory_.IsHandleValid(handle))
-	{
-		return;
-	}
-
-	auto found = std::find_if(attachments_.begin(), attachments_.end(),
-		[&handle](const auto& attachment) { return attachment.handle == handle; });
-
-	if (found != attachments_.end())
-	{
-		attachments_.erase(found);
-		Hooks::Get().handleFactory_.RetireHandle(handle);
-	}
-}
+#include "Logger.h"
 
 void HookPoint::RunAttached()
 {
@@ -34,30 +18,44 @@ void HookPoint::RunAttached()
 	}
 }
 
-void Hooks::SetImpl(HookPoint::Identifier ident)
+// no default constructor for HookPoint, need to make array the hacky way
+Hooks::Hooks() : hookList_([] {
+	std::array<HookPoint, kMaxHooks> hookList{};
+	HookPointBuilder builder;
+
+	std::ranges::generate(hookList, builder);
+
+	return hookList;
+}()) {}
+
+void Hooks::SetHookPointImpl(HookPoint::Identifier ident)
 {
 	assert(ident < hookList_.size());
 
 	auto& hookPoint = hookList_[ident];
-	if (!hookPoint)
-	{
-		hookPoint = std::make_unique<HookPoint>();
-	}
-
-	hookPoint->RunAttached();
+	hookPoint.RunAttached();
 }
 
-std::unique_ptr<HookPoint>& Hooks::GetHookPointImpl(HookPoint::Identifier ident)
+void Hooks::DetachImpl(HookPoint::Identifier ident, Handle<HookPoint::Attachment>& handle)
 {
 	assert(ident < hookList_.size());
 
-	auto& hookPoint = hookList_[ident];
-	if (!hookPoint)
+	if (!handleFactory_.IsHandleValid(handle))
 	{
-		hookPoint = std::make_unique<HookPoint>();
+		LOG_WARNING("Attachment Handle was Invalid");
+		return;
 	}
 
-	return hookPoint;
+	auto& hookPoint = hookList_[ident];
+
+	auto found = std::find_if(hookPoint.attachments_.begin(), hookPoint.attachments_.end(),
+		[&handle](const auto& attachment) { return attachment.handle == handle; });
+
+	if (found != hookPoint.attachments_.end())
+	{
+		hookPoint.attachments_.erase(found);
+		Hooks::Get().handleFactory_.RetireHandle(handle);
+	}
 }
 
 Hooks& Hooks::Get()
@@ -70,43 +68,3 @@ Hooks& Hooks::Get()
 
 	return *instance;
 }
-
-
-//void Hook::RunAttached()
-//{
-//	if ((flags & HookManager::Registered) == 0)
-//	{
-//		LOG_WARNING("Hook was not registered");
-//		return;
-//	}
-//	if ((flags & HookManager::Active) == 0)
-//	{
-//		return;
-//	}
-//
-//	for (auto& [_, func] : attached_)
-//	{
-//		if (!func)
-//		{
-//			LOG_WARNING("Attached function was null");
-//			continue;
-//		}
-//
-//		func();
-//	}
-//}
-//
-//void HookManager::DetachImpl(HookPoint hp, std::string_view name)
-//{
-//	auto& hook = hookList_[static_cast<size_t>(hp)];
-//
-//	assert(hook);
-//	assert(hook->flags & HookFlag::Registered);
-//
-//	if (hook->attached_.erase(std::string{name}) == 0)
-//	{
-//		LOG_WARNING_FMT("No attachment named '{}'", name);
-//	}
-//}
-
-

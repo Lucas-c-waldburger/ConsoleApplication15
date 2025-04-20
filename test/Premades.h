@@ -3,8 +3,12 @@
 #include "../ecs/Ecs.h"
 #include "../core/Conversions.h"
 #include "../scripting/ScriptManager.h"
+#include "../sdl/SDLUtils.h"
+#include "../sdl/SDLite.h"
+#include "../systems/CollisionSystem.h"
 
-static Entity MakeColliderEntity(SDL_FRect rect, Collider::Profile profile)
+static Entity MakeStaticColliderEntity(SDL_FRect rect, SDL_Color color = SDLite::kColorBlack, 
+                                       uint8_t profile = (Collider::Solid | Collider::Static))
 {
 	Entity entity = ECS::CreateEntity();
 	assert(entity.IsValid());
@@ -12,11 +16,67 @@ static Entity MakeColliderEntity(SDL_FRect rect, Collider::Profile profile)
 	auto [pos, dims] = FromRect(rect);
 
 	auto& spatial = entity.AddComponent(Spatial{ .position = pos, .dimensions = dims });
-	auto& collider = entity.AddComponent(Collider{ .position = pos, .dimensions = dims });
-	collider.profile = Collider::Profile::Static;
+	auto& collider = entity.AddComponent(Collider{ .position = pos, .dimensions = dims, .profile = profile });
+
+    Renderable::Geometry geo{ .color = color };
+    auto& renderable = entity.AddComponent(Renderable{ .renderData = geo, .drawOrder = 1 });
 
 	return entity;
 }
+
+static Result<Void> InitSimpleEnvironment(CollisionSystem& collisionSystem,
+                                          Dimensions<int> sceneDims = { SDLite::kWindowWidth, SDLite::kWindowHeight })
+{
+    using namespace SDLite;
+
+    std::vector<Entity> entities;
+    entities.reserve(4);
+
+    auto& floor = entities.emplace_back(MakeStaticColliderEntity({
+        0.0f, static_cast<float>(sceneDims.h - 20),
+        static_cast<float>(sceneDims.w), 20.0f }, kColorBrown));
+    auto& leftWall = entities.emplace_back(MakeStaticColliderEntity({
+        0.0f, 20.0f, 20.0f, 
+        static_cast<float>(sceneDims.h - 40) }, kColorYellow));
+    auto& rightWall = entities.emplace_back(MakeStaticColliderEntity({
+        static_cast<float>(sceneDims.w - 20), 20.0f, 20.0f,
+        static_cast<float>(sceneDims.h - 40) }, kColorYellow));
+    auto& ceiling = entities.emplace_back(MakeStaticColliderEntity({
+        0.0f, 0.0f,
+        static_cast<float>(sceneDims.w), 20.0f }, kColorPurple));
+
+    collisionSystem.RebuildQuadTree(sceneDims, entities);
+
+    return Void{};
+}
+
+
+template <ComponentType...Ts>
+class EntityAsWrapper
+{
+protected:
+    using RequiredComponentTypes = TypeList<Ts...>;
+
+    Result<Void> SetEntity(Entity&& ent)
+    {
+        if (!ent.HasComponents<Ts...>())
+        {
+            return MAKE_ERROR("Entity did not have all required components for wrapper");
+        }
+
+        wrappedEntity_ = std::move(ent);
+
+        return Void{};
+    }
+
+    Entity wrappedEntity_;
+};
+
+template <typename T>
+concept DerivedEntityAsWrapper = requires(T t, Entity&& ent) {
+    typename T::RequiredComponentTypes;
+    { t.SetEntity(ent) } -> std::same_as<Result<Void>>;
+};
 
 //template <ComponentType T>
 //void RegisterLuaComponentDependencies(ScriptManager& scriptManager, ScriptInstance&& instance);

@@ -1,6 +1,6 @@
 #pragma once
-#include "../core/TypeUtils.h"
-#include "../core/Result.h"
+#include "../../core/TypeUtils.h"
+#include "../../core/Result.h"
 #include <SDL.h>
 
 static constexpr uint32_t kInvalidEventType = static_cast<uint32_t>(-1);

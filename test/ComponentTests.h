@@ -1,16 +1,24 @@
 #pragma once
-#include "../scripting/LuaTypesRegistry.h"
+#include "../components/ComponentRegistry.h"
 #include "../ecs/Ecs.h"
 
 
-Result<Void> HookPhysicsTestScript(Entity& entity)
+static void HandleControllerMovementBehavior(Entity& entity)
 {
-	if (!entity.HasComponent<Physics>())
-	{
-		return MAKE_ERROR("Entity did not have a physics component");
-	}
-	auto& physics = entity.GetComponent<Physics>();
+	auto [controller, physics, spatial] = 
+		entity.GetComponents<GameControllerState, Physics, Spatial>();
 
+    SDL_FPoint moveForce = { 0.0f, 0.0f };
+    moveForce.x = controller.axisInput.left.value.x /
+        static_cast<float>(GameController::kAxisMax) * physics.forces.max;
 
+    bool hasJumped = controller.buttonInput[SDL_CONTROLLER_BUTTON_A].state == GameControllerState::Pressed;
+    //if (hasJumped)
 
+    SDL_FPoint normed = {
+        controller.axisInput.left.value.x / static_cast<float>(GameController::kAxisMax) * physics.forces.max,
+        controller.axisInput.left.value.y / static_cast<float>(GameController::kAxisMax) * physics.forces.max
+    };
+
+    physics.forces.normed.push_back(Force{ .vector = normed, .duration = 0 });
 }

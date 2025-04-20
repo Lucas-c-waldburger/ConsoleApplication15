@@ -1,10 +1,10 @@
 #pragma once
 #include "../EventObserverComponent.h"
-#include "../../events/CustomEvents.h"
+#include "../../events/custom/CustomEvents.h"
 #include "../../ecs/Ecs.h"
 
 template <CustomEventDataType T>
-Result<Void> SendEventNotification(T&& eventData, Sint32 code = 0)
+inline Result<Void> SendEventNotification(T&& eventData, Sint32 code = 0)
 {
 	if (T::GetEventType() == kInvalidEventType)
 	{

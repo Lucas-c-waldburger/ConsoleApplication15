@@ -1,6 +1,6 @@
 #include "GameControllerEvents.h"
 #include "../components/util/EventObserverUtils.h"
-#include "../events/CustomEventDataRegistry.h"
+#include "../events/custom/CustomEventDataRegistry.h"
 #include <cassert>
 
 GameControllerEventHandler::~GameControllerEventHandler()

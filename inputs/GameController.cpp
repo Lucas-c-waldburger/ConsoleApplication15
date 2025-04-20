@@ -66,4 +66,6 @@ Sint32 GameController::FindControllerIndex()
 			return i;
 		}
 	}
+
+	return kInvalidJoystickID;
 }

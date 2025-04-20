@@ -16,11 +16,10 @@ public:
 	static constexpr std::string_view kScriptsPathFmt = R"(resources\scripts\{})";
 
 	friend class GetInstance;
-
 	class GetInstance
 	{
 	public:
-		static std::unique_ptr<ScriptFixture> PhysicsEditor(Entity& entity);
+		static std::unique_ptr<ScriptFixture> PhysicsEditor(Entity& entity, bool addComponentsIfMissing = true);
 
 	private:
 		GetInstance() = default;

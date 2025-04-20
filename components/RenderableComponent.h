@@ -31,7 +31,12 @@ struct Renderable : BaseComponent<Renderable, 7>
         int currentIndex = -1;
     };
 
-    std::variant<Text, Sprite> renderData;
+    struct Geometry
+    {
+        SDL_Color color = { 0, 0, 0, 255 };
+    };
+
+    std::variant<Text, Sprite, Geometry> renderData;
     int drawOrder = -1;
     SDL_RendererFlip flip = SDL_FLIP_NONE;
 };

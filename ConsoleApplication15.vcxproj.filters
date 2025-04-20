@@ -114,6 +114,18 @@
     <ClCompile Include="test\Premades.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="core\AABB.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="core\entity\EntityColliderBounds.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="core\entity\UnorderedEntityIdSet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\CollisionSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -626,13 +638,13 @@
     <ClInclude Include="components\EventObserverComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\CustomEventDataRegistry.h">
+    <ClInclude Include="events\custom\CustomEventDataRegistry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\CustomEventData.h">
+    <ClInclude Include="events\custom\CustomEventData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\CustomEvents.h">
+    <ClInclude Include="events\custom\CustomEvents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\ScopedInvoker.h">
@@ -654,6 +666,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\Premades.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\AABB.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\entity\EntityColliderBounds.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\entity\UnorderedEntityIdSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\CollisionSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\custom\data\EntityCollision.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\custom\data\GameControllerConnected.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

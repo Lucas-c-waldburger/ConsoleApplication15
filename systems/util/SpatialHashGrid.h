@@ -1,51 +1,28 @@
 #pragma once
 #include <unordered_map>
+#include <unordered_set>
 #include "QuadTree.h"
-
-struct GridHash 
-{
-    static constexpr float kCellSize = 64.0f; // Adjust for your game
-
-    static std::pair<int, int> Hash(const AABB& aabb) 
-    {
-        return { static_cast<int>(aabb.x / kCellSize), 
-                 static_cast<int>(aabb.y / kCellSize) };
-    }
-};
 
 class SpatialHashGrid 
 {
-    //std::unordered_map<std::pair<int, int>, std::vector<AABB>> grid;
-
 public:
-    //void Insert(const AABB& obj) 
-    //{
-    //    auto cell = GridHash::Hash(obj);
+    float cellSize = 64.0f;
+    std::unordered_map<int64_t, UnorderedEntityIdSet> cells;
 
-    //    grid[cell].push_back(obj);
-    //}
+    void Clear() 
+    {
+        cells.clear();
+    }
 
-    //void Query(const AABB& area, std::vector<AABB>& results) 
-    //{
-    //    auto minCell = GridHash::Hash({ area.x, area.y, 0, 0 });
-    //    auto maxCell = GridHash::Hash({ area.x + area.w, area.y + area.h, 0, 0 });
+    void Insert(const Entity_t entityId, const AABB& bounds);
 
-    //    for (int x = minCell.first; x <= maxCell.first; ++x) 
-    //    {
-    //        for (int y = minCell.second; y <= maxCell.second; ++y) 
-    //        {
-    //            auto iter = grid.find(std::make_pair(x, y));
-    //            if (iter != grid.end()) 
-    //            {
-    //                for (const auto& obj : iter->second) 
-    //                {
-    //                    if (area.Intersects(obj)) 
-    //                    {
-    //                        results.push_back(obj);
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
+    std::vector<EntityColliderBounds> GetIntersecting(const Entity_t entityId, const AABB& bounds,
+                                                      uint8_t flagsFilter = 0x00);
+
+private:
+    static constexpr int64_t Hash(int x, int y) 
+    {
+        return (static_cast<int64_t>(x) << 32) | static_cast<uint32_t>(y);
+    }
 };
+

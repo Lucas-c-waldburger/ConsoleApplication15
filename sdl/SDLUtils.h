@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL.h>
 #include <concepts>
+#include "../core/TypeUtils.h"
 
 static SDL_Color GetRenderDrawColor(SDL_Renderer* renderer)
 {
@@ -34,3 +35,71 @@ concept SDLPointType = std::same_as<T, SDL_Point> || std::same_as<T, SDL_FPoint>
 
 template <typename T>
 concept SDLRectType = std::same_as<T, SDL_Rect> || std::same_as<T, SDL_FRect>;
+
+namespace SDLite
+{
+    static constexpr SDL_Color kColorRed    = { 255, 0,   0,   255 };
+    static constexpr SDL_Color kColorGreen  = { 0,   255, 0,   255 };
+    static constexpr SDL_Color kColorBlue   = { 0,   0,   255, 255 };
+    static constexpr SDL_Color kColorYellow = { 255, 165, 0,   255 };
+    static constexpr SDL_Color kColorWhite  = { 255, 255, 255, 255 };
+    static constexpr SDL_Color kColorBlack  = { 0,   0,   0,   255 };
+    static constexpr SDL_Color kColorPink   = { 238, 130, 238, 255 };
+    static constexpr SDL_Color kColorPurple = { 106, 90,  205, 255 };
+    static constexpr SDL_Color kColorOrange = { 255, 104, 25,  255 };
+    static constexpr SDL_Color kColorBrown  = { 151, 75,  0,   255 };
+}
+
+// SDL POINT/RECT OVERLOADS
+
+// Point on Point
+template <SDLPointType P>
+inline constexpr P operator-(P lhs, P rhs)
+{
+    return P{
+        lhs.x - rhs.x,
+        lhs.y - rhs.y
+    };
+}
+
+// Scalar
+template <SDLPointType P, ArithmeticType T>
+inline constexpr P operator/(P p, T t)
+{
+    using ValueType = std::remove_cvref_t<decltype(P::x)>;
+
+    return P{
+        static_cast<ValueType>(static_cast<float>(p.x) / static_cast<float>(t)),
+        static_cast<ValueType>(static_cast<float>(p.y) / static_cast<float>(t))
+    };
+}
+
+template <SDLPointType P, ArithmeticType T>
+inline constexpr P operator*(P p, T t)
+{
+    using ValueType = std::remove_cvref_t<decltype(P::x)>;
+
+    return P{
+        static_cast<ValueType>(static_cast<float>(p.x) * static_cast<float>(t)),
+        static_cast<ValueType>(static_cast<float>(p.y) * static_cast<float>(t))
+    };
+}
+
+// Mutating
+template <SDLPointType P>
+inline constexpr P& operator+=(P& lhs, P rhs)
+{
+    lhs.x += rhs.x;
+    lhs.y += rhs.y;
+
+    return lhs;
+}
+
+template <SDLPointType P>
+inline constexpr P& operator-=(P& lhs, P rhs)
+{
+    lhs.x -= rhs.x;
+    lhs.y -= rhs.y;
+
+    return lhs;
+}

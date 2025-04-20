@@ -13,8 +13,9 @@
 #include "ecs/ECS.h"
 #include "atlas/AtlasManager.h" 
 #include "systems/PhysicsSystem.h"
-#include "events/CustomEventDataRegistry.h"
+#include "events/custom/CustomEventDataRegistry.h"
 #include "test/Fixtures.h"
+#include "test/Premades.h"
 
 
 
@@ -132,19 +133,19 @@ static void UpdateControllerForce(Entity& entity)
 
     auto [phys, gc] = entity.GetComponents<Physics, GameControllerState>();
 
+    const auto [leftX, leftY] = gc.axisInput.left.value;
+
+    auto getNormedVal = [max = phys.forces.max](const auto xOrY) -> float {
+        return (std::abs(xOrY) > GameController::kAxisDeadzone) ?
+            xOrY / static_cast<float>(GameController::kAxisMax) * max : 0.0f;
+    };
+
     SDL_FPoint normed = {
-        gc.axisInput.left.value.x / static_cast<float>(GameController::kAxisMax) * phys.forces.max,
-        gc.axisInput.left.value.y / static_cast<float>(GameController::kAxisMax) * phys.forces.max
+        .x = getNormedVal(leftX),
+        .y = getNormedVal(leftY)
     };
 
     phys.forces.normed.push_back(Force{ .vector = normed, .duration = 0 });
-
-    //LOG_INFO_FMT("[ {}, {} ]", normed.x, normed.y);
-    //if (normed.x > 0.0f || normed.y > 0.0f)
-    //{
-    //    LOG_INFO_FMT("From UpdateControllerForce: [ {}, {} ]", normed.x, normed.y);
-    //    phys.forces.normed.push_back(Force{ .vector = normed, .duration = 0 });
-    //}
 }
 
 int main(int argc, char* argv[]) 
@@ -176,16 +177,21 @@ int main(int argc, char* argv[])
     auto& knightSpatial = knight.AddComponent(Spatial{
         .position = SDL_FPoint{ SDLite::kWindowWidth / 2.0f, SDLite::kWindowHeight / 2.0f },
         .dimensions = {static_cast<float>(spriteRect.w), static_cast<float>(spriteRect.h)}
-        }
-    );
+    });
     auto& knightTransform = knight.AddComponent(Transform{});
     auto& knightPhysics = knight.AddComponent(Physics{
         .mass = 5.0f,
         .forces{ .max = 50.0f }
-        }
-    );
+    });
+    auto& knightCollision = knight.AddComponent(Collider{
+        .position = knightSpatial.position,
+        .dimensions = knightSpatial.dimensions,
+        .profile = (Collider::ApplyScale | Collider::Solid | Collider::Dynamic)
+    });
+    knightCollision.material.restitution = 0.1f;
     auto& knightControllerState = knight.AddComponent(GameControllerState{});
     auto& knightEvents = knight.AddComponent(EventObserver{});
+
     SetKnightControllerConnectedCallback(knightEvents);
 
     ////
@@ -239,11 +245,14 @@ int main(int argc, char* argv[])
 
     RenderSystem renderSys{};
     PhysicsSystem physSystem{};
+    CollisionSystem colSystem{};
     //ScriptManager scriptManager{};
     EventSystem eventSystem{};
 
-    auto physFixture = ScriptFixture::GetInstance::PhysicsEditor(knight);
-    assert(physFixture);
+    InitSimpleEnvironment(colSystem);
+
+    //auto physFixture = ScriptFixture::GetInstance::PhysicsEditor(knight);
+    //assert(physFixture);
 
     //scriptManager.RegisterScript<SDL_FPoint, Dimensions<float>, Spatial, Transform>(
     //    MakeComponentEditScript(knightSpatial, knightTransform)
@@ -268,7 +277,7 @@ int main(int argc, char* argv[])
 
         Hooks::SetHookPoint(HookPoint::PrePhysicsUpdate);
 
-        physSystem.Update(static_cast<float>(GetDeltaTime()));
+        physSystem.Update(colSystem, static_cast<float>(GetDeltaTime()));
 
         Hooks::SetHookPoint(HookPoint::PostPhysicsUpdate);
 

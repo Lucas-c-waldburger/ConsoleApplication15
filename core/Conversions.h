@@ -42,8 +42,8 @@ template <SDLRectType Rect>
 static constexpr std::pair<SDL_FPoint, Dimensions<float>> FromRect(const Rect r)
 {
 	return std::make_pair(
-		SDL_FPoint{ static_cast<float>(r.x - (r.w / 2.0f)),
-					static_cast<float>(r.y - (r.h / 2.0f)) },
+		SDL_FPoint{ static_cast<float>(r.x + (r.w / 2.0f)),
+					static_cast<float>(r.y + (r.h / 2.0f)) },
 		Dimensions<float>{ static_cast<float>(r.w), static_cast<float>(r.h) }
 	);
 }

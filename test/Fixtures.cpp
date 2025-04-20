@@ -1,21 +1,26 @@
 #include "Fixtures.h"
 #include "../ecs/Ecs.h"
 
-std::unique_ptr<ScriptFixture> ScriptFixture::GetInstance::PhysicsEditor(Entity& entity)
+std::unique_ptr<ScriptFixture> ScriptFixture::GetInstance::PhysicsEditor(Entity& entity, bool addComponentsIfMissing)
 {
 	static constexpr const char* kPhysEditScriptName = "test::physics";
 	static constexpr const char* kPhysEditScriptFile = "test_physics.lua";
 
 	if (!entity.HasComponent<Physics>())
 	{
-		LOG_ERROR("Entity did not have physics component. Setup unsuccesful");
-		return nullptr;
+		if (addComponentsIfMissing)
+		{
+			entity.AddComponent<Physics>();
+		}
+		else
+		{
+			LOG_ERROR("Entity did not have physics component and auto-add was disabled. Setup unsuccesful");
+			return nullptr;
+		}
 	}
 
 	auto& phys = entity.GetComponent<Physics>();
 
-	// TODO: make Lua class interfacey like ScriptManager to not make 
-	// working with a single Lua a pain in the ass
 	ScriptInstance scriptInstance{};
 
 	scriptInstance.scriptInfo = {
@@ -33,19 +38,23 @@ std::unique_ptr<ScriptFixture> ScriptFixture::GetInstance::PhysicsEditor(Entity&
 	fixture->scriptName_ = kPhysEditScriptName;
 	fixture->fileMonitor_.SetFilePath(scriptInstance.scriptInfo.path);
 
+	fixture->lua_ = Lua::GetInstance<
+		SDL_FPoint,
+		Force,
+		AccumulatedForces,
+		Physics
+	>();
+
 	fixture->lua_.SetScriptInfo(std::move(scriptInstance.scriptInfo));
 	scriptInstance.setupFn(fixture->lua_);
 
-	auto& hookPoint = Hooks::GetHookPoint(HookPoint::PrePhysicsUpdate);
-	assert(hookPoint);
-
 	fixture->hookPointIdent_ = HookPoint::PrePhysicsUpdate;
-	fixture->attachmentHandle_ = hookPoint->Attach([&fixture]() { 
-		assert(fixture); 
-		RunOnFileChange(*fixture); 
-	});
-
-	OpenInVsCode(kPhysEditScriptFile);
+	fixture->attachmentHandle_ = Hooks::Attach(HookPoint::PrePhysicsUpdate,
+		[fixturePtr = fixture.get()]() {
+			assert(fixturePtr);
+			RunOnFileChange(*fixturePtr);
+		}
+	);
 
 	return fixture;
 }
@@ -60,13 +69,7 @@ void ScriptFixture::GetInstance::RunOnFileChange(ScriptFixture& fixture)
 
 void ScriptFixture::TearDown()
 {
-	auto& hookPoint = Hooks::GetHookPoint(hookPointIdent_);
-	if (hookPoint)
-	{
-		hookPoint->Detach(attachmentHandle_);
-	}
-
-	//fileMonitor_.
+	Hooks::Detach(hookPointIdent_, attachmentHandle_); 
 }
 
 void ScriptFixture::OpenInVsCode(std::string_view scriptName)

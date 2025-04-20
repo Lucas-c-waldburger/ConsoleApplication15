@@ -80,19 +80,30 @@ void UpdatePosition(Spatial& spatial, Physics& physics, float deltaTime)
 	spatial.position.y += physics.velocity.y * deltaTime;
 }
 
-SDL_FPoint PredictPosition(Spatial& spatial, Physics& physics, float deltaTime)
+SDL_FPoint ProjectPosition(Spatial& spatial, Physics& physics, float deltaTime)
 {
 	return { spatial.position.x + (physics.velocity.x * deltaTime),
 			 spatial.position.y + (physics.velocity.y * deltaTime) };
 }
 
+void UpdateCollider(SDL_FPoint prevPos, SDL_FPoint projPos, Collider& collider)
+{
+	float dx = projPos.x - prevPos.x;
+	float dy = projPos.y - prevPos.y;
+
+	collider.position.x += dx;
+	collider.position.y += dy;
+}
+
 } // unnamed namespace
 
-void PhysicsSystem::Update(float deltaTime)
+void PhysicsSystem::Update(CollisionSystem& collisionSystem, float deltaTime)
 {
-	auto entities = ECS::GetAllEntitiesWith<Physics, Spatial>();
+	auto physEntities = ECS::GetAllEntitiesWith<Physics, Spatial>();
 
-	for (auto& entity : entities)
+	std::unordered_map<Entity_t, SDL_FPoint> colliderPosCache;
+
+	for (auto& entity : physEntities)
 	{
 		auto& physics = entity.GetComponent<Physics>();
 		auto& spatial = entity.GetComponent<Spatial>();
@@ -101,10 +112,45 @@ void PhysicsSystem::Update(float deltaTime)
 		ApplyAcceleration(physics, deltaTime);
 		ApplyDrag(physics, deltaTime);
 
-		UpdatePosition(spatial, physics, deltaTime);
+		SDL_FPoint projectedPos = ProjectPosition(spatial, physics, deltaTime);
 
-		// TODO: handle collisions here
+		if (entity.HasComponent<Collider>())
+		{
+			auto& collider = entity.GetComponent<Collider>();
+
+			UpdateCollider(spatial.position, projectedPos, collider);
+
+			colliderPosCache.emplace(entity.GetID(), collider.position);
+		}
+
+		spatial.position = projectedPos;
 	}
+
+	collisionSystem.HandleCollisions();
+
+	// update spatial position based on collider delta
+	auto colEntities = ECS::GetAllEntitiesWith<Collider, Spatial>();
+
+	for (auto& entity : colEntities)
+	{
+		auto& collider = entity.GetComponent<Collider>();
+		auto& spatial = entity.GetComponent<Spatial>();
+
+		auto it = colliderPosCache.find(entity.GetID());
+		if (it == colliderPosCache.end())
+		{
+			continue;
+		}
+
+		SDL_FPoint oldColliderPos = it->second;
+
+		float dx = collider.position.x - oldColliderPos.x;
+		float dy = collider.position.y - oldColliderPos.y;
+
+		spatial.position.x += dx;
+		spatial.position.y += dy;
+	}
+
 }
 
 void PhysicsSystem::RunEntityScripts(ScriptManager& scriptManager)

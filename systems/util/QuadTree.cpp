@@ -1,43 +1,6 @@
 #include "QuadTree.h"
 #include "../../ecs/Ecs.h"
 
-constexpr bool AABB::Contains(const AABB& other) const
-{
-	return (other.x >= x && other.x + other.w <= x + w) &&
-		(other.y >= y && other.y + other.h <= y + h);
-}
-
-constexpr bool AABB::Intersects(const AABB& other) const
-{
-	return !(other.x + other.w < x || other.x > x + w ||
-		other.y + other.h < y || other.y > y + h);
-}
-
-auto AABB::CreateFromEntity(const Entity& entity) -> AABB
-{
-	assert(entity.HasComponent<Collider>());
-
-	const auto& collider = entity.GetComponent<Collider>();
-
-	float width = collider.dimensions.w;
-	float height = collider.dimensions.h;
-
-	if (entity.HasComponent<Transform>())
-	{
-		const auto& tf = entity.GetComponent<Transform>();
-
-		width *= tf.scale.x;
-		height *= tf.scale.y;
-	}
-
-	return {
-		collider.position.x - (width / 2.0f),
-		collider.position.y - (height / 2.0f),
-		width,
-		height
-	};
-}
-
 void QuadTree::Node::Subdivide()
 {
 	if (level >= kMaxLevel)
@@ -59,22 +22,17 @@ void QuadTree::Node::Subdivide()
 	children[3] = std::make_unique<Node>(botRight, level + 1);
 }
 
-bool QuadTree::Node::Insert(Entity* entity)
+bool QuadTree::Node::Insert(const Entity_t entityId, const AABB& bounds)
 {
-	assert(entity);
-
-	auto entityBounds = AABB::CreateFromEntity(*entity);
-
-	if (!boundingBox.Intersects(entityBounds))
+	if (!boundingBox.Intersects(bounds))
 	{
 		return false;
 	}
 
-	if (entities.size() < kMaxEntitiesPerNode || level == kMaxLevel)
+	if (entityIds.Size() < kMaxEntitiesPerNode || level == kMaxLevel)
 	{
 		// not subdividing
-		entities.push_back(entity);
-		return true;
+		return entityIds.Insert(entityId);
 	}
 
 	// Otherwise, subdivide and insert entity into appropriate child node
@@ -87,7 +45,7 @@ bool QuadTree::Node::Insert(Entity* entity)
 	{
 		assert(child);
 
-		if (child->Insert(entity))
+		if (child->Insert(entityId, bounds))
 		{
 			return true;
 		}
@@ -97,43 +55,50 @@ bool QuadTree::Node::Insert(Entity* entity)
 }
 
 // Get all entities in this node and its children that intersect a given bounding box
-void QuadTree::Node::Query(const AABB& area, std::vector<Entity*>& result)
+void QuadTree::Node::Query(const AABB& area, std::vector<EntityColliderBounds>& result, uint8_t flagsFilter)
 {
 	if (!boundingBox.Intersects(area))
 	{
 		return;  // No need to check this node if the query area does not intersect it
 	}
 
-	// Add all entities that intersect with the query area
-	for (Entity* entity : entities)
+	size_t i = 0;
+	while (i < entityIds.Size())
 	{
-		assert(entity);
+		auto entity = ECS::GetEntityByID(entityIds[i]);
 
-		auto entityBounds = AABB::CreateFromEntity(*entity);
-
-		if (area.Intersects(entityBounds))
+		auto entityBounds = EntityColliderBounds::CreateFromEntity(entity, flagsFilter);
+		if (!entityBounds.has_value())
 		{
-			result.push_back(entity);
+			assert(entityIds.Erase(entityIds[i]));
+		}
+		else
+		{
+			if (area.Intersects(entityBounds->boundingBox))
+			{
+				result.push_back(*entityBounds);
+			}
+
+			++i;
 		}
 	}
 
-	// Recursively check children
 	if (!IsLeaf())
 	{
 		for (auto& child : children)
 		{
 			assert(child);
 
-			child->Query(area, result);
+			child->Query(area, result, flagsFilter);
 		}
 	}
 }
 
 // Query all entities within a given bounding box
-std::vector<Entity*> QuadTree::Query(const AABB& area)
+std::vector<EntityColliderBounds> QuadTree::GetIntersecting(const AABB& area, uint8_t flagsFilter)
 {
-	std::vector<Entity*> result;
-	root_.Query(area, result);
+	std::vector<EntityColliderBounds> result;
+	root_.Query(area, result, flagsFilter);
 
 	return result;
 }
