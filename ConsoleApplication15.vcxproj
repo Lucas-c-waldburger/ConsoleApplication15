@@ -77,13 +77,13 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -95,15 +95,15 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -113,13 +113,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,19 +131,20 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="atlas\AtlasManager.cpp" />
+    <ClCompile Include="Box.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="components\util\EventObserverUtils.cpp" />
     <ClCompile Include="components\util\GameControllerStateUtils.cpp" />
@@ -184,6 +185,7 @@
   <ItemGroup>
     <ClInclude Include="atlas\Atlas.h" />
     <ClInclude Include="atlas\AtlasManager.h" />
+    <ClInclude Include="Box.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="components\ActiveStateComponent.h" />
     <ClInclude Include="components\BaseComponent.h" />
@@ -348,6 +350,7 @@
     <ClInclude Include="inputs\GameControllerInputStates.h" />
     <ClInclude Include="inputs\InputDataCache.h" />
     <ClInclude Include="core\ScopedInvoker.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="scripting\Lua.h" />
     <ClInclude Include="core\Monitoring.h" />
     <ClInclude Include="core\Hooks.h" />
@@ -386,6 +389,9 @@
   <ItemGroup>
     <None Include="resources\scripts\game_controller_test.lua" />
     <None Include="resources\scripts\test_physics.lua" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ConsoleApplication15.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

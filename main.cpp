@@ -16,6 +16,7 @@
 #include "events/custom/CustomEventDataRegistry.h"
 #include "test/Fixtures.h"
 #include "test/Premades.h"
+#include "Box.h"
 
 
 
@@ -251,6 +252,8 @@ int main(int argc, char* argv[])
 
     InitSimpleEnvironment(colSystem);
 
+    RunBox2DSample();
+
     //auto physFixture = ScriptFixture::GetInstance::PhysicsEditor(knight);
     //assert(physFixture);
 
@@ -280,14 +283,6 @@ int main(int argc, char* argv[])
         physSystem.Update(colSystem, static_cast<float>(GetDeltaTime()));
 
         Hooks::SetHookPoint(HookPoint::PostPhysicsUpdate);
-
-        auto& [x, y] = knightSpatial.position;
-        if (x < 0.0f) { x = 0.0f; }
-        if (x > static_cast<float>(SDLite::kWindowWidth)) { x = static_cast<float>(SDLite::kWindowWidth); }
-        if (y < 0.0f) { y = 0.0f; }
-        if (y > static_cast<float>(SDLite::kWindowHeight)) { y = static_cast<float>(SDLite::kWindowHeight); }
-
-        //LOG_DEBUG_FMT("Knight Position: [ {}, {} ]", knightSpatial.position.x, knightSpatial.position.y);
 
         renderSys.Update(SDLite::Renderer(), atlasStore);
 
