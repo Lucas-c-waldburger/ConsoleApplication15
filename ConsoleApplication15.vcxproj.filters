@@ -126,7 +126,22 @@
     <ClCompile Include="systems\CollisionSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Box.cpp">
+    <ClCompile Include="physics\Box.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="physics\B2Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="physics\B2World.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="physics\B2Body.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="physics\B2Shape.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -692,45 +707,63 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Box.h">
+    <ClInclude Include="physics\Box.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="physics\B2Handle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="physics\B2Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="physics\B2World.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="physics\B2Body.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="physics\B2Shape.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_0.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_1.png">
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_1.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_2.png">
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_2.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_3.png">
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_3.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_4.png">
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_4.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_5.png">
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_5.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_6.png">
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_6.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_7.png">
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_7.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_8.png">
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_8.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="resources\scripts\test.lua" />
+    <Text Include="scripting\resources\scripts\test.lua" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="resources\scripts\game_controller_test.lua" />
-    <None Include="resources\scripts\test_physics.lua" />
+    <None Include="scripting\resources\scripts\game_controller_test.lua" />
+    <None Include="scripting\resources\scripts\test_physics.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

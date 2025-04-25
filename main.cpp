@@ -16,7 +16,7 @@
 #include "events/custom/CustomEventDataRegistry.h"
 #include "test/Fixtures.h"
 #include "test/Premades.h"
-#include "Box.h"
+//#include "physics/Box.h"
 
 
 
@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
 
     InitSimpleEnvironment(colSystem);
 
-    RunBox2DSample();
+    //RunBox2DSample();
 
     //auto physFixture = ScriptFixture::GetInstance::PhysicsEditor(knight);
     //assert(physFixture);

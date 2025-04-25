@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "Handle.h"
 #include "TypeUtils.h"
+#include "../physics/B2Handle.h"
 
 /* HandleTs pack tells us which Handle types this factory is capable of producing */
 template <typename...HandleTs> //requires pack_types_unique_v<HandleTs...>
@@ -41,4 +42,24 @@ public:
     }
 
 private:
+};
+
+template <>
+class HandleFactory<B2Body>
+{
+public:
+    static Handle<B2Body> GetHandle(b2BodyId bodyId)
+    {
+        return Handle<B2Body>{ bodyId };
+    }
+};
+
+template <>
+class HandleFactory<B2Shape>
+{
+public:
+    static Handle<B2Shape> GetHandle(b2ShapeId shapeId)
+    {
+        return Handle<B2Shape>{ shapeId };
+    }
 };

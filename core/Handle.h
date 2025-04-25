@@ -16,6 +16,11 @@ public:
         return static_cast<size_t>(id_) * 31 + static_cast<size_t>(gen_);
     }
 
+    bool IsValid() const
+    {
+        return id_ == idCount && gen_ == genCount;
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const Handle<T>& handle)
     {
         if (handle.id_ == -1 && handle.gen_ == -1)

@@ -144,7 +144,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="atlas\AtlasManager.cpp" />
-    <ClCompile Include="Box.cpp" />
+    <ClCompile Include="physics\B2Body.cpp" />
+    <ClCompile Include="physics\B2Shape.cpp" />
+    <ClCompile Include="physics\B2Utils.cpp" />
+    <ClCompile Include="physics\B2World.cpp" />
+    <ClCompile Include="physics\Box.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="components\util\EventObserverUtils.cpp" />
     <ClCompile Include="components\util\GameControllerStateUtils.cpp" />
@@ -160,6 +164,7 @@
     <ClCompile Include="inputs\GameControllerEvents.cpp" />
     <ClCompile Include="inputs\GameControllerInputStates.cpp" />
     <ClCompile Include="inputs\InputDataCache.cpp" />
+    <ClCompile Include="Scene.cpp" />
     <ClCompile Include="scripting\Lua.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ecs\Ecs.cpp" />
@@ -185,7 +190,11 @@
   <ItemGroup>
     <ClInclude Include="atlas\Atlas.h" />
     <ClInclude Include="atlas\AtlasManager.h" />
-    <ClInclude Include="Box.h" />
+    <ClInclude Include="physics\B2Body.h" />
+    <ClInclude Include="physics\B2Shape.h" />
+    <ClInclude Include="physics\B2Utils.h" />
+    <ClInclude Include="physics\B2World.h" />
+    <ClInclude Include="physics\Box.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="components\ActiveStateComponent.h" />
     <ClInclude Include="components\BaseComponent.h" />
@@ -350,7 +359,9 @@
     <ClInclude Include="inputs\GameControllerInputStates.h" />
     <ClInclude Include="inputs\InputDataCache.h" />
     <ClInclude Include="core\ScopedInvoker.h" />
+    <ClInclude Include="physics\B2Handle.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="scripting\Lua.h" />
     <ClInclude Include="core\Monitoring.h" />
     <ClInclude Include="core\Hooks.h" />
@@ -373,22 +384,22 @@
     <ClInclude Include="test\Premades.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png" />
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_1.png" />
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_2.png" />
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_3.png" />
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_4.png" />
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_5.png" />
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_6.png" />
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_7.png" />
-    <Image Include="resources\sprites\knight\walk_anim\knight_walk_8.png" />
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_0.png" />
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_1.png" />
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_2.png" />
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_3.png" />
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_4.png" />
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_5.png" />
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_6.png" />
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_7.png" />
+    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_8.png" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="resources\scripts\test.lua" />
+    <Text Include="scripting\resources\scripts\test.lua" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="resources\scripts\game_controller_test.lua" />
-    <None Include="resources\scripts\test_physics.lua" />
+    <None Include="scripting\resources\scripts\game_controller_test.lua" />
+    <None Include="scripting\resources\scripts\test_physics.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc" />

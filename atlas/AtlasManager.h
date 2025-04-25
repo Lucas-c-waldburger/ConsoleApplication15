@@ -4,6 +4,8 @@
 #include "../core/HandleFactory.h"
 #include "../core/TypeUtils.h"
 
+// TODO: Change file name to AtlasStore.h
+
 struct SDL_Renderer;
 
 template <typename T>
