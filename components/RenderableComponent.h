@@ -1,6 +1,7 @@
 #pragma once
 #include "BaseComponent.h"
 #include "../core/Handle.h"
+#include "../physics/B2Shape.h"
 #include <variant>
 #include <SDL.h>
 
@@ -20,6 +21,7 @@ struct Renderable : BaseComponent<Renderable, 7>
 
         Handle<GlyphAtlas> sourceAtlas;
         std::string text;
+        Dimensions<int> desiredDimensions = { 0, 0 }; // TODO: dont store this on here
         Alignment align;
         bool scaleToFit = false;
     };

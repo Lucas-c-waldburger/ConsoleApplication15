@@ -139,7 +139,7 @@ public:
         assert(entity < kMaxEntities);
         assert(isEntityHoldsSignature_[entity] & T::componentBit);
 
-        auto& entry = GetEntry<T>();
+        const auto& entry = GetEntry<T>();
 
         return entry.GetComponent(entity);
     }
@@ -180,6 +180,11 @@ public:
 protected:
     template <typename T>
     ComponentArray<T>& GetEntry()
+    {
+        return std::get<ComponentArray<T>>(componentArrays_);
+    }
+    template <typename T>
+    const ComponentArray<T>& GetEntry() const
     {
         return std::get<ComponentArray<T>>(componentArrays_);
     }

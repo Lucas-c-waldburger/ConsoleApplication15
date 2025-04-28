@@ -65,20 +65,20 @@ template <> static void RegisterLuaUserType<Handle<SpriteSeriesAtlas>>(sol::stat
 			return lhs != rhs;
 	};
 }
-template <> static void RegisterLuaUserType<Force>(sol::state& lua)
-{
-	lua.new_usertype<Force>("Force", "vector", &Force::vector, "duration", &Force::duration);
-}
-template <> static void RegisterLuaUserType<AccumulatedForces>(sol::state& lua)
-{
-	lua.new_usertype<AccumulatedForces>("AccumulatedForces", "normed",
-		&AccumulatedForces::normed, "max", &AccumulatedForces::max);
-}
-template <> static void RegisterLuaUserType<Collider::Material>(sol::state& lua)
-{
-	lua.new_usertype<Collider::Material>("Collider::Material",
-		"restitution", &Collider::Material::restitution, "friction", &Collider::Material::friction);
-}
+//template <> static void RegisterLuaUserType<Force>(sol::state& lua)
+//{
+//	lua.new_usertype<Force>("Force", "vector", &Force::vector, "duration", &Force::duration);
+//}
+//template <> static void RegisterLuaUserType<AccumulatedForces>(sol::state& lua)
+//{
+//	lua.new_usertype<AccumulatedForces>("AccumulatedForces", "normed",
+//		&AccumulatedForces::normed, "max", &AccumulatedForces::max);
+//}
+//template <> static void RegisterLuaUserType<Collider::Material>(sol::state& lua)
+//{
+//	lua.new_usertype<Collider::Material>("Collider::Material",
+//		"restitution", &Collider::Material::restitution, "friction", &Collider::Material::friction);
+//}
 
 template <> static void RegisterLuaUserType<SDL_GameControllerButton>(sol::state& lua)
 {
@@ -109,25 +109,25 @@ template <> static void RegisterLuaUserType<SDL_GameControllerButton>(sol::state
 	);
 }
 
-template <> static void RegisterLuaUserType<Collider::Profile>(sol::state& lua)
-{
-	lua.new_enum("Collider::Profile",
-		"Solid", Collider::Profile::Solid,
-		"NonSolid", Collider::Profile::NonSolid,
-		"Static", Collider::Profile::Static,
-		"Dynamic", Collider::Profile::Dynamic,
-		"ApplyScale", Collider::Profile::ApplyScale
-	);
-}
+//template <> static void RegisterLuaUserType<Collider::Profile>(sol::state& lua)
+//{
+//	lua.new_enum("Collider::Profile",
+//		"Solid", Collider::Profile::Solid,
+//		"NonSolid", Collider::Profile::NonSolid,
+//		"Static", Collider::Profile::Static,
+//		"Dynamic", Collider::Profile::Dynamic,
+//		"ApplyScale", Collider::Profile::ApplyScale
+//	);
+//}
 
 // COMPONENTS
 
-template <> static void RegisterLuaUserType<Physics>(sol::state& lua)
-{
-	lua.new_usertype<Physics>("Physics", "velocity", &Physics::velocity,
-		"acceleration", &Physics::acceleration, "mass", &Physics::mass, 
-		"drag", &Physics::drag, "gravity", &Physics::gravity, "forces", &Physics::forces);
-}
+//template <> static void RegisterLuaUserType<Physics>(sol::state& lua)
+//{
+//	lua.new_usertype<Physics>("Physics", "velocity", &Physics::velocity,
+//		"acceleration", &Physics::acceleration, "mass", &Physics::mass, 
+//		"drag", &Physics::drag, "gravity", &Physics::gravity, "forces", &Physics::forces);
+//}
 template <> static void RegisterLuaUserType<Spatial>(sol::state& lua)
 {
 	try {
@@ -136,16 +136,16 @@ template <> static void RegisterLuaUserType<Spatial>(sol::state& lua)
 			"dimensions", &Spatial::dimensions);
 	} catch (sol::error& e) { std::cout << e.what() << '\n'; }
 }
-template <> static void RegisterLuaUserType<Transform>(sol::state& lua)
-{
-	lua.new_usertype<Transform>("Transform", "scale", &Transform::scale,
-		"rotation", &Transform::rotation, "offset", &Transform::offset);
-}
-template <> static void RegisterLuaUserType<Collider>(sol::state& lua)
-{
-	lua.new_usertype<Collider>("Collider", "position", &Collider::position,
-		"dimensions", &Collider::dimensions, "material", &Collider::material, "profile", &Collider::profile);
-}
+//template <> static void RegisterLuaUserType<Transform>(sol::state& lua)
+//{
+//	lua.new_usertype<Transform>("Transform", "scale", &Transform::scale,
+//		"rotation", &Transform::rotation, "offset", &Transform::offset);
+//}
+//template <> static void RegisterLuaUserType<Collider>(sol::state& lua)
+//{
+//	lua.new_usertype<Collider>("Collider", "position", &Collider::position,
+//		"dimensions", &Collider::dimensions, "material", &Collider::material, "profile", &Collider::profile);
+//}
 
 template <> static void RegisterLuaUserType<Parent>(sol::state& lua)
 {

@@ -2,6 +2,11 @@
 #include <SDL.h>
 #include "B2Body.h"
 
+inline constexpr bool operator==(const b2WorldId& lhs, const b2WorldId& rhs)
+{
+    return lhs.generation == rhs.generation && lhs.index1 == rhs.index1;
+}
+
 class B2World
 {
 public:
@@ -11,6 +16,8 @@ public:
 
     void Destroy();
 
+    Result<Void> Step(float timeStep, int subStepCount);
+
     SDL_FPoint GetGravity() const;
 
     void SetGravity(float newX, float newY);
@@ -19,10 +26,9 @@ public:
 
     Result<B2Body> AddBody(const B2BodyDefinition& bodyDef);
 
-    Result<B2Body> GetBody(const Handle<B2Body>& bodyHandle);
+    Result<B2Body> GetBody(const Handle<B2Body>& bodyHandle) const;
 
 private:
     B2World() = default;
     b2WorldId worldId_ = b2_nullWorldId;
-    std::unordered_set<Handle<B2Body>> bodyHandles_;
 };

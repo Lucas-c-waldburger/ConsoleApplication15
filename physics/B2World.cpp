@@ -23,6 +23,18 @@ void B2World::Destroy()
     }
 }
 
+Result<Void> B2World::Step(float timeStep, int subStepCount)
+{
+    if (!IsValid())
+    {
+        return MAKE_ERROR("WorldId was invalid");
+    }
+
+    b2World_Step(worldId_, timeStep, subStepCount);
+
+    return Void{};
+}
+
 SDL_FPoint B2World::GetGravity() const
 {
     b2Vec2 grav = b2World_GetGravity(worldId_);
@@ -48,7 +60,6 @@ Result<B2Body> B2World::AddBody(const B2BodyDefinition& bodyDef)
     Handle<B2Body> bodyHandle = HandleFactory<B2Body>::GetHandle(bodyId);
 
     assert(bodyHandle.IsValid());
-    assert(!bodyHandles_.contains(bodyHandle));
 
     B2Body body{ bodyHandle };
 
@@ -57,12 +68,10 @@ Result<B2Body> B2World::AddBody(const B2BodyDefinition& bodyDef)
         TRY(body.AddShape(shapeDef));
     }
 
-    assert(bodyHandles_.insert(bodyHandle).second);
-
     return body;
 }
 
-Result<B2Body> B2World::GetBody(const Handle<B2Body>& bodyHandle)
+Result<B2Body> B2World::GetBody(const Handle<B2Body>& bodyHandle) const
 {
     if (!IsValid())
     {
@@ -72,30 +81,10 @@ Result<B2Body> B2World::GetBody(const Handle<B2Body>& bodyHandle)
     {
         return MAKE_ERROR("BodyId was invalid");
     }
-    if (!bodyHandles_.contains(bodyHandle))
+    if (b2Body_GetWorld(bodyHandle) != worldId_)
     {
         return MAKE_ERROR("BodyId does not belong to world");
     }
 
-    B2Body body{ bodyHandle };
-
-    b2ShapeId shapeIds[B2Body::kMaxShapesPerBody];
-    int count = b2Body_GetShapes(bodyHandle, shapeIds, B2Body::kMaxShapesPerBody);
-    body.shapeHandles_.reserve(count);
-
-    for (int i = 0; i < count; i++)
-    {
-        Handle<B2Shape> shapeHandle = HandleFactory<B2Shape>::GetHandle(shapeIds[i]);
-
-        if (shapeHandle.IsValid())
-        {
-            body.shapeHandles_.insert(shapeHandle);
-        }
-        else
-        {
-            LOG_WARNING("Shape handle was invalid");
-        }
-    }
-
-    return body;
+    return B2Body{ bodyHandle };
 }

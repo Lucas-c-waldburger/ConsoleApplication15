@@ -1,9 +1,9 @@
 #include "Fixtures.h"
 #include "../ecs/Ecs.h"
 
-std::unique_ptr<ScriptFixture> ScriptFixture::GetInstance::PhysicsEditor(Entity& entity, bool addComponentsIfMissing)
-{
-	static constexpr const char* kPhysEditScriptName = "test::physics";
+//std::unique_ptr<ScriptFixture> ScriptFixture::GetInstance::PhysicsEditor(Entity& entity, bool addComponentsIfMissing)
+//{
+	/*static constexpr const char* kPhysEditScriptName = "test::physics";
 	static constexpr const char* kPhysEditScriptFile = "test_physics.lua";
 
 	if (!entity.HasComponent<Physics>())
@@ -56,8 +56,8 @@ std::unique_ptr<ScriptFixture> ScriptFixture::GetInstance::PhysicsEditor(Entity&
 		}
 	);
 
-	return fixture;
-}
+	return fixture;*/
+//}
 
 void ScriptFixture::GetInstance::RunOnFileChange(ScriptFixture& fixture)
 {

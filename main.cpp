@@ -17,7 +17,7 @@
 #include "test/Fixtures.h"
 #include "test/Premades.h"
 //#include "physics/Box.h"
-
+#include "Scene.h"
 
 
 static constexpr const char* kFontPath =
@@ -130,27 +130,28 @@ static void SetKnightControllerConnectedCallback(EventObserver& knightEvents)
 
 static void UpdateControllerForce(Entity& entity)
 {
-    assert((entity.HasComponents<Physics, GameControllerState>()));
+    assert((entity.HasComponents<RigidBody, GameControllerState>()));
 
-    auto [phys, gc] = entity.GetComponents<Physics, GameControllerState>();
+    auto [rigidBody, controller] = entity.GetComponents<RigidBody, GameControllerState>();
 
-    const auto [leftX, leftY] = gc.axisInput.left.value;
+    const auto [leftX, leftY] = controller.axisInput.left.value;
 
-    auto getNormedVal = [max = phys.forces.max](const auto xOrY) -> float {
-        return (std::abs(xOrY) > GameController::kAxisDeadzone) ?
-            xOrY / static_cast<float>(GameController::kAxisMax) * max : 0.0f;
-    };
+    //auto getNormedVal = [max = phys.forces.max](const auto xOrY) -> float {
+    //    return (std::abs(xOrY) > GameController::kAxisDeadzone) ?
+    //        xOrY / static_cast<float>(GameController::kAxisMax) * max : 0.0f;
+    //};
 
-    SDL_FPoint normed = {
-        .x = getNormedVal(leftX),
-        .y = getNormedVal(leftY)
-    };
+    //SDL_FPoint normed = {
+    //    .x = getNormedVal(leftX),
+    //    .y = getNormedVal(leftY)
+    //};
 
-    phys.forces.normed.push_back(Force{ .vector = normed, .duration = 0 });
+    //phys.forces.normed.push_back(Force{ .vector = normed, .duration = 0 });
 }
 
 int main(int argc, char* argv[]) 
 {
+    /*
     Logger::StartSession();
     SDLite::Start();
     ASSERT_RESULT(RegisterCustomEventDataTypes<TypeList<CUSTOM_EVENT_DATA_REGISTRY>>());
@@ -194,6 +195,8 @@ int main(int argc, char* argv[])
     auto& knightEvents = knight.AddComponent(EventObserver{});
 
     SetKnightControllerConnectedCallback(knightEvents);
+    */
+
 
     ////
     //auto entB = ECS::CreateEntity();
@@ -244,6 +247,9 @@ int main(int argc, char* argv[])
     //
     //fileMonitor.Start();
 
+
+
+    /*
     RenderSystem renderSys{};
     PhysicsSystem physSystem{};
     CollisionSystem colSystem{};
@@ -251,6 +257,8 @@ int main(int argc, char* argv[])
     EventSystem eventSystem{};
 
     InitSimpleEnvironment(colSystem);
+    */
+
 
     //RunBox2DSample();
 
@@ -264,6 +272,7 @@ int main(int argc, char* argv[])
 
     //FileChangeMonitor fileMonitor{ "resources\\scripts\\game_controller_test.lua" };
 
+    /*
     SDL_Event ev;
     while (true)
     {
@@ -292,6 +301,10 @@ int main(int argc, char* argv[])
     Logger::EndSession();
 
     SDLite::Exit();
+    */
+
+
+    ASSERT_RESULT(B2Scene::Run());
 
     return 0;
 }

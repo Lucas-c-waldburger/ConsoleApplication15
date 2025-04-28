@@ -1,9 +1,9 @@
 #include "EntityColliderBounds.h"
 #include "../../ecs/Ecs.h"
 
-std::optional<EntityColliderBounds> EntityColliderBounds::CreateFromEntity(const Entity& entity, uint8_t filter)
-{
-    if (!entity.IsValid())
+//std::optional<EntityColliderBounds> EntityColliderBounds::CreateFromEntity(const Entity& entity, uint8_t filter)
+//{
+    /*if (!entity.IsValid())
     {
         LOG_WARNING("Entity was invalid");
         return std::nullopt;
@@ -40,5 +40,5 @@ std::optional<EntityColliderBounds> EntityColliderBounds::CreateFromEntity(const
         height
     };
 
-    return EntityColliderBounds{ .entityId = entity.GetID(), .boundingBox = aabb };
-}
+    return EntityColliderBounds{ .entityId = entity.GetID(), .boundingBox = aabb };*/
+//}

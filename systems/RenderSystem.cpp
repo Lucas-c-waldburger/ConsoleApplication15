@@ -2,6 +2,7 @@
 #include "RenderSystem.h"
 #include "../ecs/Ecs.h"
 #include "../atlas/GlyphAtlas.h"
+#include "../physics/B2Shape.h"
 //#include "../atlas/AtlasManager.h"
 //#include "../components/RenderableComponent.h"
 
@@ -112,50 +113,131 @@ void RenderGlyphsAligned<Alignment::Center>(const RenderSystem::RenderGlyphsArgs
 	}
 }
 
-static SDL_Rect MakeTransformedRect(const Spatial& spatial, const Transform& tf)
+std::vector<SDL_FPoint> GetCirclePerimeterPoints(SDL_FPoint center, float radius)
 {
-	float scaledW = spatial.dimensions.w * tf.scale.x;
-	float scaledH = spatial.dimensions.h * tf.scale.y;
+	std::vector<SDL_FPoint> points;
+	points.reserve(8 * static_cast<int>(radius));
+
+	int x = static_cast<int>(radius);
+	int y = 0;
+	int radiusError = 1 - x;
+
+	while (x >= y)
+	{
+		points.push_back({ center.x + x, center.y - y }); // Top-right
+		points.push_back({ center.x + y, center.y - x }); // Top-left
+		points.push_back({ center.x - x, center.y - y }); // Bottom-left
+		points.push_back({ center.x - y, center.y - x }); // Bottom-right
+		points.push_back({ center.x - x, center.y + y }); // Bottom-left (mirrored)
+		points.push_back({ center.x - y, center.y + x }); // Bottom-right (mirrored)
+		points.push_back({ center.x + x, center.y + y }); // Top-right (mirrored)
+		points.push_back({ center.x + y, center.y + x }); // Top-left (mirrored)
+
+		y++;
+
+		// Adjust the radiusError based on the distance from the center
+		if (radiusError < 0)
+		{
+			radiusError += 2 * y + 1;
+		}
+		else
+		{
+			x--;
+			radiusError += 2 * (y - x + 1);
+		}
+	}
+
+	return points;
+}
+
+//SDL_Rect MakeTransformedRect(const Spatial& spatial, const Transform& tf)
+//{
+//	float scaledW = spatial.dimensions.w * tf.scale.x;
+//	float scaledH = spatial.dimensions.h * tf.scale.y;
+//
+//	return SDL_Rect{
+//		static_cast<int>(spatial.position.x - (scaledW / 2.0f)),
+//		static_cast<int>(spatial.position.y - (scaledH / 2.0f)),
+//		static_cast<int>(scaledW),
+//		static_cast<int>(scaledH)
+//	};
+//}
+SDL_Rect MakeTransformedRect(const Transform& transform, int w, int h)
+{
+	float scaledW = w * transform.scale.x;
+	float scaledH = h * transform.scale.y;
 
 	return SDL_Rect{
-		static_cast<int>(spatial.position.x - (scaledW / 2.0f)),
-		static_cast<int>(spatial.position.y - (scaledH / 2.0f)),
+		static_cast<int>(transform.position.x - (scaledW / 2.0f)),
+		static_cast<int>(transform.position.y - (scaledH / 2.0f)),
 		static_cast<int>(scaledW),
 		static_cast<int>(scaledH)
 	};
 }
 
+SDL_Rect MakeTransformedRect(const Transform& transform, Dimensions<int> dimensions)
+{
+	return MakeTransformedRect(transform, dimensions.w, dimensions.h);
+}
+
+Result<Void> DrawB2ColliderShape(SDL_Renderer* renderer, const Collider& collider)
+{
+	switch (collider.shape.GetShapeType())
+	{
+	case B2Shape::Type::Polygon:
+	{
+		auto polyShape = collider.shape.GetAs<B2PolygonShape>();
+
+		auto verts = polyShape.GetVertices();
+
+		SDL_RenderDrawLinesF(renderer, verts.data(), verts.size());
+
+		break;
+	}
+	case B2Shape::Type::Circle:
+	{
+		auto circleShape = collider.shape.GetAs<B2CircleShape>();
+
+		SDL_FPoint center = circleShape.GetCenter();
+		float radius = circleShape.GetRadius();
+
+		auto points = GetCirclePerimeterPoints(center, radius);
+
+		SDL_RenderDrawPointsF(renderer, points.data(), points.size());
+
+		break;
+	}
+
+	default:
+		return MAKE_ERROR("Unsupported B2ShapeType");
+	}
+
+	return Void{};
+}
+
 } // unnamed namespace
 
-
-// TODO: Decide what to do about entities w/o transform
 void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasStore)
 {
-	auto entities = ECS::GetAllEntitiesWith<Spatial, Renderable>();
+	auto entities = ECS::GetAllEntitiesWith<Transform, Renderable>();
 
 	std::sort(entities.begin(), entities.end(), [](const Entity& lhs, const Entity& rhs) {
 		return lhs.GetComponent<Renderable>().drawOrder <
-			   rhs.GetComponent<Renderable>().drawOrder;
+			rhs.GetComponent<Renderable>().drawOrder;
 		});
 
 	for (auto& entity : entities)
 	{
-		auto& renderable = entity.GetComponent<Renderable>();
-		auto& spatial = entity.GetComponent<Spatial>();
-
-		Transform transform = (entity.HasComponent<Transform>()) ?
-			entity.GetComponent<Transform>() : Transform{};
-
-		SDL_Rect renderRect = MakeTransformedRect(spatial, transform);
+		const auto& renderable = entity.GetComponent<Renderable>();
+		const auto& transform = entity.GetComponent<Transform>();
 
 		if (auto spriteData = std::get_if<Renderable::Sprite>(&renderable.renderData))
 		{
 			auto spriteAtlas = atlasStore.GetAtlas(spriteData->sourceAtlas);
 			if (!spriteAtlas)
 			{
-				std::cerr << "Sprite handle expired for sprite { seriesName : " << spriteData->seriesName
-					<< ", index : " << spriteData->currentIndex << " }\n";
-
+				LOG_WARNING_FMT("Sprite handle expired for sprite (seriesName: '{}', index: '{}')",
+							    spriteData->seriesName, spriteData->currentIndex);			 
 				continue;
 			}
 
@@ -163,14 +245,15 @@ void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasS
 													  spriteData->currentIndex).atlasRect;
 			if (srcRect.w == 0 || srcRect.h == 0)
 			{
-				std::cerr << "SpriteInfo not found for sprite { seriesName : " << spriteData->seriesName
-					<< ", index : " << spriteData->currentIndex << " }\n";
-
+				LOG_WARNING_FMT("SpriteInfo not found for sprite (seriesName: '{}', index: '{}')",
+							    spriteData->seriesName, spriteData->currentIndex);
 				continue;
 			}
 
+			SDL_Rect renderRect = MakeTransformedRect(transform, srcRect.w, srcRect.h);
+
 			SDL_RenderCopyEx(renderer, spriteAtlas->GetAtlasTexture(), &srcRect,
-				&renderRect, transform.rotation, nullptr, renderable.flip);
+							 &renderRect, transform.rotation, nullptr, renderable.flip);
 		}
 
 		else if (auto textData = std::get_if<Renderable::Text>(&renderable.renderData))
@@ -180,13 +263,12 @@ void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasS
 			auto glyphAtlas = atlasStore.GetAtlas(textData->sourceAtlas);
 			if (!glyphAtlas)
 			{
-				std::cerr << "Glyph handle expired for text { \"" << textData->text << " }\n";
-
+				LOG_WARNING_FMT("Glyph handle expired for text '{}'", textData->text);
 				continue;
 			}
 
 			const int numNewlines = std::count(textData->text.begin(), textData->text.end(), '\n');
-			const int totalHeight = 
+			const int totalHeight =
 				static_cast<int>(glyphAtlas->GetAtlasInfo().fontHeight * transform.scale.y) * (numNewlines + 1);
 
 			RenderGlyphsArgs args{
@@ -195,8 +277,10 @@ void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasS
 				.text = textData->text,
 				.scale = transform.scale,
 				.numNewlines = numNewlines,
-				.startY = static_cast<int>(spatial.position.y - (totalHeight / 2.0f))
+				.startY = static_cast<int>(transform.position.y - (totalHeight / 2.0f))
 			};
+
+			SDL_Rect renderRect = MakeTransformedRect(transform, textData->desiredDimensions);
 
 			if (textData->scaleToFit)
 			{
@@ -219,29 +303,156 @@ void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasS
 				break;
 
 			case Alignment::Center:
-				args.startX = static_cast<int>(spatial.position.x);
+				args.startX = static_cast<int>(transform.position.x);
 				RenderGlyphsAligned<Alignment::Center>(args);
 				break;
 			}
 		}
 
-		// TODO: Add fill/line option for how to draw
 		else if (auto geometryData = std::get_if<Renderable::Geometry>(&renderable.renderData))
 		{
+			if (!entity.HasComponent<Collider>())
+			{
+				LOG_ERROR("Entity with geometry render data did not have collider");
+				continue;
+			}
+
+			auto& collider = entity.GetComponent<Collider>();
+			if (!collider.shape.IsValid())
+			{
+				LOG_ERROR("Collider shape was invalid");
+				continue;
+			}
+
 			auto origColor = GetRenderDrawColor(renderer);
 			SetRenderDrawColor(renderer, geometryData->color);
 
-			SDL_RenderFillRect(renderer, &renderRect);
+			LOG_IF_ERROR(DrawB2ColliderShape(renderer, collider));
 
 			SetRenderDrawColor(renderer, origColor);
 		}
 
 		else
 		{
-			std::cerr << "Logic error: renderable type not text or sprite";
+			LOG_ERROR("Logic error: renderable type not recognized");
 		}
 	}
 }
+
+// TODO: Decide what to do about entities w/o transform
+//void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasStore)
+//{
+//	auto entities = ECS::GetAllEntitiesWith<Spatial, Renderable>();
+//
+//	std::sort(entities.begin(), entities.end(), [](const Entity& lhs, const Entity& rhs) {
+//		return lhs.GetComponent<Renderable>().drawOrder <
+//			   rhs.GetComponent<Renderable>().drawOrder;
+//		});
+//
+//	for (auto& entity : entities)
+//	{
+//		auto& renderable = entity.GetComponent<Renderable>();
+//		auto& spatial = entity.GetComponent<Spatial>();
+//
+//		Transform transform = (entity.HasComponent<Transform>()) ?
+//			entity.GetComponent<Transform>() : Transform{};
+//
+//		SDL_Rect renderRect = MakeTransformedRect(spatial, transform);
+//
+//		if (auto spriteData = std::get_if<Renderable::Sprite>(&renderable.renderData))
+//		{
+//			auto spriteAtlas = atlasStore.GetAtlas(spriteData->sourceAtlas);
+//			if (!spriteAtlas)
+//			{
+//				std::cerr << "Sprite handle expired for sprite { seriesName : " << spriteData->seriesName
+//					<< ", index : " << spriteData->currentIndex << " }\n";
+//
+//				continue;
+//			}
+//
+//			SDL_Rect srcRect = spriteAtlas->GetSprite(spriteData->seriesName,
+//													  spriteData->currentIndex).atlasRect;
+//			if (srcRect.w == 0 || srcRect.h == 0)
+//			{
+//				std::cerr << "SpriteInfo not found for sprite { seriesName : " << spriteData->seriesName
+//					<< ", index : " << spriteData->currentIndex << " }\n";
+//
+//				continue;
+//			}
+//
+//			SDL_RenderCopyEx(renderer, spriteAtlas->GetAtlasTexture(), &srcRect,
+//				&renderRect, transform.rotation, nullptr, renderable.flip);
+//		}
+//
+//		else if (auto textData = std::get_if<Renderable::Text>(&renderable.renderData))
+//		{
+//			if (textData->text.empty()) { continue; }
+//
+//			auto glyphAtlas = atlasStore.GetAtlas(textData->sourceAtlas);
+//			if (!glyphAtlas)
+//			{
+//				std::cerr << "Glyph handle expired for text { \"" << textData->text << " }\n";
+//
+//				continue;
+//			}
+//
+//			const int numNewlines = std::count(textData->text.begin(), textData->text.end(), '\n');
+//			const int totalHeight = 
+//				static_cast<int>(glyphAtlas->GetAtlasInfo().fontHeight * transform.scale.y) * (numNewlines + 1);
+//
+//			RenderGlyphsArgs args{
+//				.renderer = renderer,
+//				.glyphAtlas = glyphAtlas,
+//				.text = textData->text,
+//				.scale = transform.scale,
+//				.numNewlines = numNewlines,
+//				.startY = static_cast<int>(spatial.position.y - (totalHeight / 2.0f))
+//			};
+//
+//			if (textData->scaleToFit)
+//			{
+//				float toFit = GetScaleToFitFactor(args, totalHeight, renderRect.w, renderRect.h);
+//
+//				args.scale.x *= toFit;
+//				args.scale.y *= toFit;
+//			}
+//
+//			switch (textData->align)
+//			{
+//			case Alignment::Left:
+//				args.startX = renderRect.x;
+//				RenderGlyphsAligned<Alignment::Left>(args);
+//				break;
+//
+//			case Alignment::Right:
+//				args.startX = renderRect.x + renderRect.w;
+//				RenderGlyphsAligned<Alignment::Right>(args);
+//				break;
+//
+//			case Alignment::Center:
+//				args.startX = static_cast<int>(spatial.position.x);
+//				RenderGlyphsAligned<Alignment::Center>(args);
+//				break;
+//			}
+//		}
+//
+//		// TODO: Add fill/line option for how to draw
+//		else if (auto geometryData = std::get_if<Renderable::Geometry>(&renderable.renderData))
+//		{
+//			auto origColor = GetRenderDrawColor(renderer);
+//			SetRenderDrawColor(renderer, geometryData->color);
+//
+//			SDL_RenderFillRect(renderer, &renderRect);
+//
+//			SetRenderDrawColor(renderer, origColor);
+//		}
+//
+//		else
+//		{
+//			std::cerr << "Logic error: renderable type not text or sprite";
+//		}
+//	}
+//}
 
 float RenderSystem::GetScaleToFitFactor(const RenderGlyphsArgs& args, int totalHeight,
 										int boundingWidth, int boundingHeight)
@@ -262,7 +473,7 @@ float RenderSystem::GetScaleToFitFactor(const RenderGlyphsArgs& args, int totalH
 			glyphs.begin() + currentPos,
 			glyphs.begin() + newlinePos,
 			0, [scale = args.scale.x](int sum, const auto& glyph) {
-				return sum + (glyph.advance * scale);
+				return sum + static_cast<int>(glyph.advance * scale);
 			});
 
 		longestRowWidth = std::max(longestRowWidth, rowWidth);

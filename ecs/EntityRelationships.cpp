@@ -51,6 +51,7 @@ bool EntityRelations::AddChild(impl::ComponentManager& componentManager, Entity_
         assert(componentManager.GetComponent<Parent>(entity).parentEntity != requestedChild);
     }
 
+    // either retrieves current parent or constructs new component
     auto& childsCurrentParent = componentManager.AddComponent<Parent>(requestedChild).parentEntity;
 
     if (childsCurrentParent != kInvalidEntity) // child already has a different parent

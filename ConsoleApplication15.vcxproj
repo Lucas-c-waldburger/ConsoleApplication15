@@ -201,7 +201,7 @@
     <ClInclude Include="components\ColliderComponent.h" />
     <ClInclude Include="components\EventObserverComponent.h" />
     <ClInclude Include="components\GameControllerStateComponent.h" />
-    <ClInclude Include="components\PhysicsComponent.h" />
+    <ClInclude Include="components\RigidBodyComponent.h" />
     <ClInclude Include="components\RelationComponents.h" />
     <ClInclude Include="components\RenderableComponent.h" />
     <ClInclude Include="components\ScriptComponent.h" />
@@ -377,6 +377,8 @@
     <ClInclude Include="systems\PhysicsSystem.h" />
     <ClInclude Include="core\TypeUtils.h" />
     <ClInclude Include="core\AABB.h" />
+    <ClInclude Include="systems\System.h" />
+    <ClInclude Include="systems\SystemRegistry.h" />
     <ClInclude Include="systems\util\QuadTree.h" />
     <ClInclude Include="systems\util\SpatialHashGrid.h" />
     <ClInclude Include="test\ComponentTests.h" />

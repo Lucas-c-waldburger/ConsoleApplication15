@@ -608,7 +608,7 @@
     <ClInclude Include="ecs\EntityT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\PhysicsComponent.h">
+    <ClInclude Include="components\RigidBodyComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\TransformComponent.h">
@@ -726,6 +726,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Scene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\SystemRegistry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\System.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

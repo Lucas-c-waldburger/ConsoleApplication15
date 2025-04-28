@@ -3,6 +3,7 @@
 #include <cassert>
 #include "B2Shape.h"
 #include "../core/Result.h"
+#include "../core/HandleFactory.h"
 
 struct B2BodyDefinition
 {
@@ -30,13 +31,12 @@ public:
     void Destroy()
     {
         b2DestroyBody(bodyHandle_);
-        shapeHandles_.clear();
         bodyHandle_ = Handle<B2Body>{};
     }
 
     bool IsValid() const { return b2Body_IsValid(bodyHandle_); }
 
-    Type GetType() const { return static_cast<Type>(b2Body_GetType(bodyHandle_)); }
+    Type GetBodyType() const { return static_cast<Type>(b2Body_GetType(bodyHandle_)); }
 
     void SetFixedRotation(bool fixed) { b2Body_SetFixedRotation(bodyHandle_, fixed); }
     bool IsFixedRotation() const { return b2Body_IsFixedRotation(bodyHandle_); }
@@ -44,10 +44,10 @@ public:
     void SetAwake(bool awake) { b2Body_SetAwake(bodyHandle_, awake); }
     bool IsAwake() const { return b2Body_IsAwake(bodyHandle_); }
 
-    SDL_FPoint GetPosition() const { return ToSDLFPoint(b2Body_GetPosition(bodyHandle_)); }
+    SDL_FPoint GetPosition() const { return ToSDLFPointScaled(b2Body_GetPosition(bodyHandle_)); }
     void SetPosition(SDL_FPoint newPos, bool wakeState = true)
     {
-        b2Body_SetTransform(bodyHandle_, ToB2Vec(newPos), b2Body_GetRotation(bodyHandle_));
+        b2Body_SetTransform(bodyHandle_, ToB2VecScaled(newPos), b2Body_GetRotation(bodyHandle_));
         SetAwake(wakeState);
     }
 
@@ -58,31 +58,34 @@ public:
         SetAwake(wakeState);
     }
 
-    SDL_FPoint GetVelocity() const { return ToSDLFPoint(b2Body_GetLinearVelocity(bodyHandle_)); }
+    SDL_FPoint GetVelocity() const { return ToSDLFPointScaled(b2Body_GetLinearVelocity(bodyHandle_)); }
 
-    void ApplyForce(SDL_FPoint force, std::optional<SDL_FPoint> pointOfContact = {})
+    void ApplyForce(SDL_FPoint forceNewtons, std::optional<SDL_FPoint> worldPoint = {})
     {
-        if (!pointOfContact.has_value())
+        if (!worldPoint.has_value())
         {
-            ApplyForceToCenter(force);
+            ApplyForceToCenter(forceNewtons);
         }
         else
         {
-            b2Body_ApplyForce(bodyHandle_, ToB2Vec(force), ToB2Vec(*pointOfContact), true);
+            b2Body_ApplyForce(bodyHandle_, ToB2Vec(forceNewtons), ToB2VecScaled(*worldPoint), true);
         }
     }
 
-    void ApplyForceToCenter(SDL_FPoint force) { b2Body_ApplyForceToCenter(bodyHandle_, ToB2Vec(force), true); }
+    void ApplyForceToCenter(SDL_FPoint forceNewtons) 
+    { 
+        b2Body_ApplyForceToCenter(bodyHandle_, ToB2Vec(forceNewtons), true); 
+    }
 
-    void ApplyLinearImpulse(SDL_FPoint impulse, std::optional<SDL_FPoint> pointOfContact = {})
+    void ApplyLinearImpulse(SDL_FPoint impulse, std::optional<SDL_FPoint> worldPoint = {})
     {
-        if (!pointOfContact.has_value())
+        if (!worldPoint.has_value())
         {
             ApplyLinearImpulseToCenter(impulse);
         }
         else
         {
-            b2Body_ApplyLinearImpulse(bodyHandle_, ToB2Vec(impulse), ToB2Vec(*pointOfContact), true);
+            b2Body_ApplyLinearImpulse(bodyHandle_, ToB2Vec(impulse), ToB2VecScaled(*worldPoint), true);
         }
     }
 
@@ -94,7 +97,9 @@ public:
     // Shapes API
     int GetShapeCount() const { return b2Body_GetShapeCount(bodyHandle_); }
 
-    template <typename T> requires IsDerivedShape<T>
+    Result<B2Shape> GetShape(const Handle<B2Shape>& shapeHandle);
+
+    template <typename T> requires SomeDerivedB2Shape<T>
     Result<T> GetShape(const Handle<B2Shape>& shapeHandle)
     {
         if (!IsValid())
@@ -105,26 +110,25 @@ public:
         {
             return MAKE_ERROR("ShapeId was invalid");
         }
-
-        auto it = shapeHandles_.find(shapeHandle);
-        if (it == shapeHandles_.end())
+        if (!OwnsShape(shapeHandle))
         {
             return MAKE_ERROR("ShapeId not found on body");
         }
-
-        if (!ShapeTypeMatches<T>(*it))
+        if (!ShapeTypeMatches<T>(shapeHandle))
         {
             return MAKE_ERROR("T::shapeType differs from held shape's type");
         }
         
-        return T{ *it };
+        return T{ shapeHandle };
     }
 
-    Result<Handle<B2Shape>> AddShape(const B2ShapeDefinition& shapeDef);
+    Result<B2Shape> AddShape(const B2ShapeDefinition& shapeDef);
 
-    template <typename T> requires IsDerivedShape<T>
-    Result<T> AddShape(const B2ShapeDefinition& shapeDef)
+ /*   template <typename T> requires SomeDerivedB2Shape<T>
+    Result<T> AddShape(B2ShapeDefinition& shapeDef)
     {
+        shapeDef.type = T::shapeType;
+
         if (GetShapeCount() >= kMaxShapesPerBody)
         {
             return MAKE_ERROR_FMT("Body cannot have more than {} shapes attached", kMaxShapesPerBody);
@@ -141,12 +145,30 @@ public:
         Handle<B2Shape> shapeHandle = HandleFactory<B2Shape>::GetHandle(shapeId);
 
         assert(shapeHandle.IsValid());
-        assert(shapeHandles_.insert(shapeHandle).second);
 
         return T{ shapeHandle };
-    }
+    }*/
+
+    std::unordered_set<Handle<B2Shape>> GetShapeHandles() const;
+
+    bool OwnsShape(const Handle<B2Shape>& shapeHandle) const;
 
 private:
+    static Result<b2ShapeId> AddCircle(b2BodyId bodyId, const B2ShapeDefinition& shapeDef)
+    {
+        auto& data = shapeDef.data;
+
+        if (!data.radius.has_value())
+        {
+            return MAKE_ERROR("shape type was circle but radius had no value");
+        }
+
+        b2Circle circle = B2ShapeFactory::MakeCircle(
+            data.localPosition.value_or(SDL_FPoint{0.0, 0.0}), *data.radius);
+
+        return b2CreateCircleShape(bodyId, &shapeDef.def, &circle);
+    }
+
     static Result<b2ShapeId> AddPolygon(b2BodyId bodyId, const B2ShapeDefinition& shapeDef)
     {
         if (shapeDef.data.dimensions.has_value())
@@ -211,5 +233,5 @@ private:
     }
 
     Handle<B2Body> bodyHandle_;
-    std::unordered_set<Handle<B2Shape>> shapeHandles_;
+    //std::unordered_set<Handle<B2Shape>> shapeHandles_;
 };

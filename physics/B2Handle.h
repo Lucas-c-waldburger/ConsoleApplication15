@@ -12,6 +12,14 @@ template <typename T>
 concept B2HandleAliasType = (std::same_as<T, B2Body> || std::same_as<T, B2Shape>);
 
 template <B2IdType T>
+inline constexpr bool operator==(const T& lhs, const T& rhs)
+{
+    return lhs.index1 == rhs.index1 &&
+           lhs.world0 == rhs.world0 &&
+           lhs.generation == rhs.generation;
+}
+
+template <B2IdType T>
 struct B2BodyShapeIdEq
 {
     bool operator()(const T& lhs, const T& rhs) const {
@@ -50,7 +58,8 @@ public:
     using B2IdType = b2BodyId;
 
     Handle() = default;
-    bool operator==(const Handle& rhs) const { return B2BodyShapeIdEq<b2BodyId>{}(bodyId_, rhs.bodyId_); }
+    bool operator==(const Handle& rhs) const { return bodyId_ == rhs.bodyId_; }
+    bool operator==(const b2BodyId& bodyId) const { return bodyId_ == bodyId; }
     size_t GetHash() const noexcept { return B2BodyShapeIdHash<b2BodyId>{}(bodyId_); }
     bool IsValid() const { return b2Body_IsValid(bodyId_); }
     operator const b2BodyId& () const { return bodyId_; }
@@ -79,7 +88,8 @@ public:
     using B2IdType = b2ShapeId;
 
     Handle() = default;
-    bool operator==(const Handle& rhs) const { return B2BodyShapeIdEq<b2ShapeId>{}(shapeId_, rhs.shapeId_); }
+    bool operator==(const Handle& rhs) const { return shapeId_ == rhs.shapeId_; }
+    bool operator==(const b2ShapeId& shapeId) const { return shapeId_ == shapeId; }
     size_t GetHash() const noexcept { return B2BodyShapeIdHash<b2ShapeId>{}(shapeId_); }
     bool IsValid() const { return b2Shape_IsValid(shapeId_); }
     operator const b2ShapeId& () const { return shapeId_; }
