@@ -61,6 +61,14 @@ inline constexpr P operator-(P lhs, P rhs)
         lhs.y - rhs.y
     };
 }
+template <SDLPointType P>
+inline constexpr P operator+(P lhs, P rhs)
+{
+    return P{
+        lhs.x + rhs.x,
+        lhs.y + rhs.y
+    };
+}
 
 // Scalar
 template <SDLPointType P, ArithmeticType T>
@@ -85,7 +93,7 @@ inline constexpr P operator*(P p, T t)
     };
 }
 
-// Mutating
+// Mutating Point on Point
 template <SDLPointType P>
 inline constexpr P& operator+=(P& lhs, P rhs)
 {
@@ -102,4 +110,23 @@ inline constexpr P& operator-=(P& lhs, P rhs)
     lhs.y -= rhs.y;
 
     return lhs;
+}
+
+// Mutating Scalar
+template <SDLPointType P, ArithmeticType T>
+inline constexpr P& operator*=(P& p, T scalar)
+{
+    using ValueType = std::remove_cvref_t<decltype(P::x)>;
+
+    p.x *= static_cast<ValueType>(scalar);
+    p.y *= static_cast<ValueType>(scalar);
+
+    return p;
+}
+
+// other
+template <SDLPointType P>
+inline constexpr P operator-(P p)
+{
+    return P{ -p.x, -p.y };
 }

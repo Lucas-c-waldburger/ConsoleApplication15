@@ -7,6 +7,7 @@ inline constexpr bool operator==(const b2WorldId& lhs, const b2WorldId& rhs)
     return lhs.generation == rhs.generation && lhs.index1 == rhs.index1;
 }
 
+// TODO: have timestep/substepCount be member vars
 class B2World
 {
 public:

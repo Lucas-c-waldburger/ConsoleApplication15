@@ -7,9 +7,8 @@
 class PhysicsSystem
 {
 public:
-	void Update(float timeStep, int subStepCount);
+	void Update(B2World* world_, float timeStep, int subStepCount);
 
 private:
-	B2World* world_ = nullptr;
 };
 

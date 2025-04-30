@@ -113,7 +113,7 @@ void RenderGlyphsAligned<Alignment::Center>(const RenderSystem::RenderGlyphsArgs
 	}
 }
 
-std::vector<SDL_FPoint> GetCirclePerimeterPoints(SDL_FPoint center, float radius)
+std::vector<SDL_FPoint> MakeCirclePerimeterPoints(SDL_FPoint center, float radius)
 {
 	std::vector<SDL_FPoint> points;
 	points.reserve(8 * static_cast<int>(radius));
@@ -182,9 +182,11 @@ SDL_Rect MakeTransformedRect(const Transform& transform, Dimensions<int> dimensi
 
 Result<Void> DrawB2ColliderShape(SDL_Renderer* renderer, const Collider& collider)
 {
+	assert(collider.shape.IsValid());
+
 	switch (collider.shape.GetShapeType())
 	{
-	case B2Shape::Type::Polygon:
+	case B2Shape::Type::Polygon: 
 	{
 		auto polyShape = collider.shape.GetAs<B2PolygonShape>();
 
@@ -201,14 +203,14 @@ Result<Void> DrawB2ColliderShape(SDL_Renderer* renderer, const Collider& collide
 		SDL_FPoint center = circleShape.GetCenter();
 		float radius = circleShape.GetRadius();
 
-		auto points = GetCirclePerimeterPoints(center, radius);
+		auto points = MakeCirclePerimeterPoints(center, radius);
 
 		SDL_RenderDrawPointsF(renderer, points.data(), points.size());
 
 		break;
 	}
 
-	default:
+	case B2Shape::Type::Invalid: default:
 		return MAKE_ERROR("Unsupported B2ShapeType");
 	}
 
@@ -219,11 +221,11 @@ Result<Void> DrawB2ColliderShape(SDL_Renderer* renderer, const Collider& collide
 
 void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasStore)
 {
-	auto entities = ECS::GetAllEntitiesWith<Transform, Renderable>();
+	auto entities = ECS::GetAllEntitiesWith<Renderable, Transform>();
 
 	std::sort(entities.begin(), entities.end(), [](const Entity& lhs, const Entity& rhs) {
 		return lhs.GetComponent<Renderable>().drawOrder <
-			rhs.GetComponent<Renderable>().drawOrder;
+			   rhs.GetComponent<Renderable>().drawOrder;
 		});
 
 	for (auto& entity : entities)
@@ -334,7 +336,7 @@ void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasS
 
 		else
 		{
-			LOG_ERROR("Logic error: renderable type not recognized");
+			LOG_ERROR("Renderable type not recognized");
 		}
 	}
 }

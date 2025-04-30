@@ -146,9 +146,9 @@ namespace SDLite
 	public:
 		friend Status Start(WindowArgs);
 
-		void Clear()
+		void Clear(SDL_Color clearClr = { 0xFF, 0xFF, 0xFF, 0xFF })
 		{
-			SDL_SetRenderDrawColor(*this, 0xFF, 0xFF, 0xFF, 0xFF);
+			SDL_SetRenderDrawColor(*this, clearClr.r, clearClr.g, clearClr.b, clearClr.a);
 			SDL_RenderClear(*this);
 		}
 

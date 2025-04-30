@@ -5,6 +5,7 @@
 #include "../core/Result.h"
 #include "../core/HandleFactory.h"
 
+
 struct B2BodyDefinition
 {
     B2BodyDefinition() : bodyData(b2DefaultBodyDef()) {}
@@ -36,6 +37,8 @@ public:
 
     bool IsValid() const { return b2Body_IsValid(bodyHandle_); }
 
+    const Handle<B2Body>& GetHandle() const { return bodyHandle_; }
+
     Type GetBodyType() const { return static_cast<Type>(b2Body_GetType(bodyHandle_)); }
 
     void SetFixedRotation(bool fixed) { b2Body_SetFixedRotation(bodyHandle_, fixed); }
@@ -58,7 +61,11 @@ public:
         SetAwake(wakeState);
     }
 
-    SDL_FPoint GetVelocity() const { return ToSDLFPointScaled(b2Body_GetLinearVelocity(bodyHandle_)); }
+    SDL_FPoint GetLinearVelocity() const { return ToSDLFPoint(b2Body_GetLinearVelocity(bodyHandle_)); }
+    void SetLinearVelocity(SDL_FPoint newVel) { b2Body_SetLinearVelocity(bodyHandle_, ToB2Vec(newVel)); }
+
+    float GetAngularVelocity() const { return b2Body_GetAngularVelocity(bodyHandle_); }
+    void SetAngularVelocity(float newVel) { b2Body_SetAngularVelocity(bodyHandle_, newVel); }
 
     void ApplyForce(SDL_FPoint forceNewtons, std::optional<SDL_FPoint> worldPoint = {})
     {
@@ -124,114 +131,16 @@ public:
 
     Result<B2Shape> AddShape(const B2ShapeDefinition& shapeDef);
 
- /*   template <typename T> requires SomeDerivedB2Shape<T>
-    Result<T> AddShape(B2ShapeDefinition& shapeDef)
-    {
-        shapeDef.type = T::shapeType;
-
-        if (GetShapeCount() >= kMaxShapesPerBody)
-        {
-            return MAKE_ERROR_FMT("Body cannot have more than {} shapes attached", kMaxShapesPerBody);
-        }
-
-        b2ShapeId shapeId = b2_nullShapeId;
-
-        if constexpr (std::same_as<T, B2PolygonShape>)
-        {
-            TRY(AddPolygon(bodyHandle_, shapeDef), id);
-            shapeId = id;
-        }
-
-        Handle<B2Shape> shapeHandle = HandleFactory<B2Shape>::GetHandle(shapeId);
-
-        assert(shapeHandle.IsValid());
-
-        return T{ shapeHandle };
-    }*/
-
     std::unordered_set<Handle<B2Shape>> GetShapeHandles() const;
 
     bool OwnsShape(const Handle<B2Shape>& shapeHandle) const;
 
 private:
-    static Result<b2ShapeId> AddCircle(b2BodyId bodyId, const B2ShapeDefinition& shapeDef)
-    {
-        auto& data = shapeDef.data;
-
-        if (!data.radius.has_value())
-        {
-            return MAKE_ERROR("shape type was circle but radius had no value");
-        }
-
-        b2Circle circle = B2ShapeFactory::MakeCircle(
-            data.localPosition.value_or(SDL_FPoint{0.0, 0.0}), *data.radius);
-
-        return b2CreateCircleShape(bodyId, &shapeDef.def, &circle);
-    }
-
-    static Result<b2ShapeId> AddPolygon(b2BodyId bodyId, const B2ShapeDefinition& shapeDef)
-    {
-        if (shapeDef.data.dimensions.has_value())
-        {
-            return AddBox(bodyId, shapeDef);
-        }
-        
-        return AddPolygonImpl(bodyId, shapeDef);
-    }
-
-    static Result<b2ShapeId> AddBox(b2BodyId bodyId, const B2ShapeDefinition& shapeDef)
-    {
-        auto& data = shapeDef.data;
-
-        assert(data.dimensions.has_value());
-
-        b2Polygon poly;
-
-        if (data.localPosition.has_value() || data.localRotation.has_value())
-        {
-            poly = B2ShapeFactory::MakeOffsetBox(*data.dimensions,
-                data.localPosition.value_or(SDL_FPoint{ 0.0f, 0.0f }),
-                data.localRotation.value_or(0.0f)
-            );
-        }
-        else
-        {
-            poly = B2ShapeFactory::MakeBox(*data.dimensions);
-        }
-
-        return b2CreatePolygonShape(bodyId, &shapeDef.def, &poly);
-    }
-
-    static Result<b2ShapeId> AddPolygonImpl(b2BodyId bodyId, const B2ShapeDefinition& shapeDef)
-    {
-        auto& data = shapeDef.data;
-
-        if (!data.hull.has_value())
-        {
-            return MAKE_ERROR("shape type was polygon but hull had no value");
-        }
-
-        b2Polygon poly;
-
-        if (data.localPosition.has_value() || data.localRotation.has_value())
-        {
-            poly = B2ShapeFactory::MakeOffsetPolygon(*data.hull,
-                data.localPosition.value_or(SDL_FPoint{ 0.0f, 0.0f }),
-                data.localRotation.value_or(0.0f)
-            );
-        }
-        else if (data.radius.has_value())
-        {
-            poly = B2ShapeFactory::MakePolygon(*data.hull, *data.radius);
-        }
-        else
-        {
-            return MAKE_ERROR("shape type was polygon but had no radius OR had no offset data");
-        }
-
-        return b2CreatePolygonShape(bodyId, &shapeDef.def, &poly);
-    }
+    static Result<b2ShapeId> AddCircle(b2BodyId bodyId, const B2ShapeDefinition& shapeDef);
+    static Result<b2ShapeId> AddPolygon(b2BodyId bodyId, const B2ShapeDefinition& shapeDef);   
+    static Result<b2ShapeId> AddPolygonImpl(b2BodyId bodyId, const B2ShapeDefinition& shapeDef);
+    static Result<b2ShapeId> AddBox(b2BodyId bodyId, const B2ShapeDefinition& shapeDef);
 
     Handle<B2Body> bodyHandle_;
-    //std::unordered_set<Handle<B2Shape>> shapeHandles_;
 };
+

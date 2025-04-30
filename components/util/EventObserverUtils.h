@@ -41,3 +41,4 @@ inline Result<Void> SendEventNotification(T&& eventData, Sint32 code = 0)
 
 	return CustomEvents::FreeEvent<T>(newEv);
 }
+ 

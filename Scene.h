@@ -7,3 +7,9 @@ class B2Scene
 public:
 	static Result<Void> Run();
 };
+
+class SimplePhysicsScene
+{
+public:
+	static Result<Void> Run();
+};

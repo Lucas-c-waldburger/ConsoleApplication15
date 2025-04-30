@@ -124,6 +124,13 @@ public:
         return B2AABBToSDLFRect(aabb);
     }
 
+    bool IsPointInside(SDL_FPoint point) const
+    {
+        if (!IsValid()) { return false; }
+
+        return b2Shape_TestPoint(shapeHandle_, ToB2VecScaled(point));
+    }
+
     template <typename T>
     T GetAs() const;
 
@@ -154,29 +161,28 @@ concept SomeDerivedB2Shape = std::derived_from<T, B2Shape>&&
                              std::same_as<std::remove_cvref_t<decltype(T::shapeType)>, B2Shape::Type>;
 
 
+struct B2ShapeParameters
+{
+    B2Shape::Type shapeType = B2Shape::Type::Invalid;
+
+    std::optional<Dimensions<float>> dimensions;
+    std::optional<std::vector<SDL_FPoint>> hull;
+    std::optional<SDL_FPoint> localPosition;
+    std::optional<float> localRotation;
+    std::optional<float> radius;
+};
+
 struct B2ShapeDefinition
 {
-    struct Data
-    {
-        std::optional<Dimensions<float>> dimensions;
-        std::optional<std::vector<SDL_FPoint>> hull;
-        std::optional<SDL_FPoint> localPosition;
-        std::optional<float> localRotation;
-        std::optional<float> radius;
-    };
-
-    B2ShapeDefinition() : type(B2Shape::Type::Invalid), data(), def(b2DefaultShapeDef()) {}
-    B2Shape::Type type;
-    Data data;
-    b2ShapeDef def;
+    B2ShapeDefinition() : shapeParams(), shapeDef(b2DefaultShapeDef()) {}
+    B2ShapeParameters shapeParams;
+    b2ShapeDef shapeDef;
 };
 
 template <typename T> requires SomeDerivedB2Shape<T>
 inline bool ShapeTypeMatches(const Handle<B2Shape>& shapeHandle)
 {
-    B2Shape::Type castType = static_cast<B2Shape::Type>(b2Shape_GetType(shapeHandle));
-
-    return castType == T::shapeType;
+    return T::shapeType == static_cast<B2Shape::Type>(b2Shape_GetType(shapeHandle));
 }
 
 class B2PolygonShape : public B2Shape

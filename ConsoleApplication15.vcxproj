@@ -190,6 +190,10 @@
   <ItemGroup>
     <ClInclude Include="atlas\Atlas.h" />
     <ClInclude Include="atlas\AtlasManager.h" />
+    <ClInclude Include="components\builder\ColliderComponentBuilder.h" />
+    <ClInclude Include="components\builder\ComponentBuilder.h" />
+    <ClInclude Include="components\builder\RigidBodyComponentBuilder.h" />
+    <ClInclude Include="core\ReadOnly.h" />
     <ClInclude Include="physics\B2Body.h" />
     <ClInclude Include="physics\B2Shape.h" />
     <ClInclude Include="physics\B2Utils.h" />

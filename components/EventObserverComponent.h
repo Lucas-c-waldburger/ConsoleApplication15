@@ -9,7 +9,8 @@ struct EventObserver : public BaseComponent<EventObserver, 11>
 {
 	struct Callback
 	{
-		using Fn = ReturnSignal(*)(const SDL_Event&, Entity&);
+		//using Fn = ReturnSignal(*)(const SDL_Event&, Entity&);
+		using Fn = std::function<ReturnSignal(const SDL_Event&, Entity&)>;
 
 		Fn func = nullptr;
 		ReturnSignal status = ReturnSignal::Unknown;

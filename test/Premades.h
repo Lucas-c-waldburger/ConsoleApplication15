@@ -6,23 +6,53 @@
 #include "../sdl/SDLUtils.h"
 #include "../sdl/SDLite.h"
 #include "../systems/CollisionSystem.h"
+#include "../components/builder/RigidBodyComponentBuilder.h"
+#include "../components/builder/ColliderComponentBuilder.h"
 
-//static Entity MakeStaticColliderEntity(SDL_FRect rect, SDL_Color color = SDLite::kColorBlack, 
-//                                       uint8_t profile = (Collider::Solid | Collider::Static))
-//{
-//	Entity entity = ECS::CreateEntity();
-//	assert(entity.IsValid());
-//
-//	auto [pos, dims] = FromRect(rect);
-//
-//	auto& spatial = entity.AddComponent(Spatial{ .position = pos, .dimensions = dims });
-//	auto& collider = entity.AddComponent(Collider{ .position = pos, .dimensions = dims, .profile = profile });
-//
-//    Renderable::Geometry geo{ .color = color };
-//    auto& renderable = entity.AddComponent(Renderable{ .renderData = geo, .drawOrder = 1 });
-//
-//	return entity;
-//}
+static Result<Entity> MakeColliderBoxEntity(B2World& world, SDL_FPoint position, Dimensions<float> dimensions, 
+                                            B2Body::Type bodyType, const ColliderSettings& settings = {},
+                                            SDL_Color color = SDLite::kColorBlack)
+{
+    if (!world.IsValid())
+    {
+        return MAKE_ERROR("B2World was invalid");
+    }
+
+	Entity entity = ECS::CreateEntity();
+	assert(entity.IsValid());
+
+    entity.AddComponent(Transform{});
+
+    auto& rigidBody = entity.AddComponent(ComponentBuilder<RigidBody>{}.WithBodyParameters({
+        .bodyType = bodyType,
+        .position = position
+    }).Build(world));
+
+    auto bodyOc = world.GetBody(rigidBody.bodyHandle);
+    if (!bodyOc.Success())
+    {
+        entity.Destroy();
+        return bodyOc.GetError();
+    }
+    auto& body = bodyOc.GetValue();
+    assert(body.IsValid());
+    
+    entity.AddComponent(ComponentBuilder<Collider>{}
+        .WithShapeParameters({
+            .shapeType = B2Shape::Type::Polygon,
+            .dimensions = dimensions
+        })
+        .WithColliderSettings(settings)
+        .Build(body));
+
+    Renderable::Geometry geo{ .color = color };
+    entity.AddComponent(Renderable{  
+        .renderData = geo, 
+        .drawOrder = 0
+    });
+
+	return entity;
+}
 //
 //static Result<Void> InitSimpleEnvironment(CollisionSystem& collisionSystem,
 //                                          Dimensions<int> sceneDims = { SDLite::kWindowWidth, SDLite::kWindowHeight })

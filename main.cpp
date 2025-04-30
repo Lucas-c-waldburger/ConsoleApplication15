@@ -130,11 +130,11 @@ static void SetKnightControllerConnectedCallback(EventObserver& knightEvents)
 
 static void UpdateControllerForce(Entity& entity)
 {
-    assert((entity.HasComponents<RigidBody, GameControllerState>()));
+    //assert((entity.HasComponents<RigidBody, GameControllerState>()));
 
-    auto [rigidBody, controller] = entity.GetComponents<RigidBody, GameControllerState>();
+    //auto [rigidBody, controller] = entity.GetComponents<RigidBody, GameControllerState>();
 
-    const auto [leftX, leftY] = controller.axisInput.left.value;
+    //const auto [leftX, leftY] = controller.axisInput.left.value;
 
     //auto getNormedVal = [max = phys.forces.max](const auto xOrY) -> float {
     //    return (std::abs(xOrY) > GameController::kAxisDeadzone) ?
@@ -304,7 +304,7 @@ int main(int argc, char* argv[])
     */
 
 
-    ASSERT_RESULT(B2Scene::Run());
+    ASSERT_RESULT(SimplePhysicsScene::Run());
 
     return 0;
 }

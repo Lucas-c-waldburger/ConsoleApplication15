@@ -16,6 +16,7 @@ class GlyphAtlas;
 class RenderSystem 
 {
 public:
+	// TODO: Attach stores to render system via Scene
 	void Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasStore);
 	
 private:	

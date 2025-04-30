@@ -12,6 +12,30 @@ float GetLengthSquared(const SDL_FPoint& point)
 	return point.x * point.x + point.y * point.y;
 }
 
+void ClampVelocities(B2Body& body, const BodyLimits& limits)
+{
+	assert(body.IsValid());
+
+	SDL_FPoint linearVel = body.GetLinearVelocity();
+	SDL_FPoint maxLinear = limits.linearVelocity.max;
+	if (std::abs(linearVel.x) > maxLinear.x || std::abs(linearVel.y) > maxLinear.y)
+	{
+		linearVel.x = std::clamp(linearVel.x, -maxLinear.x, maxLinear.x);
+		linearVel.y = std::clamp(linearVel.y, -maxLinear.y, maxLinear.y);
+
+		body.SetLinearVelocity(linearVel);
+	}
+
+	float angularVel = body.GetAngularVelocity();
+	float maxAngular = limits.angularVelocity.max;
+	if (std::abs(angularVel) > maxAngular)
+	{
+		angularVel = std::clamp(angularVel, -maxAngular, maxAngular);
+
+		body.SetAngularVelocity(angularVel);
+	}
+}
+
 void ApplyForceRequestsImpl(B2Body& body, std::vector<Force>& forces, 
 							void (B2Body::*applyFn)(SDL_FPoint, std::optional<SDL_FPoint>))
 {
@@ -69,10 +93,12 @@ void UpdateForces(const B2World* world)
 		auto& body = bodyOc.GetValue();
 
 		ApplyForceRequests(body, rigidBody.forceRequests);
+
+		ClampVelocities(body, rigidBody.limits);
 	}
 }
 
-void UpdateTransformations(const B2World* world)
+void UpdateTransformComponents(const B2World* world)
 {
 	assert(world);
 
@@ -102,7 +128,7 @@ void UpdateTransformations(const B2World* world)
 
 } // unnamed namespace
 
-void PhysicsSystem::Update(float timeStep, int subStepCount)
+void PhysicsSystem::Update(B2World* world_, float timeStep, int subStepCount)
 {
 	if (!world_)
 	{
@@ -121,7 +147,7 @@ void PhysicsSystem::Update(float timeStep, int subStepCount)
 
 	LOG_IF_ERROR(DispatchCollisionEvents(world_));
 
-	UpdateTransformations(world_);
+	UpdateTransformComponents(world_);
 }
 
 

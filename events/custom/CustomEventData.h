@@ -12,6 +12,7 @@ struct CustomEventData;
 template <typename T>
 concept CustomEventDataType = std::derived_from<T, CustomEventData<T>>;
 
+// TODO: Don't need to have the typelist registration
 // registration impl
 namespace detail {
 

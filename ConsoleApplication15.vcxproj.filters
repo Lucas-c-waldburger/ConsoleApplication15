@@ -734,6 +734,18 @@
     <ClInclude Include="systems\System.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="components\builder\ComponentBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\builder\ColliderComponentBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\builder\RigidBodyComponentBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\ReadOnly.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_0.png">
