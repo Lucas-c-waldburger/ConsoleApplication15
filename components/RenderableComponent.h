@@ -8,6 +8,8 @@
 class GlyphAtlas;
 class SpriteSeriesAtlas;
 
+// TODO: make draw order layers (overlay, etc.)
+
 struct Renderable : BaseComponent<Renderable, 7>
 {
     struct Text

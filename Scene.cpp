@@ -7,11 +7,12 @@
 #include "test/Premades.h"
 #include "systems/RenderSystem.h"
 #include "systems/PhysicsSystem.h"
-#include "events/EventSystem.h"
+#include "systems/EventSystem.h"
 #include "events/custom/CustomEventDataRegistry.h"
 #include "events/custom/CustomEvents.h"
 #include "components/GameControllerStateComponent.h"
 #include "components/EventObserverComponent.h"
+#include "systems/CameraSystem.h"
 
 namespace {
     static constexpr const char* kFontPath =
@@ -169,6 +170,35 @@ namespace {
         }       
     }
 
+    //uint32_t GrabMoveRoutine(Entity& target, uint32_t lastBtnMask, bool& grabbingState)
+    //{
+    //    auto& shape = target.GetComponent<Collider>().shape;
+    //    assert(shape.IsValid());
+
+    //    int x, y;
+    //    uint32_t btnMask = SDL_GetMouseState(&x, &y);
+
+    //    SDL_FPoint mousePos = { static_cast<float>(x), static_cast<float>(y) };
+
+    //    bool clicked = (btnMask & SDL_BUTTON(1)) && ((lastBtnMask & SDL_BUTTON(1)) == 0);
+    //    bool held = (btnMask & SDL_BUTTON(1)) && (lastBtnMask & SDL_BUTTON(1));
+    //    bool released = ((btnMask & SDL_BUTTON(1)) == 0) && (lastBtnMask & SDL_BUTTON(1));
+
+    //    if (clicked)
+    //    {
+    //        if (!grabbingState && shape.IsPointInside(mousePos))
+    //        {
+    //            grabbingState = true;
+    //        }
+    //    }
+    //    else if (held)
+    //    {
+    //        if (grabbingState)
+    //        {
+    //        }
+    //    }
+    //}
+
 
 
     Entity MakeScoreboard(const Handle<GlyphAtlas>& atlas, 
@@ -226,7 +256,7 @@ namespace {
                 }
                 else
                 {
-                    currentScore = 0;
+                    //currentScore = 0;
                 }
 
                 textData->text = std::to_string(currentScore);
@@ -236,85 +266,85 @@ namespace {
     }
 }
 
-Result<Void> B2Scene::Run()
-{
-	Logger::StartSession();
-	SDLite::Start();
-
-    B2World world = B2World::Create(0, 9.8f);
-
-    TRY(AddGroundBody(world), groundBody);
-    TRY(AddDynamicBody(world), dynamicBody);
-    TRY(AddPolyToDynamicBody(dynamicBody), dynamicPolyShape);
-
-    float timeStep = 1.0f / 60.0f;
-    int subStepCount = 4;
-    
-    SDL_Event ev;
-    while (true)
-    {
-        SDL_FPoint forceNewtons = { 0.0 };
-
-        while (SDL_PollEvent(&ev))
-        {
-            if (ev.type == SDL_QUIT)
-            {
-                break;
-            }
-            if (ev.type == SDL_KEYDOWN)
-            {
-                switch (ev.key.keysym.sym) 
-                {
-                case SDLK_LEFT:
-                    forceNewtons.x -= 3.0f;
-                    break;
-                case SDLK_RIGHT:
-                    forceNewtons.x += 3.0f;
-                    break;
-                case SDLK_UP:
-                    forceNewtons.y -= 3.0f;
-                    break;
-                case SDLK_DOWN:
-                    forceNewtons.y += 3.0f;
-                    break;
-                default:
-                    break;
-                }
-            }
-        }
-
-        dynamicBody.ApplyLinearImpulse(forceNewtons, forceNewtons);
-
-        world.Step(timeStep, subStepCount);
-
-        SDL_FPoint dynamicPos = dynamicBody.GetPosition();
-        float dynamicAngle = dynamicBody.GetAngle();
-
-        LOG_INFO_FMT("position = [{:.2f}, {:.2f}], rotation = {:.2f}",
-            dynamicPos.x, dynamicPos.y, dynamicAngle);
-
-        SDLite::Renderer().Clear();
-
-        assert(dynamicPolyShape.GetShapeType() == B2Shape::Type::Polygon);
-        auto dynamicPolyVerts = dynamicPolyShape.GetAs<B2PolygonShape>().GetVertices();
-
-        auto origColor = GetRenderDrawColor(SDLite::Renderer());
-        SetRenderDrawColor(SDLite::Renderer(), SDLite::kColorBlack);
-
-        SDL_RenderDrawLinesF(SDLite::Renderer(), dynamicPolyVerts.data(), dynamicPolyVerts.size());
-
-        SetRenderDrawColor(SDLite::Renderer(), origColor);
-
-        SDLite::Renderer().Show();
-    }
-
-    world.Destroy();
-
-    Logger::EndSession();
-    SDLite::Exit();
-
-	return Void{};
-}
+//Result<Void> B2Scene::Run()
+//{
+//	Logger::StartSession();
+//	SDLite::Start();
+//
+//    B2World world = B2World::Create(0, 9.8f);
+//
+//    TRY(AddGroundBody(world), groundBody);
+//    TRY(AddDynamicBody(world), dynamicBody);
+//    TRY(AddPolyToDynamicBody(dynamicBody), dynamicPolyShape);
+//
+//    float timeStep = 1.0f / 60.0f;
+//    int subStepCount = 4;
+//    
+//    SDL_Event ev;
+//    while (true)
+//    {
+//        SDL_FPoint forceNewtons = { 0.0 };
+//
+//        while (SDL_PollEvent(&ev))
+//        {
+//            if (ev.type == SDL_QUIT)
+//            {
+//                break;
+//            }
+//            if (ev.type == SDL_KEYDOWN)
+//            {
+//                switch (ev.key.keysym.sym) 
+//                {
+//                case SDLK_LEFT:
+//                    forceNewtons.x -= 3.0f;
+//                    break;
+//                case SDLK_RIGHT:
+//                    forceNewtons.x += 3.0f;
+//                    break;
+//                case SDLK_UP:
+//                    forceNewtons.y -= 3.0f;
+//                    break;
+//                case SDLK_DOWN:
+//                    forceNewtons.y += 3.0f;
+//                    break;
+//                default:
+//                    break;
+//                }
+//            }
+//        }
+//
+//        dynamicBody.ApplyLinearImpulse(forceNewtons, forceNewtons);
+//
+//        world.Step(timeStep, subStepCount);
+//
+//        SDL_FPoint dynamicPos = dynamicBody.GetPosition();
+//        float dynamicAngle = dynamicBody.GetAngle();
+//
+//        LOG_INFO_FMT("position = [{:.2f}, {:.2f}], rotation = {:.2f}",
+//            dynamicPos.x, dynamicPos.y, dynamicAngle);
+//
+//        SDLite::Renderer().Clear();
+//
+//        assert(dynamicPolyShape.GetShapeType() == B2Shape::Type::Polygon);
+//        auto dynamicPolyVerts = dynamicPolyShape.GetAs<B2PolygonShape>().GetVertices();
+//
+//        auto origColor = GetRenderDrawColor(SDLite::Renderer());
+//        SetRenderDrawColor(SDLite::Renderer(), SDLite::kColorBlack);
+//
+//        SDL_RenderDrawLinesF(SDLite::Renderer(), dynamicPolyVerts.data(), dynamicPolyVerts.size());
+//
+//        SetRenderDrawColor(SDLite::Renderer(), origColor);
+//
+//        SDLite::Renderer().Show();
+//    }
+//
+//    world.Destroy();
+//
+//    Logger::EndSession();
+//    SDLite::Exit();
+//
+//	return Void{};
+//}
 
 Result<Void> SimplePhysicsScene::Run()
 {
@@ -324,9 +354,14 @@ Result<Void> SimplePhysicsScene::Run()
 
     B2World world = B2World::Create(0, 9.8f);
 
-    RenderSystem renderSys{};
+    RenderSystem renderSys{}; 
     PhysicsSystem physicsSys{};
     EventSystem eventSys{};
+
+    Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
+                                   static_cast<float>(SDLite::kWindowHeight) };
+    CameraSystem cameraSys{ cameraVp };
+    cameraSys.GetCamera().SetPosition(kScreenCenterPosition);
 
     impl::AtlasStore store{};
     TRY(store.LoadAtlas(SDLite::Renderer(), GlyphAtlas::AtlasInfo{
@@ -364,6 +399,8 @@ Result<Void> SimplePhysicsScene::Run()
     auto scoreboard = MakeScoreboard(glyphAtlasHandle, player, ball, groundEntity);
     assert(scoreboard.IsValid());
 
+    cameraSys.SetCameraTarget(player);
+
     float timeStep = 1.0f / 60.0f;
     int subStepCount = 4;
 
@@ -383,9 +420,11 @@ Result<Void> SimplePhysicsScene::Run()
 
         world.Step(timeStep, subStepCount);
 
+        cameraSys.Update(GetDeltaTime());
+
         SDLite::Renderer().Clear(SDLite::kColorBlack);
 
-        renderSys.Update(SDLite::Renderer(), store);
+        renderSys.Update(SDLite::Renderer(), cameraSys.GetCamera(), store);
 
         SDLite::Renderer().Show();
     }

@@ -1,6 +1,5 @@
 #include "PhysicsSystem.h"
 #include "../ecs/Ecs.h"
-#include "util/QuadTree.h"
 #include "../sdl/SDLUtils.h"
 #include "CollisionSystem.h"
 #include <algorithm>

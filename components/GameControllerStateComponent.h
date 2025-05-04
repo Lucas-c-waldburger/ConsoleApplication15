@@ -3,15 +3,13 @@
 #include <array>
 #include "BaseComponent.h"
 #include "../core/commonObjects.h"
-#include "../inputs/GameController.h"
-#include "../inputs/GameControllerInputStates.h"
+#include "../inputs/controller/GameController.h"
+#include "../inputs/InputData.h"
 
 // TODO: figure out what to do with State enum
 struct GameControllerState : public BaseComponent<GameControllerState, 9>
 {
-    enum State : uint8_t { None, Pressed, Released, Held };
-
     SDL_JoystickID joystickID = GameController::kInvalidJoystickID;
-    HandedPair<AxisInputState> axisInput = {};
-    std::array<ButtonInputState, SDL_CONTROLLER_BUTTON_MAX> buttonInput = {};
+    HandedPair<AxisInputData> axisInput = {};
+    std::array<ButtonInputData, SDL_CONTROLLER_BUTTON_MAX> buttonInput = {};
 };

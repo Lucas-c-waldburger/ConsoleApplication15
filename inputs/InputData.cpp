@@ -1,6 +1,6 @@
-#include "GameControllerInputStates.h"
+#include "InputData.h"
 
-std::ostream& operator<<(std::ostream& os, const AxisInputState& inp)
+std::ostream& operator<<(std::ostream& os, const AxisInputData& inp)
 {
 	os << "XY: { " << inp.value.x << ", " << inp.value.y << " }\nTimestamp: "
 		<< inp.timestamp << "\nState: " << inp.state << "\nStateDuration: "
@@ -8,7 +8,7 @@ std::ostream& operator<<(std::ostream& os, const AxisInputState& inp)
 
 	return os;
 }
-std::ostream& operator<<(std::ostream& os, const ButtonInputState& inp)
+std::ostream& operator<<(std::ostream& os, const ButtonInputData& inp)
 {
 	os << "Button: " << SDL_GameControllerGetStringForButton(inp.button) << "\nTimestamp: "
 		<< inp.timestamp << "\nState: " << inp.state << "\nStateDuration: "

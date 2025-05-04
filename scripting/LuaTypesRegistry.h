@@ -128,14 +128,6 @@ template <> static void RegisterLuaUserType<SDL_GameControllerButton>(sol::state
 //		"acceleration", &Physics::acceleration, "mass", &Physics::mass, 
 //		"drag", &Physics::drag, "gravity", &Physics::gravity, "forces", &Physics::forces);
 //}
-template <> static void RegisterLuaUserType<Spatial>(sol::state& lua)
-{
-	try {
-		lua.new_usertype<Spatial>("Spatial",
-			"position", &Spatial::position,
-			"dimensions", &Spatial::dimensions);
-	} catch (sol::error& e) { std::cout << e.what() << '\n'; }
-}
 //template <> static void RegisterLuaUserType<Transform>(sol::state& lua)
 //{
 //	lua.new_usertype<Transform>("Transform", "scale", &Transform::scale,
@@ -157,22 +149,22 @@ template <> static void RegisterLuaUserType<Children>(sol::state& lua)
 }
 
 // GAME CONTROLLER
-template <> static void RegisterLuaUserType<AxisInputState>(sol::state& lua)
+template <> static void RegisterLuaUserType<AxisInputData>(sol::state& lua)
 {
-	lua.new_usertype<AxisInputState>("AxisInputState", 
-		"value", &AxisInputState::value, "timestamp", &AxisInputState::timestamp, 
-		"state", &AxisInputState::state, "stateDuration", &AxisInputState ::stateDuration);
+	lua.new_usertype<AxisInputData>("AxisInputState", 
+		"value", &AxisInputData::value, "timestamp", &AxisInputData::timestamp, 
+		"state", &AxisInputData::state, "stateDuration", &AxisInputData ::stateDuration);
 }
-template <> static void RegisterLuaUserType<ButtonInputState>(sol::state& lua)
+template <> static void RegisterLuaUserType<ButtonInputData>(sol::state& lua)
 {
-	lua.new_usertype<ButtonInputState>("ButtonInputState", 
-		"button", &ButtonInputState::button, "timestamp", &ButtonInputState::timestamp,
-		"state", &ButtonInputState::state, "stateDuration", &ButtonInputState::stateDuration);
+	lua.new_usertype<ButtonInputData>("ButtonInputState", 
+		"button", &ButtonInputData::button, "timestamp", &ButtonInputData::timestamp,
+		"state", &ButtonInputData::state, "stateDuration", &ButtonInputData::stateDuration);
 }
-template <> static void RegisterLuaUserType<HandedPair<AxisInputState>>(sol::state& lua)
+template <> static void RegisterLuaUserType<HandedPair<AxisInputData>>(sol::state& lua)
 {
-	lua.new_usertype<HandedPair<AxisInputState>>("HandedPair<AxisInputState>", 
-		"left", &HandedPair<AxisInputState>::left, "right", &HandedPair<AxisInputState>::right);
+	lua.new_usertype<HandedPair<AxisInputData>>("HandedPair<AxisInputState>", 
+		"left", &HandedPair<AxisInputData>::left, "right", &HandedPair<AxisInputData>::right);
 }
 template <> static void RegisterLuaUserType<GameControllerState>(sol::state& lua)
 {

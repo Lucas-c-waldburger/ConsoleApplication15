@@ -1,6 +1,6 @@
 #pragma once
 #include <SDL.h>
-#include "../core/Result.h"
+#include "../../core/Result.h"
 
 class GameController
 {

@@ -2,6 +2,7 @@
 #pragma warning(disable: 4067) // will bitch at us for no newline eof
 
 #include "ActiveStateComponent.h";
+#include "CameraTargetComponent.h"
 #include "ColliderComponent.h"
 #include "EventObserverComponent.h"
 #include "GameControllerStateComponent.h"
@@ -9,12 +10,12 @@
 #include "RelationComponents.h"
 #include "RenderableComponent.h"
 #include "ScriptComponent.h"
-#include "SpatialComponent.h"
+#include "MouseStateComponent.h"
 #include "TagsComponent.h"
 #include "TransformComponent.h"
 
 #define COMPONENT_REGISTRY \
-    Spatial, \
+    MouseState, \
     Transform, \
     RigidBody, \
     Parent, \
@@ -24,5 +25,7 @@
     Collider, \
     GameControllerState, \
     Script, \
-    EventObserver
+    EventObserver, \
+    CameraTarget
+
 

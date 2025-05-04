@@ -2,22 +2,19 @@
 #include "../sdl/SDLUtils.h"
 #include "../core/Result.h"
 #include "../atlas/AtlasManager.h"
+#include "System.h"
 #include <span>
 #include <numeric>
 #include <typeindex>
 
-//namespace impl {
-//class atlasStore;
-//}
-
 class GlyphAtlas;
+class Camera;
 
-
-class RenderSystem 
+class RenderSystem : public System
 {
 public:
 	// TODO: Attach stores to render system via Scene
-	void Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasStore);
+	void Update(SDL_Renderer* renderer, const Camera& camera, const impl::AtlasStore& atlasStore);
 	
 private:	
 	struct RenderGlyphsArgs

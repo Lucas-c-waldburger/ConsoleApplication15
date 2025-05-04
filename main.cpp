@@ -9,7 +9,7 @@
 #include "scripting/ScriptManager.h"
 #include "core/Monitoring.h"
 #include "core/Hooks.h"
-#include "events/EventSystem.h"
+#include "systems/EventSystem.h"
 #include "ecs/ECS.h"
 #include "atlas/AtlasManager.h" 
 #include "systems/PhysicsSystem.h"
@@ -46,23 +46,23 @@ static SpriteSeriesAtlas::AtlasInfo MakeKnightAtlasInfo()
     return knightAtlasInfo;
 }
 
-static ScriptInstance MakeComponentEditScript(Spatial& spatial, Transform& tf)
-{
-    ScriptInstance instance{};
-
-    instance.scriptInfo = { 
-        .name = "component test", 
-        .scriptType = ScriptType::File, 
-        .path = "resources\\scripts\\test.lua" 
-    };
-
-    instance.setupFn = [&spatial, &tf](Lua& lua) {
-        lua["spatial"] = &spatial;
-        lua["transform"] = &tf;
-    };
-
-    return instance;
-}
+//static ScriptInstance MakeComponentEditScript(Spatial& spatial, Transform& tf)
+//{
+//    ScriptInstance instance{};
+//
+//    instance.scriptInfo = { 
+//        .name = "component test", 
+//        .scriptType = ScriptType::File, 
+//        .path = "resources\\scripts\\test.lua" 
+//    };
+//
+//    instance.setupFn = [&spatial, &tf](Lua& lua) {
+//        lua["spatial"] = &spatial;
+//        lua["transform"] = &tf;
+//    };
+//
+//    return instance;
+//}
 
 static void InitGameControllerInputTest(ScriptManager& scriptManager)
 {
@@ -84,9 +84,9 @@ static void InitGameControllerInputTest(ScriptManager& scriptManager)
     scriptManager.RegisterScript<
         SDL_FPoint,
         SDL_GameControllerButton,
-        HandedPair<AxisInputState>,
-        AxisInputState,
-        ButtonInputState,
+        HandedPair<AxisInputData>,
+        AxisInputData,
+        ButtonInputData,
         GameControllerState>(std::move(instance));
 }
 

@@ -1,26 +1,8 @@
 #pragma once
 #include "../sdl/SDLUtils.h"
 #include "commonObjects.h"
-#include "../components/SpatialComponent.h"
 #include "../components/TransformComponent.h"
 #include "../components/ColliderComponent.h"
-
-// Spatial-relevant components <-> Rects
-template <SDLRectType Rect>
-static constexpr Rect ToRect(const Spatial& spatial, const Transform& tf)
-{
-	float scaledW = spatial.dimensions.w * tf.scale.x;
-	float scaledH = spatial.dimensions.h * tf.scale.y;
-
-	using ValueType = std::remove_cvref_t<decltype(Rect::x)>;
-
-	return Rect{
-		static_cast<ValueType>(spatial.position.x - (scaledW / 2.0f)),
-		static_cast<ValueType>(spatial.position.y - (scaledH / 2.0f)),
-		static_cast<ValueType>(scaledW),
-		static_cast<ValueType>(scaledH)
-	};
-}
 
 template <SDLRectType Rect>
 static constexpr Rect ToRect(const SDL_FPoint p, const Dimensions<float> dims, float scale)

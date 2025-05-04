@@ -1,6 +1,7 @@
-#include "GameControllerEvents.h"
-#include "../components/util/EventObserverUtils.h"
-#include "../events/custom/CustomEventDataRegistry.h"
+#include "GameControllerEventHandler.h"
+#include "../../inputs/InputState.h"
+#include "../../components/util/EventObserverUtils.h"
+#include "../../events/custom/CustomEventDataRegistry.h"
 #include <cassert>
 
 GameControllerEventHandler::~GameControllerEventHandler()
@@ -59,7 +60,7 @@ void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev)
 
 void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
 {
-	auto getAffectedAxisSide = [](auto axisType, auto& axisInputPair) -> AxisInputState& {
+	auto getAffectedAxisSide = [](auto axisType, auto& axisInputPair) -> AxisInputData& {
 		auto& [left, right] = axisInputPair;
 		return (axisType == SDL_CONTROLLER_AXIS_LEFTX ||
 				axisType == SDL_CONTROLLER_AXIS_LEFTY) ? left : right;
@@ -91,17 +92,17 @@ void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
 
 		xOrY = static_cast<float>(ev.caxis.value);
 
-		bool markAsHeld = (lastInputSide.state == GameControllerState::Pressed ||
-						   lastInputSide.state == GameControllerState::Held);
+		bool markAsHeld = (lastInputSide.state == InputState::Pressed ||
+						   lastInputSide.state == InputState::Held);
 		if (markAsHeld)
 		{
-			lastInputSide.state = GameControllerState::Held;
+			lastInputSide.state = InputState::Held;
 			lastInputSide.stateDuration = lastInputSide.stateDuration +
 				(ev.caxis.timestamp - lastInputSide.timestamp);
 		}
 		else
 		{
-			lastInputSide.state = GameControllerState::Pressed;
+			lastInputSide.state = InputState::Pressed;
 			lastInputSide.stateDuration = 0;
 		}
 
@@ -122,7 +123,7 @@ void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
 			return;
 		}
 
-		ButtonInputState newButtonInput{};
+		ButtonInputData newButtonInput{};
 		newButtonInput.button = static_cast<SDL_GameControllerButton>(ev.cbutton.button);
 		newButtonInput.timestamp = ev.cbutton.timestamp;
 
@@ -130,8 +131,8 @@ void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
 		auto& lastButtonInput = inputCache.cachedControllerState.buttonInput[ev.cbutton.button];
 
 
-		newButtonInput.state = (ev.type == SDL_CONTROLLERBUTTONUP) ? GameControllerState::Released :
-			GameControllerState::Pressed;
+		newButtonInput.state = (ev.type == SDL_CONTROLLERBUTTONUP) ? InputState::Released :
+																	 InputState::Pressed;
 		newButtonInput.stateDuration = 0;
 
 		lastButtonInput = std::move(newButtonInput);

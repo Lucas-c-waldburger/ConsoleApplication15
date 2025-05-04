@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "HandleFactory.h"
 
+// TODO : make this non-singleton
 class HookPoint
 {
 public:

@@ -1,8 +1,10 @@
 #pragma once
-#include "../inputs/GameControllerEvents.h"
-#include "EventBuffer.h"
+#include "../events/handler/GameControllerEventHandler.h"
+#include "../events/handler/MouseEventHandler.h"
+#include "../events/EventBuffer.h"
+#include "System.h"
 
-class EventSystem
+class EventSystem : public System
 {
 public:
 	bool Poll(SDL_Event& ev);

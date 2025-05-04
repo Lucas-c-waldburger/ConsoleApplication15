@@ -3,6 +3,7 @@
 #include "../ecs/Ecs.h"
 #include "../atlas/GlyphAtlas.h"
 #include "../physics/B2Shape.h"
+#include "../camera/Camera.h"
 //#include "../atlas/AtlasManager.h"
 //#include "../components/RenderableComponent.h"
 
@@ -36,7 +37,7 @@ void RenderGlyphsAligned<Alignment::Left>(const RenderSystem::RenderGlyphsArgs& 
 									  static_cast<int>(glyph.atlasRect.h * args.scale.y) };
 
 		SDL_RenderCopy(args.renderer, args.glyphAtlas->GetAtlasTexture(),
-			&glyph.atlasRect, &dest);
+					   &glyph.atlasRect, &dest);
 
 		xPos += static_cast<int>(glyph.advance * args.scale.x);
 	}
@@ -180,9 +181,40 @@ SDL_Rect MakeTransformedRect(const Transform& transform, Dimensions<int> dimensi
 	return MakeTransformedRect(transform, dimensions.w, dimensions.h);
 }
 
-Result<Void> DrawB2ColliderShape(SDL_Renderer* renderer, const Collider& collider)
+SDL_Rect MakeScreenRect(const Camera& camera, const Transform& transform, int w, int h)
+{
+	SDL_Point screenPos = camera.WorldToScreen<SDL_Point>(transform.position);
+
+	float scaledW = w * transform.scale.x;
+	float scaledH = h * transform.scale.y;
+
+	return SDL_Rect{
+		static_cast<int>(screenPos.x - (scaledW / 2.0f)),
+		static_cast<int>(screenPos.y - (scaledH / 2.0f)),
+		static_cast<int>(scaledW),
+		static_cast<int>(scaledH)
+	};
+}
+
+SDL_Rect MakeScreenRect(const Camera& camera, const Transform& transform, Dimensions<int> dimensions)
+{
+	return MakeScreenRect(camera, transform, dimensions.w, dimensions.h);
+}
+
+//void DrawIfVisible(const Camera& camera, const std::vector<SDL_FPoint>& points, 
+//				   int(*drawFn)(SDL_Renderer*, const SDL_FPoint*, int))
+//{
+//
+//}
+
+Result<Void> DrawB2ColliderShape(const Camera& camera, SDL_Renderer* renderer, const Collider& collider)
 {
 	assert(collider.shape.IsValid());
+
+	auto viewport = camera.GetViewport();
+
+	auto toScreen = [&camera](const auto& p) { return camera.WorldToScreen<SDL_FPoint>(p); };
+	auto pointInViewport = [&viewport](const auto& p) { return viewport.PointInsideBoundingBox(p); };
 
 	switch (collider.shape.GetShapeType())
 	{
@@ -192,7 +224,12 @@ Result<Void> DrawB2ColliderShape(SDL_Renderer* renderer, const Collider& collide
 
 		auto verts = polyShape.GetVertices();
 
-		SDL_RenderDrawLinesF(renderer, verts.data(), verts.size());
+		std::transform(verts.begin(), verts.end(), verts.begin(), toScreen);
+		
+		if (std::any_of(verts.begin(), verts.end(), pointInViewport))
+		{
+			SDL_RenderDrawLinesF(renderer, verts.data(), verts.size());
+		}
 
 		break;
 	}
@@ -205,7 +242,12 @@ Result<Void> DrawB2ColliderShape(SDL_Renderer* renderer, const Collider& collide
 
 		auto points = MakeCirclePerimeterPoints(center, radius);
 
-		SDL_RenderDrawPointsF(renderer, points.data(), points.size());
+		std::transform(points.begin(), points.end(), points.begin(), toScreen);
+
+		//if (std::any_of(points.begin(), points.end(), pointInViewport))
+		//{
+			SDL_RenderDrawPointsF(renderer, points.data(), points.size());
+		//}
 
 		break;
 	}
@@ -219,7 +261,7 @@ Result<Void> DrawB2ColliderShape(SDL_Renderer* renderer, const Collider& collide
 
 } // unnamed namespace
 
-void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasStore)
+void RenderSystem::Update(SDL_Renderer* renderer, const Camera& camera, const impl::AtlasStore& atlasStore)
 {
 	auto entities = ECS::GetAllEntitiesWith<Renderable, Transform>();
 
@@ -252,12 +294,19 @@ void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasS
 				continue;
 			}
 
-			SDL_Rect renderRect = MakeTransformedRect(transform, srcRect.w, srcRect.h);
+			//SDL_Rect renderRect = MakeTransformedRect(transform, srcRect.w, srcRect.h);
+			SDL_Rect renderRect = MakeScreenRect(camera, transform, srcRect.w, srcRect.h);
+
+			if (!camera.GetViewport().IntersectsBoundingBox(renderRect))
+			{
+				continue;
+			}
 
 			SDL_RenderCopyEx(renderer, spriteAtlas->GetAtlasTexture(), &srcRect,
 							 &renderRect, transform.rotation, nullptr, renderable.flip);
 		}
 
+		// TODO : support non-overlay text that can move in world with camera
 		else if (auto textData = std::get_if<Renderable::Text>(&renderable.renderData))
 		{
 			if (textData->text.empty()) { continue; }
@@ -283,6 +332,7 @@ void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasS
 			};
 
 			SDL_Rect renderRect = MakeTransformedRect(transform, textData->desiredDimensions);
+			//SDL_Rect renderRect = MakeScreenRect(camera, transform, textData->desiredDimensions);
 
 			if (textData->scaleToFit)
 			{
@@ -329,7 +379,7 @@ void RenderSystem::Update(SDL_Renderer* renderer, const impl::AtlasStore& atlasS
 			auto origColor = GetRenderDrawColor(renderer);
 			SetRenderDrawColor(renderer, geometryData->color);
 
-			LOG_IF_ERROR(DrawB2ColliderShape(renderer, collider));
+			LOG_IF_ERROR(DrawB2ColliderShape(camera, renderer, collider));
 
 			SetRenderDrawColor(renderer, origColor);
 		}

@@ -1,6 +1,5 @@
 #include "GameController.h"
 
-
 Result<SDL_JoystickID> GameController::Connect(Sint32 deviceIndex)
 {
 	return ConnectImpl(deviceIndex);

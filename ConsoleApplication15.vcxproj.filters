@@ -57,16 +57,16 @@
     <ClCompile Include="core\Monitoring.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="inputs\GameController.cpp">
+    <ClCompile Include="inputs\controller\GameController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="inputs\GameControllerEvents.cpp">
+    <ClCompile Include="events\handler\GameControllerEventHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="core\Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="events\EventSystem.cpp">
+    <ClCompile Include="systems\EventSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="events\EventBuffer.cpp">
@@ -87,25 +87,13 @@
     <ClCompile Include="scripting\Lua.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="systems\util\QuadTree.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="systems\util\SpatialHashGrid.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Camera.cpp">
+    <ClCompile Include="camera\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="components\util\EventObserverUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\Fixtures.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="inputs\GameControllerInputStates.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="components\util\GameControllerStateUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\ComponentTests.cpp">
@@ -126,9 +114,6 @@
     <ClCompile Include="systems\CollisionSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="physics\Box.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="physics\B2Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -142,6 +127,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="inputs\mouse\Mouse.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="events\handler\MouseEventHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="inputs\mouse\MouseCursor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="inputs\InputData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\CameraSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -566,10 +566,10 @@
     <ClInclude Include="components\ComponentRegistry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inputs\GameController.h">
+    <ClInclude Include="inputs\controller\GameController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inputs\GameControllerEvents.h">
+    <ClInclude Include="events\handler\GameControllerEventHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="events\EventBuffer.h">
@@ -581,7 +581,7 @@
     <ClInclude Include="core\TerminalUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\EventSystem.h">
+    <ClInclude Include="systems\EventSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="atlas\AtlasManager.h">
@@ -597,9 +597,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scripting\ScriptInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inputs\GameControllerInputStates.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inputs\InputDataCache.h">
@@ -626,7 +623,7 @@
     <ClInclude Include="components\GameControllerStateComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\SpatialComponent.h">
+    <ClInclude Include="components\MouseStateComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\RelationComponents.h">
@@ -644,13 +641,7 @@
     <ClInclude Include="components\ActiveStateComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="systems\util\QuadTree.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="systems\util\SpatialHashGrid.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
+    <ClInclude Include="camera\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\EventObserverComponent.h">
@@ -675,9 +666,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\Conversions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="components\util\GameControllerStateUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\ComponentTests.h">
@@ -705,9 +693,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="physics\Box.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="physics\B2Handle.h">
@@ -744,6 +729,36 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\ReadOnly.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\mouse\Mouse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\InputState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\InputData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\handler\MouseEventHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\mouse\MouseCursor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\ShiftedIndexArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\CameraTargetComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\builder\CameraTargetComponentBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="camera\Projection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\CameraSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

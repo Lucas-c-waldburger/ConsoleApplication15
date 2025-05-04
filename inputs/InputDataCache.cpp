@@ -1,4 +1,5 @@
 #include "InputDataCache.h"
+#include "InputState.h"
 
 // TODO : Set axis state to NONE if no motion event this frame & axis values < kDeadzone
 void InputDataCache::UpdateSkippedInputs()
@@ -8,15 +9,15 @@ void InputDataCache::UpdateSkippedInputs()
 	auto updateFromLastState = [now](auto& inputData) {
 		switch (inputData.state)
 		{
-		case GameControllerState::Pressed:
-		case GameControllerState::Held:
-			inputData.state = GameControllerState::Held;
+		case InputState::Pressed:
+		case InputState::Held:
+			inputData.state = InputState::Held;
 			break;
 
-		case GameControllerState::Released:
-		case GameControllerState::None:
+		case InputState::Released:
+		case InputState::None:
 		default:
-			inputData.state = GameControllerState::None;
+			inputData.state = InputState::None;
 			break;
 		}
 

@@ -35,6 +35,13 @@ public:
         return os;
     }
 
+    static Handle Create()
+    {
+        return Handle{ idCount++, genCount };
+    }
+
+    static const Handle kInvalid;
+
 private:
     static inline int idCount = 0;
     static inline int genCount = 0;
@@ -44,6 +51,9 @@ private:
     int id_ = -1;
     int gen_ = -1;
 };
+
+template <typename T>
+const Handle<T> Handle<T>::kInvalid{};
 
 namespace std {
     template <typename T>

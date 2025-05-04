@@ -1,7 +1,6 @@
 #pragma once
-#include "GameController.h"
-#include "GameControllerInputStates.h"
-#include "InputDataCache.h"
+#include "../../inputs/controller/GameController.h"
+#include "../../inputs/InputDataCache.h"
 #include <unordered_map>
 #include <set>
 
@@ -17,9 +16,6 @@ public:
 
 private:
 	std::unordered_map<SDL_JoystickID, std::pair<GameController, InputDataCache>> activeControllers_;
-	AxisInputState tracking_{};
+	AxisInputData tracking_{};
 };
 
-std::ostream& operator<<(std::ostream& os, const GameControllerState::State& st);
-std::ostream& operator<<(std::ostream& os, const AxisInputState& inp);
-std::ostream& operator<<(std::ostream& os, const ButtonInputState& inp);
