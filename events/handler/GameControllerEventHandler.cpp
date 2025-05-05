@@ -47,9 +47,13 @@ void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev)
 		assert(activeControllers_.contains(ev.cdevice.which));
 
 		auto& deadController = activeControllers_[ev.cdevice.which].first;
+		auto deadJoystickId = deadController.GetJoystickID();
+
 		deadController.Disconnect();
 
 		activeControllers_.erase(ev.cdevice.which);
+
+		LOG_IF_ERROR(SendEventNotification(GameControllerDisconnected{ .joystickID = deadJoystickId }));
 
 		break;
 	}

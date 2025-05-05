@@ -13,6 +13,7 @@
 #include "components/GameControllerStateComponent.h"
 #include "components/EventObserverComponent.h"
 #include "systems/CameraSystem.h"
+#include "core/Hooks.h"
 
 namespace {
     static constexpr const char* kFontPath =
@@ -47,6 +48,7 @@ namespace {
     static constexpr Dimensions<float> kDynamicSquareDimensions = {
         60.0f, 60.0f
     };
+    static constexpr float kDynamicCircleRadius = 30.0f;
 
     static constexpr float kMaxImpulseValue = 8.0f;
     static constexpr float kImpuseScale = kMaxImpulseValue / static_cast<float>(GameController::kAxisMax);
@@ -130,6 +132,52 @@ namespace {
         return ReturnSignal::Pause;
     };
 
+    ReturnSignal InvalidateEntityJoystickIDAndListenForNewConnection(const SDL_Event& ev, Entity& ent)
+    {
+        assert(ev.type == GameControllerDisconnected::GetEventType());
+
+        if (!ent.IsValid())
+        {
+            LOG_WARNING("Entity was invalid");
+            return ReturnSignal::StopObserving;
+        }
+        if (!ent.HasComponent<GameControllerState>())
+        {
+            LOG_WARNING("Entity did not have GameControllerState component");
+            return ReturnSignal::StopObserving;
+        }
+
+        // 1. mark entity's joystickID as invalid in its controller state
+        const auto* disconnectEv = CustomEvents::GetEventData<GameControllerDisconnected>(ev);
+        assert(disconnectEv);
+
+        auto& controllerState = ent.GetComponent<GameControllerState>();
+        if (controllerState.joystickID != disconnectEv->joystickID)
+        {
+            LOG_DEBUG("Entity's connected controller different from the one that was disconnected");
+            return ReturnSignal::KeepObserving;
+        }
+
+        controllerState.joystickID = GameController::kInvalidJoystickID;
+
+        LOG_DEBUG("Set entity's controller state joystickID to invalid");
+
+        // 2. unpause listening for new controller connection
+        assert(ent.HasComponent<EventObserver>());
+        auto& entityEvents = ent.GetComponent<EventObserver>();
+       
+        auto connectEvIt = entityEvents.eventCallbacks.find(GameControllerConnected::GetEventType());
+
+        assert(connectEvIt != entityEvents.eventCallbacks.end());
+        assert(connectEvIt->second.status == ReturnSignal::Pause);
+
+        connectEvIt->second.status = ReturnSignal::KeepObserving;
+
+        LOG_DEBUG("Listening for a new connection on this entity...");
+
+        return ReturnSignal::KeepObserving;
+    }
+
     bool AxisOutsideDeadzone(SDL_FPoint axisValue)
     {
         return (std::abs(axisValue.x) > GameController::kAxisDeadzone ||
@@ -144,7 +192,7 @@ namespace {
         auto [controller, rigidBody] = entity.GetComponents<GameControllerState, RigidBody>();
         if (controller.joystickID == GameController::kInvalidJoystickID)
         {
-            LOG_WARNING("Entity joystick ID was invalid");
+            LOG_WARNING("Entity joystick ID was invalid - No Impuse applied!");
             return;
         }
 
@@ -170,36 +218,28 @@ namespace {
         }       
     }
 
-    //uint32_t GrabMoveRoutine(Entity& target, uint32_t lastBtnMask, bool& grabbingState)
-    //{
-    //    auto& shape = target.GetComponent<Collider>().shape;
-    //    assert(shape.IsValid());
+    Entity MakeFPSCounterEntity(const Handle<GlyphAtlas>& atlas)
+    {
+        auto fpsCounter = ECS::CreateEntity();
+        assert(fpsCounter.IsValid());
 
-    //    int x, y;
-    //    uint32_t btnMask = SDL_GetMouseState(&x, &y);
+        Renderable::Text textData{
+            .sourceAtlas = atlas,
+                .text = "FPS: ",
+                .desiredDimensions = { 100, 100 },
+                .align = Renderable::Text::Alignment::Left,
+                .scaleToFit = true
+        };
+        fpsCounter.AddComponent(Renderable{
+            .renderData = std::move(textData),
+            .drawOrder = 10
+        });
+        fpsCounter.AddComponent(Transform{
+            .position = { 75.0f, 25.0f }
+        });
 
-    //    SDL_FPoint mousePos = { static_cast<float>(x), static_cast<float>(y) };
-
-    //    bool clicked = (btnMask & SDL_BUTTON(1)) && ((lastBtnMask & SDL_BUTTON(1)) == 0);
-    //    bool held = (btnMask & SDL_BUTTON(1)) && (lastBtnMask & SDL_BUTTON(1));
-    //    bool released = ((btnMask & SDL_BUTTON(1)) == 0) && (lastBtnMask & SDL_BUTTON(1));
-
-    //    if (clicked)
-    //    {
-    //        if (!grabbingState && shape.IsPointInside(mousePos))
-    //        {
-    //            grabbingState = true;
-    //        }
-    //    }
-    //    else if (held)
-    //    {
-    //        if (grabbingState)
-    //        {
-    //        }
-    //    }
-    //}
-
-
+        return fpsCounter;
+    }
 
     Entity MakeScoreboard(const Handle<GlyphAtlas>& atlas, 
         const Entity& player, const Entity& ball, const Entity& ground)
@@ -217,7 +257,7 @@ namespace {
             .drawOrder = 0
         });
         entity.AddComponent(Transform{
-            .position = { SDLite::kWindowWidth / 2.0f, 150.0f }
+            .position = { SDLite::kWindowWidth / 2.0f, 150.0f }         
         });
 
         auto& evObserver = entity.AddComponent(EventObserver{});
@@ -363,6 +403,8 @@ Result<Void> SimplePhysicsScene::Run()
     CameraSystem cameraSys{ cameraVp };
     cameraSys.GetCamera().SetPosition(kScreenCenterPosition);
 
+    HookManager hooks{};
+
     impl::AtlasStore store{};
     TRY(store.LoadAtlas(SDLite::Renderer(), GlyphAtlas::AtlasInfo{
         .fontPath = kFontPath, 
@@ -389,15 +431,52 @@ Result<Void> SimplePhysicsScene::Run()
 
     player.AddComponent(GameControllerState{});
 
-    auto& evObserver = player.AddComponent(EventObserver{});
-    evObserver.eventCallbacks[GameControllerConnected::GetEventType()].func = &ConnectToFirstController;
+    auto& playerEvents = player.AddComponent(EventObserver{});
+    playerEvents.eventCallbacks[GameControllerConnected::GetEventType()].func = 
+        &ConnectToFirstController;
+    playerEvents.eventCallbacks[GameControllerDisconnected::GetEventType()].func = 
+        &InvalidateEntityJoystickIDAndListenForNewConnection;
 
-    TRY(MakeColliderBoxEntity(world, kScreenCenterPosition + SDL_FPoint{ 100.0f, 0.0f }, kDynamicSquareDimensions,
+    TRY(MakeColliderCircleEntity(world, kScreenCenterPosition + SDL_FPoint{ 100.0f, 0.0f }, kDynamicCircleRadius,
         B2Body::Type::Dynamic, { .restitution = 0.9f, .enableEvents{ .contact = true } }, SDLite::kColorOrange),
     ball);
 
+    // scoreboard
     auto scoreboard = MakeScoreboard(glyphAtlasHandle, player, ball, groundEntity);
     assert(scoreboard.IsValid());
+
+    // fps counter
+    auto fpsCounter = MakeFPSCounterEntity(glyphAtlasHandle);
+
+    Uint32 lastTime = SDL_GetTicks(); 
+    int frameCount = 0;
+
+    hooks.Attach(HookPoint::LoopStart, [&lastTime, &frameCount, entId = fpsCounter.GetID()]() 
+    {
+        frameCount++;
+
+        Uint32 currentTime = SDL_GetTicks();
+        if (currentTime - lastTime < 1000)  // Update every 1000 ms = 1 second
+        {
+            return ReturnSignal::KeepObserving;
+        }
+
+        float fps = frameCount * 1000.0f / (currentTime - lastTime);
+        frameCount = 0;
+        lastTime = currentTime;
+        
+        auto fpsEnt = ECS::GetEntityByID(entId);
+        assert(fpsEnt.IsValid());
+        assert(fpsEnt.HasComponent<Renderable>());
+
+        auto& renderable = fpsEnt.GetComponent<Renderable>();
+        auto textData = std::get_if<Renderable::Text>(&renderable.renderData);
+        assert(textData);
+
+        textData->text = "FPS: " + std::to_string(fps);
+
+        return ReturnSignal::KeepObserving;
+    });
 
     cameraSys.SetCameraTarget(player);
 
@@ -407,6 +486,8 @@ Result<Void> SimplePhysicsScene::Run()
     SDL_Event ev;
     while (true)
     {
+        hooks.SetHookPoint<HookPoint::LoopStart>();
+
         if (!eventSys.Poll(ev))
         {
             break;

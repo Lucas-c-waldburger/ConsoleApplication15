@@ -11,7 +11,7 @@ class Entity;
 class ScriptFixture
 {
 public:
-	static constexpr std::string_view kVsCodePathFmt = 
+	/*static constexpr std::string_view kVsCodePathFmt = 
 		R"(C:\Users\Lucas\AppData\Local\Programs\Microsoft VS Code\Code.exe\ {})";
 	static constexpr std::string_view kScriptsPathFmt = R"(resources\scripts\{})";
 
@@ -42,7 +42,7 @@ private:
 	FileChangeMonitor fileMonitor_;
 	std::string scriptName_;
 	HookPoint::Identifier hookPointIdent_;
-	Handle<HookPoint::Attachment> attachmentHandle_;
+	Handle<HookPoint::Attachment> attachmentHandle_;*/
 };
 
 

@@ -59,37 +59,37 @@
 	return fixture;*/
 //}
 
-void ScriptFixture::GetInstance::RunOnFileChange(ScriptFixture& fixture)
-{
-	if (fixture.fileMonitor_.FileDidChange())
-	{
-		LOG_IF_ERROR(fixture.lua_.Run());
-	}
-}
-
-void ScriptFixture::TearDown()
-{
-	Hooks::Detach(hookPointIdent_, attachmentHandle_); 
-}
-
-void ScriptFixture::OpenInVsCode(std::string_view scriptName)
-{
-	namespace fs = std::filesystem;
-
-	std::string scriptPath = std::format(kScriptsPathFmt, scriptName);
-
-	fs::path source = __FILE__;
-	auto base = source.parent_path().parent_path();
-	base /= scriptPath;
-
-	//std::string scriptPath = std::format(kScriptsPathFmt, scriptName);
-	if (!fs::exists(base))
-	{
-		LOG_WARNING_FMT("No script with name '{}' found inside scripts directory", scriptName);
-		return;
-	}
-
-	std::string command = std::format(kVsCodePathFmt, base.string());
-
-	system(command.c_str());
-}
+//void ScriptFixture::GetInstance::RunOnFileChange(ScriptFixture& fixture)
+//{
+//	if (fixture.fileMonitor_.FileDidChange())
+//	{
+//		LOG_IF_ERROR(fixture.lua_.Run());
+//	}
+//}
+//
+//void ScriptFixture::TearDown()
+//{
+//	Hooks::Detach(hookPointIdent_, attachmentHandle_); 
+//}
+//
+//void ScriptFixture::OpenInVsCode(std::string_view scriptName)
+//{
+//	namespace fs = std::filesystem;
+//
+//	std::string scriptPath = std::format(kScriptsPathFmt, scriptName);
+//
+//	fs::path source = __FILE__;
+//	auto base = source.parent_path().parent_path();
+//	base /= scriptPath;
+//
+//	//std::string scriptPath = std::format(kScriptsPathFmt, scriptName);
+//	if (!fs::exists(base))
+//	{
+//		LOG_WARNING_FMT("No script with name '{}' found inside scripts directory", scriptName);
+//		return;
+//	}
+//
+//	std::string command = std::format(kVsCodePathFmt, base.string());
+//
+//	system(command.c_str());
+//}

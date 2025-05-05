@@ -4,6 +4,7 @@
 
 #define CUSTOM_EVENT_DATA_REGISTRY \
 	GameControllerConnected, \
+	GameControllerDisconnected, \
 	EntityCollision::ContactBegin, \
 	EntityCollision::ContactEnd, \
 	EntityCollision::SensorBegin, \

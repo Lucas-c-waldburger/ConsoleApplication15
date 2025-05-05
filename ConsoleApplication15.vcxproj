@@ -149,6 +149,7 @@
     <ClCompile Include="inputs\mouse\MouseCursor.cpp" />
     <ClCompile Include="events\handler\MouseEventHandler.cpp" />
     <ClCompile Include="physics\B2Body.cpp" />
+    <ClCompile Include="physics\B2Joint.cpp" />
     <ClCompile Include="physics\B2Shape.cpp" />
     <ClCompile Include="physics\B2Utils.cpp" />
     <ClCompile Include="physics\B2World.cpp" />
@@ -160,6 +161,7 @@
     <ClCompile Include="events\EventBuffer.cpp" />
     <ClCompile Include="core\Logger.cpp" />
     <ClCompile Include="ecs\EntityRetrieval.cpp" />
+    <ClCompile Include="render\RenderContext.cpp" />
     <ClCompile Include="systems\CameraSystem.cpp" />
     <ClCompile Include="systems\EventSystem.cpp" />
     <ClCompile Include="atlas\GlyphAtlas.cpp" />
@@ -196,6 +198,7 @@
     <ClInclude Include="components\builder\ComponentBuilder.h" />
     <ClInclude Include="components\builder\RigidBodyComponentBuilder.h" />
     <ClInclude Include="components\CameraTargetComponent.h" />
+    <ClInclude Include="core\Algorithms.h" />
     <ClInclude Include="core\ReadOnly.h" />
     <ClInclude Include="core\ShiftedIndexArray.h" />
     <ClInclude Include="inputs\InputData.h" />
@@ -204,6 +207,7 @@
     <ClInclude Include="inputs\mouse\MouseCursor.h" />
     <ClInclude Include="events\handler\MouseEventHandler.h" />
     <ClInclude Include="physics\B2Body.h" />
+    <ClInclude Include="physics\B2Joint.h" />
     <ClInclude Include="physics\B2Shape.h" />
     <ClInclude Include="physics\B2Utils.h" />
     <ClInclude Include="physics\B2World.h" />
@@ -362,6 +366,7 @@
     <ClInclude Include="ecs\EntityManager.h" />
     <ClInclude Include="ecs\EntityRelationships.h" />
     <ClInclude Include="ecs\EntityRetrieval.h" />
+    <ClInclude Include="render\RenderContext.h" />
     <ClInclude Include="systems\CameraSystem.h" />
     <ClInclude Include="systems\EventSystem.h" />
     <ClInclude Include="atlas\GlyphAtlas.h" />

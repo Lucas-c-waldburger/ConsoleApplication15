@@ -18,7 +18,7 @@ public:
 
     bool IsValid() const
     {
-        return id_ == idCount && gen_ == genCount;
+        return id_ <= idCount && gen_ == genCount;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Handle<T>& handle)

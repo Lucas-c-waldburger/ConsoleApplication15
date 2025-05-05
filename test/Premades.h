@@ -53,6 +53,52 @@ static Result<Entity> MakeColliderBoxEntity(B2World& world, SDL_FPoint position,
 
 	return entity;
 }
+
+static Result<Entity> MakeColliderCircleEntity(B2World& world, SDL_FPoint position, float radius,
+                                               B2Body::Type bodyType, const ColliderSettings& settings = {},
+                                               SDL_Color color = SDLite::kColorBlack)
+{
+    if (!world.IsValid())
+    {
+        return MAKE_ERROR("B2World was invalid");
+    }
+
+    Entity entity = ECS::CreateEntity();
+    assert(entity.IsValid());
+
+    entity.AddComponent(Transform{});
+
+    auto& rigidBody = entity.AddComponent(ComponentBuilder<RigidBody>{}
+    .WithBodyParameters({
+        .bodyType = bodyType,
+        .position = position
+    }).Build(world));
+
+    auto bodyOc = world.GetBody(rigidBody.bodyHandle);
+    if (!bodyOc.Success())
+    {
+        entity.Destroy();
+        return bodyOc.GetError();
+    }
+    auto& body = bodyOc.GetValue();
+    assert(body.IsValid());
+
+    entity.AddComponent(ComponentBuilder<Collider>{}
+    .WithShapeParameters({
+        .shapeType = B2Shape::Type::Circle,
+        .radius = radius
+    })
+    .WithColliderSettings(settings)
+    .Build(body));
+
+    Renderable::Geometry geo{.color = color };
+    entity.AddComponent(Renderable{
+        .renderData = geo,
+        .drawOrder = 0
+    });
+
+    return entity;
+}
 //
 //static Result<Void> InitSimpleEnvironment(CollisionSystem& collisionSystem,
 //                                          Dimensions<int> sceneDims = { SDLite::kWindowWidth, SDLite::kWindowHeight })

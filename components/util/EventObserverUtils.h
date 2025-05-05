@@ -32,6 +32,16 @@ inline Result<Void> SendEventNotification(T&& eventData, Sint32 code = 0)
 		auto& events = entity.GetComponent<EventObserver>();
 		auto& [func, status] = events.eventCallbacks[T::GetEventType()];
 
+		// TODO: should skip or erase on a null callback?
+		if (!func)
+		{
+			continue;
+		}
+		if (status == ReturnSignal::Pause)
+		{
+			continue;
+		}
+
 		status = func(newEv, entity);
 		if (status == ReturnSignal::StopObserving)
 		{

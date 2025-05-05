@@ -24,22 +24,7 @@ public:
 		bool IntersectsBoundingBox(T rect) const noexcept { return RectsIntersect(boundingBox_, rect); }
 
 		template <SDLPointType T>
-		bool PointInsideBoundingBox(T p, Dimensions<float> buffer = { 0.0f, 0.0f }) const noexcept 
-		{
-			if (buffer.w != 0.0f || buffer.h != 0.0f)
-			{
-				SDL_FRect bufferedBox = {
-					boundingBox_.x - (buffer.w / 2.0f),
-					boundingBox_.y - (buffer.h / 2.0f),
-					boundingBox_.w + buffer.w,
-					boundingBox_.h + buffer.h
-				};
-
-				return PointInsideRect(bufferedBox, p);
-			}
-
-			return PointInsideRect(boundingBox_, p); 
-		}
+		bool PointInsideBoundingBox(T p) const noexcept { return PointInsideRect(boundingBox_, p); }
 
 	private:
 		Dimensions<float> size_;
@@ -88,6 +73,12 @@ public:
 		return Projection::WorldToScreen<T>(pointOrRect, worldPosition_, viewportSize_, 
 										    zoomScale_, rotationDegrees_);
 	}
+	//template <SDLRectType T = SDL_FRect, typename U = T>
+	//T WorldToScreen(U pointOrRect) const
+	//{
+	//	return Projection::WorldToScreen<T>(pointOrRect, worldPosition_, viewportSize_,
+	//		zoomScale_, rotationDegrees_);
+	//}
 
 	template <typename T, typename U = T>
 	T ScreenToWorld(U pointOrRect) const

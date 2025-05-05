@@ -42,5 +42,6 @@ struct Renderable : BaseComponent<Renderable, 7>
 
     std::variant<Text, Sprite, Geometry> renderData;
     int drawOrder = -1;
+    uint8_t opacity = 255;
     SDL_RendererFlip flip = SDL_FLIP_NONE;
 };

@@ -6,8 +6,6 @@ bool EventSystem::Poll(SDL_Event& ev)
 {
 	while (SDL_PollEvent(&ev))
 	{
-		//Hooks::SetHookPoint(HookPoint::SDLEventLoop);
-
 		if (ev.type == SDL_QUIT)
 		{
 			return false;
@@ -23,8 +21,6 @@ void EventSystem::DistributeEvents()
 {
 	while (!eventBuffer_.Empty())
 	{
-		//Hooks::SetHookPoint(HookPoint::EventBufferLoop);
-
 		auto ev = eventBuffer_.Pop();
 
 		switch (ev.type)
