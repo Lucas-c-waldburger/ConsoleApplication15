@@ -150,6 +150,15 @@
     <ClCompile Include="physics\B2Joint.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="physics\B2RayCast.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="components\util\TagsComponentUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="components\helper\GameControllerStateComponentHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -774,6 +783,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="physics\B2Joint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="physics\B2RayCast.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\util\TagsComponentUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\helper\ComponentHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\helper\GameControllerStateComponentHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

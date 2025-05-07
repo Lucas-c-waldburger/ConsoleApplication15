@@ -24,8 +24,22 @@ public:
 
 	bool IsValid() const { return jointHandle_.IsValid(); }
 
+	void Destroy() 
+	{ 
+		b2DestroyJoint(jointHandle_);
+		jointHandle_ = {};
+	}
+
 	Handle<B2Body> GetBodyHandleA() const { return Handle<B2Body>::Create(b2Joint_GetBodyA(jointHandle_)); }
 	Handle<B2Body> GetBodyHandleB() const { return Handle<B2Body>::Create(b2Joint_GetBodyB(jointHandle_)); }
+
+	std::pair<SDL_FPoint, SDL_FPoint> GetEndPoints() const
+	{
+		return std::make_pair(
+			ToSDLFPointScaled(b2Body_GetPosition(GetBodyHandleA())),
+			ToSDLFPointScaled(b2Body_GetPosition(GetBodyHandleB()))
+		);
+	}
 
 	template <typename T>
 	T GetAs();
@@ -47,9 +61,9 @@ inline bool JointTypeMatches(const Handle<B2Joint>& jointHandle)
 	return T::jointType == static_cast<B2Joint::Type>(b2Joint_GetType(jointHandle));
 }
 
-template <SomeDerivedB2Joint T>
-struct B2JointDefinition;
-
+//template <SomeDerivedB2Joint T>
+//struct B2JointDefinition;
+ 
 
 class B2DistanceJoint : public B2Joint
 {
@@ -96,16 +110,119 @@ public:
 	float GetMaxMotorForce() const { return b2DistanceJoint_GetMaxMotorForce(jointHandle_); }
 	void SetMaxMotorForce(float newForce) { b2DistanceJoint_SetMaxMotorForce(jointHandle_, newForce); }
 
-
-
 private:
 };
 
+template <SomeDerivedB2Joint T>
+struct B2JointParams;
+
 template <>
-struct B2JointDefinition<B2DistanceJoint>
+struct B2JointParams<B2DistanceJoint>
 {
-	B2JointDefinition() : jointDef(b2DefaultDistanceJointDef()) {}
-	b2DistanceJointDef jointDef;
+	struct
+	{
+		std::optional<float> rest;
+		std::optional<float> min;
+		std::optional<float> max;
+	} length;
+
+	struct
+	{
+		SDL_FPoint a = { 0.0f, 0.0f };
+		SDL_FPoint b = { 0.0f, 0.0f };
+	} localAnchor;
+
+	struct 
+	{
+		bool enable = false;
+		std::optional<float> hertz;
+		std::optional<float> dampingRatio;
+		std::optional<bool> limit;
+	} spring;
+
+	struct
+	{
+		bool enable = false;
+		std::optional<float> maxForce;
+		std::optional<float> speed;
+	} motor;
+
+	bool collideConnected = false;
+};
+
+class B2JointFactory
+{
+public:
+	static B2DistanceJoint MakeDistanceJoint(const Handle<B2Body>& bodyA, const Handle<B2Body>& bodyB,
+											 const B2JointParams<B2DistanceJoint>& params)
+	{
+		if (!(bodyA.IsValid() && bodyB.IsValid()))
+		{
+			return {};
+		}
+
+		b2WorldId bodyAWorld = b2Body_GetWorld(bodyA);
+		b2WorldId bodyBWorld = b2Body_GetWorld(bodyB);
+
+		if (!(b2World_IsValid(bodyAWorld) && b2World_IsValid(bodyBWorld)) || bodyAWorld != bodyBWorld)
+		{
+			return {};
+		}
+
+		b2DistanceJointDef def = b2DefaultDistanceJointDef();
+
+		def.bodyIdA = bodyA;
+		def.bodyIdB = bodyB;
+
+		const auto& len = params.length;
+		if (!len.rest.has_value())
+		{
+			def.length = b2Distance(b2Body_GetPosition(bodyA), b2Body_GetPosition(bodyB));
+		}
+		else
+		{
+			def.length = *len.rest;
+		}
+
+		auto trySet = [](const auto& op, auto& defMember) -> void {
+			if (op.has_value()) { defMember = *op; }
+		};
+		auto anyHaveValue = [](const auto&...ops) -> bool {
+			return (ops.has_value() || ...);
+		};
+
+		trySet(len.min, def.minLength);
+		trySet(len.max, def.maxLength);
+
+		def.localAnchorA = ToB2VecScaled(params.localAnchor.a);
+		def.localAnchorB = ToB2VecScaled(params.localAnchor.b);
+
+		const auto& spring = params.spring;
+		if (spring.enable || anyHaveValue(spring.hertz, spring.dampingRatio, spring.limit))
+		{
+			def.enableSpring = true;
+			trySet(spring.hertz, def.hertz);
+			trySet(spring.dampingRatio, def.dampingRatio);
+			trySet(spring.limit, def.enableLimit);
+		}
+
+		const auto& motor = params.motor;
+		if (motor.enable || anyHaveValue(motor.maxForce, motor.speed))
+		{
+			def.enableMotor = true;
+			trySet(motor.maxForce, def.maxMotorForce);
+			trySet(motor.speed, def.motorSpeed);
+		}
+
+		def.collideConnected = params.collideConnected;
+		
+		auto handle = Handle<B2Joint>::Create(b2CreateDistanceJoint(bodyAWorld, &def));
+
+		return B2DistanceJoint{ handle };
+	}
+
+private:
+	B2JointFactory() = default;
 };
 
 

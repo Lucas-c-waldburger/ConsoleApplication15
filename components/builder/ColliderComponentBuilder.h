@@ -63,7 +63,10 @@ public:
             return {};
         }
 
-        return Collider{ .shape = std::move(result.GetValue()) };
+        Collider collider{};
+        collider.shape = std::move(result.GetValue());
+
+        return collider;
     }
 
 private:

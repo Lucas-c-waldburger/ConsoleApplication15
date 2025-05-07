@@ -28,7 +28,7 @@ static Result<Entity> MakeColliderBoxEntity(B2World& world, SDL_FPoint position,
         .position = position
     }).Build(world));
 
-    auto bodyOc = world.GetBody(rigidBody.bodyHandle);
+    auto bodyOc = world.GetBody(rigidBody.body.GetData().GetHandle());
     if (!bodyOc.Success())
     {
         entity.Destroy();
@@ -74,7 +74,7 @@ static Result<Entity> MakeColliderCircleEntity(B2World& world, SDL_FPoint positi
         .position = position
     }).Build(world));
 
-    auto bodyOc = world.GetBody(rigidBody.bodyHandle);
+    auto bodyOc = world.GetBody(rigidBody.body.GetData().GetHandle());
     if (!bodyOc.Success())
     {
         entity.Destroy();

@@ -4,6 +4,7 @@
 #include <optional>
 #include "BaseComponent.h"
 #include "../physics/B2Body.h"
+#include "../core/ReadOnly.h"
 
 static constexpr float kDrag = 0.89f;
 static constexpr float kGravity = 9.81f;
@@ -34,7 +35,7 @@ struct BodyLimits
 
 struct RigidBody : BaseComponent<RigidBody, 3>
 {
-    Handle<B2Body> bodyHandle;
+    ReadOnly<B2Body> body;
     BodyLimits limits;
     ForceRequests forceRequests; 
 };

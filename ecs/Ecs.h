@@ -1,6 +1,7 @@
 #pragma once
 #include "EntityManager.h"
 #include "EntityRelationships.h"
+#include "../core/TypeUtils.h"
 #include <cassert>
 #include <functional>
 
@@ -203,7 +204,15 @@ private:
                 continue;
             }
 
-            if (!(filter && std::invoke(filter, componentManager_.GetComponent<Ts>(ent)...)))
+            if constexpr (HasBooleanNotOperator<Filter>)
+            {
+                if (!filter)
+                {
+                    continue;
+                }
+            }
+
+            if (!std::invoke(filter, componentManager_.GetComponent<Ts>(ent)...))
             {
                 continue;
             }

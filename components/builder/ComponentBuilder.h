@@ -4,7 +4,6 @@
 template <ComponentType T>
 class ComponentBuilder;
 
-
 namespace detail {
 
 template <typename T>

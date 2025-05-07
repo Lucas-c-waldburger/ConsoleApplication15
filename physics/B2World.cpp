@@ -49,6 +49,38 @@ void B2World::SetGravity(float newX, float newY)
     return b2World_SetGravity(worldId_, newGrav);
 }
 
+const B2RayCastContext& B2World::CastRay(const B2Body& bodyA, const B2Body& bodyB)
+{
+    if (!(IsValid() && bodyA.IsValid() && bodyB.IsValid()))
+    {
+        rayCaster_.ClearContext();
+        return rayCaster_.GetContext();
+    }
+
+    return rayCaster_.CastRay(worldId_, bodyA.GetPosition(), bodyB.GetPosition(), 
+                              B2RayCastCallback::FindAllShapes);
+}
+
+B2RayCastResult B2World::CastRayClosest(const B2Body& bodyA, const B2Body& bodyB)
+{
+    if (!(IsValid() && bodyA.IsValid() && bodyB.IsValid()))
+    {
+        return {};
+    }
+
+    return rayCaster_.CastRayClosest(worldId_, bodyA.GetPosition(), bodyB.GetPosition());
+}
+
+B2RayCastResult B2World::CastRayToPoint(const B2Body& body, SDL_FPoint point)
+{
+    if (!(IsValid() && body.IsValid()))
+    {
+        return {};
+    }
+
+    return rayCaster_.CastRayClosest(worldId_, body.GetPosition(), point);
+}
+
 Result<B2Body> B2World::AddBody(const B2BodyDefinition& bodyDef)
 {
     if (!IsValid())

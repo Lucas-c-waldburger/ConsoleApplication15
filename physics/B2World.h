@@ -1,18 +1,12 @@
 #pragma once
 #include <SDL.h>
-#include "B2Body.h"
-
-inline constexpr bool operator==(const b2WorldId& lhs, const b2WorldId& rhs)
-{
-    return lhs.generation == rhs.generation && lhs.index1 == rhs.index1;
-}
+#include "B2RayCast.h"
 
 // TODO: have timestep/substepCount be member vars
 class B2World
 {
 public:
     static B2World Create(float gravX, float gravY);
-
     bool IsValid() const { return b2World_IsValid(worldId_); }
 
     void Destroy();
@@ -29,7 +23,14 @@ public:
 
     Result<B2Body> GetBody(const Handle<B2Body>& bodyHandle) const;
 
+    const B2RayCastContext& CastRay(const B2Body& bodyA, const B2Body& bodyB);
+
+    B2RayCastResult CastRayClosest(const B2Body& bodyA, const B2Body& bodyB);
+
+    B2RayCastResult CastRayToPoint(const B2Body& body, SDL_FPoint point);
+
 private:
     B2World() = default;
     b2WorldId worldId_ = b2_nullWorldId;
+    B2RayCaster rayCaster_;
 };

@@ -304,7 +304,7 @@ int main(int argc, char* argv[])
     */
 
 
-    ASSERT_RESULT(SimplePhysicsScene::Run());
+    ASSERT_RESULT(GrapplePhysicsScene::Run());
 
     return 0;
 }

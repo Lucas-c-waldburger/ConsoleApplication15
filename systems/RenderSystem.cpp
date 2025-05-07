@@ -225,22 +225,24 @@ SDL_Rect MakeScreenRect(const Camera& camera, const Transform& transform, Dimens
 
 Result<Void> DrawB2ColliderShape(const Camera& camera, SDL_Renderer* renderer, const Collider& collider)
 {
-	assert(collider.shape.IsValid());
+	const auto& shapeData = collider.shape.GetData();
+
+	assert(shapeData.IsValid());
 
 	// test visible
 	auto viewport = camera.GetViewport();
-	if (!viewport.IntersectsBoundingBox(collider.shape.GetBoundingBox()))
+	if (!viewport.IntersectsBoundingBox(collider.shape.GetData().GetBoundingBox()))
 	{
 		return Void{};
 	}
 
 	auto toScreen = [&camera](const auto& p) { return camera.WorldToScreen<SDL_FPoint>(p); };
 
-	switch (collider.shape.GetShapeType())
+	switch (shapeData.GetShapeType())
 	{
 	case B2Shape::Type::Polygon: 
 	{
-		auto polyShape = collider.shape.GetAs<B2PolygonShape>();
+		auto polyShape = shapeData.GetAs<B2PolygonShape>();
 
 		auto verts = polyShape.GetVertices();
 
@@ -252,7 +254,7 @@ Result<Void> DrawB2ColliderShape(const Camera& camera, SDL_Renderer* renderer, c
 	}
 	case B2Shape::Type::Circle:
 	{
-		auto circleShape = collider.shape.GetAs<B2CircleShape>();
+		auto circleShape = shapeData.GetAs<B2CircleShape>();
 
 		SDL_FPoint center = circleShape.GetCenter();
 		float radius = circleShape.GetRadius();
@@ -386,7 +388,7 @@ void RenderSystem::Update(SDL_Renderer* renderer, const Camera& camera, const im
 			}
 
 			auto& collider = entity.GetComponent<Collider>();
-			if (!collider.shape.IsValid())
+			if (!collider.shape.GetData().IsValid())
 			{
 				LOG_ERROR("Collider shape was invalid");
 				continue;

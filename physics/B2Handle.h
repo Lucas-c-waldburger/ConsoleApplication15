@@ -2,6 +2,11 @@
 #include <box2d/box2d.h>
 #include "../core/Handle.h"
 
+inline constexpr bool operator==(const b2WorldId& lhs, const b2WorldId& rhs)
+{
+    return lhs.generation == rhs.generation && lhs.index1 == rhs.index1;
+}
+
 class B2Shape;
 class B2Body;
 class B2Joint;

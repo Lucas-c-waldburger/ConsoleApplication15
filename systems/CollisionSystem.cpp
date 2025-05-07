@@ -40,52 +40,6 @@ std::pair<Handle<B2Shape>, Handle<B2Shape>> GetShapeHandles(T* b2Ev)
 	}
 }
 
-// TestComponents<T...>(bool(*)(const Ts&...))
- 
-// returns this entity id, its parent's id, or invalid id 
-Entity_t GetOwningBodyEntity(Entity& entity, const Handle<B2Shape>& shapehandle)
-{
-	assert(entity.HasComponent<Collider>());
-
-	// check if this event handle is for the current entity's collider
-	auto& collider = entity.GetComponent<Collider>();
-	if (collider.shape.GetHandle() != shapehandle)
-	{
-		return kInvalidEntity;
-	}
-
-	// check if this entity has the owning body
-	if (entity.HasComponent<RigidBody>())
-	{
-		auto bodyHandle = entity.GetComponent<RigidBody>().bodyHandle;
-
-		if (b2Shape_GetBody(shapehandle) == bodyHandle)
-		{
-			return entity.GetID(); 
-		}
-	}
-
-	// check if parent is the owning body
-	if (!entity.HasComponent<Parent>())
-	{
-		return kInvalidEntity;
-	}
-
-	auto& parentEntityId = entity.GetComponent<Parent>().parentEntity;
-
-	auto parentEntity = ECS::GetEntityByID(parentEntityId);
-	if (parentEntity.IsValid() && parentEntity.HasComponent<RigidBody>())
-	{
-		auto parentBodyHandle = parentEntity.GetComponent<RigidBody>().bodyHandle;
-		if (b2Shape_GetBody(shapehandle) == parentBodyHandle)
-		{
-			return parentEntityId;
-		}
-	}
-	
-	return kInvalidEntity;
-}
-
 template <SomeEntityCollisionEvent T, SomeB2Event U>
 std::vector<T> AssembleCollisionEvents(std::vector<Entity>& entities, U* b2EvArr, int count)
 {
@@ -124,17 +78,14 @@ std::vector<T> AssembleCollisionEvents(std::vector<Entity>& entities, U* b2EvArr
 			auto& collider = entity.GetComponent<Collider>();
 			auto& [a, b] = event;
 
-			if (a.shapeHandle == collider.shape.GetHandle())
+			if (a.shapeHandle == collider.shape.GetData().GetHandle())
 			{
 				a.entityId = entity.GetID();
 			}
-			if (b.shapeHandle == collider.shape.GetHandle())
+			if (b.shapeHandle == collider.shape.GetData().GetHandle())
 			{
 				b.entityId = entity.GetID();
 			}
-
-			//a.entityId = GetOwningBodyEntity(entity, a.shapeHandle);
-			//b.entityId = GetOwningBodyEntity(entity, b.shapeHandle);
 		}
 	}
 
@@ -170,7 +121,7 @@ Result<Void> DispatchCollisionEvents(const B2World* world)
 	assert(world->IsValid());
 
 	auto entities = ECS::GetAllEntitiesWith<Collider>([](const Collider& collider) {
-		return collider.shape.IsValid();
+		return collider.shape.GetData().IsValid();
 	});
 
 	auto contactEvs = b2World_GetContactEvents(world->GetID());

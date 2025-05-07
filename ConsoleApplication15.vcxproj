@@ -144,12 +144,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="atlas\AtlasManager.cpp" />
+    <ClCompile Include="components\helper\GameControllerStateComponentHelper.cpp" />
+    <ClCompile Include="components\util\TagsComponentUtils.cpp" />
     <ClCompile Include="inputs\InputData.cpp" />
     <ClCompile Include="inputs\mouse\Mouse.cpp" />
     <ClCompile Include="inputs\mouse\MouseCursor.cpp" />
     <ClCompile Include="events\handler\MouseEventHandler.cpp" />
     <ClCompile Include="physics\B2Body.cpp" />
     <ClCompile Include="physics\B2Joint.cpp" />
+    <ClCompile Include="physics\B2RayCast.cpp" />
     <ClCompile Include="physics\B2Shape.cpp" />
     <ClCompile Include="physics\B2Utils.cpp" />
     <ClCompile Include="physics\B2World.cpp" />
@@ -198,6 +201,9 @@
     <ClInclude Include="components\builder\ComponentBuilder.h" />
     <ClInclude Include="components\builder\RigidBodyComponentBuilder.h" />
     <ClInclude Include="components\CameraTargetComponent.h" />
+    <ClInclude Include="components\helper\ComponentHelper.h" />
+    <ClInclude Include="components\helper\GameControllerStateComponentHelper.h" />
+    <ClInclude Include="components\util\TagsComponentUtils.h" />
     <ClInclude Include="core\Algorithms.h" />
     <ClInclude Include="core\ReadOnly.h" />
     <ClInclude Include="core\ShiftedIndexArray.h" />
@@ -208,6 +214,7 @@
     <ClInclude Include="events\handler\MouseEventHandler.h" />
     <ClInclude Include="physics\B2Body.h" />
     <ClInclude Include="physics\B2Joint.h" />
+    <ClInclude Include="physics\B2RayCast.h" />
     <ClInclude Include="physics\B2Shape.h" />
     <ClInclude Include="physics\B2Utils.h" />
     <ClInclude Include="physics\B2World.h" />

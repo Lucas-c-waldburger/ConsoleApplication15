@@ -101,6 +101,26 @@ public:
         b2Body_ApplyLinearImpulseToCenter(bodyHandle_, ToB2Vec(impulse), true);
     }
 
+    float GetDistance(const B2Body& other) const
+    {
+        if (!(IsValid() && other.IsValid()))
+        {
+            return std::numeric_limits<float>::min();
+        }
+
+        return b2Distance(b2Body_GetPosition(bodyHandle_), b2Body_GetPosition(other.bodyHandle_));
+    }
+
+    float GetDistance(SDL_FPoint point) const
+    {
+        if (!IsValid())
+        {
+            return std::numeric_limits<float>::min();
+        }
+
+        return b2Distance(b2Body_GetPosition(bodyHandle_), ToB2VecScaled(point));
+    }
+
     // Shapes API
     int GetShapeCount() const { return b2Body_GetShapeCount(bodyHandle_); }
 

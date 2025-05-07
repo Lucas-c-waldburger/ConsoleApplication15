@@ -44,10 +44,11 @@ public:
             return {};
         }
 
-        return RigidBody{ 
-            .bodyHandle = result.GetValue().GetHandle(),
-            .limits = limits_
-        };
+        RigidBody rigidBody;
+        rigidBody.body = std::move(result.GetValue());
+        rigidBody.limits = limits_;
+        
+        return rigidBody;
     }
 
 private:

@@ -79,6 +79,16 @@ public:
 
     const Handle<B2Shape>& GetHandle() const { return shapeHandle_; }
 
+    Handle<B2Body> GetParentBodyHandle() const 
+    {
+        if (!IsValid())
+        {
+            return {};
+        }
+
+        return Handle<B2Body>::Create(b2Shape_GetBody(shapeHandle_));
+    }
+
     bool IsValid() const
     {
         return shapeHandle_.IsValid() && b2Body_IsValid(b2Shape_GetBody(shapeHandle_));

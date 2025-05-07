@@ -14,6 +14,12 @@ public:
 	static Result<Void> Run();
 };
 
+class GrapplePhysicsScene
+{
+public:
+	static Result<Void> Run();
+};
+
 
 
 class Scene

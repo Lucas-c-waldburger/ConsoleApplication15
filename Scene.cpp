@@ -12,7 +12,9 @@
 #include "events/custom/CustomEvents.h"
 #include "components/GameControllerStateComponent.h"
 #include "components/EventObserverComponent.h"
+#include "test/ComponentTests.h"
 #include "systems/CameraSystem.h"
+#include "inputs/InputState.h"
 #include "core/Hooks.h"
 
 namespace {
@@ -53,6 +55,29 @@ namespace {
     static constexpr float kMaxImpulseValue = 8.0f;
     static constexpr float kImpuseScale = kMaxImpulseValue / static_cast<float>(GameController::kAxisMax);
     static constexpr float kMaxSpeed = 5.0f;
+
+    struct Room
+    {
+        Entity floor, ceiling, leftWall, rightWall;
+        static Result<Room> Create(B2World& world)
+        {
+            TRY(MakeColliderBoxEntity(world, kGroundPosition,
+                kGroundCeilingDimensions, B2Body::Type::Static, {}, SDLite::kColorWhite), floorEntity);
+            TRY(MakeColliderBoxEntity(world, kCeilingPosition,
+                kGroundCeilingDimensions, B2Body::Type::Static, {}, SDLite::kColorWhite), ceilingEntity);
+            TRY(MakeColliderBoxEntity(world, kLeftWallPosition,
+                kWallDimensions, B2Body::Type::Static, {}, SDLite::kColorWhite), leftWallEntity);
+            TRY(MakeColliderBoxEntity(world, kRightWallPosition,
+                kWallDimensions, B2Body::Type::Static, {}, SDLite::kColorWhite), rightWallEntity);
+
+            return Room{
+                .floor = floorEntity,
+                .ceiling = ceilingEntity,
+                .leftWall = leftWallEntity,
+                .rightWall = rightWallEntity
+            };
+        }
+    };
 
     Result<B2Body> AddGroundBody(B2World& world)
     {
@@ -182,6 +207,70 @@ namespace {
     {
         return (std::abs(axisValue.x) > GameController::kAxisDeadzone ||
                 std::abs(axisValue.y) > GameController::kAxisDeadzone);
+    }
+
+    SDL_FPoint NormalizeAxis(SDL_FPoint ax)
+    {
+        float mag = std::sqrt(ax.x * ax.x + ax.y + ax.y);
+        if (mag > 0.0001f)
+        {
+            return { ax.x / mag, ax.y / mag };
+        }
+        return { 0.0f, -1.0f };
+    }
+
+    SDL_FPoint GetGrapplePoint(const GameControllerState& controller, const RigidBody& rigidBody, float ropeLen)
+    {
+        auto direction = NormalizeAxis(controller.axisInput.right.value);
+        auto playerPos = rigidBody.body.GetData().GetPosition();
+
+        return {
+           playerPos.x + direction.x * ropeLen,
+           playerPos.y + direction.y * ropeLen
+        };
+    }
+
+    Result<Void> HandleGrapple(B2World& world, Entity& entity, B2DistanceJoint& joint)
+    {
+        assert(entity.HasComponent<GameControllerState>());
+        assert(entity.HasComponent<RigidBody>());
+
+        auto [controller, rigidBody] = entity.GetComponents<GameControllerState, RigidBody>();
+        assert(rigidBody.body.GetData().IsValid());
+
+        if (controller.joystickID == GameController::kInvalidJoystickID)
+        {
+            LOG_WARNING("Entity joystick ID was invalid - No Impuse applied!");
+            return Void{};
+        }
+
+        if (joint.IsValid())
+        {
+            if (controller.buttonInput[SDL_CONTROLLER_BUTTON_B].state == InputState::Pressed)
+            {
+                joint.Destroy();
+            }
+
+            return Void{};
+        }
+
+        if (controller.buttonInput[SDL_CONTROLLER_BUTTON_RIGHTSHOULDER].state != InputState::Pressed)
+        {
+            return Void{};
+        }
+
+        constexpr float grappleRopeLen = 1200.0f;
+        
+        SDL_FPoint grapplePoint = GetGrapplePoint(controller, rigidBody, grappleRopeLen);
+
+        B2JointParams<B2DistanceJoint> params{
+            .spring {.enable = true, .hertz = 8.0f, .dampingRatio = 0.7f }
+            //.motor { .enable = true, .speed = -1.0f }
+        };
+
+        TRY_ASSIGN(joint, test::MakeGrappleJoint(world, entity, grapplePoint, params));
+
+        return Void{};
     }
 
     void ApplyImpulseFromControllerInput(Entity& entity/*, bool enableJump = true*/)
@@ -506,6 +595,120 @@ Result<Void> SimplePhysicsScene::Run()
         SDLite::Renderer().Clear(SDLite::kColorBlack);
 
         renderSys.Update(SDLite::Renderer(), cameraSys.GetCamera(), store);
+
+        SDLite::Renderer().Show();
+    }
+
+    world.Destroy();
+
+    Logger::EndSession();
+    SDLite::Exit();
+
+    return Void{};
+}
+
+Result<Void> GrapplePhysicsScene::Run()
+{
+    Logger::StartSession();
+    SDLite::Start();
+    TRY((RegisterCustomEventDataTypes<TypeList<CUSTOM_EVENT_DATA_REGISTRY>>()));
+
+    B2World world = B2World::Create(0, 9.8f);
+
+    RenderSystem renderSys{};
+    PhysicsSystem physicsSys{};
+    EventSystem eventSys{};
+
+    Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
+                                   static_cast<float>(SDLite::kWindowHeight) };
+    CameraSystem cameraSys{ cameraVp };
+    cameraSys.GetCamera().SetPosition(kScreenCenterPosition);
+
+    HookManager hooks{};
+
+    impl::AtlasStore store{};
+    TRY(store.LoadAtlas(SDLite::Renderer(), GlyphAtlas::AtlasInfo{
+        .fontPath = kFontPath,
+            .fontSize = 48,
+            .fontColor = SDLite::kColorWhite
+    }), glyphAtlasHandle);
+
+    TRY(Room::Create(world), room);
+
+    // player
+    TRY(MakeColliderBoxEntity(world, kScreenCenterPosition - SDL_FPoint{ 100.0f, 0.0f }, kDynamicSquareDimensions,
+        B2Body::Type::Dynamic, { .restitution = 0.7f, .enableEvents{.contact = true } }, SDLite::kColorRed),
+        player);
+
+    auto& playerRigid = player.GetComponent<RigidBody>();
+    playerRigid.limits.linearVelocity.max = { 25.0f, 25.0f };
+
+    player.AddComponent(GameControllerState{});
+
+    auto& playerEvents = player.AddComponent(EventObserver{});
+    playerEvents.eventCallbacks[GameControllerConnected::GetEventType()].func =
+        &ConnectToFirstController;
+    playerEvents.eventCallbacks[GameControllerDisconnected::GetEventType()].func =
+        &InvalidateEntityJoystickIDAndListenForNewConnection;
+
+    TRY(MakeColliderCircleEntity(world, kScreenCenterPosition + SDL_FPoint{ 100.0f, 0.0f }, kDynamicCircleRadius,
+        B2Body::Type::Dynamic, { .restitution = 0.9f, .enableEvents{.contact = true } }, SDLite::kColorOrange),
+        ball);
+
+    B2DistanceJoint grappleJoint{};
+    assert(!grappleJoint.IsValid());
+
+    /*const auto& playerBody = playerRigid.body.GetData();
+    const auto& ballBody = ball.GetComponent<RigidBody>().body.GetData();
+    const float currentDist = playerBody.GetDistance(ballBody);
+
+    B2JointParams<B2DistanceJoint> params{
+        .length { .rest = currentDist, .max = currentDist },
+        .spring { .enable = true, .hertz = 4.0f, .dampingRatio = 0.7f }
+    };
+
+    auto joint = B2JointFactory::MakeDistanceJoint(playerBody.GetHandle(), ballBody.GetHandle(), std::move(params));
+    assert(joint.IsValid());*/
+
+    //cameraSys.SetCameraTarget(player);
+
+    float timeStep = 1.0f / 60.0f;
+    int subStepCount = 4;
+
+    SDL_Event ev;
+    while (true)
+    {
+        hooks.SetHookPoint<HookPoint::LoopStart>();
+
+        if (!eventSys.Poll(ev))
+        {
+            break;
+        }
+
+        eventSys.DistributeEvents();
+
+        HandleGrapple(world, player, grappleJoint);
+
+        ApplyImpulseFromControllerInput(player);
+
+        physicsSys.Update(&world, timeStep, subStepCount);
+
+        world.Step(timeStep, subStepCount);
+
+        cameraSys.Update(GetDeltaTime());
+
+        SDLite::Renderer().Clear(SDLite::kColorBlack);
+
+        renderSys.Update(SDLite::Renderer(), cameraSys.GetCamera(), store);
+
+        if (grappleJoint.IsValid())
+        {
+            auto [p1, p2] = grappleJoint.GetEndPoints();
+
+            SetRenderDrawColor(SDLite::Renderer(), SDLite::kColorWhite);
+            SDL_RenderDrawLineF(SDLite::Renderer(), p1.x, p1.y, p2.x, p2.y);
+            SetRenderDrawColor(SDLite::Renderer(), SDLite::kColorBlack);
+        }
 
         SDLite::Renderer().Show();
     }
