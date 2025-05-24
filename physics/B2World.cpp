@@ -89,7 +89,7 @@ Result<B2Body> B2World::AddBody(const B2BodyDefinition& bodyDef)
     }
 
     b2BodyId bodyId = b2CreateBody(worldId_, &bodyDef.bodyData);
-    Handle<B2Body> bodyHandle = HandleFactory<B2Body>::GetHandle(bodyId);
+    Handle<B2Body> bodyHandle = Handle<B2Body>::Create(bodyId);
 
     assert(bodyHandle.IsValid());
 

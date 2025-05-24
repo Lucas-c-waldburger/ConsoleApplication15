@@ -50,7 +50,7 @@ public:
 	bool RemoveScript(const std::string& scriptName)
 	{
 		return scriptMap_.erase(scriptName) > 0;
-	}
+	} 
 
 	Result<Void> RunScript(const std::string& scriptName)
 	{

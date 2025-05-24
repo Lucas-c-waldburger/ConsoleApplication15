@@ -5,7 +5,10 @@
 #include "../scripting/ScriptManager.h"
 #include "../sdl/SDLUtils.h"
 #include "../sdl/SDLite.h"
-#include "../systems/CollisionSystem.h"
+#include "../systems/PhysicsSystem.h"
+#include "../systems/CameraSystem.h"
+#include "../systems/RenderSystem.h"
+#include "../systems/PhysicsSystem.h"
 #include "../components/builder/RigidBodyComponentBuilder.h"
 #include "../components/builder/ColliderComponentBuilder.h"
 
@@ -99,6 +102,82 @@ static Result<Entity> MakeColliderCircleEntity(B2World& world, SDL_FPoint positi
 
     return entity;
 }
+
+struct SpoofBodyAccessor : public HasWriteAccess<SpoofBodyAccessor, B2Body>
+{
+    B2Body& operator()(ReadOnly<B2Body>& ro)
+    {
+        return GetWriteAccess(ro);
+    }
+};
+
+inline Result<Entity> MakeMultiColliderEntity(B2World& world)
+{
+    TRY(MakeColliderBoxEntity(world, { 200.0f, 200.0f }, { 50.0f, 50.0f }, 
+        B2Body::Type::Dynamic, 
+        ColliderSettings{ .restitution = 0.9f, .enableEvents{ .contact = true } }, SDLite::kColorGreen),
+    parentEnt);
+    assert(parentEnt.IsValid());
+
+    auto& parentRigidBody = parentEnt.GetComponent<RigidBody>();
+    assert(parentRigidBody.body.GetData().IsValid());
+
+    auto& parentBodyMutable = SpoofBodyAccessor{}(parentRigidBody.body);
+
+    auto parentRelations = parentEnt.GetRelations();
+    auto childEnt = parentRelations.AddChild();
+    assert(childEnt.IsValid());
+    assert(parentRelations.IsParent());
+    assert(parentRelations.IsParentOf(childEnt));
+
+    auto childRelations = childEnt.GetRelations();
+    assert(childRelations.IsChild());
+    assert(childRelations.IsChildOf(parentEnt));
+
+    childEnt.AddComponent(Transform{});
+
+    childEnt.AddComponent(ComponentBuilder<Collider>{}
+    .WithShapeParameters({
+        .shapeType = B2Shape::Type::Circle,
+        .localPosition = SDL_FPoint{ -50.0f, 0.0f },
+        .radius = 20.0f
+    })
+    .WithColliderSettings({
+        .restitution = 0.9f,
+        .enableEvents{ .contact = true }
+    }).Build(parentBodyMutable));
+
+    Renderable::Geometry geo{.color = SDLite::kColorBlue };
+    childEnt.AddComponent(Renderable{
+        .renderData = geo,
+        .drawOrder = 0
+    });
+
+    auto allChildren = parentRelations.GetChildren();
+    assert(allChildren.size() == 1);
+    assert(allChildren[0].GetID() == childEnt.GetID());
+    
+
+    return parentEnt;
+}
+
+
+//class SceneFixture
+//{
+//public:
+//
+//
+//
+//private:
+//    B2World world_;
+//    impl::AtlasStore atlasStore_;
+//    EventSystem eventSystem_;
+//    RenderSystem renderSystem_;
+//    CameraSystem cameraSystem_;
+//    PhysicsSystem physicsSystem_;
+//};
+
+
 //
 //static Result<Void> InitSimpleEnvironment(CollisionSystem& collisionSystem,
 //                                          Dimensions<int> sceneDims = { SDLite::kWindowWidth, SDLite::kWindowHeight })

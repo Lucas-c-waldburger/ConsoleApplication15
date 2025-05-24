@@ -4,9 +4,128 @@
 #include "../ecs/Ecs.h"
 #include "../components/builder/RigidBodyComponentBuilder.h"
 #include "../core/commonObjects.h"
+#include "../core/Algorithms.h"
 
 namespace test
 {
+	/*template <ComponentType T>
+	std::vector<T*> ExtractComponent(const std::vector<Entity>& entities)
+	{
+		std::vector<T*> extracted{};
+		extracted.reserve(entities.size());
+		
+		for (const auto& entity : entities)
+		{
+			if (entity.HasComponent<T>())
+			{
+				extracted.push_back(&entity.GetComponent<T>());
+			}
+		}
+
+		extracted.shrink_to_fit();
+
+		return extracted;
+	}
+
+	template <ComponentType...Ts>
+	std::vector<std::tuple<Ts*...>> ExtractComponents(const std::vector<Entity>& entities)
+	{
+		std::vector<std::tuple<Ts*...>> extracted;
+		extracted.reserve(entities.size());
+
+		auto extract = []<typename T, size_t I>(const auto& entity, auto& tup) {
+			if (entity.HasComponent<T>())
+			{
+				std::get<I>(tup) = &entity.GetComponent<T>();
+			}
+			else
+			{
+				std:get<I>(tup) = nullptr;
+			}
+		};
+
+		for (const auto& entity : entities)
+		{
+			auto& newTup = extracted.emplace_back();
+
+			[&entity, &newTup]<size_t...Is>(std::index_sequence) {
+				((extract<Ts, Is>(entity, newTup)), ...);
+			}(std::make_index_sequence<sizeof...(Ts)>{});
+		}
+
+		extracted.shrink_to_fit();
+
+		return extracted;
+	}*/
+
+
+	inline std::vector<Collider*> FindCollidersForEntity(Entity& entity)
+	{
+		if (!entity.HasComponent<RigidBody>())
+		{
+			return {};
+		}
+
+		std::vector<Collider*> colliders{};
+
+		auto& rigidBody = entity.GetComponent<RigidBody>();
+
+		auto shapes = rigidBody.body.GetData().GetShapes();
+
+		auto shapeEntities = ECS::GetAllEntitiesWith<Collider>([&shapes](const Collider& collider) {
+			return collider.shape.GetData().IsValid() &&
+				AnyOf(shapes, [target = collider.shape](const auto& shape) { return target == shape; });
+		});
+
+		colliders.reserve(shapeEntities.size() + 1);
+
+		std::transform(shapeEntities.begin(), shapeEntities.end(), std::back_inserter(colliders),
+			[](auto& ent) { return &ent.GetComponent<Collider>(); });
+
+		return colliders;
+	}
+
+	inline std::vector<Entity> FindColliderEntitiesForRigidBody(const RigidBody& rigidBody)
+	{
+		if (!rigidBody.body.GetData().IsValid())
+		{
+			return {};
+		}
+
+		auto shapes = rigidBody.body.GetData().GetShapes();
+
+		auto shapeEntities = ECS::GetAllEntitiesWith<Collider>([&shapes](const Collider& collider) {
+			return collider.shape.GetData().IsValid() &&
+				AnyOf(shapes, [target = collider.shape](const auto& shape) { return target == shape; });
+			});
+
+		return shapeEntities;
+	}
+
+	inline std::optional<Entity> FindRigidBodyEntityForCollider(const Collider& collider)
+	{
+		const auto& shape = collider.shape.GetData();
+
+		if (!shape.IsValid())
+		{
+			return std::nullopt;
+		}
+
+		auto entities = ECS::GetAllEntitiesWith<RigidBody>(
+			[bodyHandle = shape.GetParentBodyHandle()](const RigidBody& rigidBody) {
+				return bodyHandle == rigidBody.body.GetData().GetHandle();
+			});
+
+		if (entities.empty())
+		{
+			return std::nullopt;
+		}
+
+		assert(entities.size() <= 1);
+
+		return entities.back();
+	}
+
 	inline Result<Entity> GetOwningBodyEntity(Entity& entity)
 	{
 		assert(entity.HasComponent<Collider>());
@@ -38,7 +157,7 @@ namespace test
 			return MAKE_ERROR("Entity did not own collider's body and had no parent who could own it");
 		}
 
-		auto& parentEntityId = entity.GetComponent<Parent>().parentEntity;
+		auto& parentEntityId = entity.GetComponent<Parent>().entityId;
 		auto parentEntity = ECS::GetEntityByID(parentEntityId);
 
 		if (!parentEntity.IsValid())
@@ -158,14 +277,164 @@ namespace test
 		return B2DistanceJoint{};
 	}
 
+	
+	
+	
 
 
 
-
-
-
+	/*inline void HashCombine(std::size_t& seed, std::size_t value)
+	{
+		seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	}*/
 
 
 
 
 }
+
+//#include "../inputs/InputState.h"
+//#include <vector>
+//
+//class GameControllerInput
+//{
+//public:
+//	enum Input
+//	{
+//		Invalid = SDL_CONTROLLER_BUTTON_INVALID,
+//		A = SDL_CONTROLLER_BUTTON_A,
+//		B = SDL_CONTROLLER_BUTTON_B,
+//		X = SDL_CONTROLLER_BUTTON_X,
+//		Y = SDL_CONTROLLER_BUTTON_Y,
+//		Back = SDL_CONTROLLER_BUTTON_BACK,
+//		Guide = SDL_CONTROLLER_BUTTON_GUIDE,
+//		Start = SDL_CONTROLLER_BUTTON_START,
+//		LeftStickButton = SDL_CONTROLLER_BUTTON_LEFTSTICK,
+//		RightStickButton = SDL_CONTROLLER_BUTTON_RIGHTSTICK,
+//		LeftShoulder = SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
+//		RightShoulder = SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
+//		DPadUp = SDL_CONTROLLER_BUTTON_DPAD_UP,
+//		DPadDown = SDL_CONTROLLER_BUTTON_DPAD_DOWN,
+//		DPadLeft = SDL_CONTROLLER_BUTTON_DPAD_LEFT,
+//		DPadRight = SDL_CONTROLLER_BUTTON_DPAD_RIGHT,
+//		Misc1 = SDL_CONTROLLER_BUTTON_MISC1,
+//		Paddle1 = SDL_CONTROLLER_BUTTON_PADDLE1,
+//		Paddle2 = SDL_CONTROLLER_BUTTON_PADDLE2,
+//		Paddle3 = SDL_CONTROLLER_BUTTON_PADDLE3,
+//		Paddle4 = SDL_CONTROLLER_BUTTON_PADDLE4,
+//		TouchPad = SDL_CONTROLLER_BUTTON_TOUCHPAD,
+//		LeftStickAxis = SDL_CONTROLLER_BUTTON_MAX,
+//		RightStickAxis,
+//		LeftTrigger,
+//		RightTrigger
+//	};
+//
+//private:
+//	static constexpr int kButtonEnumStart = Input::A;
+//	static constexpr int kButtonEnumEnd = Input::TouchPad;
+//	static constexpr int kAxisEnumStart = Input::LeftStickAxis;
+//	static constexpr int kAxisEnumEnd = Input::RightTrigger;
+//
+//public:
+//	static constexpr size_t kInputsSize = kAxisEnumEnd - kButtonEnumStart;
+//
+//	static constexpr bool IsButton(Input inp) noexcept {
+//		return inp >= kButtonEnumStart && inp <= kButtonEnumEnd;
+//	}
+//	static constexpr bool IsAxis(Input inp) noexcept {
+//		return inp >= kAxisEnumStart && inp <= kAxisEnumEnd;
+//	}
+//};
+
+//template <typename Context>
+//struct SchemeInputDefinition
+//{
+//	GameControllerInput input;
+//	InputState state;
+//	std::function<void(Context&)> callback;
+//
+//	bool operator==(const SchemeInputDefinition& rhs) const { 
+//		return input == rhs.input && state == rhs.state; 
+//	}
+//};
+//
+//template <typename Context>
+//class GameControllerScheme
+//{
+//public:
+//	GameControllerScheme() = default;
+//
+//	bool OnInput(GameControllerInput inp, InputState state, std::function<void(Context&)> fn)
+//	{
+//		if (!fn)
+//		{
+//			return false;
+//		}
+//		if (!(GameControllerInput::IsButton(inp) || GameControllerInput::IsAxis(inp)))
+//		{
+//			return false;
+//		}
+//
+//		inputDefs_.push_back(SchemeInputDefinition<Context>{
+//			.input = inp,
+//			.state = state,
+//			.callback = std::move(fn)
+//		});
+//	}
+//
+//	void Process(const GameControllerState& gc)
+//	{
+//		auto getAxis = [&gc](auto inp) -> AxisInputData* {
+//			return (inp == GameControllerInput::LeftStickAxis) ? &gc.axisInput.left :
+//			       (inp == GameControllerInput::RightStickAxis) ? &gc.axisInput.right : nullptr;
+//		};
+//
+//		for (auto& [input, state, callback] : inputDefs_)
+//		{
+//			if (!callback)
+//			{
+//				continue;
+//			}
+//
+//			if (GameControllerInput::IsButton(input))
+//			{
+//				auto btnState = gc.buttonInput[static_cast<size_t>(input)].state;
+//				
+//				if (btnState == state)
+//				{
+//					callback(context_);
+//				}
+//			}
+//			else if (GameControllerInput::IsAxis(input))
+//			{			
+//				auto axisPtr = getAxis(input);
+//				if (!axisPtr)
+//				{
+//					continue;
+//				}
+//
+//				if (axisState == state)
+//				{
+//					callback(context_);
+//				}				
+//			}
+//		}
+//	}
+//
+//private:
+//	Context context_;
+//	std::vector<SchemeInputDefinition<Context>> inputDefs_;
+//};
+//
+//namespace std {
+//	template <typename Context>
+//	struct hash<SchemeInputDefinition<Context>> {
+//		size_t operator()(const SchemeInputDefinition<Context>& def) const noexcept {
+//			std::size_t hash = 0;
+//			test::HashCombine(hash, std::hash<int>{}(static_cast<int>(def.input));
+//			test::HashCombine(hash, std::hash<int>{}(static_cast<int>(def.state));
+//
+//			return hash;
+//		}
+//	};
+//}

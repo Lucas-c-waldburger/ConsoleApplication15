@@ -44,22 +44,22 @@ public:
 private:
 };
 
-template <>
-class HandleFactory<B2Body>
-{
-public:
-    static Handle<B2Body> GetHandle(b2BodyId bodyId)
-    {
-        return Handle<B2Body>{ bodyId };
-    }
-};
-
-template <>
-class HandleFactory<B2Shape>
-{
-public:
-    static Handle<B2Shape> GetHandle(b2ShapeId shapeId)
-    {
-        return Handle<B2Shape>{ shapeId };
-    }
-};
+//template <>
+//class HandleFactory<B2Body>
+//{
+//public:
+//    static Handle<B2Body> GetHandle(b2BodyId bodyId)
+//    {
+//        return Handle<B2Body>{ bodyId };
+//    }
+//};
+//
+//template <>
+//class HandleFactory<B2Shape>
+//{
+//public:
+//    static Handle<B2Shape> GetHandle(b2ShapeId shapeId)
+//    {
+//        return Handle<B2Shape>{ shapeId };
+//    }
+//};

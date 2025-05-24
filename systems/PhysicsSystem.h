@@ -6,7 +6,8 @@
 #include "../events/custom/CustomEventDataRegistry.h",
 #include "../core/ReadOnly.h"
 
-class PhysicsSystem : public System, public HasWriteAccess<PhysicsSystem, B2Body>
+class PhysicsSystem : public System, 
+					  public HasWriteAccess<PhysicsSystem, B2Body>
 {
 public:
 	void Update(B2World* world_, float timeStep, int subStepCount);

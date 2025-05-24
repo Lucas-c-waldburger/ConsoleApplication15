@@ -144,13 +144,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="atlas\AtlasManager.cpp" />
-    <ClCompile Include="components\helper\GameControllerStateComponentHelper.cpp" />
     <ClCompile Include="components\util\TagsComponentUtils.cpp" />
+    <ClCompile Include="core\WeightGenerator.cpp" />
+    <ClCompile Include="ecs\EcsImpl.cpp" />
+    <ClCompile Include="ecs\Entity.cpp" />
+    <ClCompile Include="ecs\EntityDestructor.cpp" />
     <ClCompile Include="inputs\InputData.cpp" />
     <ClCompile Include="inputs\mouse\Mouse.cpp" />
     <ClCompile Include="inputs\mouse\MouseCursor.cpp" />
     <ClCompile Include="events\handler\MouseEventHandler.cpp" />
     <ClCompile Include="physics\B2Body.cpp" />
+    <ClCompile Include="physics\B2CompoundObject.cpp" />
     <ClCompile Include="physics\B2Joint.cpp" />
     <ClCompile Include="physics\B2RayCast.cpp" />
     <ClCompile Include="physics\B2Shape.cpp" />
@@ -163,7 +167,7 @@
     <ClCompile Include="core\Error.cpp" />
     <ClCompile Include="events\EventBuffer.cpp" />
     <ClCompile Include="core\Logger.cpp" />
-    <ClCompile Include="ecs\EntityRetrieval.cpp" />
+    <ClCompile Include="ecs\EntityRetrievalHelper.cpp" />
     <ClCompile Include="render\RenderContext.cpp" />
     <ClCompile Include="systems\CameraSystem.cpp" />
     <ClCompile Include="systems\EventSystem.cpp" />
@@ -175,7 +179,7 @@
     <ClCompile Include="scripting\Lua.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ecs\Ecs.cpp" />
-    <ClCompile Include="ecs\EntityRelationships.cpp" />
+    <ClCompile Include="ecs\EntityRelationsHelper.cpp" />
     <ClCompile Include="core\Monitoring.cpp" />
     <ClCompile Include="core\Hooks.cpp" />
     <ClCompile Include="scripting\LuaTypesRegistry.cpp" />
@@ -188,6 +192,7 @@
     <ClCompile Include="systems\RenderSystem.cpp" />
     <ClCompile Include="systems\PhysicsSystem.cpp" />
     <ClCompile Include="core\AABB.cpp" />
+    <ClCompile Include="systems\TallySystem.cpp" />
     <ClCompile Include="test\ComponentTests.cpp" />
     <ClCompile Include="test\Fixtures.cpp" />
     <ClCompile Include="test\Premades.cpp" />
@@ -201,18 +206,27 @@
     <ClInclude Include="components\builder\ComponentBuilder.h" />
     <ClInclude Include="components\builder\RigidBodyComponentBuilder.h" />
     <ClInclude Include="components\CameraTargetComponent.h" />
-    <ClInclude Include="components\helper\ComponentHelper.h" />
-    <ClInclude Include="components\helper\GameControllerStateComponentHelper.h" />
+    <ClInclude Include="components\EntityMetricsComponent.h" />
     <ClInclude Include="components\util\TagsComponentUtils.h" />
     <ClInclude Include="core\Algorithms.h" />
+    <ClInclude Include="core\CommonFunctions.h" />
+    <ClInclude Include="core\Counter.h" />
+    <ClInclude Include="core\Literals.h" />
     <ClInclude Include="core\ReadOnly.h" />
     <ClInclude Include="core\ShiftedIndexArray.h" />
+    <ClInclude Include="core\WeightGenerator.h" />
+    <ClInclude Include="deps\function2\function2.hpp" />
+    <ClInclude Include="ecs\EcsImpl.h" />
+    <ClInclude Include="ecs\Entity.h" />
+    <ClInclude Include="ecs\EntityDestructor.h" />
     <ClInclude Include="inputs\InputData.h" />
     <ClInclude Include="inputs\InputState.h" />
     <ClInclude Include="inputs\mouse\Mouse.h" />
     <ClInclude Include="inputs\mouse\MouseCursor.h" />
     <ClInclude Include="events\handler\MouseEventHandler.h" />
     <ClInclude Include="physics\B2Body.h" />
+    <ClInclude Include="physics\B2CollisionFilter.h" />
+    <ClInclude Include="physics\B2CompoundObject.h" />
     <ClInclude Include="physics\B2Joint.h" />
     <ClInclude Include="physics\B2RayCast.h" />
     <ClInclude Include="physics\B2Shape.h" />
@@ -371,8 +385,8 @@
     <ClInclude Include="deps\include\sol\wrapper.hpp" />
     <ClInclude Include="ecs\Ecs.h" />
     <ClInclude Include="ecs\EntityManager.h" />
-    <ClInclude Include="ecs\EntityRelationships.h" />
-    <ClInclude Include="ecs\EntityRetrieval.h" />
+    <ClInclude Include="ecs\EntityRelationsHelper.h" />
+    <ClInclude Include="ecs\EntityRetrievalHelper.h" />
     <ClInclude Include="render\RenderContext.h" />
     <ClInclude Include="systems\CameraSystem.h" />
     <ClInclude Include="systems\EventSystem.h" />
@@ -401,28 +415,30 @@
     <ClInclude Include="core\TypeUtils.h" />
     <ClInclude Include="core\AABB.h" />
     <ClInclude Include="systems\System.h" />
+    <ClInclude Include="systems\SystemManager.h" />
     <ClInclude Include="systems\SystemRegistry.h" />
+    <ClInclude Include="systems\TallySystem.h" />
     <ClInclude Include="test\ComponentTests.h" />
     <ClInclude Include="test\Fixtures.h" />
     <ClInclude Include="test\Premades.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_0.png" />
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_1.png" />
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_2.png" />
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_3.png" />
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_4.png" />
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_5.png" />
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_6.png" />
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_7.png" />
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_8.png" />
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png" />
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_1.png" />
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_2.png" />
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_3.png" />
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_4.png" />
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_5.png" />
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_6.png" />
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_7.png" />
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_8.png" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="scripting\resources\scripts\test.lua" />
+    <Text Include="resources\scripts\b2body_test.lua" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="scripting\resources\scripts\game_controller_test.lua" />
-    <None Include="scripting\resources\scripts\test_physics.lua" />
+    <None Include="resources\scripts\game_controller_test.lua" />
+    <None Include="resources\scripts\test_physics.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc" />

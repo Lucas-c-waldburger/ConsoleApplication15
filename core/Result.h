@@ -106,7 +106,7 @@ private:
             std::exit(EXIT_FAILURE); \
         } \
     } else { \
-        auto asrt_res_tmp__ = (result_1); \
+        auto asrt_res_tmp__ = std::move(result_1); \
         if (!asrt_res_tmp__.Success()) { \
             Logger::Get().Log(LogLevel::ERROR, asrt_res_tmp__.GetError()); \
             std::exit(EXIT_FAILURE); \
@@ -120,7 +120,7 @@ private:
             Logger::Log(LogLevel::ERROR, (result_2).GetError()); \
         } \
     } else { \
-        auto lg_if_err_tmp__ = (result_2); \
+        auto lg_if_err_tmp__ = std::move(result_2); \
         if (!lg_if_err_tmp__.Success()) { \
             Logger::Log(LogLevel::ERROR, lg_if_err_tmp__.GetError()); \
         } \

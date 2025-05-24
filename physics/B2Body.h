@@ -4,7 +4,7 @@
 #include "B2Shape.h"
 #include "../core/Result.h"
 #include "../core/HandleFactory.h"
-
+#include "../core/ReadOnly.h"
 
 struct B2BodyDefinition
 {
@@ -40,6 +40,7 @@ public:
     const Handle<B2Body>& GetHandle() const { return bodyHandle_; }
 
     Type GetBodyType() const { return static_cast<Type>(b2Body_GetType(bodyHandle_)); }
+    void SetBodyType(Type newType) { b2Body_SetType(bodyHandle_, static_cast<b2BodyType>(newType)); }
 
     void SetFixedRotation(bool fixed) { b2Body_SetFixedRotation(bodyHandle_, fixed); }
     bool IsFixedRotation() const { return b2Body_IsFixedRotation(bodyHandle_); }
@@ -121,6 +122,8 @@ public:
         return b2Distance(b2Body_GetPosition(bodyHandle_), ToB2VecScaled(point));
     }
 
+    bool operator==(const B2Body& rhs) const noexcept { return bodyHandle_ == rhs.bodyHandle_; }
+
     // Shapes API
     int GetShapeCount() const { return b2Body_GetShapeCount(bodyHandle_); }
 
@@ -153,6 +156,10 @@ public:
 
     std::unordered_set<Handle<B2Shape>> GetShapeHandles() const;
 
+    std::unordered_set<B2Shape> GetShapes();
+
+    std::unordered_set<ReadOnly<B2Shape>> GetShapes() const;
+
     bool OwnsShape(const Handle<B2Shape>& shapeHandle) const;
 
 private:
@@ -164,3 +171,11 @@ private:
     Handle<B2Body> bodyHandle_;
 };
 
+namespace std {
+    template <>
+    struct hash<B2Body> {
+        size_t operator()(const B2Body& body) const noexcept {
+            return std::hash<Handle<B2Body>>{}(body.GetHandle());
+        }
+    };
+}

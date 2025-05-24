@@ -14,11 +14,11 @@ concept AtlasType = requires(T atlas, SDL_Renderer* renderer, AtlasInfo<T> info)
 	{ atlas.Load(renderer, info) } -> std::same_as<bool>;
 };
 
-template <AtlasType...AtlasTs> //requires pack_types_unique_v<AtlasTs...>
-class AtlasStoreTemplate
+template <AtlasType...AtlasTs> requires pack_types_unique_v<AtlasTs...>
+class TextureManagerTemplate
 {
 public:
-	AtlasStoreTemplate() = default;
+	TextureManagerTemplate() = default;
 
 	template <PackMemberType<AtlasTs...> T>
 	Result<Handle<T>> LoadAtlas(SDL_Renderer* renderer, AtlasInfo<T> info)
@@ -72,5 +72,5 @@ protected:
 
 // IMPL //
 namespace impl {
-class AtlasStore : public AtlasStoreTemplate<GlyphAtlas, SpriteSeriesAtlas> {};
+class TextureManager : public TextureManagerTemplate<GlyphAtlas, SpriteSeriesAtlas> {};
 }

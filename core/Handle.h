@@ -1,48 +1,59 @@
 #pragma once
-#include <iostream>
 #include <unordered_map>
+#include "CommonFunctions.h"
 
-template <typename T>
-class Handle
+template <typename HandleDerived>
+class HandleBase;
+
+template <template <typename> class HandleDerived, typename T>
+class HandleBase<HandleDerived<T>>
 {
 public:
-    template <typename...HandleTs>
+    HandleBase() = default;
+    //bool operator==(const HandleBase& rhs) const { return static_cast<const HandleDerived*>(this).operator==(rhs); }
+
+    bool IsValid() const { return static_cast<const HandleDerived<T>*>(this)->IsValidImpl(); }
+    size_t GetHash() const noexcept { return static_cast<const HandleDerived<T>*>(this)->GetHashImpl(); }
+
+    template <typename...Args>
+    static HandleDerived<T> Create(Args&&...args) 
+    { 
+        return HandleDerived<T>::CreateImpl(std::forward<Args>(args)...); 
+    }
+};
+
+
+template <typename T>
+class Handle : public HandleBase<Handle<T>>
+{
+public:   
+    friend class HandleBase<Handle<T>>;
+    template <typename...Ts>
     friend class HandleFactory;
 
     Handle() = default;
-    bool operator==(const Handle&) const = default;
-    size_t GetHash() const noexcept
+    bool operator==(const Handle& rhs) const { return id_ == rhs.id_ && gen_ == rhs.gen_; }
+
+private:
+    size_t GetHashImpl() const noexcept
     {
-        return static_cast<size_t>(id_) * 31 + static_cast<size_t>(gen_);
+        size_t hash = 0;
+        HashCombine(hash, std::hash<int>{}(id_));
+        HashCombine(hash, std::hash<int>{}(gen_));
+
+        return hash;
     }
 
-    bool IsValid() const
+    bool IsValidImpl() const
     {
-        return id_ <= idCount && gen_ == genCount;
+        return id_ < idCount && gen_ == genCount;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const Handle<T>& handle)
-    {
-        if (handle.id_ == -1 && handle.gen_ == -1)
-        {
-            os << "{ INVALID }";
-        }
-        else
-        {
-            os << "{ id: " << handle.id_ << ", gen: " << handle.gen_ << " }";
-        }
-
-        return os;
-    }
-
-    static Handle Create()
+    static Handle CreateImpl()
     {
         return Handle{ idCount++, genCount };
     }
 
-    static const Handle kInvalid;
-
-private:
     static inline int idCount = 0;
     static inline int genCount = 0;
 
@@ -51,9 +62,6 @@ private:
     int id_ = -1;
     int gen_ = -1;
 };
-
-template <typename T>
-const Handle<T> Handle<T>::kInvalid{};
 
 namespace std {
     template <typename T>

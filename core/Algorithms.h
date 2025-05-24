@@ -31,3 +31,15 @@ inline auto FindIf(Container& c, Pred&& pred)
 {
     return std::find_if(std::begin(c), std::end(c), std::forward<Pred>(pred));
 }
+
+template <typename Container, typename Pred>
+inline auto AnyOf(Container& c, Pred&& pred)
+{
+    return std::any_of(std::begin(c), std::end(c), std::forward<Pred>(pred));
+}
+
+template <typename Container, typename Pred>
+inline auto AllOf(Container& c, Pred&& pred)
+{
+    return std::all_of(std::begin(c), std::end(c), std::forward<Pred>(pred));
+}

@@ -6,7 +6,10 @@
 class B2World
 {
 public:
-    static B2World Create(float gravX, float gravY);
+    B2World() = default;
+
+    static B2World Create(float gravX, float gravY); 
+
     bool IsValid() const { return b2World_IsValid(worldId_); }
 
     void Destroy();
@@ -30,7 +33,6 @@ public:
     B2RayCastResult CastRayToPoint(const B2Body& body, SDL_FPoint point);
 
 private:
-    B2World() = default;
     b2WorldId worldId_ = b2_nullWorldId;
     B2RayCaster rayCaster_;
 };

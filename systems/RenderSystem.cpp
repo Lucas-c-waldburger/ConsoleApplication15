@@ -9,39 +9,39 @@
 
 namespace
 {
-void RenderTexture(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_Rect& srcRect, 
-				   const SDL_Rect& destRect, const Renderable& renderable, const Transform& transform)
-{
-	if (renderable.opacity < 255)
-	{
-		SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-		SDL_SetTextureAlphaMod(texture, renderable.opacity);
-	}
-
-	SDL_RenderCopyEx(renderer, texture, &srcRect, &destRect, transform.rotation, nullptr, renderable.flip);
-
-	if (renderable.opacity < 255)
-	{
-		SDL_SetTextureAlphaMod(texture, 255);
-	}
-}
-
-void RenderTexture(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_Rect& srcRect, 
-				   const SDL_Rect& destRect, const Renderable& renderable)
-{
-	if (renderable.opacity < 255)
-	{
-		SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-		SDL_SetTextureAlphaMod(texture, renderable.opacity);
-	}
-
-	SDL_RenderCopy(renderer, texture, &srcRect, &destRect);
-
-	if (renderable.opacity < 255)
-	{
-		SDL_SetTextureAlphaMod(texture, 255);
-	}
-}
+//void RenderTexture(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_Rect& srcRect, 
+//				   const SDL_Rect& destRect, const Renderable& renderable, const Transform& transform)
+//{
+//	if (renderable.opacity < 255)
+//	{
+//		SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+//		SDL_SetTextureAlphaMod(texture, renderable.opacity);
+//	}
+//
+//	SDL_RenderCopyEx(renderer, texture, &srcRect, &destRect, transform.rotation, nullptr, renderable.flip);
+//
+//	if (renderable.opacity < 255)
+//	{
+//		SDL_SetTextureAlphaMod(texture, 255);
+//	}
+//}
+//
+//void RenderTexture(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_Rect& srcRect, 
+//				   const SDL_Rect& destRect, const Renderable& renderable)
+//{
+//	if (renderable.opacity < 255)
+//	{
+//		SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+//		SDL_SetTextureAlphaMod(texture, renderable.opacity);
+//	}
+//
+//	SDL_RenderCopy(renderer, texture, &srcRect, &destRect);
+//
+//	if (renderable.opacity < 255)
+//	{
+//		SDL_SetTextureAlphaMod(texture, 255);
+//	}
+//}
 
 using Alignment = Renderable::Text::Alignment;
 
@@ -279,7 +279,7 @@ Result<Void> DrawB2ColliderShape(const Camera& camera, SDL_Renderer* renderer, c
 
 } // unnamed namespace
 
-void RenderSystem::Update(SDL_Renderer* renderer, const Camera& camera, const impl::AtlasStore& atlasStore)
+void RenderSystem::Update(SDL_Renderer* renderer, const Camera& camera, const impl::TextureManager& atlasStore)
 {
 	auto entities = ECS::GetAllEntitiesWith<Renderable, Transform>();
 

@@ -303,8 +303,10 @@ int main(int argc, char* argv[])
     SDLite::Exit();
     */
 
+    auto sceneFixture = SceneFixture::GetInstance();
+    ASSERT_RESULT(sceneFixture);
 
-    ASSERT_RESULT(GrapplePhysicsScene::Run());
+    ASSERT_RESULT(ChainScene::Run(sceneFixture.GetValue()));
 
     return 0;
 }

@@ -4,6 +4,26 @@
 #include "../../ecs/Ecs.h"
 
 template <CustomEventDataType T>
+inline Result<Void> PushEventNotification(T&& eventData, Sint32 code = 0)
+{
+	if (T::GetEventType() == kInvalidEventType)
+	{
+		return MAKE_ERROR("Custom event did not have valid event type. Did you register it?");
+	}
+
+	auto newEv = CustomEvents::MakeNewEvent(std::forward<T>(eventData), code);
+	assert(newEv.user.data1);
+
+	if (SDL_PushEvent(&newEv) < 0)
+	{
+		return MAKE_ERROR_FMT("Pushing custom event to SDL failed: '{}'", SDL_GetError());
+	}
+
+	return Void{};
+}
+
+
+template <CustomEventDataType T>
 inline Result<Void> SendEventNotification(T&& eventData, Sint32 code = 0)
 {
 	if (T::GetEventType() == kInvalidEventType)

@@ -24,13 +24,13 @@
     <ClCompile Include="ecs\Ecs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ecs\EntityRelationships.cpp">
+    <ClCompile Include="ecs\EntityRelationsHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="systems\RenderSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ecs\EntityRetrieval.cpp">
+    <ClCompile Include="ecs\EntityRetrievalHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sdl\SDLUtils.cpp">
@@ -156,7 +156,22 @@
     <ClCompile Include="components\util\TagsComponentUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="components\helper\GameControllerStateComponentHelper.cpp">
+    <ClCompile Include="ecs\Entity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ecs\EcsImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ecs\EntityDestructor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="core\WeightGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="physics\B2CompoundObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\TallySystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -530,13 +545,13 @@
     <ClInclude Include="ecs\EntityManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ecs\EntityRelationships.h">
+    <ClInclude Include="ecs\EntityRelationsHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="systems\RenderSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ecs\EntityRetrieval.h">
+    <ClInclude Include="ecs\EntityRetrievalHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="sdl\SDLUtils.h">
@@ -728,7 +743,7 @@
     <ClInclude Include="Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="systems\SystemRegistry.h">
+    <ClInclude Include="systems\SystemManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="systems\System.h">
@@ -791,48 +806,81 @@
     <ClInclude Include="components\util\TagsComponentUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\helper\ComponentHelper.h">
+    <ClInclude Include="ecs\Entity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\helper\GameControllerStateComponentHelper.h">
+    <ClInclude Include="ecs\EcsImpl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ecs\EntityDestructor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\WeightGenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Literals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\function2\function2.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\SystemRegistry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="physics\B2CompoundObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="physics\B2CollisionFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\EntityMetricsComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Counter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\TallySystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\CommonFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_0.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_1.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_1.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_2.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_2.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_3.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_3.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_4.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_4.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_5.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_5.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_6.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_6.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_7.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_7.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="scripting\resources\sprites\knight\walk_anim\knight_walk_8.png">
+    <Image Include="resources\sprites\knight\walk_anim\knight_walk_8.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="scripting\resources\scripts\test.lua" />
+    <Text Include="resources\scripts\b2body_test.lua" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="scripting\resources\scripts\game_controller_test.lua" />
-    <None Include="scripting\resources\scripts\test_physics.lua" />
+    <None Include="resources\scripts\game_controller_test.lua" />
+    <None Include="resources\scripts\test_physics.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

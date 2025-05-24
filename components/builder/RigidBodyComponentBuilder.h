@@ -7,6 +7,7 @@ struct BodyParameters
 {
     B2Body::Type bodyType = B2Body::Type::Static;
     SDL_FPoint position = { 0.0f, 0.0f };
+    float gravityScale = 1.0f;
 };
 
 
@@ -36,6 +37,7 @@ public:
         B2BodyDefinition definition;
         definition.bodyData.type = static_cast<b2BodyType>(bodyParams_.bodyType);
         definition.bodyData.position = ToB2VecScaled(bodyParams_.position);
+        definition.bodyData.gravityScale = bodyParams_.gravityScale;
 
         auto result = world.AddBody(definition);
         if (!result.Success())

@@ -7,6 +7,7 @@
 #include "../core/Handle.h"
 #include "ScriptInfo.h"
 #include <SDL.h>
+#include "../physics/B2Body.h"
 
 template <typename>
 static void RegisterLuaUserType(sol::state& lua);
@@ -43,28 +44,28 @@ template <> static void RegisterLuaUserType<Dimensions<float>>(sol::state& lua)
 }
 
 
-// HANDLES
-class GlyphAtlas;
-template <> static void RegisterLuaUserType<Handle<GlyphAtlas>>(sol::state& lua)
-{
-	lua.new_usertype<Handle<GlyphAtlas>>("Handle<GlyphAtlas>",
-		sol::meta_function::equal_to, &Handle<GlyphAtlas>::operator==);
-
-	lua["Handle<GlyphAtlas>"]["__ne"] = [](const Handle<GlyphAtlas>& lhs, const Handle<GlyphAtlas>& rhs) {
-		return lhs != rhs;
-	};
-}
-class SpriteSeriesAtlas;
-template <> static void RegisterLuaUserType<Handle<SpriteSeriesAtlas>>(sol::state& lua)
-{
-	lua.new_usertype<Handle<SpriteSeriesAtlas>>("Handle<SpriteSeriesAtlas>",
-		sol::meta_function::equal_to, &Handle<SpriteSeriesAtlas>::operator==);
-
-	lua["Handle<SpriteSeriesAtlas>"]["__ne"] = 
-		[](const Handle<SpriteSeriesAtlas>& lhs, const Handle<SpriteSeriesAtlas>& rhs) {
-			return lhs != rhs;
-	};
-}
+//// HANDLES
+//class GlyphAtlas;
+//template <> static void RegisterLuaUserType<Handle<GlyphAtlas>>(sol::state& lua)
+//{
+//	lua.new_usertype<Handle<GlyphAtlas>>("Handle<GlyphAtlas>",
+//		sol::meta_function::equal_to, &Handle<GlyphAtlas>::operator==);
+//
+//	lua["Handle<GlyphAtlas>"]["__ne"] = [](const Handle<GlyphAtlas>& lhs, const Handle<GlyphAtlas>& rhs) {
+//		return lhs != rhs;
+//	};
+//}
+//class SpriteSeriesAtlas;
+//template <> static void RegisterLuaUserType<Handle<SpriteSeriesAtlas>>(sol::state& lua)
+//{
+//	lua.new_usertype<Handle<SpriteSeriesAtlas>>("Handle<SpriteSeriesAtlas>",
+//		sol::meta_function::equal_to, &Handle<SpriteSeriesAtlas>::operator==);
+//
+//	lua["Handle<SpriteSeriesAtlas>"]["__ne"] = 
+//		[](const Handle<SpriteSeriesAtlas>& lhs, const Handle<SpriteSeriesAtlas>& rhs) {
+//			return lhs != rhs;
+//	};
+//}
 //template <> static void RegisterLuaUserType<Force>(sol::state& lua)
 //{
 //	lua.new_usertype<Force>("Force", "vector", &Force::vector, "duration", &Force::duration);
@@ -120,7 +121,6 @@ template <> static void RegisterLuaUserType<SDL_GameControllerButton>(sol::state
 //	);
 //}
 
-// COMPONENTS
 
 //template <> static void RegisterLuaUserType<Physics>(sol::state& lua)
 //{
@@ -141,12 +141,12 @@ template <> static void RegisterLuaUserType<SDL_GameControllerButton>(sol::state
 
 template <> static void RegisterLuaUserType<Parent>(sol::state& lua)
 {
-	lua.new_usertype<Parent>("Parent", "parentEntity", &Parent::parentEntity);
+	lua.new_usertype<Parent>("Parent", "parentEntity", &Parent::entityId);
 }
-template <> static void RegisterLuaUserType<Children>(sol::state& lua)
-{
-	lua.new_usertype<Children>("Children", "childEntities", &Children::childEntities);
-}
+//template <> static void RegisterLuaUserType<Children>(sol::state& lua)
+//{
+//	lua.new_usertype<Children>("Children", "childEntities", &Children::childEntities);
+//}
 
 // GAME CONTROLLER
 template <> static void RegisterLuaUserType<AxisInputData>(sol::state& lua)
@@ -193,10 +193,108 @@ template <> static void RegisterLuaUserType<Renderable::Sprite>(sol::state& lua)
 		"seriesName", &Sprite::seriesName, "currentIndex", &Sprite::currentIndex);
 }
 
-
-
-//// LUA KEY
-//template <typename T> struct LuaKeyTemplate;
-//template <typename T> static constexpr const char* LuaKey = LuaKeyTemplate<T>::value;
+//template <> static void RegisterLuaUserType<Handle<B2Body>>(sol::state& lua)
+//{
 //
-//template <> struct LuaKeyTemplate<Spatial> { static constexpr const char* value = };
+//}
+
+template <> static void RegisterLuaUserType<B2Shape::Type>(sol::state& lua)
+{
+	lua.new_enum("B2ShapeType",
+		"Invalid", B2Shape::Type::Invalid,
+		"Circle", B2Shape::Type::Circle,
+		"Capsule", B2Shape::Type::Capsule,
+		"Segment", B2Shape::Type::Segment,
+		"Polygon", B2Shape::Type::Polygon,
+		"ChainSegment", B2Shape::Type::ChainSegment
+	);
+}
+
+template <> static void RegisterLuaUserType<B2Shape>(sol::state& lua)
+{
+	lua.new_usertype<B2Shape>("B2Shape",
+		sol::constructors<B2Shape(), B2Shape(const Handle<B2Shape>&)>(),
+
+		// Operators
+		sol::meta_function::equal_to, &B2Shape::operator==,
+
+		// Methods using same names as C++
+		"GetShapeType", &B2Shape::GetShapeType,
+		"GetHandle", &B2Shape::GetHandle,
+		"GetParentBodyHandle", &B2Shape::GetParentBodyHandle,
+		"IsValid", &B2Shape::IsValid,
+		"Destroy", &B2Shape::Destroy,
+		"GetDensity", &B2Shape::GetDensity,
+		"SetDensity", &B2Shape::SetDensity,
+		"GetFriction", &B2Shape::GetFriction,
+		"SetFriction", &B2Shape::SetFriction,
+		"GetRestitution", &B2Shape::GetRestitution,
+		"SetRestitution", &B2Shape::SetRestitution,
+		"GetBoundingBox", &B2Shape::GetBoundingBox,
+		"IsPointInside", &B2Shape::IsPointInside
+	);
+}
+
+template <> static void RegisterLuaUserType<B2Body::Type>(sol::state& lua)
+{
+	lua.new_enum("B2BodyType",
+		"Static", B2Body::Type::Static,
+		"Kinematic", B2Body::Type::Kinematic,
+		"Dynamic", B2Body::Type::Dynamic
+	);
+}
+
+template <> static void RegisterLuaUserType<B2Body>(sol::state& lua)
+{
+	lua.new_usertype<B2Body>("B2Body",
+		// Constructor
+		sol::constructors<B2Body(), B2Body(const Handle<B2Body>&)>(),
+
+		// Equality operator
+		sol::meta_function::equal_to, &B2Body::operator==,
+
+		// Core methods
+		"Destroy", &B2Body::Destroy,
+		"IsValid", &B2Body::IsValid,
+		"GetHandle", &B2Body::GetHandle,
+
+		// Body Type
+		"GetBodyType", &B2Body::GetBodyType,
+		"SetBodyType", &B2Body::SetBodyType,
+
+		// Rotation
+		"SetFixedRotation", &B2Body::SetFixedRotation,
+		"IsFixedRotation", &B2Body::IsFixedRotation,
+
+		// Awake state
+		"SetAwake", &B2Body::SetAwake,
+		"IsAwake", &B2Body::IsAwake,
+
+		// Position and angle
+		"GetPosition", &B2Body::GetPosition,
+		"SetPosition", &B2Body::SetPosition,
+		"GetAngle", &B2Body::GetAngle,
+		"SetAngle", &B2Body::SetAngle,
+
+		// Velocity
+		"GetLinearVelocity", &B2Body::GetLinearVelocity,
+		"SetLinearVelocity", &B2Body::SetLinearVelocity,
+		"GetAngularVelocity", &B2Body::GetAngularVelocity,
+		"SetAngularVelocity", &B2Body::SetAngularVelocity,
+
+		// Forces and impulses
+		"ApplyForce", &B2Body::ApplyForce,
+		"ApplyForceToCenter", &B2Body::ApplyForceToCenter,
+		"ApplyLinearImpulse", &B2Body::ApplyLinearImpulse,
+		"ApplyLinearImpulseToCenter", &B2Body::ApplyLinearImpulseToCenter,
+
+		// Distance
+		"GetDistance", sol::overload(
+			static_cast<float (B2Body::*)(const B2Body&) const>(&B2Body::GetDistance),
+			static_cast<float (B2Body::*)(SDL_FPoint) const>(&B2Body::GetDistance)
+		)
+	);
+}
+
+
+

@@ -1,17 +1,22 @@
 #pragma once
 #include "EntityManager.h"
-#include "EntityRelationships.h"
+#include "EntityRelationsHelper.h"
+#include "EntityDestructor.h"
 #include "../core/TypeUtils.h"
+#include "../core/Logger.h"
 #include <cassert>
 #include <functional>
 
 // TODO: Do we need an ActiveComponent if we can just get that info directly from EntityManager?
 
 class ECS;
+class EntityRelations;
 
+// ENTITY //
 class Entity
 {
 public:
+    Entity() : id_(kInvalidEntity), ecs_(nullptr) {}
     Entity(Entity_t id, ECS& ecs) : id_(id), ecs_(&ecs) {}
 
     template <ComponentType T> requires (!RelationalComponentType<T>) T& AddComponent(T cmp = {});
@@ -25,10 +30,7 @@ public:
     template <ComponentType T> bool HasComponent() const;
     template <ComponentType...Ts> bool HasComponents() const;
 
-    void SetParent(const Entity& requestedParent);
-    void RemoveParent(); 
-    bool AddChild(const Entity& requestedChild);
-    bool RemoveChild(const Entity& requestedChild);
+    EntityRelations GetRelations();
 
     void Destroy();
     bool IsValid() const;
@@ -37,23 +39,39 @@ public:
     bool operator==(const Entity& rhs) const { return id_ == rhs.id_; }
     bool operator==(const Entity_t& entT) const { return id_ == entT; }
 
-private:
+protected:
     Entity_t id_ = kInvalidEntity;
     ECS* ecs_ = nullptr;
 };
 
+// ENTITY RELATIONS //
+class EntityRelations : protected Entity
+{
+public:
+    EntityRelations(Entity& ent) : Entity(ent) {}
+    ~EntityRelations() = default;
 
-//using ComponentFilter = bool(*)(const T&);
-template <ComponentType T>
-using ComponentFilter = std::function<bool(const T&)>;
+    Entity AddChild();
 
-template <ComponentType...Ts>
-using ComponentsFilter = std::function<bool(const Ts&...)>;
+    bool IsParent() const;
+    bool IsChild() const;
 
+    bool IsParentOf(Entity_t child) const;
+    bool IsParentOf(const Entity& child) const;
+
+    bool IsChildOf(Entity_t parent) const;
+    bool IsChildOf(const Entity& parent) const;
+
+    Entity GetParent();
+    std::vector<Entity> GetChildren();
+};
+
+// ECS //
 class ECS
 {
 public:
     friend class Entity;
+    friend class EntityRelations;
 
     ~ECS() = default;
 
@@ -68,14 +86,6 @@ public:
 
         return Entity{ ECS::Get().CreateEntity_t(), ecs };
     }
-
-    //template <ComponentType T>
-    //static std::vector<Entity> GetAllEntitiesWith(ComponentFilter<T>&& filter)
-    //{
-    //    auto& ecs = ECS::Get();
-
-    //    return ecs.GetAllEntitiesWithInternal<T>(std::forward<ComponentFilter<T>>(filter));
-    //}
 
     template <ComponentType...Ts, typename Filter>
     static std::vector<Entity> GetAllEntitiesWith(Filter&& filter)
@@ -115,12 +125,14 @@ private:
 
     void DestroyEntity(Entity_t entity)
     {
-        entityManager_.DestroyEntity(entity);
-        EntityRelations::DestroyRelationshipsWithEntity(componentManager_, entity);
-        componentManager_.EntityDestroyed(entity);
+        assert(IsEntityValid(entity));
+        EntityDestructor::EntityDestroyed(entityManager_, componentManager_, entity);
+        //entityManager_.DestroyEntity(entity);
+        //EntityRelationsHelper::DestroyRelationshipsWithEntity(componentManager_, entity);
+        //componentManager_.EntityDestroyed(entity);
     }
 
-    template <ComponentType T> requires (!RelationalComponentType<T>)
+    template <ComponentType T>
     T& AddComponent(Entity_t entity, T cmp = {})
     {
         return componentManager_.AddComponent<T>(entity, std::move(cmp));
@@ -132,13 +144,13 @@ private:
         return componentManager_.AddComponent<T>(entity, std::move(cmp));
     }
 
-    template <ComponentType T> requires (!RelationalComponentType<T>)
-        void RemoveComponent(Entity_t entity)
+    template <ComponentType T>
+    void RemoveComponent(Entity_t entity)
     {
         return componentManager_.RemoveComponent<T>(entity);
     }
 
-    template <ComponentType T> requires (!RelationalComponentType<T>)
+    template <ComponentType T>
     T& GetComponent(Entity_t entity)
     {
         return componentManager_.GetComponent<T>(entity);
@@ -150,7 +162,7 @@ private:
         return componentManager_.GetComponent<T>(entity);
     }
 
-    template <ComponentType...Ts> requires (!RelationalComponentType<Ts> && ...)
+    template <ComponentType...Ts>
     std::tuple<Ts&...> GetComponents(Entity_t entity)
     {
         return std::tie(componentManager_.GetComponent<Ts>(entity)...);
@@ -161,32 +173,6 @@ private:
     {
         return componentManager_.GetSignature(entity) & T::componentBit;
     }
-
-    //template <typename T>
-    //std::vector<Entity> GetAllEntitiesWithInternal(ComponentFilter<T>&& filter)
-    //{
-    //    std::vector<Entity> result;
-
-    //    auto activeEntities = entityManager_.GetActiveEntities();
-    //    for (const auto& ent : activeEntities)
-    //    {
-    //        const uint64_t entitySig = componentManager_.GetSignature(ent);
-
-    //        if ((entitySig & T::componentBit) == 0)
-    //        {
-    //            continue;
-    //        }
-
-    //        if (!(filter && filter(componentManager_.GetComponent<T>(ent))))
-    //        {
-    //            continue;
-    //        }
-
-    //        result.emplace_back(ent, *this);
-    //    }
-
-    //    return result;
-    //}
 
     template <ComponentType...Ts, typename Filter>
     std::vector<Entity> GetAllEntitiesWithInternalFiltered(Filter&& filter)
@@ -199,7 +185,7 @@ private:
         {
             const uint64_t entitySig = componentManager_.GetSignature(ent);
 
-            if ((entitySig & mask) != mask) 
+            if ((entitySig & mask) != mask)
             {
                 continue;
             }
@@ -263,7 +249,7 @@ private:
     {
         assert(entity < kMaxEntities);
 
-        bool activeAccordingToComponentManager = 
+        bool activeAccordingToComponentManager =
             componentManager_.GetSignature(entity) & ActiveState::componentBit;
         bool activeAccordingToEntityManager = entityManager_.IsEntityActive(entity);
 
@@ -272,33 +258,16 @@ private:
         return activeAccordingToComponentManager;
     }
 
-    void SetParent(Entity_t entity, Entity_t requestedParent)
+    bool IsEntityValid(Entity_t entity) const
     {
-        if (!IsEntityActive(entity) || !IsEntityActive(requestedParent)) { return; }
-
-        return EntityRelations::SetParent(componentManager_, entity, requestedParent);
+        return (entity < kMaxEntities && IsEntityActive(entity));
     }
 
-    void RemoveParent(Entity_t entity)
-    {
-        if (!IsEntityActive(entity)) { return; }
+    EntityManager& GetEntityManager() { return entityManager_; }
+    const EntityManager& GetEntityManager() const { return entityManager_; }
 
-        return EntityRelations::SetParent(componentManager_, entity, kInvalidEntity);
-    }
-
-    bool AddChild(Entity_t entity, Entity_t requestedChild)
-    {
-        if (!IsEntityActive(entity) || !IsEntityActive(requestedChild)) { return false; }
-
-        return EntityRelations::AddChild(componentManager_, entity, requestedChild);
-    }
-
-    bool RemoveChild(Entity_t entity, Entity_t requestedChild)
-    {
-        if (!IsEntityActive(entity) || !IsEntityActive(requestedChild)) { return false; }
-
-        return EntityRelations::RemoveChild(componentManager_, entity, requestedChild);
-    }
+    impl::ComponentManager& GetComponentManager() { return componentManager_; }
+    const impl::ComponentManager& GetComponentManager() const { return componentManager_; }
 
     static ECS& Get()
     {
@@ -317,6 +286,7 @@ private:
     impl::ComponentManager componentManager_;
 };
 
+// ENTITY DEFS //
 template <ComponentType T> requires (!RelationalComponentType<T>)
 inline T& Entity::AddComponent(T cmp)
 {
@@ -379,5 +349,4 @@ inline bool Entity::HasComponents() const
 
     return (ecs_->HasComponent<Ts>(id_) && ...);
 }
-
 

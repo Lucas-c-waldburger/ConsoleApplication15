@@ -14,7 +14,7 @@ class RenderSystem : public System
 {
 public:
 	// TODO: Attach stores to render system via Scene
-	void Update(SDL_Renderer* renderer, const Camera& camera, const impl::AtlasStore& atlasStore);
+	void Update(SDL_Renderer* renderer, const Camera& camera, const impl::TextureManager& atlasStore);
 	
 private:	
 	struct RenderGlyphsArgs

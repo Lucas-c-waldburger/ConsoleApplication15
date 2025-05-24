@@ -111,6 +111,7 @@ namespace SDLite
 	static constexpr int kWindowWidth = 1200;
 	static constexpr int kWindowHeight = 900;
 
+
 	struct WindowArgs
 	{
 		int w = 1200;

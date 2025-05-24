@@ -2,6 +2,7 @@
 #include "B2Utils.h"
 #include "B2Handle.h"
 #include "../core/commonObjects.h"
+#include "B2CollisionFilter.h"
 #include <optional>
 #include <SDL.h>
 #include <numeric>
@@ -17,7 +18,7 @@ public:
         return b2MakeBox(halfW, halfH);
     }
     static b2Polygon MakeOffsetBox(Dimensions<float> dimensions, SDL_FPoint localCenter,
-        float localRotAngle)
+                                   float localRotAngle)
     {
         b2Vec2 convertedCenter = ToB2VecScaled(localCenter);
         b2Rot convertedRot = AngleToB2Rot(localRotAngle);
@@ -37,7 +38,7 @@ public:
         return b2MakePolygon(&hull, radius);
     }
     static b2Polygon MakeOffsetPolygon(const std::vector<SDL_FPoint>& points,
-        SDL_FPoint localPos, float localRotAngle)
+                                       SDL_FPoint localPos, float localRotAngle)
     {
         b2Vec2 convertedPos = ToB2VecScaled(localPos);
         b2Rot convertedRot = AngleToB2Rot(localRotAngle);
@@ -74,6 +75,9 @@ public:
     };
 
     B2Shape() = default;
+    explicit B2Shape(const Handle<B2Shape>& handle) : shapeHandle_(handle) {}
+
+    bool operator==(const B2Shape& rhs) const { return shapeHandle_ == rhs.shapeHandle_; }
 
     Type GetShapeType() const { return static_cast<Type>(b2Shape_GetType(shapeHandle_)); }
 
@@ -127,6 +131,27 @@ public:
         b2Shape_SetFriction(shapeHandle_, restitution);
     }
 
+    B2CollisionFilter GetCollisionFilter() const
+    {
+        auto filter = b2Shape_GetFilter(shapeHandle_);
+
+        return B2CollisionFilter{
+            .categories = filter.categoryBits,
+            .categoryMask = filter.maskBits,
+            .groupIndex = filter.groupIndex
+        };
+    }
+    void SetCollisionFilter(const B2CollisionFilter& pubFilter)
+    {
+        b2Filter filter{
+            .categoryBits = pubFilter.categories,
+            .maskBits = pubFilter.categoryMask,
+            .groupIndex = pubFilter.groupIndex
+        };
+
+        b2Shape_SetFilter(shapeHandle_, filter);
+    }
+
     SDL_FRect GetBoundingBox() const
     {
         auto aabb = b2Shape_GetAABB(shapeHandle_);
@@ -145,8 +170,6 @@ public:
     T GetAs() const;
 
 protected:
-    explicit B2Shape(const Handle<B2Shape>& handle) : shapeHandle_(handle) {}
-
     b2BodyId GetBodyId() const
     {
         if (!shapeHandle_.IsValid())
@@ -164,6 +187,15 @@ protected:
 
     Handle<B2Shape> shapeHandle_;
 };
+
+namespace std {
+template <>
+struct hash<B2Shape> {
+    size_t operator()(const B2Shape& shape) const noexcept {
+        return std::hash<Handle<B2Shape>>{}(shape.GetHandle());
+    };
+};
+}
 
 template <typename T>
 concept SomeDerivedB2Shape = std::derived_from<T, B2Shape>&&

@@ -1,9 +1,13 @@
 #pragma once
 #include <concepts>
 #include <type_traits>
+#include <unordered_set>
 #include "commonObjects.h"
 
-template <typename...> struct TypeList {};
+template <typename...Ts> struct TypeList 
+{
+	static constexpr size_t size = sizeof...(Ts);
+};
 
 template <typename T, typename...Ts>
 static constexpr bool type_in_pack_v = (std::same_as<T, Ts> || ...);
@@ -12,16 +16,53 @@ template <typename T, typename...Ts>
 concept PackMemberType = type_in_pack_v<T, Ts...>;
 
 template <typename...Ts>
-struct pack_types_unique;
+struct pack_types_unique : std::true_type {};
+
+//template <typename T>
+//struct pack_types_unique<T> : std::true_type {};
 
 template <typename T, typename U, typename...Ts>
 struct pack_types_unique<T, U, Ts...>
 {
-	static constexpr bool value = !(std::same_as<T, U>) && pack_types_unique<Ts...>;
+	static constexpr bool value = !(std::same_as<T, U>) && pack_types_unique<Ts...>::value;
 };
 
 template <typename...Ts>
 static constexpr bool pack_types_unique_v = pack_types_unique<Ts...>::value;
+
+namespace detail {
+template <typename T, typename TList>
+struct type_list_index;
+
+template <typename T, typename...Ts>
+struct type_list_index<T, TypeList<T, Ts...>> : std::integral_constant<size_t, 0> {};
+
+template <typename T, typename U, typename...Ts>
+struct type_list_index<T, TypeList<U, Ts...>>
+	: std::integral_constant<size_t, 1 + type_list_index<T, TypeList<Ts...>>::value> {};
+}
+
+template <typename T, typename TList>
+inline constexpr size_t type_list_index_v = detail::type_list_index<T, TList>::value;
+
+
+// tuple index
+//namespace detail {
+//template <typename T, typename Tup>
+//struct tuple_index;
+//
+//template <typename T, typename...Ts>
+//struct tuple_index<T, std::tuple<T, Ts...>> : std::integral_constant<size_t, 0> {};
+//
+//template <typename T, typename U, typename...Ts>
+//struct tuple_index<T, std::tuple<U, Ts...>>
+//	: std::integral_constant<size_t, 1 + tuple_index<T, std::tuple<Ts...>>::value> {};
+//}
+//
+//template <typename T, typename Tup>
+//inline constexpr size_t tuple_index_v = detail::tuple_index<T, Tup>::value;
+
+
 
 template <typename T> concept ArithmeticType = std::is_arithmetic_v<T>;
 
@@ -38,3 +79,12 @@ template <typename T>
 concept HasBooleanNotOperator = requires(T t) {
 	{ !t } -> std::convertible_to<bool>;
 };
+
+template <typename T>
+concept Hashable = requires(T t) {
+	{ std::hash<T>{}(t) } -> std::convertible_to<std::size_t>;
+};
+
+template <typename T>
+concept UseableInUnorderedSet = requires { typename std::unordered_set<T>; };
+

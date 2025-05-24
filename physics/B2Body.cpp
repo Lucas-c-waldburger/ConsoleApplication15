@@ -1,6 +1,45 @@
 #include "B2Body.h"
 #include "../core/HandleFactory.h"
+#include "../core/TypeUtils.h"
 #include <cassert>
+
+namespace {
+
+template <typename T>
+std::unordered_set<T> GetShapesImpl(const Handle<B2Body>& bodyHandle)
+{
+    if (!bodyHandle.IsValid())
+    {
+        return {};
+    }
+
+    b2ShapeId shapeIds[B2Body::kMaxShapesPerBody];
+
+    int count = b2Body_GetShapes(bodyHandle, shapeIds, B2Body::kMaxShapesPerBody);
+    if (count <= 0)
+    {
+        return {};
+    }
+
+    std::unordered_set<T> shapes;
+    shapes.reserve(count);
+
+    for (int i = 0; i < count; i++)
+    {
+        Handle<B2Shape> handle = Handle<B2Shape>::Create(shapeIds[i]);
+
+        if (handle.IsValid())
+        {
+            B2Shape shape{ handle };
+            shapes.emplace(std::move(shape));
+        }
+    }
+
+    return shapes;
+}
+
+
+} // unnamed namespace
 
 Result<B2Shape> B2Body::GetShape(const Handle<B2Shape>& shapeHandle)
 {
@@ -49,42 +88,33 @@ Result<B2Shape> B2Body::AddShape(const B2ShapeDefinition& shapeDef)
         return MAKE_ERROR("Shape type was invalid or unsupported");
     }
 
-    Handle<B2Shape> shapeHandle = HandleFactory<B2Shape>::GetHandle(shapeId);
+    Handle<B2Shape> shapeHandle = Handle<B2Shape>::Create(shapeId);
 
     assert(shapeHandle.IsValid());
 
     return B2Shape{ shapeHandle };
 }
 
+std::unordered_set<B2Shape> B2Body::GetShapes() 
+{
+    return GetShapesImpl<B2Shape>(bodyHandle_);
+}
+
+std::unordered_set<ReadOnly<B2Shape>> B2Body::GetShapes() const
+{
+    return GetShapesImpl<ReadOnly<B2Shape>>(bodyHandle_);
+}
+
+
 std::unordered_set<Handle<B2Shape>> B2Body::GetShapeHandles() const
 {
-    if (!IsValid())
-    {
-        return {};
-    }
+    auto shapes = GetShapes();
 
-    b2ShapeId shapeIds[B2Body::kMaxShapesPerBody];
+    std::unordered_set<Handle<B2Shape>> handles;
+    std::transform(shapes.begin(), shapes.end(), std::inserter(handles, handles.end()), 
+                   [](const auto& sh) { return sh.GetData().GetHandle(); });
 
-    int count = b2Body_GetShapes(bodyHandle_, shapeIds, B2Body::kMaxShapesPerBody);
-    if (count <= 0)
-    {
-        return {};
-    }
-
-    std::unordered_set<Handle<B2Shape>> shapeHandles;
-    shapeHandles.reserve(count);
-
-    for (int i = 0; i < count; i++)
-    {
-        Handle<B2Shape> shapeHandle = HandleFactory<B2Shape>::GetHandle(shapeIds[i]);
-
-        if (shapeHandle.IsValid())
-        {
-            shapeHandles.insert(shapeHandle);
-        }
-    }
-
-    return shapeHandles;
+    return handles;
 }
 
 bool B2Body::OwnsShape(const Handle<B2Shape>& shapeHandle) const

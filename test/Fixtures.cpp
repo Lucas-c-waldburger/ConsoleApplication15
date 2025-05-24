@@ -1,95 +1,107 @@
 #include "Fixtures.h"
 #include "../ecs/Ecs.h"
 
-//std::unique_ptr<ScriptFixture> ScriptFixture::GetInstance::PhysicsEditor(Entity& entity, bool addComponentsIfMissing)
-//{
-	/*static constexpr const char* kPhysEditScriptName = "test::physics";
-	static constexpr const char* kPhysEditScriptFile = "test_physics.lua";
+SceneFixture::~SceneFixture()
+{
+	world_.Destroy();
 
-	if (!entity.HasComponent<Physics>())
+	Logger::EndSession();
+	SDLite::Exit();
+}
+
+void SceneFixture::LoopStart()
+{
+	counter_.Update();
+
+	systemOrder_.Reset();
+
+	hooks_.SetHookPoint<HookPoint::LoopStart>();
+}
+
+Result<bool> SceneFixture::UpdateEvents()
+{
+	TRY(systemOrder_.MarkUpdated<EventSystem>());
+
+	assert(systems_.IsSystemInitialized<EventSystem>());
+	auto& eventSys = systems_.GetSystem<EventSystem>();
+
+	if (!eventSys->Poll(ev_))
 	{
-		if (addComponentsIfMissing)
-		{
-			entity.AddComponent<Physics>();
-		}
-		else
-		{
-			LOG_ERROR("Entity did not have physics component and auto-add was disabled. Setup unsuccesful");
-			return nullptr;
-		}
+		return false;
 	}
 
-	auto& phys = entity.GetComponent<Physics>();
+	eventSys->DistributeEvents();
 
-	ScriptInstance scriptInstance{};
+	return true;
+}
 
-	scriptInstance.scriptInfo = {
-		.name = kPhysEditScriptName,
-		.scriptType = ScriptType::File,
-		.path = std::format(kScriptsPathFmt, kPhysEditScriptFile)
+Result<Void> SceneFixture::UpdatePhysics()
+{
+	TRY(systemOrder_.MarkUpdated<PhysicsSystem>());
+
+	assert(systems_.IsSystemInitialized<PhysicsSystem>());
+	assert(world_.IsValid());
+
+	systems_.GetSystem<PhysicsSystem>()->Update(&world_, 1.0f / 60.0f, 4);
+
+	world_.Step(1.0f / 60.0f, 4);
+
+	return Void{};
+}
+
+Result<Void> SceneFixture::UpdateCamera()
+{
+	TRY(systemOrder_.MarkUpdated<CameraSystem>());
+
+	assert(systems_.IsSystemInitialized<CameraSystem>());
+
+	systems_.GetSystem<CameraSystem>()->Update(counter_.GetDelta());
+
+	return Void{};
+}
+
+Result<Void> SceneFixture::UpdateRender()
+{
+	TRY(systemOrder_.MarkUpdated<RenderSystem>());
+
+	assert(systems_.IsSystemInitialized<RenderSystem>());
+
+	auto& cam = systems_.GetSystem<CameraSystem>()->GetCamera();
+
+	systems_.GetSystem<RenderSystem>()->Update(SDLite::Renderer(), cam, textures_);
+
+	return Void{};
+}
+
+Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
+{
+	Logger::StartSession();
+	SDLite::Start();
+	TRY((RegisterCustomEventDataTypes<CUSTOM_EVENT_DATA_REGISTRY>()));
+
+	auto fixture = std::make_shared<SceneFixture>();
+
+	fixture->world_ = B2World::Create(0, 9.8f);
+
+	fixture->systems_.InitializeSystem<RenderSystem>();
+	fixture->systems_.InitializeSystem<PhysicsSystem>();
+	fixture->systems_.InitializeSystem<EventSystem>();
+
+	Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
+								   static_cast<float>(SDLite::kWindowHeight) };
+
+	auto& camSystem = fixture->systems_.InitializeSystem<CameraSystem>(cameraVp);
+
+	static constexpr SDL_FPoint screenCenter = {
+		static_cast<float>(SDLite::kWindowWidth) / 2.0f,
+		static_cast<float>(SDLite::kWindowHeight) / 2.0f
 	};
 
-	scriptInstance.setupFn = [&phys](Lua& lua) {
-		lua["physics"] = &phys;
-	};
+	camSystem->GetCamera().SetPosition(screenCenter);
 
-	auto fixture = std::unique_ptr<ScriptFixture>(new ScriptFixture{});
+	assert(fixture->systems_.AllSystemsInitialized());
 
-	fixture->scriptName_ = kPhysEditScriptName;
-	fixture->fileMonitor_.SetFilePath(scriptInstance.scriptInfo.path);
+	return Result<std::shared_ptr<SceneFixture>>{ std::move(fixture) };
+}
 
-	fixture->lua_ = Lua::GetInstance<
-		SDL_FPoint,
-		Force,
-		AccumulatedForces,
-		Physics
-	>();
 
-	fixture->lua_.SetScriptInfo(std::move(scriptInstance.scriptInfo));
-	scriptInstance.setupFn(fixture->lua_);
-
-	fixture->hookPointIdent_ = HookPoint::PrePhysicsUpdate;
-	fixture->attachmentHandle_ = Hooks::Attach(HookPoint::PrePhysicsUpdate,
-		[fixturePtr = fixture.get()]() {
-			assert(fixturePtr);
-			RunOnFileChange(*fixturePtr);
-		}
-	);
-
-	return fixture;*/
-//}
-
-//void ScriptFixture::GetInstance::RunOnFileChange(ScriptFixture& fixture)
-//{
-//	if (fixture.fileMonitor_.FileDidChange())
-//	{
-//		LOG_IF_ERROR(fixture.lua_.Run());
-//	}
-//}
-//
-//void ScriptFixture::TearDown()
-//{
-//	Hooks::Detach(hookPointIdent_, attachmentHandle_); 
-//}
-//
-//void ScriptFixture::OpenInVsCode(std::string_view scriptName)
-//{
-//	namespace fs = std::filesystem;
-//
-//	std::string scriptPath = std::format(kScriptsPathFmt, scriptName);
-//
-//	fs::path source = __FILE__;
-//	auto base = source.parent_path().parent_path();
-//	base /= scriptPath;
-//
-//	//std::string scriptPath = std::format(kScriptsPathFmt, scriptName);
-//	if (!fs::exists(base))
-//	{
-//		LOG_WARNING_FMT("No script with name '{}' found inside scripts directory", scriptName);
-//		return;
-//	}
-//
-//	std::string command = std::format(kVsCodePathFmt, base.string());
-//
-//	system(command.c_str());
-//}

@@ -30,13 +30,13 @@ std::pair<Handle<B2Shape>, Handle<B2Shape>> GetShapeHandles(T* b2Ev)
 {
 	if constexpr (SomeB2ContactEvent<T>)
 	{
-		return std::make_pair(HandleFactory<B2Shape>::GetHandle(b2Ev->shapeIdA),
-							  HandleFactory<B2Shape>::GetHandle(b2Ev->shapeIdB));
+		return std::make_pair(Handle<B2Shape>::Create(b2Ev->shapeIdA),
+							  Handle<B2Shape>::Create(b2Ev->shapeIdB));
 	}
 	else // Sensor
 	{
-		return std::make_pair(HandleFactory<B2Shape>::GetHandle(b2Ev->sensorShapeId),
-							  HandleFactory<B2Shape>::GetHandle(b2Ev->visitorShapeId));
+		return std::make_pair(Handle<B2Shape>::Create(b2Ev->sensorShapeId),
+							  Handle<B2Shape>::Create(b2Ev->visitorShapeId));
 	}
 }
 

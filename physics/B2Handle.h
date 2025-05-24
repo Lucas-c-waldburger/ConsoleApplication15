@@ -35,11 +35,6 @@ struct B2BodyShapeJointIdEq
     }
 };
 
-inline void HashCombine(std::size_t& seed, std::size_t value)
-{
-    seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-}
-
 template <B2IdType T>
 struct B2BodyShapeJointIdHash
 {
@@ -56,93 +51,71 @@ struct B2BodyShapeJointIdHash
 
 // TODO: can use one template for all these i think
 template <> 
-class Handle<B2Body>
+class Handle<B2Body> : public HandleBase<Handle<B2Body>>
 {
 public:
-    template <typename...HandleTs>
-    friend class HandleFactory;
-
+    friend class HandleBase<Handle<B2Body>>;
     using B2IdType = b2BodyId;
 
     Handle() = default;
     bool operator==(const Handle& rhs) const { return bodyId_ == rhs.bodyId_; }
     bool operator==(const b2BodyId& bodyId) const { return bodyId_ == bodyId; }
-    size_t GetHash() const noexcept { return B2BodyShapeJointIdHash<b2BodyId>{}(bodyId_); }
-    bool IsValid() const { return b2Body_IsValid(bodyId_); }
+
     operator const b2BodyId& () const { return bodyId_; }
 
-    friend std::ostream& operator<<(std::ostream& os, const Handle& handle)
-    {
-        if (!handle.IsValid()) { os << "{ INVALID }"; }
-        else { os << "{ VALID }"; }
-        return os;
-    }
-
-    static Handle Create(b2BodyId bodyId) { return Handle{ bodyId }; }
-
 private:
+    size_t GetHashImpl() const noexcept { return B2BodyShapeJointIdHash<b2BodyId>{}(bodyId_); }
+    bool IsValidImpl() const { return b2Body_IsValid(bodyId_); }
+
+    static Handle CreateImpl(b2BodyId bodyId) { return Handle{ bodyId }; }
+
     Handle(b2BodyId bodyId) : bodyId_(bodyId) {}
 
     b2BodyId bodyId_ = b2_nullBodyId;
 };
 
 template <>
-class Handle<B2Shape>
+class Handle<B2Shape> : public HandleBase<Handle<B2Shape>>
 {
 public:
-public:
-    template <typename...HandleTs>
-    friend class HandleFactory;
-
+    friend class HandleBase<Handle<B2Shape>>;
     using B2IdType = b2ShapeId;
 
     Handle() = default;
     bool operator==(const Handle& rhs) const { return shapeId_ == rhs.shapeId_; }
     bool operator==(const b2ShapeId& shapeId) const { return shapeId_ == shapeId; }
-    size_t GetHash() const noexcept { return B2BodyShapeJointIdHash<b2ShapeId>{}(shapeId_); }
-    bool IsValid() const { return b2Shape_IsValid(shapeId_); }
+
     operator const b2ShapeId& () const { return shapeId_; }
 
-    friend std::ostream& operator<<(std::ostream& os, const Handle& handle)
-    {
-        if (!handle.IsValid()) { os << "{ INVALID }"; }
-        else { os << "{ VALID }"; }
-        return os;
-    }
-
-    static Handle Create(b2ShapeId shapeId) { return Handle{ shapeId }; }
-
 private:
+    size_t GetHashImpl() const noexcept { return B2BodyShapeJointIdHash<b2ShapeId>{}(shapeId_); }
+    bool IsValidImpl() const { return b2Shape_IsValid(shapeId_); }
+
+    static Handle CreateImpl(b2ShapeId shapeId) { return Handle{ shapeId }; }
+
     Handle(b2ShapeId shapeId) : shapeId_(shapeId) {}
 
     b2ShapeId shapeId_ = b2_nullShapeId;
 };
 
 template <>
-class Handle<B2Joint>
+class Handle<B2Joint> : public HandleBase<Handle<B2Joint>>
 {
 public:
-public:
-    template <typename...HandleTs>
-    friend class HandleFactory;
-
+    friend class HandleBase<Handle<B2Joint>>;
     using B2IdType = b2JointId;
 
     Handle() = default;
     bool operator==(const Handle& rhs) const { return jointId_ == rhs.jointId_; }
     bool operator==(const b2JointId& jointId) const { return jointId_ == jointId; }
-    size_t GetHash() const noexcept { return B2BodyShapeJointIdHash<b2JointId>{}(jointId_); }
-    bool IsValid() const { return b2Joint_IsValid(jointId_); }
+
     operator const b2JointId& () const { return jointId_; }
 
-    friend std::ostream& operator<<(std::ostream& os, const Handle& handle)
-    {
-        if (!handle.IsValid()) { os << "{ INVALID }"; }
-        else { os << "{ VALID }"; }
-        return os;
-    }
+private:
+    size_t GetHashImpl() const noexcept { return B2BodyShapeJointIdHash<b2JointId>{}(jointId_); }
+    bool IsValidImpl() const { return b2Joint_IsValid(jointId_); }
 
-    static Handle Create(b2JointId jointId) { return Handle{ jointId }; }
+    static Handle CreateImpl(b2JointId jointId) { return Handle{ jointId }; }
 
 private:
     Handle(b2JointId jointId) : jointId_(jointId) {}

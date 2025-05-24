@@ -55,7 +55,7 @@ public:
         filePath_(std::move(filePath)), checkInterval_(intervalMs),
         lastCheckTime_(std::chrono::system_clock::now()) {}
 
-    bool FileDidChange()
+    bool FileDidChange() const
     {
         auto now = std::chrono::system_clock::now();
         if (now - lastCheckTime_ < checkInterval_) 
@@ -75,6 +75,8 @@ public:
 
     void SetFilePath(std::string fp) { filePath_ = std::move(fp); }
 
+    const std::string& GetFilePath() const { return filePath_; }
+
 private:
     std::filesystem::file_time_type GetLastWriteTime() const 
     {
@@ -91,6 +93,6 @@ private:
 
     std::string filePath_;
     std::chrono::milliseconds checkInterval_;
-    std::chrono::system_clock::time_point lastCheckTime_;
-    std::filesystem::file_time_type lastWriteTime_;
+    mutable std::chrono::system_clock::time_point lastCheckTime_;
+    mutable std::filesystem::file_time_type lastWriteTime_;
 };

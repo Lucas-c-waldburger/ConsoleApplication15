@@ -62,16 +62,3 @@ public:
 };
 
 
-// TODO: Implement and have EventSystem handle it
-//class CustomEventDataRegistrar
-//{
-//public:
-//	template <CustomEventDataType...Ts>
-//	static Result<Void> Register()
-//	{
-//
-//	}
-//
-//private:
-//	static std::unordered_set<uint32_t> registeredEventTypes;
-//};

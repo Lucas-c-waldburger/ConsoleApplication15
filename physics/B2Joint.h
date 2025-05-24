@@ -35,9 +35,17 @@ public:
 
 	std::pair<SDL_FPoint, SDL_FPoint> GetEndPoints() const
 	{
+		b2Vec2 localAnchorA = b2Joint_GetLocalAnchorA(jointHandle_);
+		b2Vec2 localAnchorB = b2Joint_GetLocalAnchorB(jointHandle_);
+
+		b2Transform tfA = b2Body_GetTransform(GetBodyHandleA());
+		b2Transform tfB = b2Body_GetTransform(GetBodyHandleB());
+
+		b2Vec2 worldPointA = b2TransformPoint(tfA, localAnchorA);
+		b2Vec2 worldPointB = b2TransformPoint(tfB, localAnchorB);
+
 		return std::make_pair(
-			ToSDLFPointScaled(b2Body_GetPosition(GetBodyHandleA())),
-			ToSDLFPointScaled(b2Body_GetPosition(GetBodyHandleB()))
+			ToSDLFPointScaled(worldPointA), ToSDLFPointScaled(worldPointB)
 		);
 	}
 
@@ -61,10 +69,6 @@ inline bool JointTypeMatches(const Handle<B2Joint>& jointHandle)
 	return T::jointType == static_cast<B2Joint::Type>(b2Joint_GetType(jointHandle));
 }
 
-//template <SomeDerivedB2Joint T>
-//struct B2JointDefinition;
- 
-
 class B2DistanceJoint : public B2Joint
 {
 public:
@@ -84,6 +88,18 @@ public:
 			.min = b2DistanceJoint_GetMinLength(jointHandle_),
 			.max = b2DistanceJoint_GetMaxLength(jointHandle_)
 		};
+	}
+
+	float GetMinLength() const { return b2DistanceJoint_GetMinLength(jointHandle_); }
+	void SetMinLength(float newMin) 
+	{ 
+		b2DistanceJoint_SetLengthRange(jointHandle_, newMin, b2DistanceJoint_GetMaxLength(jointHandle_)); 
+	}
+
+	float GetMaxLength() const { return b2DistanceJoint_GetMaxLength(jointHandle_); }
+	void SetMaxLength(float newMax)
+	{
+		b2DistanceJoint_SetLengthRange(jointHandle_, b2DistanceJoint_GetMinLength(jointHandle_), newMax);
 	}
 	void SetLengthRange(Range<float> range) { b2DistanceJoint_SetLengthRange(jointHandle_, range.min, range.max); }
 

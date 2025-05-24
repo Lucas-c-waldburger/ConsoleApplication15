@@ -5,6 +5,7 @@
 #include "CameraTargetComponent.h"
 #include "ColliderComponent.h"
 #include "EventObserverComponent.h"
+#include "EntityMetricsComponent.h"
 #include "GameControllerStateComponent.h"
 #include "RigidBodyComponent.h"
 #include "RelationComponents.h"
@@ -26,6 +27,7 @@
     GameControllerState, \
     Script, \
     EventObserver, \
-    CameraTarget
+    CameraTarget, \
+    EntityMetrics
 
 

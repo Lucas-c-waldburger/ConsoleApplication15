@@ -139,8 +139,8 @@ public:
 		auto dest = ToB2VecScaled(pointB);
 
 		b2QueryFilter qFilter{
-			.categoryBits = 0xFFFFFFFF, // Accept all categories
-			.maskBits = 0xFFFFFFFF      // Can collide with all objects
+			.categoryBits = 0xFFFFFFFFFFFFFFFF, // Accept all categories
+			.maskBits = 0xFFFFFFFFFFFFFFFF      // Can collide with all objects
 		};
 
 		b2World_CastRay(worldId, origin, dest - origin, qFilter, fn, &context_);
@@ -156,8 +156,8 @@ public:
 		auto dest = ToB2VecScaled(pointB);
 
 		b2QueryFilter qFilter{
-			.categoryBits = 0xFFFFFFFF, // Accept all categories
-			.maskBits = 0xFFFFFFFF      // Can collide with all objects
+			.categoryBits = 0xFFFFFFFFFFFFFFFF, // Accept all categories
+			.maskBits = 0xFFFFFFFFFFFFFFFF      // Can collide with all objects
 		};
 
 		auto ret = b2World_CastRayClosest(worldId, origin, dest - origin, qFilter);

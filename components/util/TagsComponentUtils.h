@@ -9,6 +9,7 @@ public:
 	static constexpr std::string_view kRelation = "relation";
 	static constexpr std::string_view kChildRole = "childRole";
 	static constexpr std::string_view kParentRole = "parentRole";
+	static constexpr std::string_view kFilter = "filter";
 
 private:
 	TagCategory() = default;
@@ -17,9 +18,10 @@ private:
 class Tag
 { 
 public:
-	static constexpr std::string_view kSeparator = "::";
+	static constexpr char kSeparator = ':';
 
 	Tag() = default;
+	Tag(std::string_view input);
 	Tag(std::string_view cat, std::string_view val) :
 		category_(std::string{cat}), value_(std::string{val}) {}
 	
