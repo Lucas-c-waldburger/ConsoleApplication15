@@ -3,7 +3,7 @@
 #include "../../events/custom/CustomEvents.h"
 #include "../../ecs/Ecs.h"
 
-template <CustomEventDataType T>
+template <SomeCustomEvent T>
 inline Result<Void> PushEventNotification(T&& eventData, Sint32 code = 0)
 {
 	if (T::GetEventType() == kInvalidEventType)
@@ -23,7 +23,7 @@ inline Result<Void> PushEventNotification(T&& eventData, Sint32 code = 0)
 }
 
 
-template <CustomEventDataType T>
+template <SomeCustomEvent T>
 inline Result<Void> SendEventNotification(T&& eventData, Sint32 code = 0)
 {
 	if (T::GetEventType() == kInvalidEventType)
@@ -44,7 +44,7 @@ inline Result<Void> SendEventNotification(T&& eventData, Sint32 code = 0)
 		return Void{};
 	}
 
-	auto newEv = CustomEvents::MakeNewEvent(std::forward<T>(eventData), code);
+	auto newEv = CustomEvents::MakeNewEvent(std::forward<T>(eventData));
 	assert(newEv.user.data1);
 
 	for (auto& entity : entities)

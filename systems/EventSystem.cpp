@@ -1,45 +1,80 @@
 #include "EventSystem.h"
-#include "../core/Hooks.h"
-#include <SDL.h>
+#include "../events/EventBus.h"
+#include "../ecs/Ecs.h"
 
-bool EventSystem::Poll(SDL_Event& ev)
+void EventSystem::DispatchEvents()
 {
-	while (SDL_PollEvent(&ev))
-	{
-		if (ev.type == SDL_QUIT)
-		{
-			return false;
-		}
+	auto& buffer = EventBus::Get()->buffer_;
 
-		eventBuffer_.Push(ev);
+	if (buffer.Empty())
+	{
+		return;
 	}
 
-	return true;
+	auto bufferedEvTypes = buffer.PeekEventTypes();
+
+	auto filter = [&bufferedEvTypes](const EventCallbacks& cbs) {
+		for (const auto& evType : bufferedEvTypes)
+		{
+			if (cbs.map.HasCallbacks(evType))
+			{
+				return true;
+			}
+		}
+		return false;
+	};
+
+	auto entities = ECS::GetAllEntitiesWith<EventCallbacks>(filter);
+	if (entities.empty())
+	{
+		return;
+	}
+
+	while (!buffer.Empty())
+	{
+		auto bufEv = buffer.Pop();
+		assert(bufEv.type != SDL_POLLSENTINEL);
+
+		for (auto& entity : entities)
+		{
+			if (!entity.IsValid())
+			{
+				continue;
+			}
+
+			auto& cbsForType = entity.GetComponent<EventCallbacks>().map.GetCallbacks(bufEv.type);
+			if (cbsForType.empty())
+			{
+				continue;
+			}
+
+			ReturnSignal ret;
+
+			auto it = cbsForType.begin();
+			while (it != cbsForType.end())
+			{
+				ret = ReturnSignal::StopObserving;
+
+				if (it->handle.IsValid() && it->onEvent)
+				{
+					ret = it->onEvent(bufEv);
+				}
+
+				if (ret == ReturnSignal::StopObserving)
+				{
+					it = cbsForType.erase(it);
+				}
+				else
+				{
+					++it;
+				}
+			}
+		}
+	}
 }
 
-void EventSystem::DistributeEvents()
+void EventSystem::ResetEventBus()
 {
-	while (!eventBuffer_.Empty())
-	{
-		auto ev = eventBuffer_.Pop();
-
-		switch (ev.type)
-		{
-		case SDL_CONTROLLERDEVICEADDED:
-		case SDL_CONTROLLERDEVICEREMOVED:
-			gameControllerHandler_.HandleDeviceEvent(ev);
-			break;
-
-		case SDL_CONTROLLERAXISMOTION:
-		case SDL_CONTROLLERBUTTONDOWN:
-		case SDL_CONTROLLERBUTTONUP:
-			gameControllerHandler_.HandleInputEvent(ev);
-			break;
-
-		default:
-			break;
-		}
-	}
-
-	gameControllerHandler_.UpdateEntities();
+	EventBus::Get()->buffer_.Reset();
+	EventBus::Get()->storage_.Clear();
 }

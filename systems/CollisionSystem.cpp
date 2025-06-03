@@ -4,6 +4,7 @@
 #include "../components/util/EventObserverUtils.h"
 #include "../physics/B2World.h"
 #include "../core/Algorithms.h"
+#include "../events/EventManager.h"
 
 namespace {
 
@@ -24,6 +25,16 @@ concept SomeEntityCollisionEvent = std::same_as<T, EntityCollision::ContactBegin
 								   std::same_as<T, EntityCollision::SensorBegin> ||
 								   std::same_as<T, EntityCollision::SensorEnd> ||
 								   std::same_as<T, EntityCollision::Hit>;
+
+template <typename T>
+concept SomeCustomCollisionEvent = std::same_as<T, events::ContactCollisionBegin> ||
+								   std::same_as<T, events::ContactCollisionEnd> ||
+								   std::same_as<T, events::SensorCollisionBegin> ||
+								   std::same_as<T, events::SensorCollisionEnd> ||
+								   std::same_as<T, events::HitCollision>;
+
+
+
 
 template <SomeB2Event T>
 std::pair<Handle<B2Shape>, Handle<B2Shape>> GetShapeHandles(T* b2Ev)
@@ -113,7 +124,71 @@ Result<Void> SendCollisionEvents(std::vector<Entity>& entities, U* b2EvArr, int 
 	return Void{};
 }
 
+Entity_t FindShapeEntity(const std::vector<Entity>& entities, const Handle<B2Shape>& handle)
+{
+	auto it = FindIf(entities, [&handle](const auto& entity) {
+		assert(entity.HasComponent<Collider>());
+		return entity.GetComponent<Collider>().shape.GetData().GetHandle() == handle;
+	});
+
+	return (it != entities.end()) ? it->GetID() : kInvalidEntity;
+};
+
+template <SomeCustomCollisionEvent T, SomeB2Event U>
+void BufferCollisionEventsImpl(EventManager& eventManager, std::vector<Entity>& entities, 
+							   U* b2EventArray, int count)
+{
+	for (int i = 0; i < count; ++i)
+	{
+		U* b2Ev = b2EventArray + i;
+
+		auto [shapeHandleA, shapeHandleB] = GetShapeHandles(b2Ev);
+
+		if (!(shapeHandleA.IsValid() && shapeHandleB.IsValid()))
+		{
+			continue;
+		}
+
+		auto entityA = FindShapeEntity(entities, shapeHandleA);
+		auto entityB = FindShapeEntity(entities, shapeHandleB);
+
+		if (entityA == kInvalidEntity || entityB == kInvalidEntity)
+		{
+			continue;
+		}
+
+		eventManager.PushEvent(T{
+			.entityA = entityA,
+			.entityB = entityB
+		});
+	}
+}
+
 } // unnamed namespace
+
+Result<Void> BufferCollisionEvents(const B2World* world, EventManager& eventManager)
+{
+	assert(world);
+	assert(world->IsValid());
+
+	auto entities = ECS::GetAllEntitiesWith<Collider>([](const Collider& collider) {
+		return collider.shape.GetData().IsValid();
+	});
+
+	if (entities.empty())
+	{
+		return;
+	}
+
+	auto contactEvs = b2World_GetContactEvents(world->GetID());
+	auto sensorEvs = b2World_GetSensorEvents(world->GetID());
+
+	BufferCollisionEventsImpl<events::ContactCollisionBegin>(
+		eventManager, entities, contactEvs.endEvents, contactEvs.endCount
+	);
+
+	return Void{};
+}
 
 Result<Void> DispatchCollisionEvents(const B2World* world)
 {

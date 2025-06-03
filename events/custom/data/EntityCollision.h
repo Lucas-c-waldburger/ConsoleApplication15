@@ -3,21 +3,36 @@
 #include "../../../physics/B2Handle.h"
 #include "../../../ecs/EntityT.h"
 
-struct CollisionData
+namespace events {
+
+struct ContactCollisionBegin : EngineEventData<ContactCollisionBegin>
 {
-	Entity_t entityId = kInvalidEntity;
-	Handle<B2Shape> shapeHandle;
+    Entity_t entityA = kInvalidEntity;
+    Entity_t entityB = kInvalidEntity;
 };
 
-class EntityCollision
+struct ContactCollisionEnd : EngineEventData<ContactCollisionEnd>
 {
-public:
-	struct ContactBegin : CustomEventData<ContactBegin> { CollisionData a, b; };
-	struct ContactEnd   : CustomEventData<ContactEnd>   { CollisionData a, b; };
-	struct SensorBegin  : CustomEventData<SensorBegin>  { CollisionData a, b; };
-	struct SensorEnd    : CustomEventData<SensorEnd>    { CollisionData a, b; };
-	struct Hit          : CustomEventData<Hit>          { CollisionData a, b; };
-
-private:
-	EntityCollision() = default;
+    Entity_t entityA = kInvalidEntity;
+    Entity_t entityB = kInvalidEntity;
 };
+
+struct SensorCollisionBegin : EngineEventData<SensorCollisionBegin>
+{
+    Entity_t entityA = kInvalidEntity;
+    Entity_t entityB = kInvalidEntity;
+};
+
+struct SensorCollisionEnd : EngineEventData<SensorCollisionEnd>
+{
+    Entity_t entityA = kInvalidEntity;
+    Entity_t entityB = kInvalidEntity;
+};
+
+struct HitCollision : EngineEventData<HitCollision>
+{
+    Entity_t entityA = kInvalidEntity;
+    Entity_t entityB = kInvalidEntity;
+};
+
+}

@@ -69,9 +69,6 @@
     <ClCompile Include="systems\EventSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="events\EventBuffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="atlas\AtlasManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -172,6 +169,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="systems\TallySystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="audio\Sound.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="events\EventCallbackMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\SDLInputSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -843,6 +849,48 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\CommonFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\Sound.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventCallback.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventCallbackMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\types\GameControllerEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\types\CollisionEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\types\EntityActionEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\Event.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\custom\data\EntityActions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventBus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\custom\EventUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventStorageBinTemplate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\SDLInputSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

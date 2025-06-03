@@ -3,16 +3,17 @@
 #include "CustomEventData.h"
 
 class CustomEvents
-{
+{ 
 public:
-	template <CustomEventDataType T>
-	static SDL_Event MakeNewEvent(T&& evData, Sint32 code = 0)
+	template <SomeCustomEvent T>
+	static SDL_Event MakeNewEvent(T&& evData)
 	{
 		SDL_Event ev{};
 		ev.type = T::GetEventType();
 		ev.user.data1 = nullptr;
 		ev.user.data2 = nullptr;
-	
+		ev.user.code = static_cast<Sint32>(T::eventCode);
+	 
 		if (ev.type == kInvalidEventType)
 		{
 			LOG_WARNING("Invalid event type for template arg, did you register it?");
@@ -21,10 +22,10 @@ public:
 
 		ev.user.data1 = new T{ std::forward<T>(evData) };
 
-		return ev;
+		return ev; 
 	}
 
-	template <CustomEventDataType T>
+	template <SomeCustomEvent T>
 	static Result<Void> FreeEvent(SDL_Event& ev)
 	{
 		if (ev.type != T::GetEventType())
@@ -43,7 +44,7 @@ public:
 		return Void{};
 	}
 
-	template <CustomEventDataType T>
+	template <SomeCustomEvent T>
 	static const T* GetEventData(const SDL_Event& ev)
 	{
 		if (ev.type != T::GetEventType())

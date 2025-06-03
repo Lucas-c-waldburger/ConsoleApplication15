@@ -28,6 +28,7 @@
     Script, \
     EventObserver, \
     CameraTarget, \
-    EntityMetrics
+    EntityMetrics, \
+    EventCallbacks
 
 

@@ -77,13 +77,13 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -95,15 +95,15 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -113,13 +113,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,24 +131,26 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="atlas\AtlasManager.cpp" />
+    <ClCompile Include="audio\Sound.cpp" />
     <ClCompile Include="components\util\TagsComponentUtils.cpp" />
     <ClCompile Include="core\WeightGenerator.cpp" />
     <ClCompile Include="ecs\EcsImpl.cpp" />
     <ClCompile Include="ecs\Entity.cpp" />
     <ClCompile Include="ecs\EntityDestructor.cpp" />
+    <ClCompile Include="events\EventCallbackMap.cpp" />
     <ClCompile Include="inputs\InputData.cpp" />
     <ClCompile Include="inputs\mouse\Mouse.cpp" />
     <ClCompile Include="inputs\mouse\MouseCursor.cpp" />
@@ -165,7 +167,6 @@
     <ClCompile Include="core\entity\EntityColliderBounds.cpp" />
     <ClCompile Include="core\entity\UnorderedEntityIdSet.cpp" />
     <ClCompile Include="core\Error.cpp" />
-    <ClCompile Include="events\EventBuffer.cpp" />
     <ClCompile Include="core\Logger.cpp" />
     <ClCompile Include="ecs\EntityRetrievalHelper.cpp" />
     <ClCompile Include="render\RenderContext.cpp" />
@@ -192,6 +193,7 @@
     <ClCompile Include="systems\RenderSystem.cpp" />
     <ClCompile Include="systems\PhysicsSystem.cpp" />
     <ClCompile Include="core\AABB.cpp" />
+    <ClCompile Include="systems\SDLInputSystem.cpp" />
     <ClCompile Include="systems\TallySystem.cpp" />
     <ClCompile Include="test\ComponentTests.cpp" />
     <ClCompile Include="test\Fixtures.cpp" />
@@ -200,6 +202,7 @@
   <ItemGroup>
     <ClInclude Include="atlas\Atlas.h" />
     <ClInclude Include="atlas\AtlasManager.h" />
+    <ClInclude Include="audio\Sound.h" />
     <ClInclude Include="camera\Projection.h" />
     <ClInclude Include="components\builder\CameraTargetComponentBuilder.h" />
     <ClInclude Include="components\builder\ColliderComponentBuilder.h" />
@@ -219,6 +222,18 @@
     <ClInclude Include="ecs\EcsImpl.h" />
     <ClInclude Include="ecs\Entity.h" />
     <ClInclude Include="ecs\EntityDestructor.h" />
+    <ClInclude Include="events\custom\data\EntityActions.h" />
+    <ClInclude Include="events\custom\EventUtils.h" />
+    <ClInclude Include="events\Event.h" />
+    <ClInclude Include="events\EventBus.h" />
+    <ClInclude Include="events\EventCallback.h" />
+    <ClInclude Include="events\EventCallbackMap.h" />
+    <ClInclude Include="events\EventHandle.h" />
+    <ClInclude Include="events\EventManager.h" />
+    <ClInclude Include="events\EventStorageBinTemplate.h" />
+    <ClInclude Include="events\types\CollisionEvents.h" />
+    <ClInclude Include="events\types\EntityActionEvents.h" />
+    <ClInclude Include="events\types\GameControllerEvents.h" />
     <ClInclude Include="inputs\InputData.h" />
     <ClInclude Include="inputs\InputState.h" />
     <ClInclude Include="inputs\mouse\Mouse.h" />
@@ -414,6 +429,7 @@
     <ClInclude Include="systems\PhysicsSystem.h" />
     <ClInclude Include="core\TypeUtils.h" />
     <ClInclude Include="core\AABB.h" />
+    <ClInclude Include="systems\SDLInputSystem.h" />
     <ClInclude Include="systems\System.h" />
     <ClInclude Include="systems\SystemManager.h" />
     <ClInclude Include="systems\SystemRegistry.h" />

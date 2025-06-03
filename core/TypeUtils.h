@@ -9,6 +9,19 @@ template <typename...Ts> struct TypeList
 	static constexpr size_t size = sizeof...(Ts);
 };
 
+namespace detail {
+template <typename T, typename TList>
+struct type_in_list;
+
+template <typename T, typename...Ts>
+struct type_in_list<T, TypeList<Ts...>> { 
+	static constexpr bool value = (std::same_as<T, Ts> || ...);
+};
+}
+
+template <typename T, typename TList>
+static constexpr bool type_in_list_v = detail::type_in_list<T, TList>::value;
+
 template <typename T, typename...Ts>
 static constexpr bool type_in_pack_v = (std::same_as<T, Ts> || ...);
 
@@ -32,18 +45,18 @@ static constexpr bool pack_types_unique_v = pack_types_unique<Ts...>::value;
 
 namespace detail {
 template <typename T, typename TList>
-struct type_list_index;
+struct index_of;
 
 template <typename T, typename...Ts>
-struct type_list_index<T, TypeList<T, Ts...>> : std::integral_constant<size_t, 0> {};
+struct index_of<T, TypeList<T, Ts...>> : std::integral_constant<size_t, 0> {};
 
 template <typename T, typename U, typename...Ts>
-struct type_list_index<T, TypeList<U, Ts...>>
-	: std::integral_constant<size_t, 1 + type_list_index<T, TypeList<Ts...>>::value> {};
+struct index_of<T, TypeList<U, Ts...>>
+	: std::integral_constant<size_t, 1 + index_of<T, TypeList<Ts...>>::value> {};
 }
 
 template <typename T, typename TList>
-inline constexpr size_t type_list_index_v = detail::type_list_index<T, TList>::value;
+inline constexpr size_t index_of_v = detail::index_of<T, TList>::value;
 
 
 // tuple index

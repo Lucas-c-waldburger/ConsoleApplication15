@@ -1,7 +1,9 @@
 #pragma once
 #include <SDL.h>
+#include <typeindex>
 #include "BaseComponent.h"
 #include "../core/Monitoring.h"
+#include "../events/EventCallbackMap.h"
 
 class Entity;
 
@@ -17,4 +19,9 @@ struct EventObserver : public BaseComponent<EventObserver, 11>
 	};
 
 	std::unordered_map<uint32_t, Callback> eventCallbacks;
+};
+
+struct EventCallbacks : BaseComponent<EventCallbacks, 14>
+{
+	EventCallbackMap map;  
 };

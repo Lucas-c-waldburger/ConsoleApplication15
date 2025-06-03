@@ -1,46 +1,129 @@
 #pragma once
 #include <array>
 #include <SDL.h>
-#include <queue>
+#include <SDL_events.h>
+#include <array>
+#include <unordered_set>
 
-// TODO: re-implement original EventBuffer
-
-//class EventBuffer
-//{
-//public:
-//	static constexpr int kMaxSize = 64;
-//
-//	void Push(SDL_Event ev);
-//	SDL_Event Pop();
-//	bool Empty() const { return size_ <= 0; }
-//	size_t Size() const { return size_; }
-//
-//private:
-//	std::array<SDL_Event, kMaxSize> events_{};
-//	int headIndex_ = 0;
-//	int size_ = 0;
-//};
-
+template <size_t N> requires (N > 0)
 class EventBuffer
 {
 public:
-	void Push(SDL_Event ev) { events_.push(std::move(ev)); }
-	SDL_Event Pop() 
+	EventBuffer()
+	{
+		events_.fill(SDL_Event{ .type = SDL_POLLSENTINEL });
+	}
+
+	bool Push(SDL_Event&& ev) 
 	{ 
-		if (events_.empty())
+		if (Full())
+		{
+			LOG_WARNING("Event buffer full");
+			return false;
+		}
+
+		assert(nextFree_ < N);
+
+		events_[nextFree_] = std::move(ev); 
+
+		nextFree_ = (nextFree_ + 1) % N;
+
+		return true;
+	}
+
+	SDL_Event Pop()
+	{
+		if (Empty())
 		{
 			return SDL_Event{ .type = SDL_POLLSENTINEL };
 		}
 
-		SDL_Event ev = std::move(events_.front());
-		events_.pop();
+		assert(headIndex_ < N);
+
+		SDL_Event ev = std::move(events_[headIndex_]);
+
+		headIndex_ = (headIndex_ + 1) % N;
 
 		return ev;
 	}
-	bool Empty() const { return events_.empty(); }
-	size_t Size() const { return events_.size(); }
+
+	std::unordered_set<uint32_t> PeekEventTypes(std::optional<EventCode> ofCode = {}) const
+	{
+		assert(headIndex_ < N);
+		
+		std::unordered_set<uint32_t> eventTypes;
+
+		auto process = [&](const SDL_Event& ev) -> void {
+			if (ev.type == SDL_POLLSENTINEL)
+			{
+				return;
+			}
+
+			if (ofCode.has_value() && GetEventCode(ev) != *ofCode)
+			{
+				return;
+			}
+
+			eventTypes.insert(ev.type);
+		};
+
+		size_t start = headIndex_;
+		size_t end = nextFree_;
+
+		if (end < start) // wrapped around
+		{
+			for (size_t i = 0; i < end; i++)
+			{
+				process(events_[i]);
+			}
+
+			end = N;
+		}
+
+		for (size_t i = start; i < end; i++)
+		{
+			process(events_[i]);
+		}
+
+		return eventTypes;
+	}
+
+	bool Empty() const
+	{
+		return headIndex_ == nextFree_;
+	}
+
+	bool Full() const
+	{
+		return (nextFree_ + 1) % N == headIndex_;
+	}
+
+	size_t Size() const
+	{
+		size_t size = 0;
+
+		if (nextFree_ < headIndex_) // wrapped around
+		{
+			size = N - headIndex_ + nextFree_;
+		}
+		else
+		{
+			size = nextFree_ - headIndex_;
+		}
+
+		return size;
+	}
+
+	constexpr size_t Capacity() const noexcept { return N - 1; }
+
+	void Reset()
+	{
+		headIndex_ = 0;
+		nextFree_ = 0;
+	}
 
 private:
-	std::queue<SDL_Event> events_{};
+	std::array<SDL_Event, N> events_;
+	size_t headIndex_ = 0;
+	size_t nextFree_ = 0;
 };
-
