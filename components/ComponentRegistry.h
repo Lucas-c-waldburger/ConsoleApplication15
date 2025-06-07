@@ -4,7 +4,7 @@
 #include "ActiveStateComponent.h";
 #include "CameraTargetComponent.h"
 #include "ColliderComponent.h"
-#include "EventObserverComponent.h"
+#include "EventCallbacksComponent.h"
 #include "EntityMetricsComponent.h"
 #include "GameControllerStateComponent.h"
 #include "RigidBodyComponent.h"
@@ -26,9 +26,8 @@
     Collider, \
     GameControllerState, \
     Script, \
-    EventObserver, \
+    EventCallbacks, \
     CameraTarget, \
-    EntityMetrics, \
-    EventCallbacks
+    EntityMetrics \
 
 

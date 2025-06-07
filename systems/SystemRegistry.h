@@ -1,14 +1,13 @@
 #pragma once
 #include "CameraSystem.h"
 #include "CollisionSystem.h"
-#include "EventSystem.h"
 #include "PhysicsSystem.h"
 #include "RenderSystem.h"
-
+#include "SDLInputSystem.h"
 
 #define SYSTEM_REGISTRY \
 	CameraSystem, \
-	EventSystem, \
 	PhysicsSystem, \
-	RenderSystem \
+	RenderSystem, \
+	SDLInputSystem
 

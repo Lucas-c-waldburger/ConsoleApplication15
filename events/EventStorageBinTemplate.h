@@ -1,23 +1,37 @@
 #pragma once
+#include <vector>
 #include "custom/CustomEventData.h"
+
 
 template <SomeCustomEvent...Ts> requires pack_types_unique_v<Ts...>
 class EventDataStorageBinTemplate
 {
 public:
-	using Types = TypeList<Ts...>;
+    EventDataStorageBinTemplate() = default;
 
-	template <PackMemberType<Ts...> T>
-	std::vector<T>& GetEvents()
-	{
-		return std::get<std::vector<T>>(storage_);
-	}
+    template <PackMemberType<Ts...> T>
+    const std::vector<T>& GetEntry() const
+    {
+        return std::get<std::vector<T>>(eventDatas_);
+    }
 
-	void Clear()
-	{
-		((GetEvents<Ts>().clear()), ...);
-	}
+    template <PackMemberType<Ts...> T>
+    const T& Emplace(T&& data)
+    {
+        return std::get<std::vector<T>>(eventDatas_).emplace_back(std::forward<T>(data));
+    }
+
+    template <PackMemberType<Ts...> T>
+    void ClearEntry()
+    {
+        std::get<std::vector<T>>(eventDatas_).clear();
+    }
+
+    void ClearAll()
+    {
+        ((ClearEntry<Ts>()), ...);
+    }
 
 private:
-	std::tuple<std::vector<Ts>...> storage_;
+    std::tuple<std::vector<Ts>...> eventDatas_;
 };

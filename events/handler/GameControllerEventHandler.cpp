@@ -1,7 +1,7 @@
 #include "GameControllerEventHandler.h"
 #include "../../inputs/InputState.h"
-#include "../../components/util/EventObserverUtils.h"
-#include "../../events/custom/CustomEventDataRegistry.h"
+#include "../../events/EventBus.h"
+#include "../../ecs/Ecs.h"
 #include <cassert>
 
 GameControllerEventHandler::~GameControllerEventHandler()
@@ -36,7 +36,7 @@ void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev)
 
 		activeControllers_[joystickId].first = std::move(newController);
 
-		LOG_IF_ERROR(SendEventNotification(GameControllerConnected{ .joystickID = joystickId }));
+		EventBus::PushEvent(events::GameControllerConnected{ .joystickID = joystickId });
 
 		break;
 	}
@@ -53,7 +53,7 @@ void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev)
 
 		activeControllers_.erase(ev.cdevice.which);
 
-		LOG_IF_ERROR(SendEventNotification(GameControllerDisconnected{ .joystickID = deadJoystickId }));
+		EventBus::PushEvent(events::GameControllerDisconnected{ .joystickID = deadJoystickId });
 
 		break;
 	}
@@ -79,7 +79,6 @@ void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
 	{
 	case SDL_CONTROLLERAXISMOTION:
 	{
-		//LOG_DEBUG("Handling controller axis motion inside GameControllerEventHandler::HandleInputEvent");
 		if (!activeControllers_.contains(ev.caxis.which))
 		{
 			LOG_ERROR("Controller active but wasn't properly connected\n");
@@ -111,8 +110,6 @@ void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
 		}
 
 		lastInputSide.timestamp = ev.caxis.timestamp;
-
-		//tracking_ = lastInputSide;
 
 		uint8_t cacheAxisIndex = InputDataCache::GetAxisIndexForEnum(ev.caxis.axis);
 		activeControllers_[ev.caxis.which].second.inputUpdatedTracker.set(cacheAxisIndex, true);
@@ -151,8 +148,6 @@ void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
 
 void GameControllerEventHandler::UpdateEntities()
 {
-	//LOG_INFO(tracking_, '\n');
-
 	for (auto& [_, controllerCachePair] : activeControllers_)
 	{
 		controllerCachePair.second.UpdateSkippedInputs();
@@ -170,10 +165,11 @@ void GameControllerEventHandler::UpdateEntities()
 		auto it = activeControllers_.find(componentControllerState.joystickID);
 		if (it == activeControllers_.end())
 		{
-			std::cout << "Controller with JoystickID '" <<
-				componentControllerState.joystickID << "' not connected\n";
+			LOG_ERROR_FMT("Controller with JoystickID '{}' not connected", 
+				componentControllerState.joystickID);
 
 			componentControllerState.joystickID = GameController::kInvalidJoystickID;
+
 			continue;
 		}
 
@@ -183,9 +179,3 @@ void GameControllerEventHandler::UpdateEntities()
 		componentControllerState.buttonInput = cachedControllerState.buttonInput;
 	}
 }
-
-//auto [x, y] = cachedControllerState.axisInput.left.value;
-//if (x > 0.0f || y > 0.0f)
-//{
-//	LOG_INFO_FMT("From UpdateEntities: [ {}, {} ]", x, y);
-//}

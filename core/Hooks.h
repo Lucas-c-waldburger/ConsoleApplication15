@@ -130,7 +130,6 @@ public:
 			auto& [callback, status, handle] = *it;
 
 			assert(handle.IsValid());
-			assert(status != ReturnSignal::Unknown); 
 			assert(status != ReturnSignal::StopObserving); // should have been removed from last run
 
 			if (!callback)

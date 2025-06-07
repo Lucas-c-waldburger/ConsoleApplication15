@@ -1,18 +1,14 @@
-#include "EventSystem.h"
-//#include "EventSystem.h"
-//#include "../events/EventBus.h"
+#include "EventBus.h"
 //#include "../ecs/Ecs.h"
-//
-//void EventSystemOld::DispatchEvents()
+
+//void EventBus::DispatchEventsImpl()
 //{
-//	auto& buffer = EventBus::Get()->buffer_;
-//
-//	if (buffer.Empty())
+//	if (buffer_.Empty())
 //	{
 //		return;
 //	}
 //
-//	auto bufferedEvTypes = buffer.PeekEventTypes();
+//	auto bufferedEvTypes = buffer_.PeekEventTypes();
 //
 //	auto filter = [&bufferedEvTypes](const EventCallbacks& cbs) {
 //		for (const auto& evType : bufferedEvTypes)
@@ -31,11 +27,11 @@
 //		return;
 //	}
 //
-//	while (!buffer.Empty())
+//	while (!buffer_.Empty())
 //	{
 //		ReturnSignal ret;
 //
-//		auto bufEv = buffer.Pop();
+//		auto bufEv = buffer_.Pop();
 //		assert(bufEv.type != SDL_POLLSENTINEL);
 //
 //		for (auto& entity : entities)
@@ -54,7 +50,7 @@
 //			auto it = cbsForType.begin();
 //			while (it != cbsForType.end())
 //			{
-//				ret = ReturnSignal::StopObserving;							 
+//				ret = ReturnSignal::StopObserving;
 //
 //				if (it->handle.IsValid() && it->onEvent)
 //				{
@@ -74,27 +70,3 @@
 //	}
 //}
 //
-//void EventSystemOld::DispatchEvent(const SDL_Event& ev)
-//{
-//
-//}
-//
-//void EventSystemOld::ResetEventBus()
-//{
-//	EventBus::Get()->buffer_.Reset();
-//	EventBus::Get()->storage_.Clear();
-//}
-//
-//void EventSystemOld::Update()
-//{
-//	cache_.eventTypes.clear();
-//	cache_.entities.clear();
-//}
-//
-//
-
-void EventSystem::Cleanup()
-{
-	EventBus::FlushEvents();
-	EventBus::ClearStorage();
-}

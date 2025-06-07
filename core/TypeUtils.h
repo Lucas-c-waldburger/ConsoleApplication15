@@ -28,20 +28,21 @@ static constexpr bool type_in_pack_v = (std::same_as<T, Ts> || ...);
 template <typename T, typename...Ts>
 concept PackMemberType = type_in_pack_v<T, Ts...>;
 
+
+namespace detail {
 template <typename...Ts>
 struct pack_types_unique : std::true_type {};
-
-//template <typename T>
-//struct pack_types_unique<T> : std::true_type {};
 
 template <typename T, typename U, typename...Ts>
 struct pack_types_unique<T, U, Ts...>
 {
 	static constexpr bool value = !(std::same_as<T, U>) && pack_types_unique<Ts...>::value;
 };
+} // detail
 
 template <typename...Ts>
-static constexpr bool pack_types_unique_v = pack_types_unique<Ts...>::value;
+static constexpr bool pack_types_unique_v = detail::pack_types_unique<Ts...>::value;
+
 
 namespace detail {
 template <typename T, typename TList>
@@ -53,11 +54,23 @@ struct index_of<T, TypeList<T, Ts...>> : std::integral_constant<size_t, 0> {};
 template <typename T, typename U, typename...Ts>
 struct index_of<T, TypeList<U, Ts...>>
 	: std::integral_constant<size_t, 1 + index_of<T, TypeList<Ts...>>::value> {};
-}
+} // detail
 
 template <typename T, typename TList>
 inline constexpr size_t index_of_v = detail::index_of<T, TList>::value;
 
+
+namespace detail {
+template <typename, typename> struct concat_type_lists;
+template <typename... Ts1, typename... Ts2>
+struct concat_type_lists<TypeList<Ts1...>, TypeList<Ts2...>>
+{
+	using type = TypeList<Ts1..., Ts2...>;
+};
+} // detail
+
+template <typename TList1, typename TList2>
+using concat_type_lists_t = typename detail::concat_type_lists<TList1, TList2>::type;
 
 // tuple index
 //namespace detail {

@@ -180,6 +180,9 @@
     <ClCompile Include="systems\SDLInputSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="events\EventBus.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -680,16 +683,13 @@
     <ClInclude Include="camera\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\EventObserverComponent.h">
+    <ClInclude Include="components\EventCallbacksComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="events\custom\CustomEventDataRegistry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="events\custom\CustomEventData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="events\custom\CustomEvents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\ScopedInvoker.h">
@@ -725,7 +725,7 @@
     <ClInclude Include="events\custom\data\EntityCollision.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\custom\data\GameControllerConnected.h">
+    <ClInclude Include="events\custom\data\GameControllerEvents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
@@ -891,6 +891,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="systems\SDLInputSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventGroup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\SDLEventBufferTransformer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\custom\data\Groups.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

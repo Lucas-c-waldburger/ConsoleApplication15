@@ -30,8 +30,8 @@ public:
 		Handle<HookAttachment> hookAttachmentHandle;
 	};
 
-	template <typename...Ts> requires (sizeof...(Ts) == TypeList<SYSTEM_REGISTRY>::size)
-	class SystemUpdateOrder
+	//template <typename...Ts> requires (sizeof...(Ts) == TypeList<SYSTEM_REGISTRY>::size)
+	/*class SystemUpdateOrder
 	{
 	public:
 		SystemUpdateOrder() : order_(MakeTypeIndexArray<Ts...>()) {}
@@ -60,21 +60,21 @@ public:
 	private:
 		std::array<std::type_index, TypeList<SYSTEM_REGISTRY>::size> order_;
 		size_t nextIndex_ = 0;
-	};
+	};*/
 
-	using SystemOrder = SystemUpdateOrder<
+	/*using SystemOrder = SystemUpdateOrder<
 		EventSystem,
 		PhysicsSystem,
 		CameraSystem,
 		RenderSystem
-	>;
+	>;*/
 
 	SceneFixture() = default;
 	~SceneFixture();
 
 	// updates
 	void LoopStart();
-	Result<bool> UpdateEvents();
+	Result<bool> UpdateSDLInputs();
 	Result<Void> UpdatePhysics();
 	Result<Void> UpdateCamera();	
 	Result<Void> UpdateRender();
@@ -101,7 +101,7 @@ public:
 	static Result<std::shared_ptr<SceneFixture>> GetInstance();
 
 private:
-	SystemOrder systemOrder_;
+	//SystemOrder systemOrder_;
 	impl::TextureManager textures_;
 	impl::SystemManager systems_;
 	HookManager hooks_;

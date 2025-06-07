@@ -9,9 +9,8 @@
 #include "systems/PhysicsSystem.h"
 #include "systems/EventSystem.h"
 #include "events/custom/CustomEventDataRegistry.h"
-#include "events/custom/CustomEvents.h"
+#include "events/custom/EventUtils.h"
 #include "components/GameControllerStateComponent.h"
-#include "components/EventObserverComponent.h"
 #include "test/ComponentTests.h"
 #include "test/Fixtures.h"
 #include "systems/CameraSystem.h"
@@ -128,85 +127,85 @@ namespace {
         return dynamicBody.AddShape(shapeDef);
     }
 
-    ReturnSignal ConnectToFirstController(const SDL_Event& ev, Entity& ent)
-    {
-        assert(ev.type == GameControllerConnected::GetEventType());
+    //ReturnSignal ConnectToFirstController(const SDL_Event& ev, Entity& ent)
+    //{
+    //    assert(ev.type == GameControllerConnected::GetEventType());
 
-        if (!ent.IsValid())
-        {
-            LOG_WARNING("Entity was invalid");
-            return ReturnSignal::StopObserving;
-        }
-        if (!ent.HasComponent<GameControllerState>())
-        {
-            LOG_WARNING("Entity did not have GameControllerState component");
-            return ReturnSignal::StopObserving;
-        }
+    //    if (!ent.IsValid())
+    //    {
+    //        LOG_WARNING("Entity was invalid");
+    //        return ReturnSignal::StopObserving;
+    //    }
+    //    if (!ent.HasComponent<GameControllerState>())
+    //    {
+    //        LOG_WARNING("Entity did not have GameControllerState component");
+    //        return ReturnSignal::StopObserving;
+    //    }
 
-        auto& controllerState = ent.GetComponent<GameControllerState>();
-        if (controllerState.joystickID != GameController::kInvalidJoystickID)
-        {
-            LOG_WARNING("Entity already had a joystick id marked valid");
-            return ReturnSignal::Pause;
-        }
+    //    auto& controllerState = ent.GetComponent<GameControllerState>();
+    //    if (controllerState.joystickID != GameController::kInvalidJoystickID)
+    //    {
+    //        LOG_WARNING("Entity already had a joystick id marked valid");
+    //        return ReturnSignal::Pause;
+    //    }
 
-        const auto* castEv = CustomEvents::GetEventData<GameControllerConnected>(ev);
-        if (!castEv)
-        {
-            return ReturnSignal::StopObserving;
-        }
+    //    const auto* castEv = CustomEvents::CastEvent<GameControllerConnected>(ev);
+    //    if (!castEv)
+    //    {
+    //        return ReturnSignal::StopObserving;
+    //    }
 
-        controllerState.joystickID = castEv->joystickID;
-        LOG_INFO("Entity attached to new controller connection!");
+    //    controllerState.joystickID = castEv->joystickID;
+    //    LOG_INFO("Entity attached to new controller connection!");
 
-        return ReturnSignal::Pause;
-    };
+    //    return ReturnSignal::Pause;
+    //};
 
-    ReturnSignal InvalidateEntityJoystickIDAndListenForNewConnection(const SDL_Event& ev, Entity& ent)
-    {
-        assert(ev.type == GameControllerDisconnected::GetEventType());
+    //ReturnSignal InvalidateEntityJoystickIDAndListenForNewConnection(const SDL_Event& ev, Entity& ent)
+    //{
+    //    assert(ev.type == GameControllerDisconnected::GetEventType());
 
-        if (!ent.IsValid())
-        {
-            LOG_WARNING("Entity was invalid");
-            return ReturnSignal::StopObserving;
-        }
-        if (!ent.HasComponent<GameControllerState>())
-        {
-            LOG_WARNING("Entity did not have GameControllerState component");
-            return ReturnSignal::StopObserving;
-        }
+    //    if (!ent.IsValid())
+    //    {
+    //        LOG_WARNING("Entity was invalid");
+    //        return ReturnSignal::StopObserving;
+    //    }
+    //    if (!ent.HasComponent<GameControllerState>())
+    //    {
+    //        LOG_WARNING("Entity did not have GameControllerState component");
+    //        return ReturnSignal::StopObserving;
+    //    }
 
-        // 1. mark entity's joystickID as invalid in its controller state
-        const auto* disconnectEv = CustomEvents::GetEventData<GameControllerDisconnected>(ev);
-        assert(disconnectEv);
+    //    // 1. mark entity's joystickID as invalid in its controller state
+    //    const auto* disconnectEv = CustomEvents::CastEvent<GameControllerDisconnected>(ev);
+    //    assert(disconnectEv);
 
-        auto& controllerState = ent.GetComponent<GameControllerState>();
-        if (controllerState.joystickID != disconnectEv->joystickID)
-        {
-            LOG_DEBUG("Entity's connected controller different from the one that was disconnected");
-            return ReturnSignal::KeepObserving;
-        }
+    //    auto& controllerState = ent.GetComponent<GameControllerState>();
+    //    if (controllerState.joystickID != disconnectEv->joystickID)
+    //    {
+    //        LOG_DEBUG("Entity's connected controller different from the one that was disconnected");
+    //        return ReturnSignal::KeepObserving;
+    //    }
 
-        controllerState.joystickID = GameController::kInvalidJoystickID;
+    //    controllerState.joystickID = GameController::kInvalidJoystickID;
 
-        LOG_DEBUG("Set entity's controller state joystickID to invalid");
+    //    LOG_DEBUG("Set entity's controller state joystickID to invalid");
 
-        // 2. unpause listening for new controller connection
-        assert(ent.HasComponent<EventObserver>());
-        auto& entityEvents = ent.GetComponent<EventObserver>();
-       
-        auto connectEvIt = entityEvents.eventCallbacks.find(GameControllerConnected::GetEventType());
+    //    // 2. unpause listening for new controller connection
+    //    assert(ent.HasComponent<EventObserver>());
+    //    auto& entityEvents = ent.GetComponent<EventObserver>();
+    //   
+    //    auto connectEvIt = entityEvents.eventCallbacks.find(GameControllerConnected::GetEventType());
 
-        assert(connectEvIt != entityEvents.eventCallbacks.end());
-        assert(connectEvIt->second.status == ReturnSignal::Pause);
+    //    assert(connectEvIt != entityEvents.eventCallbacks.end());
+    //    assert(connectEvIt->second.status == ReturnSignal::Pause);
 
-        connectEvIt->second.status = ReturnSignal::KeepObserving;
+    //    connectEvIt->second.status = ReturnSignal::KeepObserving;
 
-        LOG_DEBUG("Listening for a new connection on this entity...");
+    //    LOG_DEBUG("Listening for a new connection on this entity...");
 
-        return ReturnSignal::KeepObserving;
-    }
+    //    return ReturnSignal::KeepObserving;
+    //}
 
     bool AxisOutsideDeadzone(SDL_FPoint axisValue)
     {
@@ -380,18 +379,95 @@ namespace {
         return Void{};
     }
 
+    auto ConnectToFirstController(Entity_t entityId)
+    {
+        return [entityId](const SDL_Event& ev) {
+            auto ent = ECS::GetEntityByID(entityId);
+
+            if (!ent.IsValid())
+            {
+                LOG_WARNING("Entity was invalid, can't connect controller");
+                return ReturnSignal::StopObserving;
+            }
+            if (!ent.HasComponent<GameControllerState>())
+            {
+                LOG_WARNING("Entity did not have GameControllerState component");
+                return ReturnSignal::StopObserving;
+            }
+
+            auto& controllerState = ent.GetComponent<GameControllerState>();
+            if (controllerState.joystickID != GameController::kInvalidJoystickID)
+            {
+                LOG_WARNING("Entity already had a joystick id marked valid");
+                return ReturnSignal::StopObserving;
+            }
+
+            const auto* castEv = events::CastEvent<events::GameControllerConnected>(ev);
+            if (!castEv)
+            {
+                return ReturnSignal::KeepObserving;
+            }
+
+            controllerState.joystickID = castEv->joystickID;
+            LOG_INFO("Entity attached to new controller connection!");
+
+            return ReturnSignal::StopObserving;
+        };
+    }
+
+    auto ClearJoystickIdAndListenForNewConnection(Entity_t entityId)
+    {
+        return [entityId](const SDL_Event& ev) {
+            auto ent = ECS::GetEntityByID(entityId);
+
+            if (!ent.IsValid())
+            {
+                LOG_WARNING("Entity was invalid");
+                return ReturnSignal::StopObserving;
+            }
+            if (!ent.HasComponent<GameControllerState>())
+            {
+                LOG_WARNING("Entity did not have GameControllerState component");
+                return ReturnSignal::StopObserving;
+            }
+
+            // 1. mark entity's joystickID as invalid in its controller state
+            const auto* disconnectEv = events::CastEvent<events::GameControllerDisconnected>(ev);
+            assert(disconnectEv);
+
+            auto& controllerState = ent.GetComponent<GameControllerState>();
+            if (controllerState.joystickID != disconnectEv->joystickID)
+            {
+                LOG_DEBUG("Entity's connected controller different from the one that was disconnected");
+                return ReturnSignal::KeepObserving;
+            }
+
+            controllerState.joystickID = GameController::kInvalidJoystickID;
+
+            LOG_DEBUG("Set entity's controller state joystickID to invalid");
+
+            // 2. Listen for controller connection again
+            assert(ent.HasComponent<EventCallbacks>());
+            auto& cbs = ent.GetComponent<EventCallbacks>().map;
+
+            cbs.Insert<events::GameControllerConnected>(ConnectToFirstController(entityId));
+
+            LOG_DEBUG("Listening for a new connection on this entity...");
+
+            return ReturnSignal::KeepObserving;
+        };
+    }
+
     void ConnectEntityToController(Entity& entity)
     {
         assert(entity.IsValid());
 
         entity.AddComponent(GameControllerState{});
 
-        auto& evs = entity.AddComponent(EventObserver{});
+        auto& cbs = entity.AddComponent(EventCallbacks{}).map;       
 
-        evs.eventCallbacks[GameControllerConnected::GetEventType()].func =
-            &ConnectToFirstController;
-        evs.eventCallbacks[GameControllerDisconnected::GetEventType()].func =
-            &InvalidateEntityJoystickIDAndListenForNewConnection;
+        cbs.Insert<events::GameControllerConnected>(ConnectToFirstController(entity.GetID()));
+        cbs.Insert<events::GameControllerDisconnected>(ClearJoystickIdAndListenForNewConnection(entity.GetID()));       
     }
 
     void ApplyImpulseFromControllerInput(Entity& entity/*, bool enableJump = true*/)
@@ -514,20 +590,22 @@ namespace {
             .position = { SDLite::kWindowWidth / 2.0f, 150.0f }         
         });
 
-        auto& evObserver = entity.AddComponent(EventObserver{});
+        auto& eventCbs = entity.AddComponent(EventCallbacks{}).map;
 
-        evObserver.eventCallbacks[EntityCollision::ContactBegin::GetEventType()].func =
-            [player = player.GetID(), ball = ball.GetID(), ground = ground.GetID()]
-            (const SDL_Event& ev, Entity& scoreBoard)
+        eventCbs.Insert<events::ContactCollisionBegin>(
+            [player = player.GetID(), ball = ball.GetID(), 
+             ground = ground.GetID(), scoreBoardId = entity.GetID()](const SDL_Event& ev)
             {
+                auto scoreBoard = ECS::GetEntityByID(scoreBoardId);
+
                 assert(scoreBoard.IsValid());
                 assert(scoreBoard.HasComponent<Renderable>());
 
-                const auto* collisionEv = CustomEvents::GetEventData<EntityCollision::ContactBegin>(ev);
+                const auto* collisionEv = events::CastEvent<events::ContactCollisionBegin>(ev);
                 assert(collisionEv);
 
-                auto entA = collisionEv->a.entityId;
-                auto entB = collisionEv->b.entityId;
+                auto entA = collisionEv->entityA;
+                auto entB = collisionEv->entityB;
 
                 bool playerOnBall = ((entA == player && entB == ball) || 
                                      (entA == ball && entB == player));
@@ -554,7 +632,9 @@ namespace {
                 }
 
                 textData->text = std::to_string(currentScore);
-        };
+
+                return ReturnSignal::KeepObserving;
+            });
 
         return entity;
     }
@@ -770,50 +850,54 @@ namespace {
 
         const Entity& GetSourceEntity() const { return sourceEntity_; }
 
-        ReturnSignal HandleSensorConnection(const SDL_Event& ev, Entity& leadEnt) 
+        auto HandleSensorConnection(Entity& leadEnt) 
         {
-            if (!leadEnt.IsValid())
-            {
-                LOG_WARNING("Sensor lead entity was invalid");
+            return [this, leadEntId = leadEnt.GetID()](const SDL_Event& ev) {
+                auto leadEnt = ECS::GetEntityByID(leadEntId);
+
+                if (!leadEnt.IsValid())
+                {
+                    LOG_WARNING("Sensor lead entity was invalid");
+                    return ReturnSignal::StopObserving;
+                }
+
+                const auto* sensorBegEv = events::CastEvent<events::SensorCollisionBegin>(ev);
+                assert(sensorBegEv);
+
+                const auto& [a, b] = *sensorBegEv;
+                if (a == sourceEntity_.GetID() || b == sourceEntity_.GetID())
+                {
+                    return ReturnSignal::KeepObserving;
+                }
+                if (!(a == leadEnt.GetID() || b == leadEnt.GetID()))
+                {
+                    return ReturnSignal::KeepObserving;
+                }
+
+                assert(!entities_.empty());
+                assert(leadEnt == entities_.front());
+
+                auto currentPos = leadEnt.GetComponent<Transform>().position;
+
+                auto& leadCollider = leadEnt.GetComponent<Collider>();
+                auto& leadShape = shapeAccessor(leadCollider.shape);
+                leadShape.Destroy();
+                leadEnt.RemoveComponent<Collider>();
+
+                auto& leadRigid = leadEnt.GetComponent<RigidBody>();
+                auto& leadBody = bodyAccessor(leadRigid.body);
+                leadBody.SetLinearVelocity({ 0.0f, 0.0f });
+                leadBody.SetAngularVelocity(0.0f);
+                leadBody.SetBodyType(B2Body::Type::Static);
+
+                for (auto& joint : joints_)
+                {
+                    joint.SetLengthRange({ .min = 0.0f, .max = 0.00001f });
+                }
+
                 return ReturnSignal::StopObserving;
-            }
-
-            const auto* sensorBegEv = CustomEvents::GetEventData<EntityCollision::SensorBegin>(ev);
-            assert(sensorBegEv);
-
-            const auto& [a, b] = *sensorBegEv;
-            if (a.entityId == sourceEntity_.GetID() || b.entityId == sourceEntity_.GetID())
-            {
-                return ReturnSignal::KeepObserving;
-            }
-            if (!(a.entityId == leadEnt.GetID() || b.entityId == leadEnt.GetID()))
-            {
-                return ReturnSignal::KeepObserving;
-            }
-
-            assert(!entities_.empty());
-            assert(leadEnt == entities_.front());
-
-            auto currentPos = leadEnt.GetComponent<Transform>().position;
-            
-            auto& leadCollider = leadEnt.GetComponent<Collider>();
-            auto& leadShape = shapeAccessor(leadCollider.shape);
-            leadShape.Destroy();
-            leadEnt.RemoveComponent<Collider>();
-
-            auto& leadRigid = leadEnt.GetComponent<RigidBody>();
-            auto& leadBody = bodyAccessor(leadRigid.body);
-            leadBody.SetLinearVelocity({ 0.0f, 0.0f });
-            leadBody.SetAngularVelocity(0.0f);
-            leadBody.SetBodyType(B2Body::Type::Static);
-
-            for (auto& joint : joints_)
-            {
-                joint.SetLengthRange({ .min = 0.0f, .max = 0.00001f });
-            }
-
-            return ReturnSignal::StopObserving;
-        };
+            };
+        }
 
     private:
         Result<Void> Generate(B2World& world)
@@ -860,11 +944,8 @@ namespace {
                 .isSensor = true
             }).Build(sensorLeadRigid.body));
 
-            auto& sensorLeadEvs = sensorLead.AddComponent(EventObserver{});
-            auto& cb = sensorLeadEvs.eventCallbacks[EntityCollision::SensorBegin::GetEventType()];
-            cb.func = [this](const SDL_Event& ev, Entity& sensorLeadEnt) {
-                return this->HandleSensorConnection(ev, sensorLeadEnt);
-            };
+            auto& cbs = sensorLead.AddComponent(EventCallbacks{}).map;
+            cbs.Insert<events::SensorCollisionBegin>(HandleSensorConnection(sensorLead));
             
             auto sensorLeadRelations = sensorLead.GetRelations();
 
@@ -1235,7 +1316,7 @@ Result<Void> SimplePhysicsScene::Run()
 
     RenderSystem renderSys{}; 
     PhysicsSystem physicsSys{};
-    EventSystem eventSys{};
+    SDLInputSystem inputSys{};
 
     Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
                                    static_cast<float>(SDLite::kWindowHeight) };
@@ -1268,13 +1349,7 @@ Result<Void> SimplePhysicsScene::Run()
     auto& playerBody = player.GetComponent<RigidBody>();
     playerBody.limits.linearVelocity.max = { 25.0f, 25.0f };
 
-    player.AddComponent(GameControllerState{});
-
-    auto& playerEvents = player.AddComponent(EventObserver{});
-    playerEvents.eventCallbacks[GameControllerConnected::GetEventType()].func = 
-        &ConnectToFirstController;
-    playerEvents.eventCallbacks[GameControllerDisconnected::GetEventType()].func = 
-        &InvalidateEntityJoystickIDAndListenForNewConnection;
+    ConnectEntityToController(player);
 
     TRY(MakeColliderCircleEntity(world, kScreenCenterPosition + SDL_FPoint{ 100.0f, 0.0f }, kDynamicCircleRadius,
         B2Body::Type::Dynamic, { .restitution = 0.9f, .enableEvents{ .contact = true } }, SDLite::kColorOrange),
@@ -1322,17 +1397,14 @@ Result<Void> SimplePhysicsScene::Run()
     float timeStep = 1.0f / 60.0f;
     int subStepCount = 4;
 
-    SDL_Event ev;
     while (true)
     {
         hooks.SetHookPoint<HookPoint::LoopStart>();
 
-        if (!eventSys.Poll(ev))
+        if (!inputSys.Update())
         {
             break;
         }
-
-        eventSys.DistributeEvents();
 
         ApplyImpulseFromControllerInput(player);
 
@@ -1367,7 +1439,7 @@ Result<Void> GrapplePhysicsScene::Run()
 
     RenderSystem renderSys{};
     PhysicsSystem physicsSys{};
-    EventSystem eventSys{};
+    SDLInputSystem inputSys{};
 
     Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
                                    static_cast<float>(SDLite::kWindowHeight) };
@@ -1395,11 +1467,7 @@ Result<Void> GrapplePhysicsScene::Run()
 
     player.AddComponent(GameControllerState{});
 
-    auto& playerEvents = player.AddComponent(EventObserver{});
-    playerEvents.eventCallbacks[GameControllerConnected::GetEventType()].func =
-        &ConnectToFirstController;
-    playerEvents.eventCallbacks[GameControllerDisconnected::GetEventType()].func =
-        &InvalidateEntityJoystickIDAndListenForNewConnection;
+    ConnectEntityToController(player);
 
     TRY(MakeColliderCircleEntity(world, kScreenCenterPosition + SDL_FPoint{ 100.0f, 0.0f }, kDynamicCircleRadius,
         B2Body::Type::Dynamic, { .restitution = 0.9f, .enableEvents{.contact = true } }, SDLite::kColorOrange),
@@ -1431,17 +1499,14 @@ Result<Void> GrapplePhysicsScene::Run()
     float timeStep = 1.0f / 60.0f;
     int subStepCount = 4;
 
-    SDL_Event ev;
     while (true)
     {
         hooks.SetHookPoint<HookPoint::LoopStart>();
 
-        if (!eventSys.Poll(ev))
+        if (!inputSys.Update())
         {
             break;
         }
-
-        eventSys.DistributeEvents();
 
         HandleGrapple(world, player, grappleJoint, grappleState, extendingSpeed, extendingPoints);
 
@@ -1521,7 +1586,7 @@ Result<Void> ChainScene::Run(std::shared_ptr<SceneFixture> scene)
     {
         scene->LoopStart();
 
-        TRY(scene->UpdateEvents(), cont);
+        TRY(scene->UpdateSDLInputs(), cont);
         if (!cont) 
         { 
             break; 

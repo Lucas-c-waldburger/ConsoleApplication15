@@ -1,16 +1,11 @@
 #pragma once
 #include "data/EntityCollision.h"
-#include "data/GameControllerConnected.h"
+#include "data/GameControllerEvents.h"
 #include "data/EntityActions.h"
 
 #define CUSTOM_EVENT_DATA_REGISTRY \
-	GameControllerConnected, \
-	GameControllerDisconnected, \
-	EntityCollision::ContactBegin, \
-	EntityCollision::ContactEnd, \
-	EntityCollision::SensorBegin, \
-	EntityCollision::SensorEnd, \
-	EntityCollision::Hit, \
+	events::GameControllerConnected, \
+	events::GameControllerDisconnected, \
 	events::ContactCollisionBegin, \
 	events::ContactCollisionEnd, \
 	events::SensorCollisionBegin, \

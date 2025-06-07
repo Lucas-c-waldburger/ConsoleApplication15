@@ -13,31 +13,24 @@ void SceneFixture::LoopStart()
 {
 	counter_.Update();
 
-	systemOrder_.Reset();
+	//systemOrder_.Reset();
 
 	hooks_.SetHookPoint<HookPoint::LoopStart>();
 }
 
-Result<bool> SceneFixture::UpdateEvents()
+Result<bool> SceneFixture::UpdateSDLInputs()
 {
-	TRY(systemOrder_.MarkUpdated<EventSystem>());
+	//TRY(systemOrder_.MarkUpdated<EventSystem>());
 
-	assert(systems_.IsSystemInitialized<EventSystem>());
-	auto& eventSys = systems_.GetSystem<EventSystem>();
+	assert(systems_.IsSystemInitialized<SDLInputSystem>());
+	auto& inputSys = systems_.GetSystem<SDLInputSystem>();
 
-	if (!eventSys->Poll(ev_))
-	{
-		return false;
-	}
-
-	eventSys->DistributeEvents();
-
-	return true;
+	return inputSys->Update();
 }
 
 Result<Void> SceneFixture::UpdatePhysics()
 {
-	TRY(systemOrder_.MarkUpdated<PhysicsSystem>());
+	//TRY(systemOrder_.MarkUpdated<PhysicsSystem>());
 
 	assert(systems_.IsSystemInitialized<PhysicsSystem>());
 	assert(world_.IsValid());
@@ -51,7 +44,7 @@ Result<Void> SceneFixture::UpdatePhysics()
 
 Result<Void> SceneFixture::UpdateCamera()
 {
-	TRY(systemOrder_.MarkUpdated<CameraSystem>());
+	//TRY(systemOrder_.MarkUpdated<CameraSystem>());
 
 	assert(systems_.IsSystemInitialized<CameraSystem>());
 
@@ -62,7 +55,7 @@ Result<Void> SceneFixture::UpdateCamera()
 
 Result<Void> SceneFixture::UpdateRender()
 {
-	TRY(systemOrder_.MarkUpdated<RenderSystem>());
+	//TRY(systemOrder_.MarkUpdated<RenderSystem>());
 
 	assert(systems_.IsSystemInitialized<RenderSystem>());
 
@@ -85,7 +78,7 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 
 	fixture->systems_.InitializeSystem<RenderSystem>();
 	fixture->systems_.InitializeSystem<PhysicsSystem>();
-	fixture->systems_.InitializeSystem<EventSystem>();
+	fixture->systems_.InitializeSystem<SDLInputSystem>();
 
 	Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
 								   static_cast<float>(SDLite::kWindowHeight) };

@@ -90,43 +90,43 @@ static void InitGameControllerInputTest(ScriptManager& scriptManager)
         GameControllerState>(std::move(instance));
 }
 
-static void SetKnightControllerConnectedCallback(EventObserver& knightEvents)
-{
-    knightEvents.eventCallbacks[GameControllerConnected::GetEventType()].func =
-    [](const SDL_Event& ev, Entity& self) -> ReturnSignal 
-    {
-        assert(ev.type == GameControllerConnected::GetEventType());
-
-        if (!self.IsValid())
-        {
-            LOG_WARNING("Entity was invalid");
-            return ReturnSignal::StopObserving;
-        }
-        if (!self.HasComponent<GameControllerState>())
-        {
-            LOG_WARNING("Entity did not have GameControllerState component");
-            return ReturnSignal::StopObserving;
-        }
-
-        auto& controllerState = self.GetComponent<GameControllerState>();
-        if (controllerState.joystickID != GameController::kInvalidJoystickID)
-        {
-            LOG_WARNING("Entity already had a joystick id marked valid");
-            return ReturnSignal::Pause;
-        }
-
-        const auto* castEv = CustomEvents::GetEventData<GameControllerConnected>(ev);
-        if (!castEv)
-        {
-            return ReturnSignal::StopObserving;
-        }
-
-        controllerState.joystickID = castEv->joystickID;
-        LOG_INFO("Entity attached to new controller connection!");
-
-        return ReturnSignal::Pause;
-    };
-}
+//static void SetKnightControllerConnectedCallback(EventObserver& knightEvents)
+//{
+//    knightEvents.eventCallbacks[GameControllerConnected::GetEventType()].func =
+//    [](const SDL_Event& ev, Entity& self) -> ReturnSignal 
+//    {
+//        assert(ev.type == GameControllerConnected::GetEventType());
+//
+//        if (!self.IsValid())
+//        {
+//            LOG_WARNING("Entity was invalid");
+//            return ReturnSignal::StopObserving;
+//        }
+//        if (!self.HasComponent<GameControllerState>())
+//        {
+//            LOG_WARNING("Entity did not have GameControllerState component");
+//            return ReturnSignal::StopObserving;
+//        }
+//
+//        auto& controllerState = self.GetComponent<GameControllerState>();
+//        if (controllerState.joystickID != GameController::kInvalidJoystickID)
+//        {
+//            LOG_WARNING("Entity already had a joystick id marked valid");
+//            return ReturnSignal::Pause;
+//        }
+//
+//        const auto* castEv = CustomEvents::CastEvent<GameControllerConnected>(ev);
+//        if (!castEv)
+//        {
+//            return ReturnSignal::StopObserving;
+//        }
+//
+//        controllerState.joystickID = castEv->joystickID;
+//        LOG_INFO("Entity attached to new controller connection!");
+//
+//        return ReturnSignal::Pause;
+//    };
+//}
 
 static void UpdateControllerForce(Entity& entity)
 {

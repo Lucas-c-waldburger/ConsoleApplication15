@@ -150,6 +150,7 @@
     <ClCompile Include="ecs\EcsImpl.cpp" />
     <ClCompile Include="ecs\Entity.cpp" />
     <ClCompile Include="ecs\EntityDestructor.cpp" />
+    <ClCompile Include="events\EventBus.cpp" />
     <ClCompile Include="events\EventCallbackMap.cpp" />
     <ClCompile Include="inputs\InputData.cpp" />
     <ClCompile Include="inputs\mouse\Mouse.cpp" />
@@ -223,14 +224,17 @@
     <ClInclude Include="ecs\Entity.h" />
     <ClInclude Include="ecs\EntityDestructor.h" />
     <ClInclude Include="events\custom\data\EntityActions.h" />
+    <ClInclude Include="events\custom\data\Groups.h" />
     <ClInclude Include="events\custom\EventUtils.h" />
     <ClInclude Include="events\Event.h" />
     <ClInclude Include="events\EventBus.h" />
     <ClInclude Include="events\EventCallback.h" />
     <ClInclude Include="events\EventCallbackMap.h" />
+    <ClInclude Include="events\EventGroup.h" />
     <ClInclude Include="events\EventHandle.h" />
     <ClInclude Include="events\EventManager.h" />
     <ClInclude Include="events\EventStorageBinTemplate.h" />
+    <ClInclude Include="events\SDLEventBufferTransformer.h" />
     <ClInclude Include="events\types\CollisionEvents.h" />
     <ClInclude Include="events\types\EntityActionEvents.h" />
     <ClInclude Include="events\types\GameControllerEvents.h" />
@@ -251,7 +255,7 @@
     <ClInclude Include="components\ActiveStateComponent.h" />
     <ClInclude Include="components\BaseComponent.h" />
     <ClInclude Include="components\ColliderComponent.h" />
-    <ClInclude Include="components\EventObserverComponent.h" />
+    <ClInclude Include="components\EventCallbacksComponent.h" />
     <ClInclude Include="components\GameControllerStateComponent.h" />
     <ClInclude Include="components\RigidBodyComponent.h" />
     <ClInclude Include="components\RelationComponents.h" />
@@ -273,9 +277,8 @@
     <ClInclude Include="ecs\EntityT.h" />
     <ClInclude Include="events\custom\CustomEventData.h" />
     <ClInclude Include="events\custom\CustomEventDataRegistry.h" />
-    <ClInclude Include="events\custom\CustomEvents.h" />
     <ClInclude Include="events\custom\data\EntityCollision.h" />
-    <ClInclude Include="events\custom\data\GameControllerConnected.h" />
+    <ClInclude Include="events\custom\data\GameControllerEvents.h" />
     <ClInclude Include="events\EventBuffer.h" />
     <ClInclude Include="core\Handle.h" />
     <ClInclude Include="core\Logger.h" />

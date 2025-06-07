@@ -5,34 +5,34 @@
 
 namespace events {
 
-struct ContactCollisionBegin : EngineEventData<ContactCollisionBegin>
+struct ContactCollisionBegin : CustomEvent<ContactCollisionBegin>
 {
     Entity_t entityA = kInvalidEntity;
     Entity_t entityB = kInvalidEntity;
 };
 
-struct ContactCollisionEnd : EngineEventData<ContactCollisionEnd>
+struct ContactCollisionEnd : CustomEvent<ContactCollisionEnd>
 {
     Entity_t entityA = kInvalidEntity;
     Entity_t entityB = kInvalidEntity;
 };
 
-struct SensorCollisionBegin : EngineEventData<SensorCollisionBegin>
+struct SensorCollisionBegin : CustomEvent<SensorCollisionBegin>
 {
     Entity_t entityA = kInvalidEntity;
     Entity_t entityB = kInvalidEntity;
 };
 
-struct SensorCollisionEnd : EngineEventData<SensorCollisionEnd>
+struct SensorCollisionEnd : CustomEvent<SensorCollisionEnd>
 {
     Entity_t entityA = kInvalidEntity;
     Entity_t entityB = kInvalidEntity;
 };
 
-struct HitCollision : EngineEventData<HitCollision>
+struct HitCollision : CustomEvent<HitCollision>
 {
     Entity_t entityA = kInvalidEntity;
     Entity_t entityB = kInvalidEntity;
 };
 
-}
+} // events

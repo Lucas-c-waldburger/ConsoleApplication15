@@ -1,6 +1,7 @@
 #include "PhysicsSystem.h"
 #include "../ecs/Ecs.h"
 #include "../sdl/SDLUtils.h"
+#include "../events/custom/data/Groups.h"
 #include "CollisionSystem.h"
 #include <algorithm>
 
@@ -119,7 +120,7 @@ void UpdateTransformComponents()
 
 } // unnamed namespace
 
-void PhysicsSystem::Update(B2World* world_, float timeStep, int subStepCount)
+void PhysicsSystem::Update(EventSystem& eventSystem, B2World* world_, float timeStep, int subStepCount)
 {
 	if (!world_)
 	{
@@ -136,7 +137,9 @@ void PhysicsSystem::Update(B2World* world_, float timeStep, int subStepCount)
 
 	world_->Step(timeStep, subStepCount);
 
-	LOG_IF_ERROR(DispatchCollisionEvents(world_));
+	BufferCollisionEvents(world_);
+
+	eventSystem.DispatchEvents<events::CollisionEventGroup>();
 
 	UpdateTransformComponents();
 }
@@ -145,7 +148,7 @@ void PhysicsSystem::UpdateForces()
 {
 	auto entities = ECS::GetAllEntitiesWith<RigidBody>([](const RigidBody& rigidBody) {
 		return rigidBody.body.GetData().IsValid();
-		});
+	});
 
 	for (auto& entity : entities)
 	{

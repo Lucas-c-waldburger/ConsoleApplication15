@@ -6,11 +6,6 @@
 struct EventCallback
 {
     fu2::unique_function<ReturnSignal(const SDL_Event& ev)> onEvent;
-    Handle<EventCallback> handle;
+    //Handle<EventCallback> handle;
+    //ReturnSignal lastSignal = ReturnSignal::KeepObserving;
 };
-
-//struct EventCallback
-//{
-//    fu2::unique_function<ReturnSignal(const Event& ev)> onEvent;
-//    Handle<EventCallback> handle;
-//};

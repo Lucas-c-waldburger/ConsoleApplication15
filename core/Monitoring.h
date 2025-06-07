@@ -6,8 +6,7 @@
 
 enum class ReturnSignal 
 { 
-    Unknown,
-    KeepObserving, 
+    KeepObserving = 1, 
     StopObserving, 
     Pause 
 };

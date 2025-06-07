@@ -16,6 +16,5 @@ public:
 
 private:
 	std::unordered_map<SDL_JoystickID, std::pair<GameController, InputDataCache>> activeControllers_;
-	AxisInputData tracking_{};
 };
 
