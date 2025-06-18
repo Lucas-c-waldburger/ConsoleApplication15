@@ -4,5 +4,5 @@
 
 class B2World;
 
-Result<Void> BufferCollisionEvents(const B2World* world);
+Result<Void> DispatchCollisionEvents(const B2World* world);
 

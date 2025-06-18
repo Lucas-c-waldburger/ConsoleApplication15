@@ -1,5 +1,6 @@
 #include "Fixtures.h"
 #include "../ecs/Ecs.h"
+#include "../physics/B2World.h"
 
 SceneFixture::~SceneFixture()
 {
@@ -37,8 +38,6 @@ Result<Void> SceneFixture::UpdatePhysics()
 
 	systems_.GetSystem<PhysicsSystem>()->Update(&world_, 1.0f / 60.0f, 4);
 
-	world_.Step(1.0f / 60.0f, 4);
-
 	return Void{};
 }
 
@@ -66,11 +65,17 @@ Result<Void> SceneFixture::UpdateRender()
 	return Void{};
 }
 
+void SceneFixture::LoopEnd()
+{
+	//assert(systems_.IsSystemInitialized<EventSystem>());
+
+	EventBus::FlushEvents();
+}
+
 Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 {
 	Logger::StartSession();
 	SDLite::Start();
-	TRY((RegisterCustomEventDataTypes<CUSTOM_EVENT_DATA_REGISTRY>()));
 
 	auto fixture = std::make_shared<SceneFixture>();
 
@@ -79,6 +84,7 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 	fixture->systems_.InitializeSystem<RenderSystem>();
 	fixture->systems_.InitializeSystem<PhysicsSystem>();
 	fixture->systems_.InitializeSystem<SDLInputSystem>();
+	fixture->systems_.InitializeSystem<EventCallbackSystem>();
 
 	Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
 								   static_cast<float>(SDLite::kWindowHeight) };

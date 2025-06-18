@@ -1,6 +1,8 @@
 #include "EntityDestructor.h"
 #include "../physics/B2Body.h";
 #include "EntityRelationsHelper.h"
+#include "../events/EventBus.h"
+#include "../events/data/EntityActions.h"
 
 namespace {
 
@@ -215,10 +217,11 @@ void CleanupB2Components(impl::ComponentManager& componentManager, Entity_t enti
 	}
 }
 
-std::vector<Entity_t> GetAllEntitiesToDestroy(EntityManager& entityManager, impl::ComponentManager& componentManager, 
-											  Entity_t entityId)
+std::vector<events::EntityDestroyed> GetAllEntitiesToDestroy(EntityManager& entityManager, 
+															 impl::ComponentManager& componentManager, 
+															 Entity_t entityId)
 {
-	std::vector<Entity_t> entitiesToDestroy{ entityId };
+	std::vector<events::EntityDestroyed> entitiesToDestroy{{ .entity = entityId }};
 
 	// don't need to manually unlink these children since parent is getting merked
 	if (EntityRelationsHelper::IsParent(entityManager, componentManager, entityId))
@@ -226,11 +229,16 @@ std::vector<Entity_t> GetAllEntitiesToDestroy(EntityManager& entityManager, impl
 		auto& children = EntityRelationsHelper::GetChildren(entityManager, componentManager, entityId);
 
 		entitiesToDestroy.reserve(children.size() + 1);
-		entitiesToDestroy.insert(entitiesToDestroy.end(), std::make_move_iterator(children.begin()), 
-														  std::make_move_iterator(children.end()));
+
+		for (auto child : children)
+		{
+			entitiesToDestroy.push_back({ .entity = child, .parent = entityId });
+		}
 	}
 	else if (EntityRelationsHelper::IsChild(entityManager, componentManager, entityId))
 	{
+		entitiesToDestroy.front().parent = EntityRelationsHelper::GetParent(entityManager, componentManager, entityId);
+
 		EntityRelationsHelper::UnlinkChildFromParent(entityManager, componentManager, entityId);
 	}
 
@@ -245,13 +253,15 @@ void EntityDestructor::EntityDestroyed(EntityManager& entityManager, impl::Compo
 {
 	auto entitiesToDestroy = GetAllEntitiesToDestroy(entityManager, componentManager, entityId);
 
-	for (auto entityToDestroy : entitiesToDestroy)
+	for (auto&& destructionEvent : entitiesToDestroy)
 	{
-		CleanupB2Components(componentManager, entityToDestroy);
+		CleanupB2Components(componentManager, destructionEvent.entity);
 
-		entityManager.DestroyEntity(entityToDestroy);
+		entityManager.DestroyEntity(destructionEvent.entity);
 
-		componentManager.EntityDestroyed(entityToDestroy);
+		componentManager.EntityDestroyed(destructionEvent.entity);
+
+		EventBus::PushEvent(std::move(destructionEvent));
 	}
 }
 

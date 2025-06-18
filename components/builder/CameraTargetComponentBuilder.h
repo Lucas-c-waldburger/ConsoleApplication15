@@ -1,7 +1,7 @@
 #pragma once
 #include "ComponentBuilder.h"
-#include "../../Camera.h"
-
+#include "../CameraTargetComponent.h"
+#include "../../systems/CameraSystem.h"
 
 template<>
 class ComponentBuilder<CameraTarget>

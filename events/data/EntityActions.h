@@ -1,23 +1,24 @@
 #pragma once
 #include <optional>
-#include "../CustomEventData.h"
-#include "../../../ecs/EntityT.h"
+#include "../IEventData.h"
+#include "../../ecs/EntityT.h"
+#include <SDL_rect.h>
 
 namespace events {
 
-struct EntityCreated : CustomEvent<EntityCreated>
+struct EntityCreated : IEventData<EntityCreated>
 {
 	Entity_t entity = kInvalidEntity;
 	std::optional<Entity_t> parent;
 };
 
-struct EntityDestroyed : CustomEvent<EntityDestroyed>
+struct EntityDestroyed : IEventData<EntityDestroyed>
 {
 	Entity_t entity = kInvalidEntity;
 	std::optional<Entity_t> parent;
 };
 
-struct EntityPositionChanged : CustomEvent<EntityPositionChanged>
+struct EntityPositionChanged : IEventData<EntityPositionChanged>
 {
 	Entity_t entity = kInvalidEntity;
 	SDL_FPoint newPosition = { 0.0f, 0.0f };

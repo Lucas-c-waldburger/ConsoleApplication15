@@ -20,7 +20,7 @@ class TextureManagerTemplate
 public:
 	TextureManagerTemplate() = default;
 
-	template <PackMemberType<AtlasTs...> T>
+	template <SomeTypeInPack<AtlasTs...> T>
 	Result<Handle<T>> LoadAtlas(SDL_Renderer* renderer, AtlasInfo<T> info)
 	{
 		auto& atlasMap = GetEntry<T>();
@@ -39,7 +39,7 @@ public:
 		return atlasHandle;
 	}
 
-	template <PackMemberType<AtlasTs...> T>
+	template <SomeTypeInPack<AtlasTs...> T>
 	const T* GetAtlas(const Handle<T>& handle) const
 	{
 		if (!handleFactory_.IsHandleValid(handle))
@@ -55,12 +55,12 @@ public:
 	}
 
 protected:
-	template <PackMemberType<AtlasTs...> T>
+	template <SomeTypeInPack<AtlasTs...> T>
 	auto& GetEntry()
 	{
 		return std::get<std::unordered_map<Handle<T>, T>>(atlasMaps_);
 	}
-	template <PackMemberType<AtlasTs...> T>
+	template <SomeTypeInPack<AtlasTs...> T>
 	const auto& GetEntry() const
 	{
 		return std::get<std::unordered_map<Handle<T>, T>>(atlasMaps_);

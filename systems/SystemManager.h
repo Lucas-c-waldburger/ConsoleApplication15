@@ -66,19 +66,19 @@ public:
 	SystemManagerTemplate() = default;
 	~SystemManagerTemplate() = default;
 
-	template <PackMemberType<Ts...> T>
+	template <SomeTypeInPack<Ts...> T>
 	std::unique_ptr<T>& GetSystem()
 	{
 		return std::get<std::unique_ptr<T>>(systems_);
 	}
 
-	template <PackMemberType<Ts...> T>
+	template <SomeTypeInPack<Ts...> T>
 	const std::unique_ptr<T>& GetSystem() const
 	{
 		return std::get<std::unique_ptr<T>>(systems_);
 	}
 
-	template <PackMemberType<Ts...> T, typename...Args>
+	template <SomeTypeInPack<Ts...> T, typename...Args>
 	std::unique_ptr<T>& InitializeSystem(Args&&...args)
 	{
 		auto& sys = GetSystem<T>();
@@ -90,7 +90,7 @@ public:
 		return sys;
 	}
 
-	template <PackMemberType<Ts...> T>
+	template <SomeTypeInPack<Ts...> T>
 	bool IsSystemInitialized() const
 	{
 		return GetSystem<T>() != nullptr;

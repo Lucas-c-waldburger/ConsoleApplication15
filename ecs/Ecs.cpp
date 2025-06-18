@@ -117,3 +117,39 @@ std::vector<Entity> EntityRelations::GetChildren()
 
 	return childEntities;
 }
+
+
+Entity_t ECS::CreateEntity_t()
+{
+	Entity_t entity = entityManager_.CreateEntity();
+	componentManager_.EntityCreated(entity);
+
+	return entity;
+}
+
+void ECS::DestroyEntity(Entity_t entity)
+{
+	assert(IsEntityValid(entity));
+	EntityDestructor::EntityDestroyed(entityManager_, componentManager_, entity);
+	//entityManager_.DestroyEntity(entity);
+	//EntityRelationsHelper::DestroyRelationshipsWithEntity(componentManager_, entity);
+	//componentManager_.EntityDestroyed(entity);
+}
+
+bool ECS::IsEntityActive(Entity_t entity) const
+{
+	assert(entity < kMaxEntities);
+
+	bool activeAccordingToComponentManager =
+		componentManager_.GetSignature(entity) & ActiveState::componentBit;
+	bool activeAccordingToEntityManager = entityManager_.IsEntityActive(entity);
+
+	assert(activeAccordingToComponentManager == activeAccordingToEntityManager);
+
+	return activeAccordingToComponentManager;
+}
+
+bool ECS::IsEntityValid(Entity_t entity) const
+{
+	return (entity < kMaxEntities && IsEntityActive(entity));
+}

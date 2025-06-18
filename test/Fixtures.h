@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <typeindex>
+#include "../physics/B2World.h"
 #include "../scripting/ScriptManager.h"
 #include "../atlas/AtlasManager.h"
 #include "../core/Monitoring.h"
@@ -36,7 +37,7 @@ public:
 	public:
 		SystemUpdateOrder() : order_(MakeTypeIndexArray<Ts...>()) {}
 
-		template <PackMemberType<SYSTEM_REGISTRY> T>
+		template <SomeTypeInPack<SYSTEM_REGISTRY> T>
 		Result<Void> MarkUpdated()
 		{
 			if (nextIndex_ >= order_.size())
@@ -78,6 +79,7 @@ public:
 	Result<Void> UpdatePhysics();
 	Result<Void> UpdateCamera();	
 	Result<Void> UpdateRender();
+	void LoopEnd();
 
 	// getters
 	template <typename T> 
@@ -107,7 +109,6 @@ private:
 	HookManager hooks_;
 	B2World world_;
 	ScriptManager scripts_;
-	SDL_Event ev_;
 	Counter counter_;
 	TestScript testScript_;
 };

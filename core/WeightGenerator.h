@@ -65,9 +65,9 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const WeightGenerator& wg)
     {
-        float maxWeight = *std::max_element(wg.weights_.begin(), wg.weights_.end());
+        double maxWeight = *std::max_element(wg.weights_.begin(), wg.weights_.end());
 
-        for (float weight : wg.weights_) 
+        for (double weight : wg.weights_) 
         {
             int barLen = static_cast<int>(std::round((weight / maxWeight) * 25));
             os << std::setw(2) << barLen << " | " << std::string(barLen, '*') << "\n";

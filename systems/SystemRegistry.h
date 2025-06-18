@@ -4,10 +4,12 @@
 #include "PhysicsSystem.h"
 #include "RenderSystem.h"
 #include "SDLInputSystem.h"
+#include "EventCallbackSystem.h"
 
 #define SYSTEM_REGISTRY \
 	CameraSystem, \
 	PhysicsSystem, \
 	RenderSystem, \
-	SDLInputSystem
+	SDLInputSystem, \
+	EventCallbackSystem
 

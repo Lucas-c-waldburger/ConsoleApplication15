@@ -7,9 +7,7 @@
 #include "test/Premades.h"
 #include "systems/RenderSystem.h"
 #include "systems/PhysicsSystem.h"
-#include "systems/EventSystem.h"
-#include "events/custom/CustomEventDataRegistry.h"
-#include "events/custom/EventUtils.h"
+#include "systems/EventCallbackSystem.h"
 #include "components/GameControllerStateComponent.h"
 #include "test/ComponentTests.h"
 #include "test/Fixtures.h"
@@ -20,6 +18,11 @@
 #include "core/Literals.h"
 #include "core/WeightGenerator.h"
 #include "physics/B2CompoundObject.h"
+#include "events/Event.h"
+#include "events/EventUtils.h"
+#include "events/data/GameControllerEvents.h"
+#include "events/data/EntityCollision.h"
+#include "events/data/EntityActions.h"
 
 namespace {
     static constexpr const char* kFontPath =
@@ -379,10 +382,10 @@ namespace {
         return Void{};
     }
 
-    auto ConnectToFirstController(Entity_t entityId)
+    auto ConnectToFirstController()
     {
-        return [entityId](const SDL_Event& ev) {
-            auto ent = ECS::GetEntityByID(entityId);
+        return [](const events::GameControllerConnected& ev, Entity_t id) -> ReturnSignal {
+            auto ent = ECS::GetEntityByID(id);
 
             if (!ent.IsValid())
             {
@@ -396,29 +399,20 @@ namespace {
             }
 
             auto& controllerState = ent.GetComponent<GameControllerState>();
-            if (controllerState.joystickID != GameController::kInvalidJoystickID)
+            if (controllerState.joystickID == GameController::kInvalidJoystickID)
             {
-                LOG_WARNING("Entity already had a joystick id marked valid");
-                return ReturnSignal::StopObserving;
+                controllerState.joystickID = ev.joystickID;
+                LOG_INFO("Entity attached to new controller connection!");
             }
-
-            const auto* castEv = events::CastEvent<events::GameControllerConnected>(ev);
-            if (!castEv)
-            {
-                return ReturnSignal::KeepObserving;
-            }
-
-            controllerState.joystickID = castEv->joystickID;
-            LOG_INFO("Entity attached to new controller connection!");
-
-            return ReturnSignal::StopObserving;
+           
+            return ReturnSignal::KeepObserving;
         };
     }
 
-    auto ClearJoystickIdAndListenForNewConnection(Entity_t entityId)
+    auto DisconnectController()
     {
-        return [entityId](const SDL_Event& ev) {
-            auto ent = ECS::GetEntityByID(entityId);
+        return [](const events::GameControllerDisconnected& ev, Entity_t id) -> ReturnSignal {
+            auto ent = ECS::GetEntityByID(id);
 
             if (!ent.IsValid())
             {
@@ -432,11 +426,8 @@ namespace {
             }
 
             // 1. mark entity's joystickID as invalid in its controller state
-            const auto* disconnectEv = events::CastEvent<events::GameControllerDisconnected>(ev);
-            assert(disconnectEv);
-
             auto& controllerState = ent.GetComponent<GameControllerState>();
-            if (controllerState.joystickID != disconnectEv->joystickID)
+            if (controllerState.joystickID != ev.joystickID)
             {
                 LOG_DEBUG("Entity's connected controller different from the one that was disconnected");
                 return ReturnSignal::KeepObserving;
@@ -444,30 +435,37 @@ namespace {
 
             controllerState.joystickID = GameController::kInvalidJoystickID;
 
-            LOG_DEBUG("Set entity's controller state joystickID to invalid");
-
-            // 2. Listen for controller connection again
-            assert(ent.HasComponent<EventCallbacks>());
-            auto& cbs = ent.GetComponent<EventCallbacks>().map;
-
-            cbs.Insert<events::GameControllerConnected>(ConnectToFirstController(entityId));
-
-            LOG_DEBUG("Listening for a new connection on this entity...");
+            LOG_DEBUG("Controller Disconnected. Listening for a new connection on this entity...");
 
             return ReturnSignal::KeepObserving;
         };
     }
 
-    void ConnectEntityToController(Entity& entity)
+#define NAME_AND_MOVE(x) #x, std::move(x)
+#define NAME_AND_CALL(callable) #callable, callable()
+
+    void ConnectEntityToController(EventCallbackSystem& callbackSys, Entity& entity)
     {
         assert(entity.IsValid());
 
+        using namespace events;
+        using Key = EventCallbackRegistry::Key;
+
+        const uint32_t connectEvType = GameControllerConnected::eventType;
+        const uint32_t disconnectEvType = GameControllerDisconnected::eventType;
+
+        auto& registry = callbackSys.GetRegistry();
+
+        auto connectKey = registry.RegisterCallback("ConnectToFirstController",
+                                                     ConnectToFirstController()).key;
+        auto disconnectKey = registry.RegisterCallback("DisconnectController",
+                                                        DisconnectController()).key;
+
+        auto& callbacks = entity.AddComponent<EventCallbacks>().table;
+        callbacks[connectEvType] = std::move(connectKey);
+        callbacks[disconnectEvType] = std::move(disconnectKey);
+
         entity.AddComponent(GameControllerState{});
-
-        auto& cbs = entity.AddComponent(EventCallbacks{}).map;       
-
-        cbs.Insert<events::GameControllerConnected>(ConnectToFirstController(entity.GetID()));
-        cbs.Insert<events::GameControllerDisconnected>(ClearJoystickIdAndListenForNewConnection(entity.GetID()));       
     }
 
     void ApplyImpulseFromControllerInput(Entity& entity/*, bool enableJump = true*/)
@@ -478,7 +476,7 @@ namespace {
         auto [controller, rigidBody] = entity.GetComponents<GameControllerState, RigidBody>();
         if (controller.joystickID == GameController::kInvalidJoystickID)
         {
-            LOG_WARNING("Entity joystick ID was invalid - No Impuse applied!");
+            //LOG_WARNING("Entity joystick ID was invalid - No Impuse applied!");
             return;
         }
 
@@ -571,7 +569,7 @@ namespace {
         Entity entity_;
     };
 
-    Entity MakeScoreboard(const Handle<GlyphAtlas>& atlas, 
+    Entity MakeScoreboard(EventCallbackSystem& eventCallbackSystem, const Handle<GlyphAtlas>& atlas, 
         const Entity& player, const Entity& ball, const Entity& ground)
     {
         auto entity = ECS::CreateEntity();
@@ -590,56 +588,57 @@ namespace {
             .position = { SDLite::kWindowWidth / 2.0f, 150.0f }         
         });
 
-        auto& eventCbs = entity.AddComponent(EventCallbacks{}).map;
+        auto handleBallCollision = 
+        [player = player.GetID(), ball = ball.GetID(), ground = ground.GetID()]
+        (const events::ContactCollisionBegin& ev, Entity_t scoreBoardId)
+        {
+            auto scoreBoard = ECS::GetEntityByID(scoreBoardId);
 
-        eventCbs.Insert<events::ContactCollisionBegin>(
-            [player = player.GetID(), ball = ball.GetID(), 
-             ground = ground.GetID(), scoreBoardId = entity.GetID()](const SDL_Event& ev)
+            assert(scoreBoard.IsValid());
+            assert(scoreBoard.HasComponent<Renderable>());
+
+            auto entA = ev.a.entity;
+            auto entB = ev.a.entity;
+
+            bool playerOnBall = ((entA == player && entB == ball) ||
+                (entA == ball && entB == player));
+            bool ballOnGround = ((entA == ball && entB == ground) ||
+                (entA == ground && entB == ball));
+
+            if (!(playerOnBall || ballOnGround))
             {
-                auto scoreBoard = ECS::GetEntityByID(scoreBoardId);
-
-                assert(scoreBoard.IsValid());
-                assert(scoreBoard.HasComponent<Renderable>());
-
-                const auto* collisionEv = events::CastEvent<events::ContactCollisionBegin>(ev);
-                assert(collisionEv);
-
-                auto entA = collisionEv->entityA;
-                auto entB = collisionEv->entityB;
-
-                bool playerOnBall = ((entA == player && entB == ball) || 
-                                     (entA == ball && entB == player));
-                bool ballOnGround = ((entA == ball && entB == ground) ||
-                                     (entA == ground && entB == ball));
-
-                if (!(playerOnBall || ballOnGround))
-                {
-                    return ReturnSignal::KeepObserving;
-                }
-
-                auto& renderable = scoreBoard.GetComponent<Renderable>();
-                auto textData = std::get_if<Renderable::Text>(&renderable.renderData);
-                assert(textData);
-
-                int currentScore = std::stoi(textData->text);
-                if (playerOnBall)
-                {
-                    ++currentScore;
-                }
-                else
-                {
-                    //currentScore = 0;
-                }
-
-                textData->text = std::to_string(currentScore);
-
                 return ReturnSignal::KeepObserving;
-            });
+            }
+
+            auto& renderable = scoreBoard.GetComponent<Renderable>();
+            auto textData = std::get_if<Renderable::Text>(&renderable.renderData);
+            assert(textData);
+
+            int currentScore = std::stoi(textData->text);
+            if (playerOnBall)
+            {
+                ++currentScore;
+            }
+            else
+            {
+                //currentScore = 0;
+            }
+
+            textData->text = std::to_string(currentScore);
+
+            return ReturnSignal::KeepObserving;
+        };
+         
+        auto& registry = eventCallbackSystem.GetRegistry();
+        auto [key, _] = registry.RegisterCallback("handleBallCollision", std::move(handleBallCollision));
+
+        auto& callbacks = entity.AddComponent(EventCallbacks{}).table;
+        callbacks.AddKey(std::move(key));
 
         return entity;
     }
 
-    class Counter
+    /*class Counter
     {
     public:
         double GetDeltaTime() const
@@ -668,7 +667,7 @@ namespace {
     private:
         uint64_t last_ = 0;
         double delta_ = 0.0;
-    };
+    };*/
 
     class Chain
     {
@@ -759,7 +758,7 @@ namespace {
                 auto len = childRigid.body.GetData().GetDistance(prevRigid.body.GetData());
 
                 B2JointParams<B2DistanceJoint> params{
-                    .length {.rest = 0.0001f, .max = len },
+                    .length {.rest = 0.01f, .max = len },
                     .spring {.enable = true, .hertz = 8.0f, .dampingRatio = 0.8f }
                 };
 
@@ -830,7 +829,7 @@ namespace {
         GrapplingHookDriver(Entity srcEntity, int numLinkPoints, B2JointParams<B2DistanceJoint> jointParams) :
             sourceEntity_(srcEntity), numLinkPoints_(numLinkPoints), jointParams_(std::move(jointParams)) {}
        
-        Result<Void> Launch(B2World& world, SDL_FPoint direction)
+        Result<Void> Launch(B2World& world, EventCallbackSystem& callbackSystem, SDL_FPoint direction)
         {
             if (!sourceEntity_.IsValid())
             {
@@ -845,14 +844,14 @@ namespace {
             srcRigid.limits.linearVelocity.max = { 0.0f, 0.0f };
             state_ = State::Launched;
 
-            TRY(Generate(world));
+            TRY(Generate(world, callbackSystem));
         }
 
         const Entity& GetSourceEntity() const { return sourceEntity_; }
 
-        auto HandleSensorConnection(Entity& leadEnt) 
+        auto HandleSensorConnection() 
         {
-            return [this, leadEntId = leadEnt.GetID()](const SDL_Event& ev) {
+            return [this](const events::SensorCollisionBegin& ev, Entity_t leadEntId) {
                 auto leadEnt = ECS::GetEntityByID(leadEntId);
 
                 if (!leadEnt.IsValid())
@@ -861,15 +860,11 @@ namespace {
                     return ReturnSignal::StopObserving;
                 }
 
-                const auto* sensorBegEv = events::CastEvent<events::SensorCollisionBegin>(ev);
-                assert(sensorBegEv);
-
-                const auto& [a, b] = *sensorBegEv;
-                if (a == sourceEntity_.GetID() || b == sourceEntity_.GetID())
+                if (ev.a.entity == sourceEntity_.GetID() || ev.b.entity == sourceEntity_.GetID())
                 {
                     return ReturnSignal::KeepObserving;
                 }
-                if (!(a == leadEnt.GetID() || b == leadEnt.GetID()))
+                if (!(ev.a.entity == leadEnt.GetID() || ev.a.entity == leadEnt.GetID()))
                 {
                     return ReturnSignal::KeepObserving;
                 }
@@ -900,7 +895,7 @@ namespace {
         }
 
     private:
-        Result<Void> Generate(B2World& world)
+        Result<Void> Generate(B2World& world, EventCallbackSystem& eventCallbackSystem)
         {
             if (!sourceEntity_.IsValid())
             {
@@ -942,11 +937,15 @@ namespace {
                 .density = 5.0f,
                 .enableEvents{ .sensor = true },
                 .isSensor = true
-            }).Build(sensorLeadRigid.body));
+                }).Build(sensorLeadRigid.body));
 
-            auto& cbs = sensorLead.AddComponent(EventCallbacks{}).map;
-            cbs.Insert<events::SensorCollisionBegin>(HandleSensorConnection(sensorLead));
-            
+            auto& registry = eventCallbackSystem.GetRegistry();
+            auto [key, _] = registry.RegisterCallback("HandleSensorConnection", HandleSensorConnection(),
+                                                      sensorLead.GetID());
+
+            auto& callbacks = sensorLead.AddComponent(EventCallbacks{}).table;
+            callbacks.AddKey(std::move(key));
+
             auto sensorLeadRelations = sensorLead.GetRelations();
 
             for (int i = 0; i < numLinkPoints_; i++)
@@ -1310,13 +1309,13 @@ Result<Void> SimplePhysicsScene::Run()
 {
     Logger::StartSession();
     SDLite::Start();
-    TRY((RegisterCustomEventDataTypes<CUSTOM_EVENT_DATA_REGISTRY>()));
 
     B2World world = B2World::Create(0, 9.8f);
 
     RenderSystem renderSys{}; 
     PhysicsSystem physicsSys{};
     SDLInputSystem inputSys{};
+    EventCallbackSystem callbackSys{};
 
     Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
                                    static_cast<float>(SDLite::kWindowHeight) };
@@ -1349,14 +1348,14 @@ Result<Void> SimplePhysicsScene::Run()
     auto& playerBody = player.GetComponent<RigidBody>();
     playerBody.limits.linearVelocity.max = { 25.0f, 25.0f };
 
-    ConnectEntityToController(player);
+    ConnectEntityToController(callbackSys, player);
 
     TRY(MakeColliderCircleEntity(world, kScreenCenterPosition + SDL_FPoint{ 100.0f, 0.0f }, kDynamicCircleRadius,
         B2Body::Type::Dynamic, { .restitution = 0.9f, .enableEvents{ .contact = true } }, SDLite::kColorOrange),
     ball);
 
     // scoreboard
-    auto scoreboard = MakeScoreboard(glyphAtlasHandle, player, ball, groundEntity);
+    auto scoreboard = MakeScoreboard(callbackSys, glyphAtlasHandle, player, ball, groundEntity);
     assert(scoreboard.IsValid());
 
     // fps counter
@@ -1433,13 +1432,13 @@ Result<Void> GrapplePhysicsScene::Run()
 {
     Logger::StartSession();
     SDLite::Start();
-    TRY((RegisterCustomEventDataTypes<CUSTOM_EVENT_DATA_REGISTRY>()));
 
     B2World world = B2World::Create(0, 9.8f);
 
     RenderSystem renderSys{};
     PhysicsSystem physicsSys{};
     SDLInputSystem inputSys{};
+    EventCallbackSystem callbackSys{};
 
     Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
                                    static_cast<float>(SDLite::kWindowHeight) };
@@ -1467,7 +1466,7 @@ Result<Void> GrapplePhysicsScene::Run()
 
     player.AddComponent(GameControllerState{});
 
-    ConnectEntityToController(player);
+    ConnectEntityToController(callbackSys, player);
 
     TRY(MakeColliderCircleEntity(world, kScreenCenterPosition + SDL_FPoint{ 100.0f, 0.0f }, kDynamicCircleRadius,
         B2Body::Type::Dynamic, { .restitution = 0.9f, .enableEvents{.contact = true } }, SDLite::kColorOrange),
@@ -1578,9 +1577,9 @@ Result<Void> ChainScene::Run(std::shared_ptr<SceneFixture> scene)
     };
 
     auto chainStartEnt = chain.GetStartEntity();
-    ConnectEntityToController(chainStartEnt);
+    ConnectEntityToController(*scene->GetSystem<EventCallbackSystem>(), chainStartEnt);
 
-    SetUpBodyTestScript(chainStartEnt, scene);
+    //SetUpBodyTestScript(chainStartEnt, scene);
 
     while (true)
     {
@@ -1611,6 +1610,8 @@ Result<Void> ChainScene::Run(std::shared_ptr<SceneFixture> scene)
         TRY(scene->UpdateRender());
 
         SDLite::Renderer().Show();
+
+        scene->LoopEnd();
     }
 
     return Void{};

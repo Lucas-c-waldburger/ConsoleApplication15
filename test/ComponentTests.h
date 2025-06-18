@@ -74,7 +74,8 @@ namespace test
 
 		auto shapeEntities = ECS::GetAllEntitiesWith<Collider>([&shapes](const Collider& collider) {
 			return collider.shape.GetData().IsValid() &&
-				AnyOf(shapes, [target = collider.shape](const auto& shape) { return target == shape; });
+				std::any_of(shapes.begin(), shapes.end(), 
+					[target = collider.shape](const auto& shape) { return target == shape; });
 		});
 
 		colliders.reserve(shapeEntities.size() + 1);
@@ -96,7 +97,8 @@ namespace test
 
 		auto shapeEntities = ECS::GetAllEntitiesWith<Collider>([&shapes](const Collider& collider) {
 			return collider.shape.GetData().IsValid() &&
-				AnyOf(shapes, [target = collider.shape](const auto& shape) { return target == shape; });
+				std::any_of(shapes.begin(), shapes.end(),
+					[target = collider.shape](const auto& shape) { return target == shape; });
 			});
 
 		return shapeEntities;

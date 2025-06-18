@@ -3,6 +3,7 @@
 #include "../physics/B2World.h"
 #include "../core/Algorithms.h"
 #include "../events/EventBus.h"
+#include "../events/data/EntityCollision.h"
 
 namespace {
 
@@ -146,15 +147,15 @@ void BufferCollisionEventsImpl(std::vector<Entity>& entities, U* b2EventArray, i
 		}
 
 		EventBus::PushEvent(T{
-			.entityA = entityA,
-			.entityB = entityB
+			.a = { .entity = entityA, .shapeHandle = shapeHandleA },
+			.b = { .entity = entityB, .shapeHandle = shapeHandleB }
 		});
 	}
 }
 
 } // unnamed namespace
 
-Result<Void> BufferCollisionEvents(const B2World* world)
+Result<Void> DispatchCollisionEvents(const B2World* world)
 {
 	assert(world);
 	assert(world->IsValid());
@@ -187,12 +188,12 @@ Result<Void> BufferCollisionEvents(const B2World* world)
 		entities, contactEvs.hitEvents, contactEvs.hitCount
 	);
 
-	EventBus::DispatchEvents();
+	EventBus::DispatchEventGroup<events::CollisionEventGroup>();
 
 	return Void{};
 }
 
-//Result<Void> BufferCollisionEvents(const B2World* world)
+//Result<Void> DispatchCollisionEvents(const B2World* world)
 //{
 //	assert(world);
 //	assert(world->IsValid());

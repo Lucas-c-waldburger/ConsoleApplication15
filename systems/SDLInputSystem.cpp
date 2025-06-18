@@ -1,30 +1,25 @@
 #include "SDLInputSystem.h"
 #include "../events/EventBus.h"
-#include "../events/custom/data/Groups.h"
+#include "../events/data/GameControllerEvents.h"
 
-
-bool SDLInputSystem::Update(EventSystem& eventSystem)
+bool SDLInputSystem::Update()
 {
-	SDL_PumpEvents();
-
-	auto systemEvents = EventBus::GetEvents<events::SystemEventGroup>();
-
-	for (const auto& event : systemEvents)
+	while (SDL_PollEvent(&sdlEvent_))
 	{
-		switch (event.type)
+		switch (sdlEvent_.type)
 		{
 		case SDL_QUIT:
 			return false;
 
 		case SDL_CONTROLLERDEVICEADDED:
 		case SDL_CONTROLLERDEVICEREMOVED:
-			gameControllerHandler_.HandleDeviceEvent(event);
+			gameControllerHandler_.HandleDeviceEvent(sdlEvent_);
 			break;
 
 		case SDL_CONTROLLERAXISMOTION:
 		case SDL_CONTROLLERBUTTONDOWN:
 		case SDL_CONTROLLERBUTTONUP:
-			gameControllerHandler_.HandleInputEvent(event);
+			gameControllerHandler_.HandleInputEvent(sdlEvent_);
 			break;
 
 		default:
@@ -32,9 +27,9 @@ bool SDLInputSystem::Update(EventSystem& eventSystem)
 		}
 	}
 
-	gameControllerHandler_.UpdateEntities();
+	EventBus::DispatchEventGroup<events::GameControllerEventGroup>();
 
-	eventSystem.DispatchEvents<events::SystemEventGroup>();
+	gameControllerHandler_.UpdateEntities();
 
 	return true;
 }

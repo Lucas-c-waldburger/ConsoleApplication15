@@ -4,9 +4,9 @@
 class Counter
 {
 public:
-	double GetDelta() const
+	float GetDelta() const
 	{
-		return delta_;
+		return static_cast<float>(delta_);
 	}
 
 	void Update()

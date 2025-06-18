@@ -9,11 +9,10 @@
 #include "scripting/ScriptManager.h"
 #include "core/Monitoring.h"
 #include "core/Hooks.h"
-#include "systems/EventSystem.h"
+#include "systems/EventCallbackSystem.h"
 #include "ecs/ECS.h"
 #include "atlas/AtlasManager.h" 
 #include "systems/PhysicsSystem.h"
-#include "events/custom/CustomEventDataRegistry.h"
 #include "test/Fixtures.h"
 #include "test/Premades.h"
 //#include "physics/Box.h"
@@ -115,7 +114,7 @@ static void InitGameControllerInputTest(ScriptManager& scriptManager)
 //            return ReturnSignal::Pause;
 //        }
 //
-//        const auto* castEv = CustomEvents::CastEvent<GameControllerConnected>(ev);
+//        const auto* castEv = CustomEvents::EventCast<GameControllerConnected>(ev);
 //        if (!castEv)
 //        {
 //            return ReturnSignal::StopObserving;
@@ -303,10 +302,11 @@ int main(int argc, char* argv[])
     SDLite::Exit();
     */
 
-    auto sceneFixture = SceneFixture::GetInstance();
-    ASSERT_RESULT(sceneFixture);
+    //auto sceneFixture = SceneFixture::GetInstance();
+    //ASSERT_RESULT(sceneFixture);
 
-    ASSERT_RESULT(ChainScene::Run(sceneFixture.GetValue()));
+    //ASSERT_RESULT(ChainScene::Run(sceneFixture.GetValue()));
+    ASSERT_RESULT(SimplePhysicsScene::Run());
 
     return 0;
 }

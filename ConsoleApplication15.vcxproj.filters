@@ -66,9 +66,6 @@
     <ClCompile Include="core\Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="systems\EventSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="atlas\AtlasManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -87,9 +84,6 @@
     <ClCompile Include="camera\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="components\util\EventObserverUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="test\Fixtures.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -100,12 +94,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="core\AABB.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="core\entity\EntityColliderBounds.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="core\entity\UnorderedEntityIdSet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="systems\CollisionSystem.cpp">
@@ -168,19 +156,16 @@
     <ClCompile Include="physics\B2CompoundObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="systems\TallySystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="audio\Sound.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="events\EventCallbackMap.cpp">
+    <ClCompile Include="events\EventDispatchListener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="systems\SDLInputSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="events\EventBus.cpp">
+    <ClCompile Include="systems\EventCallbackSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -611,16 +596,10 @@
     <ClInclude Include="events\handler\GameControllerEventHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\EventBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="core\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\TerminalUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="systems\EventSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="atlas\AtlasManager.h">
@@ -686,16 +665,7 @@
     <ClInclude Include="components\EventCallbacksComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\custom\CustomEventDataRegistry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="events\custom\CustomEventData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="core\ScopedInvoker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="components\util\EventObserverUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\Fixtures.h">
@@ -713,19 +683,13 @@
     <ClInclude Include="core\AABB.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="core\entity\EntityColliderBounds.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="core\entity\UnorderedEntityIdSet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="systems\CollisionSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\custom\data\EntityCollision.h">
+    <ClInclude Include="events\data\EntityCollision.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\custom\data\GameControllerEvents.h">
+    <ClInclude Include="events\data\GameControllerEvents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
@@ -839,13 +803,7 @@
     <ClInclude Include="physics\B2CollisionFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\EntityMetricsComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="core\Counter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="systems\TallySystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\CommonFunctions.h">
@@ -854,52 +812,61 @@
     <ClInclude Include="audio\Sound.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\EventCallback.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="events\EventManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="events\EventCallbackMap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="events\types\GameControllerEvents.h">
+    <ClInclude Include="events\EventDispatchListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="events\types\CollisionEvents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\types\EntityActionEvents.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="events\Event.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\EventHandle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="events\custom\data\EntityActions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="events\EventBus.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="events\custom\EventUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="events\EventStorageBinTemplate.h">
+    <ClInclude Include="events\data\EntityActions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="systems\SDLInputSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\EventGroup.h">
+    <ClInclude Include="events\EventDataTypeList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\SDLEventBufferTransformer.h">
+    <ClInclude Include="events\IEventData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\custom\data\Groups.h">
+    <ClInclude Include="events\EventConcepts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\TypeListVectorMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventDataStorage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventStage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventBus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventCallbackRegistry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\EventCallbackSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\TransparentStringHash.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\FuncTraits.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventCallbackFn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\TypedLuaFunction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

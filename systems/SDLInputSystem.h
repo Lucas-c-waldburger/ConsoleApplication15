@@ -1,14 +1,16 @@
 #pragma once
 #include "System.h"
-#include "EventSystem.h"
 #include "../events/handler/GameControllerEventHandler.h"
 
 class SDLInputSystem : public System
 {
 public:
-	bool Update(EventSystem& eventSystem);
+	SDLInputSystem() { SDL_zero(sdlEvent_); }
+
+	bool Update();
 
 private:
+	SDL_Event sdlEvent_;
 	GameControllerEventHandler gameControllerHandler_;
 };
 

@@ -1,8 +1,10 @@
 #include "PhysicsSystem.h"
+#include "CollisionSystem.h"
 #include "../ecs/Ecs.h"
 #include "../sdl/SDLUtils.h"
-#include "../events/custom/data/Groups.h"
-#include "CollisionSystem.h"
+#include "../physics/B2World.h"
+#include "../events/EventBus.h"
+#include "../events/data/EntityActions.h"
 #include <algorithm>
 
 namespace {
@@ -113,14 +115,26 @@ void UpdateTransformComponents()
 		auto& rigidBody = entity.GetComponent<RigidBody>();
 		auto& transform = entity.GetComponent<Transform>();
 
-		transform.position = rigidBody.body.GetData().GetPosition();
-		transform.rotation = rigidBody.body.GetData().GetAngle();
+		SDL_FPoint newPosition = rigidBody.body.GetData().GetPosition();
+		float newRotation = rigidBody.body.GetData().GetAngle();
+
+		if (newPosition != transform.position)
+		{
+			EventBus::PushEvent(events::EntityPositionChanged{
+				.entity = entity.GetID(),
+				.newPosition = newPosition,
+				.oldPosition = transform.position
+			});
+		}
+
+		transform.position = newPosition;
+		transform.rotation = newRotation;
 	}
 }
 
 } // unnamed namespace
 
-void PhysicsSystem::Update(EventSystem& eventSystem, B2World* world_, float timeStep, int subStepCount)
+void PhysicsSystem::Update(B2World* world_, float timeStep, int subStepCount)
 {
 	if (!world_)
 	{
@@ -137,11 +151,10 @@ void PhysicsSystem::Update(EventSystem& eventSystem, B2World* world_, float time
 
 	world_->Step(timeStep, subStepCount);
 
-	BufferCollisionEvents(world_);
-
-	eventSystem.DispatchEvents<events::CollisionEventGroup>();
+	DispatchCollisionEvents(world_);
 
 	UpdateTransformComponents();
+	EventBus::DispatchEvents<events::EntityPositionChanged>();
 }
 
 void PhysicsSystem::UpdateForces()

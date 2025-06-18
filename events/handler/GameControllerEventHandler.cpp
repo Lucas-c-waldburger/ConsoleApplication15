@@ -2,6 +2,7 @@
 #include "../../inputs/InputState.h"
 #include "../../events/EventBus.h"
 #include "../../ecs/Ecs.h"
+#include "../data/GameControllerEvents.h"
 #include <cassert>
 
 GameControllerEventHandler::~GameControllerEventHandler()

@@ -88,6 +88,13 @@ namespace SDLite
 
 // SDL POINT/RECT OVERLOADS
 
+// equality
+template <SDLPointType P>
+inline constexpr bool operator==(const P& lhs, const P& rhs)
+{
+    return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
 // Point on Point
 template <SDLPointType P>
 inline constexpr P operator-(P lhs, P rhs)

@@ -26,7 +26,6 @@ struct TextureMods
 };
 
 
-
 struct Renderable : BaseComponent<Renderable, 7>
 {
     struct Text

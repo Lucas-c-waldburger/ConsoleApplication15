@@ -4,10 +4,11 @@
 #include <filesystem>
 #include "../components/ComponentRegistry.h"
 #include "../core/commonObjects.h"
-#include "../core/Handle.h"
+#include "../physics/B2Handle.h"
 #include "ScriptInfo.h"
 #include <SDL.h>
 #include "../physics/B2Body.h"
+#include "../physics/B2Joint.h"
 
 template <typename>
 static void RegisterLuaUserType(sol::state& lua);
@@ -218,7 +219,6 @@ template <> static void RegisterLuaUserType<B2Shape>(sol::state& lua)
 		// Operators
 		sol::meta_function::equal_to, &B2Shape::operator==,
 
-		// Methods using same names as C++
 		"GetShapeType", &B2Shape::GetShapeType,
 		"GetHandle", &B2Shape::GetHandle,
 		"GetParentBodyHandle", &B2Shape::GetParentBodyHandle,
@@ -296,5 +296,60 @@ template <> static void RegisterLuaUserType<B2Body>(sol::state& lua)
 	);
 }
 
+template <> static void RegisterLuaUserType<B2Joint::Type>(sol::state& lua)
+{
+	lua.new_enum("B2JointType",
+		"Distance", B2Joint::Type::Distance,
+		"Filter", B2Joint::Type::Filter,
+		"Motor", B2Joint::Type::Motor,
+		"Mouse", B2Joint::Type::Mouse,
+		"Prismatic", B2Joint::Type::Prismatic,
+		"Revolute", B2Joint::Type::Revolute,
+		"Weld", B2Joint::Type::Weld,
+		"Wheel", B2Joint::Type::Wheel
+	);
+}
 
+template <> static void RegisterLuaUserType<B2DistanceJoint>(sol::state& lua)
+{
+	lua.new_usertype<B2DistanceJoint>("B2DistanceJoint",
+		// Constructor
+		sol::constructors<B2DistanceJoint(), B2Joint(const Handle<B2Joint>&)>(),
 
+		// from base B2Joint
+		"Destroy", &B2DistanceJoint::Destroy,
+		"IsValid", &B2DistanceJoint::IsValid,
+		"GetBodyHandleA", &B2DistanceJoint::GetBodyHandleA,
+		"GetBodyHandleB", &B2DistanceJoint::GetBodyHandleB,
+		"GetEndPoints", &B2DistanceJoint::GetEndPoints,
+
+		// length
+		"GetCurrentLength", &B2DistanceJoint::GetCurrentLength,
+		"GetRestLength", &B2DistanceJoint::GetRestLength,
+		"SetRestLength", &B2DistanceJoint::SetRestLength,
+		"GetMinLength", &B2DistanceJoint::GetMinLength,
+		"SetMinLength", &B2DistanceJoint::SetMinLength,
+		"GetMaxLength", &B2DistanceJoint::GetMaxLength,
+		"SetMaxLength", &B2DistanceJoint::SetMaxLength,
+		"SetLengthRange", &B2DistanceJoint::SetLengthRange,
+
+		// spring
+		"IsSpringEnabled", &B2DistanceJoint::IsSpringEnabled,
+		"SetSpringEnabled", &B2DistanceJoint::SetSpringEnabled,
+		"GetSpringHertz", &B2DistanceJoint::GetSpringHertz,
+		"SetSpringHertz", &B2DistanceJoint::SetSpringHertz,
+		"GetSpringDampingRatio", &B2DistanceJoint::GetSpringDampingRatio,
+		"SetSpringDamingRatio", &B2DistanceJoint::SetSpringDampingRatio,
+		"IsSpringLimitEnabled", &B2DistanceJoint::IsSpringLimitEnabled,
+		"SetSpringLimitEnabled", &B2DistanceJoint::SetSpringLimitEnabled,
+
+		//motor
+		"IsMotorEnabled", &B2DistanceJoint::IsMotorEnabled,
+		"SetMotorEnabled", &B2DistanceJoint::SetMotorEnabled,
+		"GetMotorSpeed", &B2DistanceJoint::GetMotorSpeed,
+		"SetMotorSpeed", &B2DistanceJoint::SetMotorSpeed,
+		"GetMotorForce", &B2DistanceJoint::GetMotorForce,
+		"GetMaxMotorForce", &B2DistanceJoint::GetMaxMotorForce,
+		"SetMaxMotorForce", &B2DistanceJoint::SetMaxMotorForce
+	);
+}

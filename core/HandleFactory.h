@@ -11,7 +11,7 @@ template <typename...HandleTs> //requires pack_types_unique_v<HandleTs...>
 class HandleFactory
 {
 public:
-    template <PackMemberType<HandleTs...> T>
+    template <SomeTypeInPack<HandleTs...> T>
     Handle<T> GetHandle()
     {
         return Handle<T>{
@@ -20,14 +20,14 @@ public:
         };
     }
 
-    template <PackMemberType<HandleTs...> T>
+    template <SomeTypeInPack<HandleTs...> T>
     void RetireHandle(Handle<T>& handle)
     {
         handle.id_ = -1;
         handle.gen_ = -1;
     }
 
-    template <PackMemberType<HandleTs...> T>
+    template <SomeTypeInPack<HandleTs...> T>
     bool IsHandleValid(const Handle<T>& handle) const
     {
         return handle.id_ > -1 && handle.id_ < Handle<T>::idCount &&
@@ -35,7 +35,7 @@ public:
 
     }
 
-    template <PackMemberType<HandleTs...> T>
+    template <SomeTypeInPack<HandleTs...> T>
     void InvalidateActiveHandles()
     {
         ++Handle<T>::genCount;

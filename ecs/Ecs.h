@@ -115,22 +115,9 @@ public:
     }
 
 private:
-    Entity_t CreateEntity_t()
-    {
-        Entity_t entity = entityManager_.CreateEntity();
-        componentManager_.EntityCreated(entity);
+    Entity_t CreateEntity_t();
 
-        return entity;
-    }
-
-    void DestroyEntity(Entity_t entity)
-    {
-        assert(IsEntityValid(entity));
-        EntityDestructor::EntityDestroyed(entityManager_, componentManager_, entity);
-        //entityManager_.DestroyEntity(entity);
-        //EntityRelationsHelper::DestroyRelationshipsWithEntity(componentManager_, entity);
-        //componentManager_.EntityDestroyed(entity);
-    }
+    void DestroyEntity(Entity_t entity);
 
     template <ComponentType T>
     T& AddComponent(Entity_t entity, T cmp = {})
@@ -245,23 +232,8 @@ private:
         return result;
     }
 
-    bool IsEntityActive(Entity_t entity) const
-    {
-        assert(entity < kMaxEntities);
-
-        bool activeAccordingToComponentManager =
-            componentManager_.GetSignature(entity) & ActiveState::componentBit;
-        bool activeAccordingToEntityManager = entityManager_.IsEntityActive(entity);
-
-        assert(activeAccordingToComponentManager == activeAccordingToEntityManager);
-
-        return activeAccordingToComponentManager;
-    }
-
-    bool IsEntityValid(Entity_t entity) const
-    {
-        return (entity < kMaxEntities && IsEntityActive(entity));
-    }
+    bool IsEntityActive(Entity_t entity) const;
+    bool IsEntityValid(Entity_t entity) const;
 
     EntityManager& GetEntityManager() { return entityManager_; }
     const EntityManager& GetEntityManager() const { return entityManager_; }
