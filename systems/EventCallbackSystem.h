@@ -1,9 +1,11 @@
 #pragma once
 #include "../ecs/EntityT.h"
 #include "../events/EventCallbackRegistry.h"
+#include "../events/EventDispatchListenerInterface.h"
 #include "../systems/System.h"
 
-class EventCallbackSystem : public System
+class EventCallbackSystem : public System,
+							public EventDispatchListener<EventCallbackSystem> 
 {
 public:
 	void EntityDestroyed(Entity_t entityId);

@@ -1,32 +1,36 @@
 #pragma once
-#include "../core/TypeUtils.h"
+#include "BaseComponent.h"
 
 template <typename T>
-concept ComponentType = requires { T::componentBit; };
+concept SomeComponent = 
+    SomeTypeInList<T, ComponentTypeList> &&
+    std::derived_from<T, BaseComponent<T>>;
 
-template <typename...> struct all_unique_component_idxs : std::true_type {};
 
-template <typename T, typename... Ts>
-struct all_unique_component_idxs<T, Ts...>
-{
-    static constexpr bool value = ((T::componentBit != Ts::componentBit) && ...
-        && all_unique_component_idxs<Ts...>::value);
-};
 
-template <typename...Ts>
-static constexpr bool all_unique_component_idxs_v = all_unique_component_idxs<Ts...>::value;
-
-template <typename...Ts>
-static constexpr bool no_idxs_are_reserved_bit_v = ((Ts::componentBit != 1ull << 0/*kReservedComponentBit*/) && ...);
-
-template <typename...Ts>
-static constexpr bool no_idxs_greater_than_64_v = (((1ull << 63) <= Ts::componentBit) && ...);
-
-template <ComponentType...Ts> requires (all_unique_component_idxs_v<Ts...>&&
-    no_idxs_are_reserved_bit_v<Ts...>)
-    using ComponentTypeList = TypeList<Ts...>;
-
-// ENTITY RETRIEVAL STUFF
+//template <typename...> struct all_unique_component_idxs : std::true_type {};
+//
+//template <typename T, typename... Ts>
+//struct all_unique_component_idxs<T, Ts...>
+//{
+//    static constexpr bool value = ((T::componentBit != Ts::componentBit) && ...
+//        && all_unique_component_idxs<Ts...>::value);
+//};
+//
+//template <typename...Ts>
+//static constexpr bool all_unique_component_idxs_v = all_unique_component_idxs<Ts...>::value;
+//
+//template <typename...Ts>
+//static constexpr bool no_idxs_are_reserved_bit_v = ((Ts::componentBit != 1ull << 0/*kReservedComponentBit*/) && ...);
+//
+//template <typename...Ts>
+//static constexpr bool no_idxs_greater_than_64_v = (((1ull << 63) <= Ts::componentBit) && ...);
+//
+//template <SomeComponent...Ts> requires (all_unique_component_idxs_v<Ts...>&&
+//    no_idxs_are_reserved_bit_v<Ts...>)
+//    using ComponentTypeList = TypeList<Ts...>;
+//
+//// ENTITY RETRIEVAL STUFF
 template <typename T>
 struct Exclude
 {
@@ -36,11 +40,11 @@ template <typename T> struct is_exclude : std::false_type {};
 template <typename T> struct is_exclude<Exclude<T>> : std::true_type {};
 
 template <typename T>
-concept ComponentOrExclusionWrappedType = (ComponentType<T> ||
-    (is_exclude<T>::value && ComponentType<typename T::WrappedType>));
+concept ComponentOrExclusionWrappedType = (SomeComponent<T> ||
+    (is_exclude<T>::value && SomeComponent<typename T::WrappedType>));
 
 
-//template <ComponentType...Ts>
+//template <SomeComponent...Ts>
 //struct AnyOf
 //{
 //    using WrappedTypes = TypeList<Ts...>;

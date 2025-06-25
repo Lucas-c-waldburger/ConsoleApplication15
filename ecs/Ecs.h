@@ -2,7 +2,6 @@
 #include "EntityManager.h"
 #include "EntityRelationsHelper.h"
 #include "EntityDestructor.h"
-#include "../core/TypeUtils.h"
 #include "../core/Logger.h"
 #include <cassert>
 #include <functional>
@@ -19,16 +18,16 @@ public:
     Entity() : id_(kInvalidEntity), ecs_(nullptr) {}
     Entity(Entity_t id, ECS& ecs) : id_(id), ecs_(&ecs) {}
 
-    template <ComponentType T> requires (!RelationalComponentType<T>) T& AddComponent(T cmp = {});
-    template <ComponentType T> requires (!RelationalComponentType<T>) void RemoveComponent();
+    template <SomeComponent T> requires (!RelationalComponentType<T>) T& AddComponent(T cmp = {});
+    template <SomeComponent T> requires (!RelationalComponentType<T>) void RemoveComponent();
 
-    template <ComponentType T> requires (!RelationalComponentType<T>) T& GetComponent();
-    template <ComponentType T> const T& GetComponent() const;
+    template <SomeComponent T> requires (!RelationalComponentType<T>) T& GetComponent();
+    template <SomeComponent T> const T& GetComponent() const;
 
-    template <ComponentType...Ts> requires (!RelationalComponentType<Ts> && ...) std::tuple<Ts&...> GetComponents();
+    template <SomeComponent...Ts> requires (!RelationalComponentType<Ts> && ...) std::tuple<Ts&...> GetComponents();
 
-    template <ComponentType T> bool HasComponent() const;
-    template <ComponentType...Ts> bool HasComponents() const;
+    template <SomeComponent T> bool HasComponent() const;
+    template <SomeComponent...Ts> bool HasComponents() const;
 
     EntityRelations GetRelations();
 
@@ -87,7 +86,7 @@ public:
         return Entity{ ECS::Get().CreateEntity_t(), ecs };
     }
 
-    template <ComponentType...Ts, typename Filter>
+    template <SomeComponent...Ts, typename Filter>
     static std::vector<Entity> GetAllEntitiesWith(Filter&& filter)
     {
         auto& ecs = ECS::Get();
@@ -119,7 +118,7 @@ private:
 
     void DestroyEntity(Entity_t entity);
 
-    template <ComponentType T>
+    template <SomeComponent T>
     T& AddComponent(Entity_t entity, T cmp = {})
     {
         return componentManager_.AddComponent<T>(entity, std::move(cmp));
@@ -131,37 +130,37 @@ private:
         return componentManager_.AddComponent<T>(entity, std::move(cmp));
     }
 
-    template <ComponentType T>
+    template <SomeComponent T>
     void RemoveComponent(Entity_t entity)
     {
         return componentManager_.RemoveComponent<T>(entity);
     }
 
-    template <ComponentType T>
+    template <SomeComponent T>
     T& GetComponent(Entity_t entity)
     {
         return componentManager_.GetComponent<T>(entity);
     }
 
-    template <ComponentType T>
+    template <SomeComponent T>
     const T& GetComponent(Entity_t entity) const // all relationship stuff has to be done through relations API
     {
         return componentManager_.GetComponent<T>(entity);
     }
 
-    template <ComponentType...Ts>
+    template <SomeComponent...Ts>
     std::tuple<Ts&...> GetComponents(Entity_t entity)
     {
         return std::tie(componentManager_.GetComponent<Ts>(entity)...);
     }
 
-    template <ComponentType T>
+    template <SomeComponent T>
     bool HasComponent(Entity_t entity) const
     {
         return componentManager_.GetSignature(entity) & T::componentBit;
     }
 
-    template <ComponentType...Ts, typename Filter>
+    template <SomeComponent...Ts, typename Filter>
     std::vector<Entity> GetAllEntitiesWithInternalFiltered(Filter&& filter)
     {
         std::vector<Entity> result;
@@ -238,8 +237,8 @@ private:
     EntityManager& GetEntityManager() { return entityManager_; }
     const EntityManager& GetEntityManager() const { return entityManager_; }
 
-    impl::ComponentManager& GetComponentManager() { return componentManager_; }
-    const impl::ComponentManager& GetComponentManager() const { return componentManager_; }
+    ComponentManager& GetComponentManager() { return componentManager_; }
+    const ComponentManager& GetComponentManager() const { return componentManager_; }
 
     static ECS& Get()
     {
@@ -255,11 +254,11 @@ private:
     ECS() = default;
 
     EntityManager entityManager_;
-    impl::ComponentManager componentManager_;
+    ComponentManager componentManager_;
 };
 
 // ENTITY DEFS //
-template <ComponentType T> requires (!RelationalComponentType<T>)
+template <SomeComponent T> requires (!RelationalComponentType<T>)
 inline T& Entity::AddComponent(T cmp)
 {
     assert(ecs_);
@@ -268,7 +267,7 @@ inline T& Entity::AddComponent(T cmp)
     return ecs_->AddComponent<T>(id_, std::move(cmp));
 }
 
-template <ComponentType T> requires (!RelationalComponentType<T>)
+template <SomeComponent T> requires (!RelationalComponentType<T>)
 inline void Entity::RemoveComponent()
 {
     assert(ecs_);
@@ -277,7 +276,7 @@ inline void Entity::RemoveComponent()
     return ecs_->RemoveComponent<T>(id_);
 }
 
-template <ComponentType T> requires (!RelationalComponentType<T>)
+template <SomeComponent T> requires (!RelationalComponentType<T>)
 inline T& Entity::GetComponent()
 {
     assert(ecs_);
@@ -286,7 +285,7 @@ inline T& Entity::GetComponent()
     return ecs_->GetComponent<T>(id_);
 }
 
-template <ComponentType T>
+template <SomeComponent T>
 inline const T& Entity::GetComponent() const
 {
     assert(ecs_);
@@ -295,7 +294,7 @@ inline const T& Entity::GetComponent() const
     return ecs_->GetComponent<T>(id_);
 }
 
-template<ComponentType ...Ts> requires (!RelationalComponentType<Ts> && ...)
+template<SomeComponent...Ts> requires (!RelationalComponentType<Ts> && ...)
 inline std::tuple<Ts&...> Entity::GetComponents()
 {
     assert(ecs_);
@@ -304,7 +303,7 @@ inline std::tuple<Ts&...> Entity::GetComponents()
     return ecs_->GetComponents<Ts...>(id_);
 }
 
-template<ComponentType T>
+template<SomeComponent T>
 inline bool Entity::HasComponent() const
 {
     assert(ecs_);
@@ -313,7 +312,7 @@ inline bool Entity::HasComponent() const
     return ecs_->HasComponent<T>(id_);
 }
 
-template<ComponentType...Ts>
+template<SomeComponent...Ts>
 inline bool Entity::HasComponents() const
 {
     assert(ecs_);

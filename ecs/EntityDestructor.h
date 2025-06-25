@@ -7,7 +7,7 @@
 class EntityDestructor 
 {
 public:
-	static void EntityDestroyed(EntityManager& entityManager, impl::ComponentManager& componentManager, 
+	static void EntityDestroyed(EntityManager& entityManager, ComponentManager& componentManager, 
 								Entity_t entityId);
 
 private:

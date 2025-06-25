@@ -10,6 +10,7 @@
 #include "../core/Hooks.h"
 #include "../core/Counter.h"
 #include "../systems/SystemManager.h"
+#include "../atlas/TextureRepository.h"
 
 template <typename... Ts>
 inline std::array<std::type_index, sizeof...(Ts)> MakeTypeIndexArray()
@@ -85,15 +86,20 @@ public:
 	template <typename T> 
 	std::unique_ptr<T>& GetSystem() { return systems_.GetSystem<T>(); }
 	HookManager& GetHooks() { return hooks_; }
-	impl::TextureManager& GetTextures() { return textures_; }
+	TextureRepository& GetTextureRepository() { return textureRepo_; }
 	B2World& GetWorld() { return world_; }
 	ScriptManager& GetScripts() { return scripts_; }
 
 	// helpers
-	template <AtlasType T>
+	//template <SomeTextureAtlas T>
+	//Result<Handle<T>> LoadTextureAtlas(AtlasInfo<T> info)
+	//{
+	//	return textures_.LoadAtlas(SDLite::Renderer(), std::move(info));
+	//}
+	template <SomeTextureAtlas T>
 	Result<Handle<T>> LoadTextureAtlas(AtlasInfo<T> info)
 	{
-		return textures_.LoadAtlas(SDLite::Renderer(), std::move(info));
+		return textureRepo_.LoadAtlas(SDLite::Renderer(), std::move(info));
 	}
 	
 	template <typename...Ts>
@@ -104,7 +110,8 @@ public:
 
 private:
 	//SystemOrder systemOrder_;
-	impl::TextureManager textures_;
+	//impl::TextureManager textures_;
+	TextureRepository textureRepo_;
 	impl::SystemManager systems_;
 	HookManager hooks_;
 	B2World world_;

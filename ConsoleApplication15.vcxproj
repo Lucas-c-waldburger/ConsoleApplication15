@@ -147,9 +147,14 @@
     <ClCompile Include="audio\Sound.cpp" />
     <ClCompile Include="components\util\TagsComponentUtils.cpp" />
     <ClCompile Include="core\WeightGenerator.cpp" />
-    <ClCompile Include="ecs\EcsImpl.cpp" />
-    <ClCompile Include="ecs\Entity.cpp" />
+    <ClCompile Include="deps\RectangleBinPack\GuillotineBinPack.cpp" />
+    <ClCompile Include="deps\RectangleBinPack\MaxRectsBinPack.cpp" />
+    <ClCompile Include="deps\RectangleBinPack\Rect.cpp" />
+    <ClCompile Include="deps\RectangleBinPack\ShelfBinPack.cpp" />
+    <ClCompile Include="deps\RectangleBinPack\ShelfNextFitBinPack.cpp" />
+    <ClCompile Include="deps\RectangleBinPack\SkylineBinPack.cpp" />
     <ClCompile Include="ecs\EntityDestructor.cpp" />
+    <ClCompile Include="sprite\SpriteAnimationSeriesMap.cpp" />
     <ClCompile Include="systems\EventCallbackSystem.cpp" />
     <ClCompile Include="events\EventDispatchListener.cpp" />
     <ClCompile Include="inputs\InputData.cpp" />
@@ -166,7 +171,6 @@
     <ClCompile Include="camera\Camera.cpp" />
     <ClCompile Include="core\Error.cpp" />
     <ClCompile Include="core\Logger.cpp" />
-    <ClCompile Include="ecs\EntityRetrievalHelper.cpp" />
     <ClCompile Include="render\RenderContext.cpp" />
     <ClCompile Include="systems\CameraSystem.cpp" />
     <ClCompile Include="atlas\GlyphAtlas.cpp" />
@@ -191,6 +195,7 @@
     <ClCompile Include="systems\PhysicsSystem.cpp" />
     <ClCompile Include="core\AABB.cpp" />
     <ClCompile Include="systems\SDLInputSystem.cpp" />
+    <ClCompile Include="systems\SpriteAnimationSystem.cpp" />
     <ClCompile Include="test\ComponentTests.cpp" />
     <ClCompile Include="test\Fixtures.cpp" />
     <ClCompile Include="test\Premades.cpp" />
@@ -198,6 +203,10 @@
   <ItemGroup>
     <ClInclude Include="atlas\Atlas.h" />
     <ClInclude Include="atlas\AtlasManager.h" />
+    <ClInclude Include="atlas\AtlasMap.h" />
+    <ClInclude Include="atlas\PackingTools.h" />
+    <ClInclude Include="atlas\ResourcePacket.h" />
+    <ClInclude Include="atlas\TextureRepository.h" />
     <ClInclude Include="audio\Sound.h" />
     <ClInclude Include="camera\Projection.h" />
     <ClInclude Include="components\builder\CameraTargetComponentBuilder.h" />
@@ -205,8 +214,13 @@
     <ClInclude Include="components\builder\ComponentBuilder.h" />
     <ClInclude Include="components\builder\RigidBodyComponentBuilder.h" />
     <ClInclude Include="components\CameraTargetComponent.h" />
+    <ClInclude Include="components\ComponentIncludes.h" />
+    <ClInclude Include="components\ComponentTypeList.h" />
+    <ClInclude Include="components\EventProductionFlagsComponent.h" />
+    <ClInclude Include="components\SpriteAnimationsComponent.h" />
     <ClInclude Include="components\util\TagsComponentUtils.h" />
     <ClInclude Include="core\Algorithms.h" />
+    <ClInclude Include="core\CommonEntityMethods.h" />
     <ClInclude Include="core\CommonFunctions.h" />
     <ClInclude Include="core\Counter.h" />
     <ClInclude Include="core\FuncTraits.h" />
@@ -217,12 +231,22 @@
     <ClInclude Include="core\TypeListVectorMap.h" />
     <ClInclude Include="core\WeightGenerator.h" />
     <ClInclude Include="deps\function2\function2.hpp" />
-    <ClInclude Include="ecs\EcsImpl.h" />
-    <ClInclude Include="ecs\Entity.h" />
+    <ClInclude Include="deps\RectangleBinPack\GuillotineBinPack.h" />
+    <ClInclude Include="deps\RectangleBinPack\MaxRectsBinPack.h" />
+    <ClInclude Include="deps\RectangleBinPack\Rect.h" />
+    <ClInclude Include="deps\RectangleBinPack\ShelfBinPack.h" />
+    <ClInclude Include="deps\RectangleBinPack\ShelfNextFitBinPack.h" />
+    <ClInclude Include="deps\RectangleBinPack\SkylineBinPack.h" />
     <ClInclude Include="ecs\EntityDestructor.h" />
     <ClInclude Include="events\data\EntityActions.h" />
     <ClInclude Include="events\EventCallbackFn.h" />
+    <ClInclude Include="events\EventDispatchListenerInterface.h" />
     <ClInclude Include="scripting\TypedLuaFunction.h" />
+    <ClInclude Include="scripting\user_types\RenderableLuaUserTypes.h" />
+    <ClInclude Include="scripting\user_types\SpriteAnimationLuaUserTypes.h" />
+    <ClInclude Include="scripting\user_types\TransformLuaUserTypes.h" />
+    <ClInclude Include="sprite\SpriteAnimationSeries.h" />
+    <ClInclude Include="sprite\SpriteAnimationSeriesMap.h" />
     <ClInclude Include="systems\EventCallbackSystem.h" />
     <ClInclude Include="events\Event.h" />
     <ClInclude Include="events\EventBus.h" />
@@ -264,7 +288,6 @@
     <ClInclude Include="components\ComponentConcepts.h" />
     <ClInclude Include="core\Conversions.h" />
     <ClInclude Include="ecs\ComponentManager.h" />
-    <ClInclude Include="components\ComponentRegistry.h" />
     <ClInclude Include="core\commonObjects.h" />
     <ClInclude Include="core\Error.h" />
     <ClInclude Include="core\TypeDomain.h" />
@@ -395,7 +418,6 @@
     <ClInclude Include="ecs\Ecs.h" />
     <ClInclude Include="ecs\EntityManager.h" />
     <ClInclude Include="ecs\EntityRelationsHelper.h" />
-    <ClInclude Include="ecs\EntityRetrievalHelper.h" />
     <ClInclude Include="render\RenderContext.h" />
     <ClInclude Include="systems\CameraSystem.h" />
     <ClInclude Include="atlas\GlyphAtlas.h" />
@@ -423,6 +445,7 @@
     <ClInclude Include="core\TypeUtils.h" />
     <ClInclude Include="core\AABB.h" />
     <ClInclude Include="systems\SDLInputSystem.h" />
+    <ClInclude Include="systems\SpriteAnimationSystem.h" />
     <ClInclude Include="systems\System.h" />
     <ClInclude Include="systems\SystemManager.h" />
     <ClInclude Include="systems\SystemRegistry.h" />
@@ -446,7 +469,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\scripts\game_controller_test.lua" />
+    <None Include="resources\scripts\sprite_render_test.lua" />
     <None Include="resources\scripts\test_physics.lua" />
+    <None Include="resources\scripts\text_render_test.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc" />

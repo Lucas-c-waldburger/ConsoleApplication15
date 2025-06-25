@@ -1,6 +1,7 @@
 #pragma once
 #include "Atlas.h"
 #include "../core/Result.h"
+#include "../core/commonObjects.h"
 #include <unordered_map>
 
 static constexpr char kStartChar = 32;
@@ -44,3 +45,38 @@ private:
 	std::unordered_map<char, GlyphInfo> glyphMap_;
 };
 
+
+struct FontMetadata
+{
+    std::string fontName;
+    int fontSize = 0;
+    SDL_Color fontColor = { 0, 0, 0, 255 };
+    int fontHeight = 0;
+};
+
+using FontResourcePacket = ResourcePacket<FontMetadata>;
+
+struct GlyphData
+{
+    char character = kInvalidChar;
+    AtlasPlot plot;
+    int advance = 0;
+};
+
+class GlyphAtlas2 : public TextureAtlas<GlyphAtlas2>
+{
+public:
+    friend class TextureAtlas<GlyphAtlas2>;
+
+    const FontMetadata& GetFontData() const { return fontResourcePacket_.GetMetadata(); }
+
+    GlyphData GetGlyph(char c) const;
+
+    std::vector<GlyphData> GetGlyphsForString(std::string_view sv);
+
+private:
+    Result<Void> LoadImpl(SDL_Renderer* renderer, FontResourcePacket&& packet);
+
+    FontResourcePacket fontResourcePacket_;
+    std::unordered_map<char, GlyphData> glyphMap_;
+};

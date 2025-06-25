@@ -1,7 +1,7 @@
 #pragma once
 #include "../ComponentConcepts.h"
 
-template <ComponentType T>
+template <SomeComponent T>
 class ComponentBuilder;
 
 namespace detail {

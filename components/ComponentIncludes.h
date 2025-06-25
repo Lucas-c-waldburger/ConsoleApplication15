@@ -13,19 +13,6 @@
 #include "MouseStateComponent.h"
 #include "TagsComponent.h"
 #include "TransformComponent.h"
-
-#define COMPONENT_REGISTRY \
-    MouseState, \
-    Transform, \
-    RigidBody, \
-    Parent, \
-    Children, \
-    Tags, \
-    Renderable, \
-    Collider, \
-    GameControllerState, \
-    Script, \
-    EventCallbacks, \
-    CameraTarget \
-
+#include "SpriteAnimationsComponent.h"
+#include "EventProductionFlagsComponent.h"
 

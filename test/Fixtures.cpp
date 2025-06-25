@@ -56,11 +56,13 @@ Result<Void> SceneFixture::UpdateRender()
 {
 	//TRY(systemOrder_.MarkUpdated<RenderSystem>());
 
-	assert(systems_.IsSystemInitialized<RenderSystem>());
+	//assert(systems_.IsSystemInitialized<RenderSystem>());
+	assert(systems_.IsSystemInitialized<NewRenderSystem>());
 
 	auto& cam = systems_.GetSystem<CameraSystem>()->GetCamera();
 
-	systems_.GetSystem<RenderSystem>()->Update(SDLite::Renderer(), cam, textures_);
+	//systems_.GetSystem<NewRenderSystem>()->Update(SDLite::Renderer(), cam, textures_);
+	systems_.GetSystem<NewRenderSystem>()->Update(SDLite::Renderer(), cam, textureRepo_);
 
 	return Void{};
 }
@@ -81,24 +83,27 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 
 	fixture->world_ = B2World::Create(0, 9.8f);
 
-	fixture->systems_.InitializeSystem<RenderSystem>();
+	//fixture->systems_.InitializeSystem<RenderSystem>();
+	fixture->systems_.InitializeSystem<NewRenderSystem>();
 	fixture->systems_.InitializeSystem<PhysicsSystem>();
 	fixture->systems_.InitializeSystem<SDLInputSystem>();
-	fixture->systems_.InitializeSystem<EventCallbackSystem>();
+
+	auto& callbackSystem = fixture->systems_.InitializeSystem<EventCallbackSystem>();
+	callbackSystem->ConnectToEventBus();
 
 	Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
 								   static_cast<float>(SDLite::kWindowHeight) };
 
-	auto& camSystem = fixture->systems_.InitializeSystem<CameraSystem>(cameraVp);
+	auto& cameraSystem = fixture->systems_.InitializeSystem<CameraSystem>(cameraVp);
 
 	static constexpr SDL_FPoint screenCenter = {
 		static_cast<float>(SDLite::kWindowWidth) / 2.0f,
 		static_cast<float>(SDLite::kWindowHeight) / 2.0f
 	};
 
-	camSystem->GetCamera().SetPosition(screenCenter);
+	cameraSystem->GetCamera().SetPosition(screenCenter);
 
-	assert(fixture->systems_.AllSystemsInitialized());
+	//assert(fixture->systems_.AllSystemsInitialized());
 
 	return Result<std::shared_ptr<SceneFixture>>{ std::move(fixture) };
 }

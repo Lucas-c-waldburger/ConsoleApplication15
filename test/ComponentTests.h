@@ -8,7 +8,7 @@
 
 namespace test
 {
-	/*template <ComponentType T>
+	/*template <SomeComponent T>
 	std::vector<T*> ExtractComponent(const std::vector<Entity>& entities)
 	{
 		std::vector<T*> extracted{};
@@ -27,7 +27,7 @@ namespace test
 		return extracted;
 	}
 
-	template <ComponentType...Ts>
+	template <SomeComponent...Ts>
 	std::vector<std::tuple<Ts*...>> ExtractComponents(const std::vector<Entity>& entities)
 	{
 		std::vector<std::tuple<Ts*...>> extracted;

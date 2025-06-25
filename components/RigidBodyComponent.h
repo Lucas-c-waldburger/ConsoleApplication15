@@ -33,7 +33,8 @@ struct BodyLimits
     };
 };
 
-struct RigidBody : BaseComponent<RigidBody, 3>
+//struct RigidBody : BaseComponent<RigidBody, 3>
+struct RigidBody : BaseComponent<RigidBody>
 {
     ReadOnly<B2Body> body;
     BodyLimits limits;

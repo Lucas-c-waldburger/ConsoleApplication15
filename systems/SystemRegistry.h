@@ -11,5 +11,6 @@
 	PhysicsSystem, \
 	RenderSystem, \
 	SDLInputSystem, \
-	EventCallbackSystem
+	EventCallbackSystem, \
+	NewRenderSystem
 

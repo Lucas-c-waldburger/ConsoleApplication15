@@ -10,7 +10,8 @@ std::optional<SDL_Point> SkylinePacker::Insert(int w, int h)
     // Find the best position to fit the rectangle
     for (size_t i = 0; i < skyline_.size(); i++) {
         int y = CanFitAt(i, w, h);
-        if (y != -1 && y < bestY) {
+        if (y != -1 && y < bestY) 
+        {
             bestIndex = static_cast<int>(i);
             bestY = y;
             bestX = skyline_[i].x;

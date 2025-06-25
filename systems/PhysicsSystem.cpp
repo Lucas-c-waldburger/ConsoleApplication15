@@ -5,6 +5,7 @@
 #include "../physics/B2World.h"
 #include "../events/EventBus.h"
 #include "../events/data/EntityActions.h"
+#include "../core/CommonEntityMethods.h"
 #include <algorithm>
 
 namespace {
@@ -73,36 +74,6 @@ void ApplyForceRequests(B2Body& body, ForceRequests& requests)
 	ApplyForceRequestsImpl(body, requests.impulses, &B2Body::ApplyLinearImpulse);
 }
 
-//void UpdateDependantComponents()
-//{
-//	auto entities = ECS::GetAllEntitiesWith<RigidBody>(
-//		[](const RigidBody& rigidBody, const Transform&) {
-//			return rigidBody.body.GetData().IsValid();
-//	});
-//
-//	for (auto& entity : entities)
-//	{
-//		auto& rigidBody = entity.GetComponent<RigidBody>();
-//		auto& transform = entity.GetComponent<Transform>();
-//
-//		if (entity.HasComponent<EntityMetrics>())
-//		{
-//			auto& metrics = entity.GetComponent<EntityMetrics>();
-//			if (metrics.travelDistance.has_value())
-//			{
-//				auto [nowX, nowY] = rigidBody.body.GetData().GetPosition();
-//				auto [lastX, lastY] = transform.position;
-//
-//				metrics.travelDistance->total.x += std::abs(lastX - nowX);
-//				metrics.travelDistance->total.y += std::abs(lastY - nowY);
-//			}
-//		}
-//
-//		transform.position = rigidBody.body.GetData().GetPosition();
-//		transform.rotation = rigidBody.body.GetData().GetAngle();
-//	}
-//}
-
 void UpdateTransformComponents()
 {
 	auto entities = ECS::GetAllEntitiesWith<RigidBody, Transform>(
@@ -118,7 +89,8 @@ void UpdateTransformComponents()
 		SDL_FPoint newPosition = rigidBody.body.GetData().GetPosition();
 		float newRotation = rigidBody.body.GetData().GetAngle();
 
-		if (newPosition != transform.position)
+		if (newPosition != transform.position && 
+			ShouldProduceEvent<events::EntityPositionChanged>(entity))
 		{
 			EventBus::PushEvent(events::EntityPositionChanged{
 				.entity = entity.GetID(),

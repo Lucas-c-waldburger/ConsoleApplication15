@@ -22,28 +22,28 @@
 static constexpr const char* kFontPath =
 R"(C:\Windows\WinSxS\amd64_microsoft-windows-font-truetype-arial_31bf3856ad364e35_10.0.19041.1_none_28747db34cb89a67\arial.ttf)";
 
-static constexpr std::string_view kSpritesPath = R"(resources/sprites)";
-static constexpr std::string_view kWalkSeriesName = "walk";
-
-static SpriteSeriesAtlas::AtlasInfo MakeKnightAtlasInfo()
-{
-    static constexpr std::string_view kWalkSpriteFilePrefix = R"(\knight\walk_anim\knight_walk_)";
-
-    SpriteSeriesAtlas::AtlasInfo knightAtlasInfo{};
-    auto& walkSeries = knightAtlasInfo.seriesDatas.emplace_back();
-
-    walkSeries.seriesName = kWalkSeriesName;
-    walkSeries.spriteFilepaths.reserve(9);
-    for (int i = 0; i < 9; i++)
-    {
-        std::string filePath = 
-            std::string{kSpritesPath} + std::string{kWalkSpriteFilePrefix} + std::to_string(i) + ".png";
-
-        walkSeries.spriteFilepaths.push_back(std::move(filePath));
-    }
-
-    return knightAtlasInfo;
-}
+//static constexpr std::string_view kSpritesPath = R"(resources/sprites)";
+//static constexpr std::string_view kWalkSeriesName = "walk";
+//
+//static SpriteSeriesAtlas::AtlasInfo MakeKnightAtlasInfo()
+//{
+//    static constexpr std::string_view kWalkSpriteFilePrefix = R"(\knight\walk_anim\knight_walk_)";
+//
+//    SpriteSeriesAtlas::AtlasInfo knightAtlasInfo{};
+//    auto& walkSeries = knightAtlasInfo.seriesDatas.emplace_back();
+//
+//    walkSeries.seriesName = kWalkSeriesName;
+//    walkSeries.spriteFilepaths.reserve(9);
+//    for (int i = 0; i < 9; i++)
+//    {
+//        std::string filePath = 
+//            std::string{kSpritesPath} + std::string{kWalkSpriteFilePrefix} + std::to_string(i) + ".png";
+//
+//        walkSeries.spriteFilepaths.push_back(std::move(filePath));
+//    }
+//
+//    return knightAtlasInfo;
+//}
 
 //static ScriptInstance MakeComponentEditScript(Spatial& spatial, Transform& tf)
 //{
@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
         .renderData = Renderable::Sprite{
             .sourceAtlas = *spriteHandleResult,
             .seriesName = std::string{kWalkSeriesName},
-            .currentIndex = 0
+            .index = 0
         },
         .drawOrder = 0  
         }
@@ -302,11 +302,12 @@ int main(int argc, char* argv[])
     SDLite::Exit();
     */
 
-    //auto sceneFixture = SceneFixture::GetInstance();
-    //ASSERT_RESULT(sceneFixture);
+    auto sceneFixture = SceneFixture::GetInstance();
+    ASSERT_RESULT(sceneFixture);
 
     //ASSERT_RESULT(ChainScene::Run(sceneFixture.GetValue()));
-    ASSERT_RESULT(SimplePhysicsScene::Run());
+    //ASSERT_RESULT(TextScene::Run(sceneFixture.GetValue()));
+    ASSERT_RESULT(SpriteScene::Run(sceneFixture.GetValue()));
 
     return 0;
 }

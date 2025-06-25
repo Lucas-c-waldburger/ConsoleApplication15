@@ -7,7 +7,8 @@
 #include "../inputs/InputData.h"
 
 // TODO: figure out what to do with State enum
-struct GameControllerState : public BaseComponent<GameControllerState, 9>
+//struct GameControllerState : public BaseComponent<GameControllerState, 9>
+struct GameControllerState : public BaseComponent<GameControllerState>
 {
     SDL_JoystickID joystickID = GameController::kInvalidJoystickID;
     HandedPair<AxisInputData> axisInput = {};

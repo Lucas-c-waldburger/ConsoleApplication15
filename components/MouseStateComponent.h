@@ -5,7 +5,8 @@
 #include "../core/ShiftedIndexArray.h"
 #include <array>
 
-struct MouseState : BaseComponent<MouseState, 1>
+//struct MouseState : BaseComponent<MouseState, 1>
+struct MouseState : BaseComponent<MouseState>
 {
     // Handle<MouseCursor> activeCursor;
     MousePositionInputData positionData;

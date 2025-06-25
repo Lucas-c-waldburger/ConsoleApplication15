@@ -2,7 +2,7 @@
 //#include "ComponentManager.h"
 #include <cassert>
 
-bool EntityRelationsHelper::IsParent(EntityManager& entityManager, impl::ComponentManager& componentManager, Entity_t entity)
+bool EntityRelationsHelper::IsParent(EntityManager& entityManager, ComponentManager& componentManager, Entity_t entity)
 {
     if (entity == kInvalidEntity || !entityManager.IsEntityActive(entity))
     {
@@ -12,7 +12,7 @@ bool EntityRelationsHelper::IsParent(EntityManager& entityManager, impl::Compone
     return componentManager.HasComponent<Children>(entity);
 }
 
-bool EntityRelationsHelper::IsChild(EntityManager& entityManager, impl::ComponentManager& componentManager, Entity_t entity)
+bool EntityRelationsHelper::IsChild(EntityManager& entityManager, ComponentManager& componentManager, Entity_t entity)
 {
     if (entity == kInvalidEntity || !entityManager.IsEntityActive(entity))
     {
@@ -22,13 +22,13 @@ bool EntityRelationsHelper::IsChild(EntityManager& entityManager, impl::Componen
     return componentManager.HasComponent<Parent>(entity);
 }
 
-bool EntityRelationsHelper::IsChildOf(EntityManager& entityManager, impl::ComponentManager& componentManager, 
+bool EntityRelationsHelper::IsChildOf(EntityManager& entityManager, ComponentManager& componentManager, 
                                       Entity_t child, Entity_t parent)
 {
     return IsParentOf(entityManager, componentManager, parent, child);
 }
 
-bool EntityRelationsHelper::IsParentOf(EntityManager& entityManager, impl::ComponentManager& componentManager, 
+bool EntityRelationsHelper::IsParentOf(EntityManager& entityManager, ComponentManager& componentManager, 
                                        Entity_t parent, Entity_t child)
 {
     if (!IsParent(entityManager, componentManager, parent))
@@ -51,7 +51,7 @@ bool EntityRelationsHelper::IsParentOf(EntityManager& entityManager, impl::Compo
     return true;
 }
 
-Entity_t EntityRelationsHelper::GetParent(EntityManager& entityManager, impl::ComponentManager& componentManager, 
+Entity_t EntityRelationsHelper::GetParent(EntityManager& entityManager, ComponentManager& componentManager, 
                                           Entity_t child)
 {
     assert(IsChild(entityManager, componentManager, child));
@@ -60,7 +60,7 @@ Entity_t EntityRelationsHelper::GetParent(EntityManager& entityManager, impl::Co
 }
 
 std::unordered_set<Entity_t>& EntityRelationsHelper::GetChildren(EntityManager& entityManager, 
-                                                                 impl::ComponentManager& componentManager, 
+                                                                 ComponentManager& componentManager, 
                                                                  Entity_t parent)
 {
     assert(IsParent(entityManager, componentManager, parent));
@@ -68,7 +68,7 @@ std::unordered_set<Entity_t>& EntityRelationsHelper::GetChildren(EntityManager& 
     return componentManager.GetComponent<Children>(parent).childEntityIds;
 }
 
-Entity_t EntityRelationsHelper::AddChild(EntityManager& entityManager, impl::ComponentManager& componentManager, 
+Entity_t EntityRelationsHelper::AddChild(EntityManager& entityManager, ComponentManager& componentManager, 
                                          Entity_t parent)
 {
     assert(IsParent(entityManager, componentManager, parent) || !IsChild(entityManager, componentManager, parent));
@@ -84,7 +84,7 @@ Entity_t EntityRelationsHelper::AddChild(EntityManager& entityManager, impl::Com
     return newChild;
 }
 
-void EntityRelationsHelper::UnlinkChildFromParent(EntityManager& entityManager, impl::ComponentManager& componentManager,
+void EntityRelationsHelper::UnlinkChildFromParent(EntityManager& entityManager, ComponentManager& componentManager,
                                                   Entity_t child)
 {
     Entity_t parent = GetParent(entityManager, componentManager, child);

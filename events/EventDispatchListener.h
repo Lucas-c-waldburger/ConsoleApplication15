@@ -3,7 +3,7 @@
 #include "../core/Algorithms.h"
 #include "../deps/function2/function2.hpp"
 
-using EventDispatchListener = fu2::unique_function<void(EventSpan)>;
+using EventDispatchListenerFn = fu2::unique_function<void(EventSpan)>;
 
 class EventDispatchListenerToken
 {
@@ -75,6 +75,6 @@ public:
 	auto end() { return listeners_.end(); }
 
 private:
-	std::vector<std::pair<int, EventDispatchListener>> listeners_;
+	std::vector<std::pair<int, EventDispatchListenerFn>> listeners_;
 	int idCounter_ = 0;
 };

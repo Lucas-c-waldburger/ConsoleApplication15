@@ -2,8 +2,8 @@
 #include "IEventData.h"
 
 template <typename T>
-	concept SomeEventData =					// type T...
-	SomeTypeInList<T, EventDataTypeList>&&	// - was forward-declared and included in the master list
+concept SomeEventData =					    // type T...
+	SomeTypeInList<T, EventDataTypeList> &&	// - was forward-declared and included in the master list
 	std::derived_from<T, IEventData<T>>;    // - did inherit from the interface, and passed itself in
 
 

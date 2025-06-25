@@ -27,5 +27,15 @@ public:
 	static Result<Void> Run(std::shared_ptr<SceneFixture> scene);
 };
 
+class TextScene
+{
+public:
+	static Result<Void> Run(std::shared_ptr<SceneFixture> scene);
+};
 
+class SpriteScene
+{
+public:
+	static Result<Void> Run(std::shared_ptr<SceneFixture> scene);
+};
 

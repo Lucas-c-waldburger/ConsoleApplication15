@@ -190,7 +190,7 @@ WriteAccessor<B2Shape> shapeAccessor;
 //	return entitiesToDestroy;
 //}
 
-void CleanupB2Components(impl::ComponentManager& componentManager, Entity_t entity)
+void CleanupB2Components(ComponentManager& componentManager, Entity_t entity)
 {
 	const bool hasCollider = componentManager.HasComponent<Collider>(entity);
 	const bool hasBody = componentManager.HasComponent<RigidBody>(entity);
@@ -218,7 +218,7 @@ void CleanupB2Components(impl::ComponentManager& componentManager, Entity_t enti
 }
 
 std::vector<events::EntityDestroyed> GetAllEntitiesToDestroy(EntityManager& entityManager, 
-															 impl::ComponentManager& componentManager, 
+															 ComponentManager& componentManager, 
 															 Entity_t entityId)
 {
 	std::vector<events::EntityDestroyed> entitiesToDestroy{{ .entity = entityId }};
@@ -248,7 +248,7 @@ std::vector<events::EntityDestroyed> GetAllEntitiesToDestroy(EntityManager& enti
 } // unnamed
 
 
-void EntityDestructor::EntityDestroyed(EntityManager& entityManager, impl::ComponentManager& componentManager,
+void EntityDestructor::EntityDestroyed(EntityManager& entityManager, ComponentManager& componentManager,
 									   Entity_t entityId)
 {
 	auto entitiesToDestroy = GetAllEntitiesToDestroy(entityManager, componentManager, entityId);

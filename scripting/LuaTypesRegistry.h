@@ -2,7 +2,7 @@
 #include <sol/sol.hpp>
 #include <lua.hpp>
 #include <filesystem>
-#include "../components/ComponentRegistry.h"
+#include "../components/ComponentIncludes.h"
 #include "../core/commonObjects.h"
 #include "../physics/B2Handle.h"
 #include "ScriptInfo.h"
@@ -34,14 +34,22 @@ template <> static void RegisterLuaUserType<SDL_FRect>(sol::state& lua)
 	lua.new_usertype<SDL_FRect>("SDL_FRect", "x", &SDL_FRect::x, "y", &SDL_FRect::y,
 					 						 "w", &SDL_FRect::w, "h", &SDL_FRect::h);
 }
+template <> static void RegisterLuaUserType<SDL_Color>(sol::state& lua)
+{
+	lua.new_usertype<SDL_Color>("SDL_Color", "r", &SDL_Color::r, "g", &SDL_Color::g,
+		"b", &SDL_Color::b, "a", &SDL_Color::a);
+}
 
 // my core types
 template <> static void RegisterLuaUserType<Dimensions<float>>(sol::state& lua)
 {
-	try {
-		lua.new_usertype<Dimensions<float>>("Dimensions<float>", 
-			"w", &Dimensions<float>::w, "h", &Dimensions<float>::h);
-	} catch (sol::error& e) { std::cout << e.what() << '\n'; }
+	lua.new_usertype<Dimensions<float>>("Dimensions<float>",
+		"w", &Dimensions<float>::w, "h", &Dimensions<float>::h);
+}
+template <> static void RegisterLuaUserType<Dimensions<int>>(sol::state& lua)
+{
+	lua.new_usertype<Dimensions<int>>("Dimensions<int>",
+		"w", &Dimensions<int>::w, "h", &Dimensions<int>::h);
 }
 
 

@@ -8,7 +8,11 @@
 #include "systems/RenderSystem.h"
 #include "systems/PhysicsSystem.h"
 #include "systems/EventCallbackSystem.h"
+#include "scripting/user_types/RenderableLuaUserTypes.h"
+#include "scripting/user_types/TransformLuaUserTypes.h"
+#include "scripting/user_types/SpriteAnimationLuaUserTypes.h"
 #include "components/GameControllerStateComponent.h"
+#include "components/SpriteAnimationsComponent.h"
 #include "test/ComponentTests.h"
 #include "test/Fixtures.h"
 #include "systems/CameraSystem.h"
@@ -128,6 +132,30 @@ namespace {
         shapeDef.shapeDef.material.restitution = 1.0f;
 
         return dynamicBody.AddShape(shapeDef);
+    }
+
+    static constexpr std::string_view kSpritesPath = R"(resources/sprites)";
+    static constexpr std::string_view kWalkSeriesName = "walk";
+
+    static SpriteSeriesAtlas::AtlasInfo MakeKnightAtlasInfo()
+    {
+        static constexpr std::string_view kWalkSpriteFilePrefix = 
+            R"(\knight\walk_anim\knight_walk_)";
+
+        SpriteSeriesAtlas::AtlasInfo knightAtlasInfo{};
+        auto& walkSeries = knightAtlasInfo.seriesDatas.emplace_back();
+
+        walkSeries.seriesName = kWalkSeriesName;
+        walkSeries.spriteFilepaths.reserve(9);
+        for (int i = 0; i < 9; i++)
+        {
+            std::string filePath = std::string{ kSpritesPath } + 
+                std::string{kWalkSpriteFilePrefix} + std::to_string(i) + ".png";
+
+            walkSeries.spriteFilepaths.push_back(std::move(filePath));
+        }
+
+        return knightAtlasInfo;
     }
 
     //ReturnSignal ConnectToFirstController(const SDL_Event& ev, Entity& ent)
@@ -598,10 +626,10 @@ namespace {
             assert(scoreBoard.HasComponent<Renderable>());
 
             auto entA = ev.a.entity;
-            auto entB = ev.a.entity;
+            auto entB = ev.b.entity;
 
             bool playerOnBall = ((entA == player && entB == ball) ||
-                (entA == ball && entB == player));
+                                 (entA == ball && entB == player));
             bool ballOnGround = ((entA == ball && entB == ground) ||
                 (entA == ground && entB == ball));
 
@@ -630,7 +658,8 @@ namespace {
         };
          
         auto& registry = eventCallbackSystem.GetRegistry();
-        auto [key, _] = registry.RegisterCallback("handleBallCollision", std::move(handleBallCollision));
+        auto [key, _] = registry.RegisterCallback("handleBallCollision", std::move(handleBallCollision),
+                                                  entity.GetID());
 
         auto& callbacks = entity.AddComponent(EventCallbacks{}).table;
         callbacks.AddKey(std::move(key));
@@ -1000,7 +1029,82 @@ namespace {
         );       
     }
 
-    template <ComponentType...Ts>
+    void SetUpSpriteRenderTestScript(Entity& entity, std::shared_ptr<SceneFixture>& scene)
+    {
+        assert(entity.IsValid());
+        assert(entity.HasComponent<Transform>());
+        assert(entity.HasComponent<NewRenderable>());
+        assert(entity.HasComponent<SpriteAnimations>());
+
+        auto& transform = entity.GetComponent<Transform>();
+        auto& renderable = entity.GetComponent<NewRenderable>();
+        auto& sprite_animations = entity.GetComponent<SpriteAnimations>();
+        auto& render_profile = renderable.profile;
+
+        assert(std::holds_alternative<SpriteRenderable>(renderable.renderData));
+        auto& sprite_renderable = std::get<SpriteRenderable>(renderable.renderData);
+
+        scene->SetTestScriptFile<
+            SDL_FPoint,
+            Dimensions<int>,
+            SDL_Color,
+            SDL_Rect,
+            SDL_BlendMode,
+            SDL_RendererFlip,
+            TextureMods,
+            DebugDraw,
+            DebugDrawSet,
+            RenderProfile,
+            Handle<SpriteSeriesAtlas>,
+            SpriteAnimationSeries,
+            SpriteAnimationSeriesMap,
+            SpriteAnimations,
+            Transform>("sprite_render_test.lua", [&](Lua& lua) {
+                lua["transform"] = &transform;
+                lua["render_profile"] = &render_profile;
+                lua["sprite_renderable"] = &sprite_renderable;
+                lua["sprite_animations"] = &sprite_animations;
+            }
+        );
+    }
+
+    void SetUpTextRenderTestScript(Entity& entity, std::shared_ptr<SceneFixture>& scene)
+    {
+        assert(entity.IsValid());
+        assert(entity.HasComponent<Transform>());
+        assert(entity.HasComponent<NewRenderable>());
+
+        auto& transform = entity.GetComponent<Transform>();
+        auto& renderable = entity.GetComponent<NewRenderable>();
+        auto& render_profile = renderable.profile;
+        
+        assert(std::holds_alternative<TextRenderable>(renderable.renderData));
+        auto& text_renderable = std::get<TextRenderable>(renderable.renderData);
+
+        scene->SetTestScriptFile<
+            SDL_FPoint, 
+            Dimensions<int>,
+            SDL_Color,
+            SDL_Rect,
+            SDL_BlendMode,
+            SDL_RendererFlip,
+            TextureMods,
+            DebugDraw,
+            DebugDrawSet,
+            RenderProfile,
+            TextAlign,
+            GlyphInfo,
+            Handle<GlyphAtlas>,
+            TextRenderable,
+            Transform>("text_render_test.lua", [&](Lua& lua) { 
+                lua["transform"] = &transform; 
+                lua["render_profile"] = &render_profile;
+                lua["text_renderable"] = &text_renderable;
+            }
+        );
+    }
+
+    template <SomeComponent...Ts>
     Result<Void> ValidateEntityHasComponents(const Entity& entity)
     {
         if (!entity.IsValid())
@@ -1223,6 +1327,22 @@ namespace {
         );*/
     }
 
+    auto SpriteAdvanceOnDistanceTraveled(float target)
+    {
+        return [target, delta = 0.0f]
+        (const events::EntityPositionChanged& ev, Entity_t ent) mutable -> ReturnSignal
+        {
+            SDL_FPoint dist = { ev.newPosition - ev.oldPosition };
+            delta += std::sqrt(dist.x * dist.x + dist.y * dist.y);
+
+            if (delta >= target)
+            {
+
+            }
+
+            return ReturnSignal::KeepObserving;
+        };
+    }
 }
 
 //Result<Void> B2Scene::Run()
@@ -1315,7 +1435,9 @@ Result<Void> SimplePhysicsScene::Run()
     RenderSystem renderSys{}; 
     PhysicsSystem physicsSys{};
     SDLInputSystem inputSys{};
+
     EventCallbackSystem callbackSys{};
+    callbackSys.ConnectToEventBus();
 
     Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
                                    static_cast<float>(SDLite::kWindowHeight) };
@@ -1346,7 +1468,7 @@ Result<Void> SimplePhysicsScene::Run()
     player);
 
     auto& playerBody = player.GetComponent<RigidBody>();
-    playerBody.limits.linearVelocity.max = { 25.0f, 25.0f };
+    playerBody.limits.linearVelocity.max = { 15.0f, 15.0f };
 
     ConnectEntityToController(callbackSys, player);
 
@@ -1608,6 +1730,133 @@ Result<Void> ChainScene::Run(std::shared_ptr<SceneFixture> scene)
         SetRenderDrawColor(SDLite::Renderer(), SDLite::kColorBlack);
 
         TRY(scene->UpdateRender());
+
+        SDLite::Renderer().Show();
+
+        scene->LoopEnd();
+    }
+
+    return Void{};
+}
+
+Result<Void> TextScene::Run(std::shared_ptr<SceneFixture> scene)
+{
+    TRY(scene->LoadTextureAtlas<GlyphAtlas>({
+        .fontPath = kFontPath,
+        .fontSize = 48,
+        .fontColor = SDLite::kColorBlack
+    }), glyphAtlasHandle);
+
+    auto textEnt = ECS::CreateEntity();
+
+    auto& transform = textEnt.AddComponent(Transform{
+        .position = kScreenCenterPosition,
+        .rotation = 0.0f,
+        .scale = { 1.0f, 1.0f }
+    });
+
+    TextRenderable textRenderable{
+        .sourceAtlas = glyphAtlasHandle,
+        .text = "Dude he fucking turns himself into a pickle.\nFunniest shit I've ever seen",
+        .dimensions = { 400, 250 },
+        .align = TextAlign::Left,
+        .dirtyFlags = TextRenderable::DirtyFlag::NewText
+    };
+    RenderProfile profile{
+        
+    };
+
+    auto& renderable = textEnt.AddComponent(NewRenderable{
+        .renderData = std::move(textRenderable),
+        .profile = std::move(profile)
+    });
+
+    SetUpTextRenderTestScript(textEnt, scene);
+
+    while (true)
+    {
+        scene->LoopStart();
+
+        TRY(scene->UpdateSDLInputs(), cont);
+        if (!cont)
+        {
+            break;
+        }
+
+        TRY(scene->UpdatePhysics());
+        TRY(scene->UpdateCamera());
+
+        SDLite::Renderer().Clear(SDLite::kColorWhite);
+
+        TRY(scene->UpdateRender());
+
+        SDLite::Renderer().Show();
+
+        scene->LoopEnd();
+    }
+
+    return Void{};
+}
+
+Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
+{
+    TRY(scene->LoadTextureAtlas<SpriteSeriesAtlas>(MakeKnightAtlasInfo()), 
+        spriteAtlasHandle);
+    const auto* spriteAtlas = scene->GetTextureRepository().GetAtlas(spriteAtlasHandle);
+    assert(spriteAtlas);
+    auto spriteInfo = spriteAtlas->GetSprite(kWalkSeriesName, 0);
+    assert(spriteInfo.atlasRect.w != 0 && spriteInfo.atlasRect.h != 0);
+
+    auto spriteEnt = ECS::CreateEntity();
+
+    auto& transform = spriteEnt.AddComponent(Transform{
+        .position = kScreenCenterPosition,
+        .rotation = 0.0f,
+        .scale = { 1.0f, 1.0f }
+        });
+
+    SpriteRenderable spriteRenderable{
+        .sourceAtlas = spriteAtlasHandle,
+        .sourcePlot = spriteInfo.atlasRect
+    };
+    RenderProfile profile{
+
+    };
+
+    auto& renderable = spriteEnt.AddComponent(NewRenderable{
+        .renderData = std::move(spriteRenderable),
+        .profile = std::move(profile)
+    });
+
+    auto animSeries = spriteAtlas->GetSpriteAnimationSeries(kWalkSeriesName);
+    assert(!animSeries.spritePlots.empty());
+
+    auto& spriteAnimations = spriteEnt.AddComponent(SpriteAnimations{});
+    spriteAnimations.map.Emplace(kWalkSeriesName, std::move(animSeries));
+    spriteAnimations.map.SetCurrent(kWalkSeriesName);
+
+    SetUpSpriteRenderTestScript(spriteEnt, scene);
+
+    while (true)
+    {
+        scene->LoopStart();
+
+        TRY(scene->UpdateSDLInputs(), cont);
+        if (!cont)
+        {
+            break;
+        }
+
+        TRY(scene->UpdatePhysics());
+        TRY(scene->UpdateCamera());
+
+        SDLite::Renderer().Clear(SDLite::kColorWhite);
+
+        TRY(scene->UpdateRender());
+
+        SDL_Rect screenRect = { 0, 0, SDLite::kWindowWidth, SDLite::kWindowHeight };
+
+        SDL_RenderCopy(SDLite::Renderer(), spriteAtlas->GetAtlasTexture(), nullptr, &screenRect);
 
         SDLite::Renderer().Show();
 

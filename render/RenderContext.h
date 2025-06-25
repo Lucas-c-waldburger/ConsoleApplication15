@@ -37,9 +37,9 @@ void Render(const Renderable& renderable, RenderFn&& fn)
 struct RenderCache
 {
     SDL_Texture* lastTexture = nullptr;
-    TextureMods lastMods;
+    TextureModsOld lastMods;
 
-    void Update(SDL_Texture* texture, const TextureMods& mods) 
+    void Update(SDL_Texture* texture, const TextureModsOld& mods) 
     {
         if (texture != lastTexture || lastMods.blend != mods.blend) 
         {
@@ -72,16 +72,16 @@ private:
 
     impl::TextureManager* atlasStore_;
     RenderCache cache_;
-    TextureMods initialMods_;
+    TextureModsOld initialMods_;
 };
 
 //class RenderOp
 //{
 //public:
-//	explicit RenderOp(RenderContext& ctx) : parent_(&ctx) {}
+//	explicit RenderOp(SpriteRenderContext& ctx) : parent_(&ctx) {}
 //
 //private:
-//	RenderContext* parent_ = nullptr;
+//	SpriteRenderContext* parent_ = nullptr;
 //};
 
 //struct RenderOp

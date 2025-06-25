@@ -9,12 +9,12 @@
 struct SDL_Renderer;
 
 template <typename T>
-concept AtlasType = requires(T atlas, SDL_Renderer* renderer, AtlasInfo<T> info) {
+concept SomeTextureAtlas = requires(T atlas, SDL_Renderer* renderer, AtlasInfo<T> info) {
 	{ atlas.GetHandle() } -> std::same_as<const Handle<T>&>;
 	{ atlas.Load(renderer, info) } -> std::same_as<bool>;
 };
 
-template <AtlasType...AtlasTs> requires pack_types_unique_v<AtlasTs...>
+template <SomeTextureAtlas...AtlasTs> requires pack_types_unique_v<AtlasTs...>
 class TextureManagerTemplate
 {
 public:

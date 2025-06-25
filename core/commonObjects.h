@@ -53,6 +53,48 @@ struct HandedPair
     T right;
 };
 
+template <typename T>
+struct DirtyFlags
+{
+
+};
+
+//template <typename T> requires (std::is_default_constructible_v<T> && 
+//                                std::equality_comparable<T>)
+//struct DirtyMarker
+//{
+//    T data{};
+//    bool dirty = true;
+//
+//    constexpr DirtyMarker() = default;
+//    constexpr DirtyMarker(const T& val) : data(val) {}
+//    constexpr DirtyMarker(T&& val) : data(std::move(val)) {}
+//
+//    constexpr DirtyMarker& operator=(const T& val)
+//    {
+//        if (data != val) 
+//        { 
+//            data = val;
+//            dirty = true;
+//        }
+//        return *this;
+//    }
+//    constexpr DirtyMarker& operator=(T&& val)
+//    {
+//        if (data != val)
+//        {
+//            data = std::move(val);
+//            dirty = true;
+//        }
+//        return *this;
+//    }
+//
+//    constexpr bool operator==(const T& val) const { return data == val; }
+//
+//    constexpr operator T& () { return data; }
+//    constexpr operator const T& () const { return data; }
+//};
+
 static constexpr int GetNextPowerOfTwo(int x)
 {
     if (x <= 0) return 1;
@@ -65,3 +107,4 @@ static constexpr int GetNextPowerOfTwo(int x)
 
     return x + 1;
 }
+

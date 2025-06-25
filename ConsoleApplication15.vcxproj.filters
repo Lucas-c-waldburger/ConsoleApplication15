@@ -30,9 +30,6 @@
     <ClCompile Include="systems\RenderSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ecs\EntityRetrievalHelper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="sdl\SDLUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -141,12 +138,6 @@
     <ClCompile Include="components\util\TagsComponentUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ecs\Entity.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ecs\EcsImpl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ecs\EntityDestructor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -166,6 +157,30 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="systems\EventCallbackSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\SpriteAnimationSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sprite\SpriteAnimationSeriesMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\RectangleBinPack\GuillotineBinPack.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\RectangleBinPack\MaxRectsBinPack.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\RectangleBinPack\Rect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\RectangleBinPack\ShelfBinPack.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\RectangleBinPack\ShelfNextFitBinPack.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\RectangleBinPack\SkylineBinPack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -545,9 +560,6 @@
     <ClInclude Include="systems\RenderSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ecs\EntityRetrievalHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="sdl\SDLUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -585,9 +597,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\BaseComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="components\ComponentRegistry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inputs\controller\GameController.h">
@@ -776,12 +785,6 @@
     <ClInclude Include="components\util\TagsComponentUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ecs\Entity.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ecs\EcsImpl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ecs\EntityDestructor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -869,6 +872,72 @@
     <ClInclude Include="scripting\TypedLuaFunction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="events\EventDispatchListenerInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\SpriteAnimationSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sprite\SpriteAnimationSeriesMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sprite\SpriteAnimationSeries.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\SpriteAnimationsComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\AtlasMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\TextureRepository.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\EventProductionFlagsComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\CommonEntityMethods.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\user_types\RenderableLuaUserTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\user_types\TransformLuaUserTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\user_types\SpriteAnimationLuaUserTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\ComponentTypeList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\ComponentIncludes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\RectangleBinPack\GuillotineBinPack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\RectangleBinPack\MaxRectsBinPack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\RectangleBinPack\Rect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\RectangleBinPack\ShelfBinPack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\RectangleBinPack\ShelfNextFitBinPack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\RectangleBinPack\SkylineBinPack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\ResourcePacket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\PackingTools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -905,6 +974,8 @@
   <ItemGroup>
     <None Include="resources\scripts\game_controller_test.lua" />
     <None Include="resources\scripts\test_physics.lua" />
+    <None Include="resources\scripts\text_render_test.lua" />
+    <None Include="resources\scripts\sprite_render_test.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

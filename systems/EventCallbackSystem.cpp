@@ -8,16 +8,29 @@
 
 namespace {
 
-std::unordered_set<uint32_t> GetEventTypesFromSpan(EventSpan events)
+std::vector<uint32_t> ExtractEventTypes(EventSpan events)
 {
 	std::unordered_set<uint32_t> eventTypes;
 
 	std::transform(events.begin(), events.end(), std::inserter(eventTypes, eventTypes.end()),
 		[](const auto& event) { return event.type; });
 
-	return eventTypes;
+	return { eventTypes.begin(), eventTypes.end() };
 }
 
+//auto eventTypes = ExtractEventTypes(events);
+//
+//auto entities = ECS::GetAllEntitiesWith<EventCallbacks>(
+//	[&eventTypes](const EventCallbacks& callbacks) {
+//		for (auto eventType : eventTypes)
+//		{
+//			if (callbacks.table.contains(eventType))
+//			{
+//				return true;
+//			}
+//		}
+//		return false;
+//	});
 
 } // unnamed
 

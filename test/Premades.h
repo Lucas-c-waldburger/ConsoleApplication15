@@ -206,7 +206,7 @@ inline Result<Entity> MakeMultiColliderEntity(B2World& world)
 //}
 //
 //
-//template <ComponentType...Ts>
+//template <SomeComponent...Ts>
 //class EntityAsWrapper
 //{
 //protected:
@@ -233,7 +233,7 @@ inline Result<Entity> MakeMultiColliderEntity(B2World& world)
 //    { t.SetEntity(ent) } -> std::same_as<Result<Void>>;
 //};
 
-//template <ComponentType T>
+//template <SomeComponent T>
 //void RegisterLuaComponentDependencies(ScriptManager& scriptManager, ScriptInstance&& instance);
 //
 //template <>
@@ -265,7 +265,7 @@ inline Result<Entity> MakeMultiColliderEntity(B2World& world)
 //    ComponentTestScript(std::string bp, std::string lfn, std::string sk, ScriptInstance::Setup setup) :
 //        PremadeScript(std::move(bp), std::move(lfn), std::move(sk), std::move(setup)) {}
 //
-//    template <typename Fn, ComponentType...Ts>
+//    template <typename Fn, SomeComponent...Ts>
 //    Result<Entity> Setup(ScriptManager& scriptManager, std::string_view scriptPath, Fn&& fn)
 //    {
 //        auto entity = ECS::CreateEntity();
