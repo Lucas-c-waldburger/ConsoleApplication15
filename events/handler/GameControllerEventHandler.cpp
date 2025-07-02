@@ -5,6 +5,23 @@
 #include "../data/GameControllerEvents.h"
 #include <cassert>
 
+namespace {
+
+constexpr SDL_JoystickID ExtractJoystickIDFromEvent(const SDL_Event& ev)
+{
+	switch (ev.type)
+	{
+	case SDL_CONTROLLERAXISMOTION:
+		return ev.caxis.which;
+	case SDL_CONTROLLERBUTTONDOWN: case SDL_CONTROLLERBUTTONUP:
+		return ev.cbutton.which;
+	default:
+		return GameController::kInvalidJoystickID;
+	}
+}
+
+} // unnamed
+
 GameControllerEventHandler::~GameControllerEventHandler()
 {
 	for (auto& [_, controllerInputPair] : activeControllers_)
@@ -65,118 +82,143 @@ void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev)
 
 void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
 {
-	auto getAffectedAxisSide = [](auto axisType, auto& axisInputPair) -> AxisInputData& {
-		auto& [left, right] = axisInputPair;
-		return (axisType == SDL_CONTROLLER_AXIS_LEFTX ||
-				axisType == SDL_CONTROLLER_AXIS_LEFTY) ? left : right;
-	};
-	auto getAffectedAxisValue = [](auto axisType, auto& axisInputSide) -> float& {
-		auto& [x, y] = axisInputSide.value;
-		return (axisType == SDL_CONTROLLER_AXIS_LEFTX ||
-			    axisType == SDL_CONTROLLER_AXIS_RIGHTX) ? x : y;
-	};
+	SDL_JoystickID joystickId = ExtractJoystickIDFromEvent(ev);
 
-	switch (ev.type)
+	if (joystickId == -1)
 	{
-	case SDL_CONTROLLERAXISMOTION:
+		return;
+	}
+
+	auto it = activeControllers_.find(joystickId);
+	if (it == activeControllers_.end())
 	{
-		if (!activeControllers_.contains(ev.caxis.which))
-		{
-			LOG_ERROR("Controller active but wasn't properly connected\n");
-			return;
-		}
-
-		auto& lastInput = activeControllers_[ev.caxis.which].second.cachedControllerState.axisInput;
-		auto& lastInputSide = getAffectedAxisSide(ev.caxis.axis, lastInput);
-
-		auto& xOrY = getAffectedAxisValue(ev.caxis.axis, lastInputSide);
-
-		//bool inDeadzone = (std::abs(ev.caxis.value) <= GameController::kAxisDeadzone);
-		//xOrY = (inDeadzone) ? 0.0f : static_cast<float>(ev.caxis.value);
-
-		xOrY = static_cast<float>(ev.caxis.value);
-
-		bool markAsHeld = (lastInputSide.state == InputState::Pressed ||
-						   lastInputSide.state == InputState::Held);
-		if (markAsHeld)
-		{
-			lastInputSide.state = InputState::Held;
-			lastInputSide.stateDuration = lastInputSide.stateDuration +
-				(ev.caxis.timestamp - lastInputSide.timestamp);
-		}
-		else
-		{
-			lastInputSide.state = InputState::Pressed;
-			lastInputSide.stateDuration = 0;
-		}
-
-		lastInputSide.timestamp = ev.caxis.timestamp;
-
-		uint8_t cacheAxisIndex = InputDataCache::GetAxisIndexForEnum(ev.caxis.axis);
-		activeControllers_[ev.caxis.which].second.inputUpdatedTracker.set(cacheAxisIndex, true);
-
-		break;
+		LOG_ERROR("Controller active but wasn't properly connected\n");
+		return;
 	}
-	case SDL_CONTROLLERBUTTONDOWN: case SDL_CONTROLLERBUTTONUP:
-	{
-		if (!activeControllers_.contains(ev.cbutton.which))
-		{
-			std::cout << "Controller active but wasn't properly connected\n";
-			return;
-		}
 
-		ButtonInputData newButtonInput{};
-		newButtonInput.button = static_cast<SDL_GameControllerButton>(ev.cbutton.button);
-		newButtonInput.timestamp = ev.cbutton.timestamp;
+	auto& inputUpdater = it->second.second;
 
-		auto& inputCache = activeControllers_[ev.cbutton.which].second;
-		auto& lastButtonInput = inputCache.cachedControllerState.buttonInput[ev.cbutton.button];
-
-
-		newButtonInput.state = (ev.type == SDL_CONTROLLERBUTTONUP) ? InputState::Released :
-																	 InputState::Pressed;
-		newButtonInput.stateDuration = 0;
-
-		lastButtonInput = std::move(newButtonInput);
-		inputCache.inputUpdatedTracker.set(ev.cbutton.button, true);
-
-		break;
-	}
-	default:
-		break;
-	}
+	inputUpdater.Update(ev);
 }
 
-void GameControllerEventHandler::UpdateEntities()
+//void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
+//{
+//	auto getAffectedAxisSide = [](auto axisType, auto& axisInputPair) -> AxisInputData& {
+//		auto& [left, right] = axisInputPair;
+//		return (axisType == SDL_CONTROLLER_AXIS_LEFTX ||
+//				axisType == SDL_CONTROLLER_AXIS_LEFTY) ? left : right;
+//	};
+//	auto getAffectedAxisValue = [](auto axisType, auto& axisInputSide) -> float& {
+//		auto& [x, y] = axisInputSide.value;
+//		return (axisType == SDL_CONTROLLER_AXIS_LEFTX ||
+//			    axisType == SDL_CONTROLLER_AXIS_RIGHTX) ? x : y;
+//	};
+//
+//	switch (ev.type)
+//	{
+//	case SDL_CONTROLLERAXISMOTION:
+//	{
+//		if (!activeControllers_.contains(ev.caxis.which))
+//		{
+//			LOG_ERROR("Controller active but wasn't properly connected\n");
+//			return;
+//		}
+//
+//		auto& lastInput = activeControllers_[ev.caxis.which].second.cachedControllerState.axisInput;
+//		auto& lastInputSide = getAffectedAxisSide(ev.caxis.axis, lastInput);
+//
+//		auto& xOrY = getAffectedAxisValue(ev.caxis.axis, lastInputSide);
+//
+//		//bool inDeadzone = (std::abs(ev.caxis.value) <= GameController::kAxisDeadzone);
+//		//xOrY = (inDeadzone) ? 0.0f : static_cast<float>(ev.caxis.value);
+//
+//		xOrY = static_cast<float>(ev.caxis.value);
+//
+//		bool markAsHeld = (lastInputSide.state == InputState::Pressed ||
+//						   lastInputSide.state == InputState::Held);
+//		if (markAsHeld)
+//		{
+//			lastInputSide.state = InputState::Held;
+//			lastInputSide.stateDuration = lastInputSide.stateDuration +
+//				(ev.caxis.timestamp - lastInputSide.timestamp);
+//		}
+//		else
+//		{
+//			lastInputSide.state = InputState::Pressed;
+//			lastInputSide.stateDuration = 0;
+//		}
+//
+//		lastInputSide.timestamp = ev.caxis.timestamp;
+//
+//		uint8_t cacheAxisIndex = InputDataCache::GetAxisIndexForEnum(ev.caxis.axis);
+//		activeControllers_[ev.caxis.which].second.inputUpdatedTracker.set(cacheAxisIndex, true);
+//
+//		break;
+//	}
+//	case SDL_CONTROLLERBUTTONDOWN: case SDL_CONTROLLERBUTTONUP:
+//	{
+//		if (!activeControllers_.contains(ev.cbutton.which))
+//		{
+//			std::cout << "Controller active but wasn't properly connected\n";
+//			return;
+//		}
+//
+//		ButtonInputData newButtonInput{};
+//		newButtonInput.button = static_cast<SDL_GameControllerButton>(ev.cbutton.button);
+//		newButtonInput.timestamp = ev.cbutton.timestamp;
+//
+//		auto& inputCache = activeControllers_[ev.cbutton.which].second;
+//		auto& lastButtonInput = inputCache.cachedControllerState.buttonInput[ev.cbutton.button];
+//
+//
+//		newButtonInput.state = (ev.type == SDL_CONTROLLERBUTTONUP) ? InputState::Released :
+//																	 InputState::Pressed;
+//		newButtonInput.stateDuration = 0;
+//
+//		lastButtonInput = std::move(newButtonInput);
+//		inputCache.inputUpdatedTracker.set(ev.cbutton.button, true);
+//
+//		break;
+//	}
+//	default:
+//		break;
+//	}
+//}
+
+void GameControllerEventHandler::Finalize()
 {
-	for (auto& [_, controllerCachePair] : activeControllers_)
+	for (auto& [joystickId, pair] : activeControllers_)
 	{
-		controllerCachePair.second.UpdateSkippedInputs();
+		auto& updater = pair.second;
+
+		updater.FinalizeAndPushEvents(joystickId);
 	}
 
-	auto controllerEntities = ECS::GetAllEntitiesWith<GameControllerState>(
-		[](const GameControllerState& cmp) { 
-			return cmp.joystickID != GameController::kInvalidJoystickID; 
+	UpdateControllerStateComponents();
+}
+
+void GameControllerEventHandler::UpdateControllerStateComponents()
+{
+	auto entities = ECS::GetAllEntitiesWith<GameControllerState>(
+		[](const GameControllerState& cmp) {
+			return cmp.joystickID != GameController::kInvalidJoystickID;
 		});
 
-	for (auto& entity : controllerEntities)
+	for (auto& entity : entities)
 	{
-		auto& componentControllerState = entity.GetComponent<GameControllerState>();
+		auto& controllerState = entity.GetComponent<GameControllerState>();
 
-		auto it = activeControllers_.find(componentControllerState.joystickID);
+		auto it = activeControllers_.find(controllerState.joystickID);
 		if (it == activeControllers_.end())
 		{
-			LOG_ERROR_FMT("Controller with JoystickID '{}' not connected", 
-				componentControllerState.joystickID);
+			LOG_ERROR_FMT("Controller with JoystickID '{}' not connected",
+				controllerState.joystickID);
 
-			componentControllerState.joystickID = GameController::kInvalidJoystickID;
+			controllerState.joystickID = GameController::kInvalidJoystickID;
 
 			continue;
 		}
 
-		auto& cachedControllerState = it->second.second.cachedControllerState;
-
-		componentControllerState.axisInput = cachedControllerState.axisInput;
-		componentControllerState.buttonInput = cachedControllerState.buttonInput;
+		controllerState.inputs = it->second.second.GetInputMap();
 	}
 }

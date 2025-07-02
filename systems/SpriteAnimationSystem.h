@@ -3,5 +3,8 @@
 
 class TextureRepository;
 
-void UpdateSpriteAnimations(const TextureRepository& textureRepo);
-
+class SpriteAnimationSystem : public System
+{
+public:
+	void Update(const TextureRepository& textureRepo);
+};

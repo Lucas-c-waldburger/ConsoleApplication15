@@ -11,42 +11,42 @@
 #include "../physics/B2Joint.h"
 
 template <typename>
-static void RegisterLuaUserType(sol::state& lua);
+void RegisterLuaUserType(sol::state& lua);
 
 // SDL TYPES
-template <> static void RegisterLuaUserType<SDL_FPoint>(sol::state& lua)
+template <> inline void RegisterLuaUserType<SDL_FPoint>(sol::state& lua)
 {
 	try {
 		lua.new_usertype<SDL_FPoint>("SDL_FPoint", "x", &SDL_FPoint::x, "y", &SDL_FPoint::y);
 	} catch (sol::error& e) { std::cout << e.what() << '\n'; }
 }
-template <> static void RegisterLuaUserType<SDL_Point>(sol::state& lua)
+template <> inline void RegisterLuaUserType<SDL_Point>(sol::state& lua)
 {
 	lua.new_usertype<SDL_Point>("SDL_Point", "x", &SDL_Point::x, "y", &SDL_Point::y);
 }
-template <> static void RegisterLuaUserType<SDL_Rect>(sol::state& lua)
+template <> inline void RegisterLuaUserType<SDL_Rect>(sol::state& lua)
 {
 	lua.new_usertype<SDL_Rect>("SDL_Rect", "x", &SDL_Rect::x, "y", &SDL_Rect::y,
 										   "w", &SDL_Rect::w, "h", &SDL_Rect::h);
 }
-template <> static void RegisterLuaUserType<SDL_FRect>(sol::state& lua)
+template <> inline void RegisterLuaUserType<SDL_FRect>(sol::state& lua)
 {
 	lua.new_usertype<SDL_FRect>("SDL_FRect", "x", &SDL_FRect::x, "y", &SDL_FRect::y,
 					 						 "w", &SDL_FRect::w, "h", &SDL_FRect::h);
 }
-template <> static void RegisterLuaUserType<SDL_Color>(sol::state& lua)
+template <> inline void RegisterLuaUserType<SDL_Color>(sol::state& lua)
 {
 	lua.new_usertype<SDL_Color>("SDL_Color", "r", &SDL_Color::r, "g", &SDL_Color::g,
 		"b", &SDL_Color::b, "a", &SDL_Color::a);
 }
 
 // my core types
-template <> static void RegisterLuaUserType<Dimensions<float>>(sol::state& lua)
+template <> inline void RegisterLuaUserType<Dimensions<float>>(sol::state& lua)
 {
 	lua.new_usertype<Dimensions<float>>("Dimensions<float>",
 		"w", &Dimensions<float>::w, "h", &Dimensions<float>::h);
 }
-template <> static void RegisterLuaUserType<Dimensions<int>>(sol::state& lua)
+template <> inline void RegisterLuaUserType<Dimensions<int>>(sol::state& lua)
 {
 	lua.new_usertype<Dimensions<int>>("Dimensions<int>",
 		"w", &Dimensions<int>::w, "h", &Dimensions<int>::h);
@@ -55,7 +55,7 @@ template <> static void RegisterLuaUserType<Dimensions<int>>(sol::state& lua)
 
 //// HANDLES
 //class GlyphAtlas;
-//template <> static void RegisterLuaUserType<Handle<GlyphAtlas>>(sol::state& lua)
+//template <> inline void RegisterLuaUserType<Handle<GlyphAtlas>>(sol::state& lua)
 //{
 //	lua.new_usertype<Handle<GlyphAtlas>>("Handle<GlyphAtlas>",
 //		sol::meta_function::equal_to, &Handle<GlyphAtlas>::operator==);
@@ -65,7 +65,7 @@ template <> static void RegisterLuaUserType<Dimensions<int>>(sol::state& lua)
 //	};
 //}
 //class SpriteSeriesAtlas;
-//template <> static void RegisterLuaUserType<Handle<SpriteSeriesAtlas>>(sol::state& lua)
+//template <> inline void RegisterLuaUserType<Handle<SpriteSeriesAtlas>>(sol::state& lua)
 //{
 //	lua.new_usertype<Handle<SpriteSeriesAtlas>>("Handle<SpriteSeriesAtlas>",
 //		sol::meta_function::equal_to, &Handle<SpriteSeriesAtlas>::operator==);
@@ -75,22 +75,22 @@ template <> static void RegisterLuaUserType<Dimensions<int>>(sol::state& lua)
 //			return lhs != rhs;
 //	};
 //}
-//template <> static void RegisterLuaUserType<Force>(sol::state& lua)
+//template <> inline void RegisterLuaUserType<Force>(sol::state& lua)
 //{
 //	lua.new_usertype<Force>("Force", "vector", &Force::vector, "duration", &Force::duration);
 //}
-//template <> static void RegisterLuaUserType<AccumulatedForces>(sol::state& lua)
+//template <> inline void RegisterLuaUserType<AccumulatedForces>(sol::state& lua)
 //{
 //	lua.new_usertype<AccumulatedForces>("AccumulatedForces", "normed",
 //		&AccumulatedForces::normed, "max", &AccumulatedForces::max);
 //}
-//template <> static void RegisterLuaUserType<Collider::Material>(sol::state& lua)
+//template <> inline void RegisterLuaUserType<Collider::Material>(sol::state& lua)
 //{
 //	lua.new_usertype<Collider::Material>("Collider::Material",
 //		"restitution", &Collider::Material::restitution, "friction", &Collider::Material::friction);
 //}
 
-template <> static void RegisterLuaUserType<SDL_GameControllerButton>(sol::state& lua)
+template <> inline void RegisterLuaUserType<SDL_GameControllerButton>(sol::state& lua)
 {
 	lua.new_enum("GameControllerButton",
 		"Invalid", SDL_CONTROLLER_BUTTON_INVALID,
@@ -119,7 +119,7 @@ template <> static void RegisterLuaUserType<SDL_GameControllerButton>(sol::state
 	);
 }
 
-//template <> static void RegisterLuaUserType<Collider::Profile>(sol::state& lua)
+//template <> inline void RegisterLuaUserType<Collider::Profile>(sol::state& lua)
 //{
 //	lua.new_enum("Collider::Profile",
 //		"Solid", Collider::Profile::Solid,
@@ -131,83 +131,83 @@ template <> static void RegisterLuaUserType<SDL_GameControllerButton>(sol::state
 //}
 
 
-//template <> static void RegisterLuaUserType<Physics>(sol::state& lua)
+//template <> inline void RegisterLuaUserType<Physics>(sol::state& lua)
 //{
 //	lua.new_usertype<Physics>("Physics", "velocity", &Physics::velocity,
 //		"acceleration", &Physics::acceleration, "mass", &Physics::mass, 
 //		"drag", &Physics::drag, "gravity", &Physics::gravity, "forces", &Physics::forces);
 //}
-//template <> static void RegisterLuaUserType<Transform>(sol::state& lua)
+//template <> inline void RegisterLuaUserType<Transform>(sol::state& lua)
 //{
 //	lua.new_usertype<Transform>("Transform", "scale", &Transform::scale,
 //		"rotation", &Transform::rotation, "offset", &Transform::offset);
 //}
-//template <> static void RegisterLuaUserType<Collider>(sol::state& lua)
+//template <> inline void RegisterLuaUserType<Collider>(sol::state& lua)
 //{
 //	lua.new_usertype<Collider>("Collider", "position", &Collider::position,
 //		"dimensions", &Collider::dimensions, "material", &Collider::material, "profile", &Collider::profile);
 //}
 
-template <> static void RegisterLuaUserType<Parent>(sol::state& lua)
+template <> inline void RegisterLuaUserType<Parent>(sol::state& lua)
 {
 	lua.new_usertype<Parent>("Parent", "parentEntity", &Parent::entityId);
 }
-//template <> static void RegisterLuaUserType<Children>(sol::state& lua)
+//template <> inline void RegisterLuaUserType<Children>(sol::state& lua)
 //{
 //	lua.new_usertype<Children>("Children", "childEntities", &Children::childEntities);
 //}
 
 // GAME CONTROLLER
-template <> static void RegisterLuaUserType<AxisInputData>(sol::state& lua)
-{
-	lua.new_usertype<AxisInputData>("AxisInputState", 
-		"value", &AxisInputData::value, "timestamp", &AxisInputData::timestamp, 
-		"state", &AxisInputData::state, "stateDuration", &AxisInputData ::stateDuration);
-}
-template <> static void RegisterLuaUserType<ButtonInputData>(sol::state& lua)
-{
-	lua.new_usertype<ButtonInputData>("ButtonInputState", 
-		"button", &ButtonInputData::button, "timestamp", &ButtonInputData::timestamp,
-		"state", &ButtonInputData::state, "stateDuration", &ButtonInputData::stateDuration);
-}
-template <> static void RegisterLuaUserType<HandedPair<AxisInputData>>(sol::state& lua)
-{
-	lua.new_usertype<HandedPair<AxisInputData>>("HandedPair<AxisInputState>", 
-		"left", &HandedPair<AxisInputData>::left, "right", &HandedPair<AxisInputData>::right);
-}
-template <> static void RegisterLuaUserType<GameControllerState>(sol::state& lua)
-{
-	lua.new_usertype<GameControllerState>("GameControllerState", 
-		"joystickID", &GameControllerState::joystickID, "axisInput", &GameControllerState::axisInput,
-		"buttonInput", &GameControllerState::buttonInput);
-}
+//template <> inline void RegisterLuaUserType<AxisInputData>(sol::state& lua)
+//{
+//	lua.new_usertype<AxisInputData>("AxisInputState", 
+//		"value", &AxisInputData::value, "timestamp", &AxisInputData::timestamp, 
+//		"state", &AxisInputData::state, "stateDuration", &AxisInputData ::stateDuration);
+//}
+//template <> inline void RegisterLuaUserType<ButtonInputData>(sol::state& lua)
+//{
+//	lua.new_usertype<ButtonInputData>("ButtonInputState", 
+//		"button", &ButtonInputData::button, "timestamp", &ButtonInputData::timestamp,
+//		"state", &ButtonInputData::state, "stateDuration", &ButtonInputData::stateDuration);
+//}
+//template <> inline void RegisterLuaUserType<HandedPair<AxisInputData>>(sol::state& lua)
+//{
+//	lua.new_usertype<HandedPair<AxisInputData>>("HandedPair<AxisInputState>", 
+//		"left", &HandedPair<AxisInputData>::left, "right", &HandedPair<AxisInputData>::right);
+//}
+//template <> inline void RegisterLuaUserType<GameControllerState>(sol::state& lua)
+//{
+//	lua.new_usertype<GameControllerState>("GameControllerState", 
+//		"joystickID", &GameControllerState::joystickID, "axisInput", &GameControllerState::axisInput,
+//		"buttonInput", &GameControllerState::buttonInput);
+//}
 
 // RENDERABLE
-template <> static void RegisterLuaUserType<Renderable::Text::Alignment>(sol::state& lua)
+template <> inline void RegisterLuaUserType<Renderable::Text::Alignment>(sol::state& lua)
 {
 	using Alignment = Renderable::Text::Alignment;
 	lua.new_enum("Renderable::Text::Alignment", 
 		"Left", Alignment::Left, "Right", Alignment::Right, "Center", Alignment::Center);
 }
-template <> static void RegisterLuaUserType<Renderable::Text>(sol::state& lua)
+template <> inline void RegisterLuaUserType<Renderable::Text>(sol::state& lua)
 {
 	using Text = Renderable::Text;
 	lua.new_usertype<Text>("Renderable::Text", "sourceAtlas", &Renderable::Text::sourceAtlas,
 		"text", &Text::text, "align", &Text::align, "scaleToFit", &Text::scaleToFit);
 }
-template <> static void RegisterLuaUserType<Renderable::Sprite>(sol::state& lua)
+template <> inline void RegisterLuaUserType<Renderable::Sprite>(sol::state& lua)
 {
 	using Sprite = Renderable::Sprite;
 	lua.new_usertype<Sprite>("Renderable::Sprite", "sourceAtlas", &Renderable::Sprite::sourceAtlas,
 		"seriesName", &Sprite::seriesName, "currentIndex", &Sprite::currentIndex);
 }
 
-//template <> static void RegisterLuaUserType<Handle<B2Body>>(sol::state& lua)
+//template <> inline void RegisterLuaUserType<Handle<B2Body>>(sol::state& lua)
 //{
 //
 //}
 
-template <> static void RegisterLuaUserType<B2Shape::Type>(sol::state& lua)
+template <> inline void RegisterLuaUserType<B2Shape::Type>(sol::state& lua)
 {
 	lua.new_enum("B2ShapeType",
 		"Invalid", B2Shape::Type::Invalid,
@@ -219,7 +219,7 @@ template <> static void RegisterLuaUserType<B2Shape::Type>(sol::state& lua)
 	);
 }
 
-template <> static void RegisterLuaUserType<B2Shape>(sol::state& lua)
+template <> inline void RegisterLuaUserType<B2Shape>(sol::state& lua)
 {
 	lua.new_usertype<B2Shape>("B2Shape",
 		sol::constructors<B2Shape(), B2Shape(const Handle<B2Shape>&)>(),
@@ -243,7 +243,7 @@ template <> static void RegisterLuaUserType<B2Shape>(sol::state& lua)
 	);
 }
 
-template <> static void RegisterLuaUserType<B2Body::Type>(sol::state& lua)
+template <> inline void RegisterLuaUserType<B2Body::Type>(sol::state& lua)
 {
 	lua.new_enum("B2BodyType",
 		"Static", B2Body::Type::Static,
@@ -252,7 +252,7 @@ template <> static void RegisterLuaUserType<B2Body::Type>(sol::state& lua)
 	);
 }
 
-template <> static void RegisterLuaUserType<B2Body>(sol::state& lua)
+template <> inline void RegisterLuaUserType<B2Body>(sol::state& lua)
 {
 	lua.new_usertype<B2Body>("B2Body",
 		// Constructor
@@ -304,7 +304,7 @@ template <> static void RegisterLuaUserType<B2Body>(sol::state& lua)
 	);
 }
 
-template <> static void RegisterLuaUserType<B2Joint::Type>(sol::state& lua)
+template <> inline void RegisterLuaUserType<B2Joint::Type>(sol::state& lua)
 {
 	lua.new_enum("B2JointType",
 		"Distance", B2Joint::Type::Distance,
@@ -318,7 +318,7 @@ template <> static void RegisterLuaUserType<B2Joint::Type>(sol::state& lua)
 	);
 }
 
-template <> static void RegisterLuaUserType<B2DistanceJoint>(sol::state& lua)
+template <> inline void RegisterLuaUserType<B2DistanceJoint>(sol::state& lua)
 {
 	lua.new_usertype<B2DistanceJoint>("B2DistanceJoint",
 		// Constructor

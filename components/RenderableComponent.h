@@ -122,7 +122,7 @@ enum class TextAlign
     // rotation has changed
 struct GlyphCacheData
 {
-    GlyphInfo glyphInfo; // <- recompute only if text changed
+    Glyph glyph; // <- recompute only if text changed
     SDL_Rect destRect = { 0, 0, 0, 0 };  // <- recompute if text or transforms changed (align, dimensions, scale, etc)
     SDL_Point rotationCenter = { 0, 0 }; // <- recompute if text, transforms, or rotation changed
 };
@@ -151,7 +151,7 @@ struct TextRenderable
 struct SpriteRenderable 
 {
     Handle<SpriteSeriesAtlas> sourceAtlas; // "if i give you this, and you say you're the same generation 
-    SDL_Rect sourcePlot;                   // that plotted the atlas, then just render these rect coordinates
+    AtlasPlot sourcePlot;                   // that plotted the atlas, then just render these rect coordinates
                                            // on your texture without additional checks"
 };
 

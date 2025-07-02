@@ -1,6 +1,5 @@
 #pragma once
 #include "systems/SystemRegistry.h"
-#include "atlas/AtlasManager.h"
 #include "test/Fixtures.h"
 
 class B2Scene

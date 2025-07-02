@@ -3,7 +3,7 @@
 #include "../../components/SpriteAnimationsComponent.h"
 #include "../../sprite/SpriteAnimationSeriesMap.h"
 
-template <> static void RegisterLuaUserType<SpriteAnimationSeries>(sol::state& lua)
+template <> inline void RegisterLuaUserType<SpriteAnimationSeries>(sol::state& lua)
 {
 	if (!lua["SpriteAnimationSeries"].valid())
 	{
@@ -14,28 +14,20 @@ template <> static void RegisterLuaUserType<SpriteAnimationSeries>(sol::state& l
 	}
 }
 
-template <> static void RegisterLuaUserType<SpriteAnimationSeriesMap>(sol::state& lua)
+template <> inline void RegisterLuaUserType<SpriteAnimationSeriesMap>(sol::state& lua)
 {
 	if (!lua["SpriteAnimationSeriesMap"].valid())
 	{
 		lua.new_usertype<SpriteAnimationSeriesMap>("SpriteAnimationSeriesMap",
-			"Next", &SpriteAnimationSeriesMap::Next);
-		//"GetCurrent", 
-		//sol::overload(
-		//	static_cast<SpriteAnimationSeries*(SpriteAnimationSeriesMap::*)()>
-		//		(&SpriteAnimationSeriesMap::GetCurrent),
-		//	static_cast<const SpriteAnimationSeries*(SpriteAnimationSeriesMap::*)() const>
-		//		(&SpriteAnimationSeriesMap::GetCurrent)
-		//));
+			"NextInSeries", &SpriteAnimationSeriesMap::NextInSeries,
+			"SetCurrentIndex", &SpriteAnimationSeriesMap::SetCurrentIndex);
 	}
 }
 
-template <> static void RegisterLuaUserType<SpriteAnimations>(sol::state& lua)
+template <> inline void RegisterLuaUserType<SpriteAnimations>(sol::state& lua)
 {
 	if (!lua["SpriteAnimations"].valid())
 	{
-		lua.new_usertype<SpriteAnimations>("SpriteAnimations",
-			"map", &SpriteAnimations::map,
-			"dirty", &SpriteAnimations::dirty);
+		lua.new_usertype<SpriteAnimations>("SpriteAnimations", "map", &SpriteAnimations::map);
 	}
 }

@@ -39,9 +39,6 @@
     <ClCompile Include="atlas\SpriteSeriesAtlas.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="atlas\SkylinePacker.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="core\Error.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -61,9 +58,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="core\Logger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="atlas\AtlasManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="scripting\ScriptManager.cpp">
@@ -181,6 +175,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="deps\RectangleBinPack\SkylineBinPack.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="inputs\controller\GameControllerInputUpdater.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="inputs\controller\GameControllerInputMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\TimeSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\TimerSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -569,9 +575,6 @@
     <ClInclude Include="atlas\SpriteSeriesAtlas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="atlas\SkylinePacker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="atlas\Atlas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -609,9 +612,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\TerminalUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="atlas\AtlasManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scripting\ScriptManager.h">
@@ -936,6 +936,54 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="atlas\PackingTools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\controller\GameControllerInputUpdater.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\controller\GameControllerInputMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\controller\GameControllerInputSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\controller\GameControllerInputField.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\user_types\GameControllerLuaUserTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\GameControllerInputCallbacksComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\TimerComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\data\TimeEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\TimerSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\util\EntityStateComponentTemplate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\data\EventDataIncludes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\BaseCallbackKey.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\CallbackRegistryTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\EventCallbackRegistry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\callbacks\GameControllerCallbacks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\callbacks\AnimationCallbacks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

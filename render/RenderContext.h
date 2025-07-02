@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "../ecs/Ecs.h"
-#include "../atlas/AtlasManager.h"
 #include "../components/RenderableComponent.h"
 #include "../core/ScopedInvoker.h"
 #include "../core/commonObjects.h"
@@ -60,20 +59,7 @@ struct RenderCache
 };
 
 
-class RenderPipeline
-{
-public:
-    
 
-private:
-    void Reset()
-    {
-    }
-
-    impl::TextureManager* atlasStore_;
-    RenderCache cache_;
-    TextureModsOld initialMods_;
-};
 
 //class RenderOp
 //{

@@ -1,6 +1,6 @@
 #pragma once
 #include "../../inputs/controller/GameController.h"
-#include "../../inputs/InputDataCache.h"
+#include "../../inputs/controller/GameControllerInputUpdater.h"
 #include <unordered_map>
 #include <set>
 
@@ -12,9 +12,12 @@ public:
 
 	void HandleDeviceEvent(const SDL_Event& ev);
 	void HandleInputEvent(const SDL_Event& ev);
-	void UpdateEntities();
+	void Finalize();
 
 private:
-	std::unordered_map<SDL_JoystickID, std::pair<GameController, InputDataCache>> activeControllers_;
+	void UpdateControllerStateComponents();
+
+	std::unordered_map<SDL_JoystickID, 
+					   std::pair<GameController, GameControllerInputUpdater>> activeControllers_;
 };
 

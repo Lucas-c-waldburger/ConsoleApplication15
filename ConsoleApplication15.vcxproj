@@ -143,7 +143,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="atlas\AtlasManager.cpp" />
     <ClCompile Include="audio\Sound.cpp" />
     <ClCompile Include="components\util\TagsComponentUtils.cpp" />
     <ClCompile Include="core\WeightGenerator.cpp" />
@@ -154,6 +153,8 @@
     <ClCompile Include="deps\RectangleBinPack\ShelfNextFitBinPack.cpp" />
     <ClCompile Include="deps\RectangleBinPack\SkylineBinPack.cpp" />
     <ClCompile Include="ecs\EntityDestructor.cpp" />
+    <ClCompile Include="inputs\controller\GameControllerInputUpdater.cpp" />
+    <ClCompile Include="inputs\controller\GameControllerInputMap.cpp" />
     <ClCompile Include="sprite\SpriteAnimationSeriesMap.cpp" />
     <ClCompile Include="systems\EventCallbackSystem.cpp" />
     <ClCompile Include="events\EventDispatchListener.cpp" />
@@ -188,7 +189,6 @@
     <ClCompile Include="scripting\ScriptManager.cpp" />
     <ClCompile Include="sdl\SDLite.cpp" />
     <ClCompile Include="sdl\SDLUtils.cpp" />
-    <ClCompile Include="atlas\SkylinePacker.cpp" />
     <ClCompile Include="atlas\SpriteSeriesAtlas.cpp" />
     <ClCompile Include="systems\CollisionSystem.cpp" />
     <ClCompile Include="systems\RenderSystem.cpp" />
@@ -196,18 +196,22 @@
     <ClCompile Include="core\AABB.cpp" />
     <ClCompile Include="systems\SDLInputSystem.cpp" />
     <ClCompile Include="systems\SpriteAnimationSystem.cpp" />
+    <ClCompile Include="systems\TimerSystem.cpp" />
+    <ClCompile Include="systems\TimeSystem.cpp" />
     <ClCompile Include="test\ComponentTests.cpp" />
     <ClCompile Include="test\Fixtures.cpp" />
     <ClCompile Include="test\Premades.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="atlas\Atlas.h" />
-    <ClInclude Include="atlas\AtlasManager.h" />
     <ClInclude Include="atlas\AtlasMap.h" />
     <ClInclude Include="atlas\PackingTools.h" />
     <ClInclude Include="atlas\ResourcePacket.h" />
     <ClInclude Include="atlas\TextureRepository.h" />
     <ClInclude Include="audio\Sound.h" />
+    <ClInclude Include="callbacks\BaseCallbackKey.h" />
+    <ClInclude Include="callbacks\CallbackRegistryTable.h" />
+    <ClInclude Include="callbacks\EventCallbackRegistry.h" />
     <ClInclude Include="camera\Projection.h" />
     <ClInclude Include="components\builder\CameraTargetComponentBuilder.h" />
     <ClInclude Include="components\builder\ColliderComponentBuilder.h" />
@@ -217,7 +221,10 @@
     <ClInclude Include="components\ComponentIncludes.h" />
     <ClInclude Include="components\ComponentTypeList.h" />
     <ClInclude Include="components\EventProductionFlagsComponent.h" />
+    <ClInclude Include="components\GameControllerInputCallbacksComponent.h" />
     <ClInclude Include="components\SpriteAnimationsComponent.h" />
+    <ClInclude Include="components\TimerComponent.h" />
+    <ClInclude Include="components\util\EntityStateComponentTemplate.h" />
     <ClInclude Include="components\util\TagsComponentUtils.h" />
     <ClInclude Include="core\Algorithms.h" />
     <ClInclude Include="core\CommonEntityMethods.h" />
@@ -239,9 +246,16 @@
     <ClInclude Include="deps\RectangleBinPack\SkylineBinPack.h" />
     <ClInclude Include="ecs\EntityDestructor.h" />
     <ClInclude Include="events\data\EntityActions.h" />
+    <ClInclude Include="events\data\EventDataIncludes.h" />
+    <ClInclude Include="events\data\TimeEvents.h" />
     <ClInclude Include="events\EventCallbackFn.h" />
     <ClInclude Include="events\EventDispatchListenerInterface.h" />
+    <ClInclude Include="inputs\controller\GameControllerInputField.h" />
+    <ClInclude Include="inputs\controller\GameControllerInputUpdater.h" />
+    <ClInclude Include="inputs\controller\GameControllerInputMap.h" />
+    <ClInclude Include="inputs\controller\GameControllerInputSource.h" />
     <ClInclude Include="scripting\TypedLuaFunction.h" />
+    <ClInclude Include="scripting\user_types\GameControllerLuaUserTypes.h" />
     <ClInclude Include="scripting\user_types\RenderableLuaUserTypes.h" />
     <ClInclude Include="scripting\user_types\SpriteAnimationLuaUserTypes.h" />
     <ClInclude Include="scripting\user_types\TransformLuaUserTypes.h" />
@@ -437,7 +451,6 @@
     <ClInclude Include="scripting\ScriptManager.h" />
     <ClInclude Include="sdl\SDLite.h" />
     <ClInclude Include="sdl\SDLUtils.h" />
-    <ClInclude Include="atlas\SkylinePacker.h" />
     <ClInclude Include="atlas\SpriteSeriesAtlas.h" />
     <ClInclude Include="systems\CollisionSystem.h" />
     <ClInclude Include="systems\RenderSystem.h" />
@@ -449,6 +462,9 @@
     <ClInclude Include="systems\System.h" />
     <ClInclude Include="systems\SystemManager.h" />
     <ClInclude Include="systems\SystemRegistry.h" />
+    <ClInclude Include="systems\TimerSystem.h" />
+    <ClInclude Include="test\callbacks\AnimationCallbacks.h" />
+    <ClInclude Include="test\callbacks\GameControllerCallbacks.h" />
     <ClInclude Include="test\ComponentTests.h" />
     <ClInclude Include="test\Fixtures.h" />
     <ClInclude Include="test\Premades.h" />

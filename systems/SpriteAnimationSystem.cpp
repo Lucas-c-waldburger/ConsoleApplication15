@@ -2,51 +2,39 @@
 #include "../ecs/Ecs.h"
 #include "../atlas/TextureRepository.h"
 
-void UpdateSpriteAnimations(const TextureRepository& textureRepo)
+namespace {
+
+bool NeedsAnimationHandling(const SpriteAnimations& animations, const NewRenderable& renderable)
 {
+	return animations.map.NeedsUpdate() && animations.map.HasCurrent() && 
+		   std::holds_alternative<SpriteRenderable>(renderable.renderData);
+}
+
+} // unnamed
+
+void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
+{
+	// TODO: Figure out if we can just feed &NeedsHandling directly as filter arg
 	auto entities = ECS::GetAllEntitiesWith<SpriteAnimations, NewRenderable>(
-		[](const SpriteAnimations& spriteAnims, const NewRenderable&) {
-			return spriteAnims.dirty;
+		[](const SpriteAnimations& animations, const NewRenderable& renderable) {
+			return NeedsAnimationHandling(animations, renderable);
 		});
 
 	for (auto& entity : entities)
 	{
-		auto& animations = entity.GetComponent<SpriteAnimations>();
-		if (!animations.map.HasCurrent())
-		{
-			animations.dirty = false;
-			continue;
-		}
+		auto& animations = entity.GetComponent<SpriteAnimations>().map;
 
-		auto& current = *animations.map.GetCurrent();
-		if (current.spritePlots.empty())
-		{
-			LOG_WARNING("Sprite animation series's sprite plots was empty");
-
-			animations.dirty = false;
-			continue;
-		}
-
-		if (current.index >= current.spritePlots.size())
-		{
-			LOG_WARNING("Sprite animation series had an out-of-bounds index");
-
-			current.index = current.spritePlots.size() - 1;
-		}
+		const auto* currentSeries = animations.GetCurrent();
+		assert(currentSeries);
 
 		auto& renderable = entity.GetComponent<NewRenderable>();
-		auto* spriteRenderable = std::get_if<SpriteRenderable>(&renderable.renderData);
-		if (!spriteRenderable)
-		{
-			LOG_WARNING("Entity had sprite animation series component but no sprite renderable");
+		auto& spriteRenderable = std::get<SpriteRenderable>(renderable.renderData);
 
-			animations.dirty = false;
-			continue;
-		}
+		assert(currentSeries->index < currentSeries->spritePlots.size());
 
-		spriteRenderable->sourceAtlas = current.sourceAtlas;
-		spriteRenderable->sourcePlot = current.spritePlots[current.index];
+		spriteRenderable.sourceAtlas = currentSeries->sourceAtlas;
+		spriteRenderable.sourcePlot = currentSeries->spritePlots[currentSeries->index];
 
-		animations.dirty = false;
+		animations.MarkUpdated();
 	}
 }

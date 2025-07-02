@@ -4,7 +4,7 @@
 
 
 // TRANSFORM
-template <> static void RegisterLuaUserType<Transform>(sol::state& lua)
+template <> inline void RegisterLuaUserType<Transform>(sol::state& lua)
 {
 	if (!lua["Transform"].valid())
 	{

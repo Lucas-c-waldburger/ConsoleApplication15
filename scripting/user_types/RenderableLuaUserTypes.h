@@ -3,7 +3,7 @@
 #include "../../components/RenderableComponent.h"
 
 // RENDER PROFILE
-template <> static void RegisterLuaUserType<SDL_RendererFlip>(sol::state& lua)
+template <> inline void RegisterLuaUserType<SDL_RendererFlip>(sol::state& lua)
 {
 	if (!lua["SDL_RendererFlip"].valid())
 	{
@@ -14,7 +14,7 @@ template <> static void RegisterLuaUserType<SDL_RendererFlip>(sol::state& lua)
 	}
 }
 
-template <> static void RegisterLuaUserType<SDL_BlendMode>(sol::state& lua)
+template <> inline void RegisterLuaUserType<SDL_BlendMode>(sol::state& lua)
 {
 	if (!lua["SDL_BlendMode"].valid())
 	{
@@ -28,7 +28,7 @@ template <> static void RegisterLuaUserType<SDL_BlendMode>(sol::state& lua)
 	}
 }
 
-template <> static void RegisterLuaUserType<TextureMods>(sol::state& lua)
+template <> inline void RegisterLuaUserType<TextureMods>(sol::state& lua)
 {
 	if (!lua["TextureMods"].valid())
 	{
@@ -38,7 +38,7 @@ template <> static void RegisterLuaUserType<TextureMods>(sol::state& lua)
 	}
 }
 
-template <> static void RegisterLuaUserType<DebugDraw>(sol::state& lua)
+template <> inline void RegisterLuaUserType<DebugDraw>(sol::state& lua)
 {
 	if (!lua["DebugDraw"].valid())
 	{
@@ -46,7 +46,7 @@ template <> static void RegisterLuaUserType<DebugDraw>(sol::state& lua)
 	}
 }
 
-template <> static void RegisterLuaUserType<DebugDrawSet>(sol::state& lua)
+template <> inline void RegisterLuaUserType<DebugDrawSet>(sol::state& lua)
 {
 	if (!lua["DebugDrawSet"].valid())
 	{
@@ -56,7 +56,7 @@ template <> static void RegisterLuaUserType<DebugDrawSet>(sol::state& lua)
 	}
 }
 
-template <> static void RegisterLuaUserType<RenderProfile>(sol::state& lua)
+template <> inline void RegisterLuaUserType<RenderProfile>(sol::state& lua)
 {
 	if (!lua["RenderProfile"].valid())
 	{
@@ -70,7 +70,7 @@ template <> static void RegisterLuaUserType<RenderProfile>(sol::state& lua)
 }
 
 // TEXT RENDERABLE
-template <> static void RegisterLuaUserType<TextAlign>(sol::state& lua)
+template <> inline void RegisterLuaUserType<TextAlign>(sol::state& lua)
 {
 	if (!lua["TextAlign"].valid())
 	{
@@ -81,29 +81,29 @@ template <> static void RegisterLuaUserType<TextAlign>(sol::state& lua)
 	}
 }
 
-template <> static void RegisterLuaUserType<GlyphInfo>(sol::state& lua)
+template <> inline void RegisterLuaUserType<Glyph>(sol::state& lua)
 {
 	if (!lua["GlyphInfo"].valid())
 	{
-		lua.new_usertype<GlyphInfo>("GlyphInfo",
-			"character", &GlyphInfo::character,
-			"atlasRect", &GlyphInfo::atlasRect,
-			"advance", &GlyphInfo::advance);
+		lua.new_usertype<Glyph>("GlyphInfo",
+			"character", &Glyph::character,
+			"plot", &Glyph::plot,
+			"advance", &Glyph::advance);
 	}
 }
 
-template <> static void RegisterLuaUserType<GlyphCacheData>(sol::state& lua)
+template <> inline void RegisterLuaUserType<GlyphCacheData>(sol::state& lua)
 {
 	if (!lua["GlyphCacheData"].valid())
 	{
 		lua.new_usertype<GlyphCacheData>("GlyphCacheData",
-			"glyphInfo", &GlyphCacheData::glyphInfo,
+			"glyph", &GlyphCacheData::glyph,
 			"destRect", &GlyphCacheData::destRect,
 			"rotationCenter", &GlyphCacheData::rotationCenter);
 	}
 }
 
-template <> static void RegisterLuaUserType<Handle<GlyphAtlas>>(sol::state& lua)
+template <> inline void RegisterLuaUserType<Handle<GlyphAtlas>>(sol::state& lua)
 {
 	if (!lua["Handle<GlyphAtlas>"].valid())
 	{
@@ -117,7 +117,7 @@ template <> static void RegisterLuaUserType<Handle<GlyphAtlas>>(sol::state& lua)
 	}
 }
 
-template <> static void RegisterLuaUserType<TextRenderable>(sol::state& lua)
+template <> inline void RegisterLuaUserType<TextRenderable>(sol::state& lua)
 {
 	if (!lua["DirtyFlag"].valid())
 	{
@@ -138,7 +138,7 @@ template <> static void RegisterLuaUserType<TextRenderable>(sol::state& lua)
 }
 
 // SPRITE RENDERABLE
-template <> static void RegisterLuaUserType<Handle<SpriteSeriesAtlas>>(sol::state& lua)
+template <> inline void RegisterLuaUserType<Handle<SpriteSeriesAtlas>>(sol::state& lua)
 {
 	if (!lua["Handle<SpriteSeriesAtlas>"].valid())
 	{
@@ -152,7 +152,7 @@ template <> static void RegisterLuaUserType<Handle<SpriteSeriesAtlas>>(sol::stat
 	}
 }
 
-template <> static void RegisterLuaUserType<SpriteRenderable>(sol::state& lua)
+template <> inline void RegisterLuaUserType<SpriteRenderable>(sol::state& lua)
 {
 	if (!lua["SpriteRenderable"].valid())
 	{
@@ -163,7 +163,7 @@ template <> static void RegisterLuaUserType<SpriteRenderable>(sol::state& lua)
 }
 
 // NEW RENDERABLE COMPONENT
-template <> static void RegisterLuaUserType<NewRenderable>(sol::state& lua)
+template <> inline void RegisterLuaUserType<NewRenderable>(sol::state& lua)
 {
 	if (!lua["NewRenderable"].valid())
 	{
@@ -184,7 +184,7 @@ namespace lua::usergroup {
 //	DebugDrawSet,
 //	RenderProfile,
 //	TextAlign,
-//	GlyphInfo,
+//	Glyph,
 //	Handle<GlyphAtlas>,
 //	TextRenderable,
 //	Handle<SpriteSeriesAtlas>,

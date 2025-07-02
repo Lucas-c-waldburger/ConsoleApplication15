@@ -11,7 +11,6 @@
 #include "core/Hooks.h"
 #include "systems/EventCallbackSystem.h"
 #include "ecs/ECS.h"
-#include "atlas/AtlasManager.h" 
 #include "systems/PhysicsSystem.h"
 #include "test/Fixtures.h"
 #include "test/Premades.h"

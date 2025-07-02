@@ -237,7 +237,7 @@ constexpr auto invoke(Type T::*member, Self&& self, Args&&... args) noexcept(
         std::forward<Args>(args)...)) {
   return (std::forward<Self>(self)->*member)(std::forward<Args>(args)...);
 }
-/// Invokes the given pointer to a scalar member by reference
+/// Invokes the given pointer to a trigger member by reference
 template <typename T, typename Type, typename Self>
 constexpr auto
 invoke(Type T::*member,
@@ -245,7 +245,7 @@ invoke(Type T::*member,
     -> decltype(std::forward<Self>(self).*member) {
   return (std::forward<Self>(self).*member);
 }
-/// Invokes the given pointer to a scalar member by pointer
+/// Invokes the given pointer to a trigger member by pointer
 template <typename T, typename Type, typename Self>
 constexpr auto
 invoke(Type T::*member,

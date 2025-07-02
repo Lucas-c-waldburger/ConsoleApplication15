@@ -1,5 +1,4 @@
 #include "SpriteSeriesAtlas.h"
-#include "SkylinePacker.h"
 #include "../sprite/SpriteAnimationSeries.h"
 #include "../core/Algorithms.h"
 #include "../core/Result.h"
@@ -8,6 +7,7 @@
 #include <algorithm>
 #include <set>
 #include <string>
+#include <SDL_image.h>
 
 namespace {
 
@@ -20,165 +20,7 @@ struct SpriteSurface
 
 } // unnamed
 
-bool SpriteSeriesAtlas::Load(SDL_Renderer* renderer, AtlasInfo args)
-{
-	assert(renderer);
-
-	atlasInfo_ = std::move(args);
-
-	using LoadingMap = std::unordered_map<std::string_view,
-		std::vector<std::pair<SpriteInfo, SDL_Surface*>>>;
-	LoadingMap loadingMap;
-	loadingMap.reserve(atlasInfo_.seriesDatas.size());
-
-	SDL_Surface* atlasSurface = nullptr;
-
-	auto freeResources = [this, &loadingMap, &atlasSurface]() {
-		for (auto& [_, spriteSurfaces] : loadingMap)
-		{
-			for (auto& [_, surface] : spriteSurfaces)
-			{
-				if (surface) { SDL_FreeSurface(surface); }
-			}
-		}
-		if (atlasSurface) { SDL_FreeSurface(atlasSurface); }
-
-		spriteSeriesMap_.clear();
-	};
-
-	AtlasSizeAccumulator sizeAccumulator{};
-
-	// load our surfaces, accumulate size info as we do
-	for (const auto& series : atlasInfo_.seriesDatas)
-	{
-		auto& spriteInfoSurfaces = loadingMap[series.seriesName];
-		spriteInfoSurfaces.reserve(series.spriteFilepaths.size());
-
-		for (int i = 0; i < series.spriteFilepaths.size(); i++)
-		{
-			const auto& filePath = series.spriteFilepaths[i];
-
-			auto& [newSpriteInfo, newSurface] = spriteInfoSurfaces.emplace_back();
-
-			newSurface = IMG_Load(filePath.c_str());
-			if (!newSurface)
-			{
-				std::cerr << "Failed to load sprite from path : " << filePath;
-
-				freeResources();
-
-				return false;
-			}
-
-			// this is where index actually gets assigned to the SpriteInfos
-			newSpriteInfo.index = i;
-			newSpriteInfo.atlasRect = { 0, 0, newSurface->w, newSurface->h };
-
-			sizeAccumulator.totalArea += newSurface->w * newSurface->h;
-			sizeAccumulator.maxDims.w = std::max(sizeAccumulator.maxDims.w, newSurface->w);
-			sizeAccumulator.maxDims.h = std::max(sizeAccumulator.maxDims.h, newSurface->h);
-		}
-	}
-
-	// surfaces all loaded, lets get atlas texture's side length from our accumulator
-	int minSide = static_cast<int>(std::ceil(std::sqrt(sizeAccumulator.totalArea)));
-	int atlasSideLen = GetNextPowerOfTwo(minSide);
-
-	// make atlas and blit surfaces to it
-	atlasSurface = SDL_CreateRGBSurfaceWithFormat(
-		0, atlasSideLen, atlasSideLen, 32, SDL_PIXELFORMAT_RGBA32);
-
-	SkylinePacker skylinePacker{ atlasSideLen, atlasSideLen };
-
-	for (auto& [seriesName, spriteSurfaces] : loadingMap)
-	{
-		for (auto& [spriteInfo, surface] : spriteSurfaces)
-		{
-			auto placementPos = skylinePacker.Insert(surface->w, surface->h);
-
-			assert(placementPos.has_value());
-
-			spriteInfo.atlasRect.x = placementPos->x;
-			spriteInfo.atlasRect.y = placementPos->y;
-
-			SDL_Rect target = spriteInfo.atlasRect;
-
-			if (SDL_BlitSurface(surface, nullptr, atlasSurface, &target) == -1)
-			{
-				std::cerr << "Failed to blit surface : " << SDL_GetError();
-
-				freeResources();
-
-				return false;
-			}
-
-			// make sure we didn't try to render out of bounds of the atlas texture
-			//assert(spriteInfo.atlasRect == target);
-
-			spriteSeriesMap_[seriesName].emplace_back(std::move(spriteInfo));
-
-			SDL_FreeSurface(surface);
-		}
-	}
-
-	atlasTexture_ = SDL_CreateTextureFromSurface(renderer, atlasSurface);
-
-	SDL_FreeSurface(atlasSurface);
-
-	if (!atlasTexture_)
-	{
-		std::cerr << "Failed to create atlas texture : " << SDL_GetError();
-
-		spriteSeriesMap_.clear();
-
-		return false;
-	}
-
-	SDL_SetTextureBlendMode(atlasTexture_, SDL_BLENDMODE_BLEND);
-
-	return true;
-}
-
-SpriteInfo SpriteSeriesAtlas::GetSprite(std::string_view seriesName, size_t index, bool wrapOnOutOfRange) const
-{
-	auto it = spriteSeriesMap_.find(seriesName);
-
-	if (it == spriteSeriesMap_.end()) { return {}; }
-
-	assert(!it->second.empty());
-
-	if (it->second.size() >= index)
-	{
-		return (wrapOnOutOfRange) ? it->second[0] : SpriteInfo{};
-	}
-
-	return it->second[index];
-}
-
-SpriteAnimationSeries SpriteSeriesAtlas::GetSpriteAnimationSeries(std::string_view seriesName) const
-{
-	auto it = spriteSeriesMap_.find(seriesName);
-	if (it == spriteSeriesMap_.end()) 
-	{ 
-		return {}; 
-	}
-
-	assert(!it->second.empty());
-
-	SpriteAnimationSeries animSeries{ 
-		.sourceAtlas = GetHandle(),
-		.index = 0,
-	};
-
-	animSeries.spritePlots.resize(it->second.size());
-
-	std::transform(it->second.begin(), it->second.end(), animSeries.spritePlots.begin(),
-		[](const auto& spriteInfo) { return spriteInfo.atlasRect; });
-
-	return animSeries;
-}
-
-std::vector<AtlasPlot> SpriteAtlas::GetSpritePlots(std::string_view seriesName) const
+std::vector<AtlasPlot> SpriteSeriesAtlas::GetSpritePlots(std::string_view seriesName) const
 {
 	if (!IsLoaded())
 	{
@@ -190,7 +32,7 @@ std::vector<AtlasPlot> SpriteAtlas::GetSpritePlots(std::string_view seriesName) 
 	return (it != plotsBySeries_.end()) ? it->second : std::vector<AtlasPlot>{};
 }
 
-std::vector<std::string_view> SpriteAtlas::GetSeriesNames() const
+std::vector<std::string_view> SpriteSeriesAtlas::GetSeriesNames() const
 {
 	if (!IsLoaded())
 	{
@@ -205,7 +47,7 @@ std::vector<std::string_view> SpriteAtlas::GetSeriesNames() const
 	return seriesNames;
 }
 
-Result<Void> SpriteAtlas::LoadImpl(SDL_Renderer* renderer, SpriteSeriesResourcePackets&& packets)
+Result<Void> SpriteSeriesAtlas::LoadImpl(SDL_Renderer* renderer, SpriteSeriesResourcePackets&& packets)
 {
 	plotsBySeries_.clear();
 
@@ -213,6 +55,8 @@ Result<Void> SpriteAtlas::LoadImpl(SDL_Renderer* renderer, SpriteSeriesResourceP
 	{
 		return MAKE_ERROR("Sprite series resource packets was empty");
 	}
+
+	resourcePackets_ = std::move(packets);
 
 	int numSprites = std::accumulate(resourcePackets_.begin(), resourcePackets_.end(), 0,
 		[](int sum, const auto& packet) { return sum + static_cast<int>(packet.GetFilepaths().size()); });
@@ -251,7 +95,7 @@ Result<Void> SpriteAtlas::LoadImpl(SDL_Renderer* renderer, SpriteSeriesResourceP
 
 		for (size_t i = 0; i < filepaths.size(); i++)
 		{
-			auto& [seriesName, plot, surface] = spriteSurfaces[i];
+			auto& [seriesName, _, surface] = spriteSurfaces[i];
 
 			seriesName = metadata.seriesName;
 
@@ -263,14 +107,11 @@ Result<Void> SpriteAtlas::LoadImpl(SDL_Renderer* renderer, SpriteSeriesResourceP
 				return MAKE_ERROR_FMT("Error loading surface: {}", SDL_GetError());
 			}
 
-			plot.rect.w = surface->w;
-			plot.rect.h = surface->h;
-
-			if (plot.rect.w <= 0 || plot.rect.h <= 0)
+			if (surface->w <= 0 || surface->h <= 0)
 			{
 				freeResources();
 
-				return MAKE_ERROR_FMT("Surface dimensions invalid: [{}, {}]", plot.rect.w, plot.rect.h);
+				return MAKE_ERROR_FMT("Surface dimensions invalid: [{}, {}]", surface->w, surface->h);
 			}
 
 			totalArea += surface->w * surface->h;
@@ -290,9 +131,11 @@ Result<Void> SpriteAtlas::LoadImpl(SDL_Renderer* renderer, SpriteSeriesResourceP
 	float idealSideLen = std::ceil(std::sqrt(static_cast<float>(totalArea)));
 	int atlasSideLen = GetNextPowerOfTwo(static_cast<int>(idealSideLen));
 
-	bool success = false;
-	while (!success)
+	bool done = false;
+	while (!done)
 	{
+		done = true;
+
 		if (atlasSideLen > (1 << 30))
 		{
 			freeResources();
@@ -300,37 +143,37 @@ Result<Void> SpriteAtlas::LoadImpl(SDL_Renderer* renderer, SpriteSeriesResourceP
 			return MAKE_ERROR("Not all rects could be packed in the maximum atlas size");
 		}
 
-		binPack_.Init(atlasSideLen, atlasSideLen);
+		binPack_.Init(atlasSideLen, atlasSideLen, false);
 
 		for (auto& [seriesName, plot, surface] : spriteSurfaces)
 		{
-			rbp::Rect packed = binPack_.Insert(plot.rect.w, plot.rect.h,
+			plot.rotation = 0.0f; // undo any rotation from a prev pass
+
+			rbp::Rect packed = binPack_.Insert(surface->w, surface->h,
 											   rbp::MaxRectsBinPack::RectBestAreaFit);
 			if (!WasRectPacked(packed))
 			{
-				atlasSideLen = GetNextPowerOfTwo(atlasSideLen);
+				atlasSideLen *= 2;
 
-				continue;
+				done = false;
+
+				break;
 			}
 
-			plot.rect.x = packed.x;
-			plot.rect.y = packed.y;
+			plot.rect = RbpToSDLRect(packed);
 
-			if (WasFlipped(packed, plot.rect))
+			bool wasFlipped = (plot.rect.w == surface->h && plot.rect.h == surface->w);
+			if (wasFlipped)
 			{
 				plot.rotation = 90.0f;
 			}
-
-			plotsBySeries_[seriesName].emplace_back(plot);
 		}
-
-		success = true;
 	}
 
 	atlasSurface = SDL_CreateRGBSurfaceWithFormat(
 		0, atlasSideLen, atlasSideLen, 32, SDL_PIXELFORMAT_RGBA32);
 
-	for (auto& [_, plot, surface] : spriteSurfaces)
+	for (auto& [seriesName, plot, surface] : spriteSurfaces)
 	{
 		int blitted = SDL_BlitSurface(surface, nullptr, atlasSurface, &plot.rect);
 		if (blitted < 0)
@@ -341,9 +184,14 @@ Result<Void> SpriteAtlas::LoadImpl(SDL_Renderer* renderer, SpriteSeriesResourceP
 		}
 
 		SDL_FreeSurface(surface);
+
+		auto it = plotsBySeries_.find(seriesName);
+		assert(it != plotsBySeries_.end());
+		
+		it->second.emplace_back(plot);
 	}
 
-	atlasTexture_ = SDL_CreateTextureFromSurface(renderer, atlasSurface);
+	atlasTexture_ = MakeUniqueTexturePtrFromSurface(renderer, atlasSurface);
 
 	SDL_FreeSurface(atlasSurface);
 
@@ -354,7 +202,7 @@ Result<Void> SpriteAtlas::LoadImpl(SDL_Renderer* renderer, SpriteSeriesResourceP
 		return MAKE_ERROR_FMT("Failed to create atlas texture: {}", SDL_GetError());
 	}
 
-	SDL_SetTextureBlendMode(atlasTexture_, SDL_BLENDMODE_BLEND);
+	SDL_SetTextureBlendMode(atlasTexture_.get(), SDL_BLENDMODE_BLEND);
 
 	return Void{};
 }

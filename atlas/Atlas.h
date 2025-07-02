@@ -1,38 +1,27 @@
 #pragma once
-#include "../sdl/SDLite.h"
+#include "../sdl/SDLUtils.h"
 #include "../core/Handle.h"
 #include "../deps/RectangleBinPack/MaxRectsBinPack.h"
 #include "ResourcePacket.h"
 #include "../core/Result.h"
 
-template <typename T> struct AtlasInfo;
+using UniqueTexturePtr = std::unique_ptr<SDL_Texture, 
+	decltype([](SDL_Texture* t) { SDL_DestroyTexture(t); })>;
 
-template <typename Derived>
-class Atlas
+inline UniqueTexturePtr MakeUniqueTexturePtrFromSurface(SDL_Renderer* renderer, SDL_Surface* surface)
 {
-public:
-	using AtlasInfo = AtlasInfo<Derived>;
-
-	Atlas() = default;
-	Atlas(const Handle<Derived>& handle) : handle_(handle) {}
-	~Atlas() { if (atlasTexture_) { SDL_DestroyTexture(atlasTexture_); } }
-
-	SDL_Texture* GetAtlasTexture() const { return atlasTexture_; }
-	const AtlasInfo& GetAtlasInfo() const { return atlasInfo_; }
-	const Handle<Derived>& GetHandle() const { return handle_; }
-	bool IsLoaded() const { return atlasTexture_ != nullptr; }
-
-protected:
-	SDL_Texture* atlasTexture_ = nullptr;
-	AtlasInfo atlasInfo_;
-	Handle<Derived> handle_;
-};
-
+	return UniqueTexturePtr{ SDL_CreateTextureFromSurface(renderer, surface) };
+}
 
 struct AtlasPlot
 {
 	SDL_Rect rect = { 0, 0, 0, 0 };
-	float rotation = 0.0f;
+	float rotation = 0.0f; 
+
+	friend constexpr bool operator==(const AtlasPlot& lhs, const AtlasPlot& rhs)
+	{
+		return lhs.rect == rhs.rect && lhs.rotation == rhs.rotation;
+	}
 };
 
 template <typename Derived>
@@ -40,9 +29,26 @@ class TextureAtlas
 {
 public:
 	TextureAtlas() = default;
-	~TextureAtlas() { if (atlasTexture_) { SDL_DestroyTexture(atlasTexture_); } }
+	~TextureAtlas() = default;
 
-	SDL_Texture* GetAtlasTexture() const { return atlasTexture_; }
+	TextureAtlas(const TextureAtlas&) = delete;
+	TextureAtlas& operator=(const TextureAtlas&) = delete;
+
+	TextureAtlas(TextureAtlas&& other) noexcept : atlasTexture_(std::move(other.atlasTexture_)),
+		binPack_(std::move(other.binPack_)), handle_(other.handle_) {}
+
+	TextureAtlas& operator=(TextureAtlas&& other) noexcept
+	{
+		if (this != &other)
+		{
+			atlasTexture_ = std::move(other.atlasTexture_);
+			binPack_ = std::move(other.binPack_);
+			handle_ = other.handle_;
+		}
+		return *this;
+	}
+
+	SDL_Texture* GetAtlasTexture() const { return atlasTexture_.get(); }
 	const Handle<Derived>& GetHandle() const { return handle_; }
 
 	template <typename LoadData>
@@ -51,7 +57,7 @@ public:
 	bool IsLoaded() const { return handle_.IsValid() && atlasTexture_; }
 
 protected:
-	SDL_Texture* atlasTexture_ = nullptr;
+	UniqueTexturePtr atlasTexture_ = nullptr;
 	rbp::MaxRectsBinPack binPack_;
 
 private:
@@ -65,18 +71,13 @@ inline Result<Handle<Derived>> TextureAtlas<Derived>::Load(SDL_Renderer* rendere
 {
 	// clear our last state
 	handle_ = {};
-
-	if (atlasTexture_)
-	{
-		SDL_DestroyTexture(atlasTexture_);
-		atlasTexture_ = nullptr;
-	}
+	atlasTexture_.reset();
 
 	// do actual loading
-	auto result = static_cast<Derived*>(this)->LoadImpl(renderer, std::forward<LoadData>(data));
+	auto loadResult = static_cast<Derived*>(this)->LoadImpl(renderer, std::forward<LoadData>(data));
 
 	// if success, generate a new handle and return it
-	if (result.Success())
+	if (loadResult.Success())
 	{
 		handle_ = Handle<Derived>::Create();
 
@@ -84,12 +85,8 @@ inline Result<Handle<Derived>> TextureAtlas<Derived>::Load(SDL_Renderer* rendere
 	}
 	else
 	{
-		if (atlasTexture_)
-		{
-			SDL_DestroyTexture(atlasTexture_);
-			atlasTexture_ = nullptr;
-		}
+		atlasTexture_.reset();
 
-		return result.GetError();
+		return loadResult.GetError();
 	}
 }

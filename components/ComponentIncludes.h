@@ -15,4 +15,6 @@
 #include "TransformComponent.h"
 #include "SpriteAnimationsComponent.h"
 #include "EventProductionFlagsComponent.h"
+#include "GameControllerInputCallbacksComponent.h"
+#include "TimerComponent.h"
 

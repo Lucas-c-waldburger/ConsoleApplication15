@@ -5,19 +5,11 @@
 #include <typeindex>
 #include "../physics/B2World.h"
 #include "../scripting/ScriptManager.h"
-#include "../atlas/AtlasManager.h"
 #include "../core/Monitoring.h"
 #include "../core/Hooks.h"
 #include "../core/Counter.h"
 #include "../systems/SystemManager.h"
 #include "../atlas/TextureRepository.h"
-
-template <typename... Ts>
-inline std::array<std::type_index, sizeof...(Ts)> MakeTypeIndexArray()
-{
-	return { std::type_index(typeid(Ts))... };
-}
-
 
 class SceneFixture
 {
@@ -31,45 +23,6 @@ public:
 		FileChangeMonitor fileMonitor;
 		Handle<HookAttachment> hookAttachmentHandle;
 	};
-
-	//template <typename...Ts> requires (sizeof...(Ts) == TypeList<SYSTEM_REGISTRY>::size)
-	/*class SystemUpdateOrder
-	{
-	public:
-		SystemUpdateOrder() : order_(MakeTypeIndexArray<Ts...>()) {}
-
-		template <SomeTypeInPack<SYSTEM_REGISTRY> T>
-		Result<Void> MarkUpdated()
-		{
-			if (nextIndex_ >= order_.size())
-			{
-				return MAKE_ERROR("LoopStart was not called first!");
-			}
-
-			if (order_[nextIndex_] != typeid(T))
-			{
-				return MAKE_ERROR_FMT("Systems updated out of order! Expected '{}', got '{}'",
-					order_[nextIndex_].name(), typeid(T).name());
-			}
-
-			++nextIndex_;
-
-			return Void{};
-		}
-
-		void Reset() { nextIndex_ = 0; }
-
-	private:
-		std::array<std::type_index, TypeList<SYSTEM_REGISTRY>::size> order_;
-		size_t nextIndex_ = 0;
-	};*/
-
-	/*using SystemOrder = SystemUpdateOrder<
-		EventSystem,
-		PhysicsSystem,
-		CameraSystem,
-		RenderSystem
-	>;*/
 
 	SceneFixture() = default;
 	~SceneFixture();
@@ -91,15 +44,18 @@ public:
 	ScriptManager& GetScripts() { return scripts_; }
 
 	// helpers
-	//template <SomeTextureAtlas T>
-	//Result<Handle<T>> LoadTextureAtlas(AtlasInfo<T> info)
-	//{
-	//	return textures_.LoadAtlas(SDLite::Renderer(), std::move(info));
-	//}
-	template <SomeTextureAtlas T>
-	Result<Handle<T>> LoadTextureAtlas(AtlasInfo<T> info)
+	template <SupportedAtlasType T, typename LoadData>
+	Result<Handle<T>> LoadTextureAtlas(LoadData&& loadData)
 	{
-		return textureRepo_.LoadAtlas(SDLite::Renderer(), std::move(info));
+		return textureRepo_.LoadNewAtlas<T>(SDLite::Renderer(), std::forward<LoadData>(loadData));
+	}
+	Result<Handle<SpriteSeriesAtlas>> LoadNewSpriteSeriesAtlas(SpriteSeriesResourcePackets&& packets)
+	{
+		return textureRepo_.LoadNewAtlas<SpriteSeriesAtlas>(SDLite::Renderer(), std::move(packets));
+	}
+	Result<Handle<GlyphAtlas>> LoadNewGlyphAtlas(FontResourcePacket& packet)
+	{
+		return textureRepo_.LoadNewAtlas<GlyphAtlas>(SDLite::Renderer(), std::move(packet));
 	}
 	
 	template <typename...Ts>
@@ -109,8 +65,8 @@ public:
 	static Result<std::shared_ptr<SceneFixture>> GetInstance();
 
 private:
-	//SystemOrder systemOrder_;
-	//impl::TextureManager textures_;
+	void UpdateTimers();
+
 	TextureRepository textureRepo_;
 	impl::SystemManager systems_;
 	HookManager hooks_;

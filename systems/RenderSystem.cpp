@@ -4,17 +4,16 @@
 #include "../atlas/GlyphAtlas.h"
 #include "../physics/B2Shape.h"
 #include "../camera/Camera.h"
-#include "SpriteAnimationSystem.h"
 
 
 namespace
 {
 
-void Render(SDL_Renderer* renderer, SDL_Texture* texture, AtlasPlot& atlasPlot, SDL_Rect& destRect,
-			const Transform& transform, SDL_Point* rotationCenter, const RenderProfile& profile)
+void Draw(SDL_Renderer* renderer, SDL_Texture* texture, const AtlasPlot& atlasPlot, SDL_Rect& destRect,
+		  const Transform& transform, SDL_Point* rotationCenter, const RenderProfile& profile)
 {
 	SDL_RenderCopyEx(renderer, texture, &atlasPlot.rect, &destRect, 
-		transform.rotation + atlasPlot.rotation, rotationCenter, profile.flip);
+					 transform.rotation + atlasPlot.rotation, rotationCenter, profile.flip);
 }
 
 //void RenderTexture(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_Rect& srcRect, 
@@ -72,12 +71,12 @@ int CalculateGlyphsRowWidth(const TextRenderable::GlyphCache& glyphCache, int cu
 		glyphCache.begin() + currentPos,
 		glyphCache.begin() + newlinePos,
 		0, [scale = scaleX](int sum, const auto& data) {
-			return sum + static_cast<int>(data.glyphInfo.advance * scale);
+			return sum + static_cast<int>(data.glyph.advance * scale);
 		});
 }
 
 float GetScaleToFitFactor(const TextRenderable::GlyphCache& glyphCache,
-						  const NewRenderSystem::TextRenderParams& params)
+						  const RenderSystem::TextRenderParams& params)
 {
 	int currentPos = 0;
 	int longestRowWidth = 0;
@@ -99,7 +98,7 @@ float GetScaleToFitFactor(const TextRenderable::GlyphCache& glyphCache,
 }
 
 void FillGlyphRectsLeftAlign(TextRenderable::GlyphCache& glyphCache,
-							 const NewRenderSystem::TextRenderParams& params)
+							 const RenderSystem::TextRenderParams& params)
 {
 	int xPos = params.start.x;
 	int yPos = params.start.y;
@@ -116,8 +115,8 @@ void FillGlyphRectsLeftAlign(TextRenderable::GlyphCache& glyphCache,
 			continue;
 		}
 
-		destRect = { xPos, yPos, static_cast<int>(glyph.atlasRect.w * params.scale.x),
-								 static_cast<int>(glyph.atlasRect.h * params.scale.y) };
+		destRect = { xPos, yPos, static_cast<int>(glyph.plot.rect.w * params.scale.x),
+								 static_cast<int>(glyph.plot.rect.h * params.scale.y) };
 
 		xPos += static_cast<int>(glyph.advance * params.scale.x);
 
@@ -125,7 +124,7 @@ void FillGlyphRectsLeftAlign(TextRenderable::GlyphCache& glyphCache,
 }
 
 void FillGlyphRectsRightAlign(TextRenderable::GlyphCache& glyphCache,
-							  const NewRenderSystem::TextRenderParams& params)
+							  const RenderSystem::TextRenderParams& params)
 {
 	int xPos = params.start.x;
 	int yPos = params.start.y + (params.fontHeight * params.scale.y * params.numNewlines);
@@ -144,16 +143,16 @@ void FillGlyphRectsRightAlign(TextRenderable::GlyphCache& glyphCache,
 			continue;
 		}
 
-		destRect = { xPos - static_cast<int>(glyph.atlasRect.w * params.scale.x), yPos,
-					 static_cast<int>(glyph.atlasRect.w * params.scale.x),
-					 static_cast<int>(glyph.atlasRect.h * params.scale.y) };
+		destRect = { xPos - static_cast<int>(glyph.plot.rect.w * params.scale.x), yPos,
+					 static_cast<int>(glyph.plot.rect.w * params.scale.x),
+					 static_cast<int>(glyph.plot.rect.h * params.scale.y) };
 
 		xPos -= static_cast<int>(glyph.advance * params.scale.x);
 	}
 }
 
 void FillGlyphRectsCenterAlign(TextRenderable::GlyphCache& glyphCache,
-							   const NewRenderSystem::TextRenderParams& params)
+							   const RenderSystem::TextRenderParams& params)
 {
 	assert(params.text.size() == glyphCache.size());
 
@@ -176,8 +175,8 @@ void FillGlyphRectsCenterAlign(TextRenderable::GlyphCache& glyphCache,
 
 			assert(glyph.character != kInvalidChar);
 
-			destRect = { xPos , yPos, static_cast<int>(glyph.atlasRect.w * params.scale.x),
-									  static_cast<int>(glyph.atlasRect.h * params.scale.y) };
+			destRect = { xPos , yPos, static_cast<int>(glyph.plot.rect.w * params.scale.x),
+									  static_cast<int>(glyph.plot.rect.h * params.scale.y) };
 
 			xPos += static_cast<int>(glyph.advance * params.scale.x);
 		}
@@ -199,12 +198,12 @@ void RepopulateGlyphCacheGlyphs(TextRenderable& textRenderable, const GlyphAtlas
 		char c = textRenderable.text[i];
 		if (c == '\n')
 		{
-			textRenderable.glyphCache[i].glyphInfo.character = '\n';
+			textRenderable.glyphCache[i].glyph.character = '\n';
 
 			continue;
 		}
 
-		textRenderable.glyphCache[i].glyphInfo = glyphAtlas->GetGlyph(c);
+		textRenderable.glyphCache[i].glyph = glyphAtlas->GetGlyph(c);
 	}
 
 	auto glyphs = glyphAtlas->GetGlyphsForString(textRenderable.text);
@@ -217,12 +216,12 @@ void ReprojectGlyphCacheGeometry(TextRenderable& textRenderable, const Transform
 	int numNewlines = std::count(textRenderable.text.begin(), 
 								 textRenderable.text.end(), '\n');
 
-	int fontHeight = glyphAtlas->GetAtlasInfo().fontHeight;
+	int fontHeight = glyphAtlas->GetFontData().fontHeight;
 
 	int totalHeight = static_cast<int>(fontHeight * transform.scale.y) *
 					  static_cast<int>(numNewlines + 1);
 
-	NewRenderSystem::TextRenderParams textParams = {
+	RenderSystem::TextRenderParams textParams = {
 		.text = textRenderable.text,
 		.bounds = textRenderable.dimensions,
 		.scale = transform.scale,
@@ -255,110 +254,110 @@ void ReprojectGlyphCacheGeometry(TextRenderable& textRenderable, const Transform
 
 
 
-using Alignment = Renderable::Text::Alignment;
-
-template <Alignment T>
-void RenderGlyphsAligned(const RenderSystem::RenderGlyphsArgs& args);
-
-template <>
-void RenderGlyphsAligned<Alignment::Left>(const RenderSystem::RenderGlyphsArgs& args)
-{
-	int xPos = args.startX;
-	int yPos = args.startY;
-
-	for (size_t i = 0; i < args.text.size(); i++)
-	{
-		if (args.text[i] == '\n')
-		{
-			xPos = args.startX;
-			yPos += args.glyphAtlas->GetAtlasInfo().fontHeight;
-
-			continue;
-		}
-
-		auto glyph = args.glyphAtlas->GetGlyph(args.text[i]);
-		assert(glyph.character != kInvalidChar);
-
-		SDL_Rect dest = { xPos, yPos, static_cast<int>(glyph.atlasRect.w * args.scale.x),
-									  static_cast<int>(glyph.atlasRect.h * args.scale.y) };
-
-		SDL_RenderCopy(args.renderer, args.glyphAtlas->GetAtlasTexture(),
-					   &glyph.atlasRect, &dest);
-
-		xPos += static_cast<int>(glyph.advance * args.scale.x);
-	}
-}
-
-template <>
-void RenderGlyphsAligned<Alignment::Right>(const RenderSystem::RenderGlyphsArgs& args)
-{
-	int xPos = args.startX;
-	int yPos = args.startY;
-
-	for (int i = args.text.size() - 1; i >= 0; i--)
-	{
-		if (args.text[i] == '\n')
-		{
-			xPos = args.startX;
-			yPos += args.glyphAtlas->GetAtlasInfo().fontHeight;
-
-			continue;
-		}
-
-		auto glyph = args.glyphAtlas->GetGlyph(args.text[i]);
-		assert(glyph.character != kInvalidChar);
-
-		SDL_Rect dest = { xPos - static_cast<int>(glyph.atlasRect.w * args.scale.x), yPos,
-						  static_cast<int>(glyph.atlasRect.w * args.scale.x),
-						  static_cast<int>(glyph.atlasRect.h * args.scale.y) };
-
-		SDL_RenderCopy(args.renderer, args.glyphAtlas->GetAtlasTexture(),
-			&glyph.atlasRect, &dest);
-
-		xPos -= static_cast<int>(glyph.advance * args.scale.x);
-	}
-}
-
-template <>
-void RenderGlyphsAligned<Alignment::Center>(const RenderSystem::RenderGlyphsArgs& args)
-{
-	auto glyphs = args.glyphAtlas->GetGlyphsForString(args.text);
-	assert(glyphs.size() == args.text.size());
-
-	int yPos = args.startY;
-	int currentPos = 0;
-	for (int i = 0; i <= args.numNewlines; i++)
-	{
-		size_t newlinePos = args.text.find_first_of('\n', currentPos);
-		newlinePos = (std::min(newlinePos, args.text.length()));
-
-		int rowWidth = std::accumulate(
-			glyphs.begin() + currentPos,
-			glyphs.begin() + newlinePos,
-			0, [scale = args.scale.x](int sum, const auto& glyph) {
-				return sum + static_cast<int>(glyph.advance * scale);
-			});
-
-		int xPos = args.startX - static_cast<int>(rowWidth / 2.0f);
-
-		for (size_t j = currentPos; j < newlinePos; j++)
-		{
-			auto& glyph = glyphs[j];
-			assert(glyph.character != kInvalidChar);
-
-			SDL_Rect dest = { xPos , yPos, static_cast<int>(glyph.atlasRect.w * args.scale.x),
-										   static_cast<int>(glyph.atlasRect.h * args.scale.y) };
-
-			SDL_RenderCopy(args.renderer, args.glyphAtlas->GetAtlasTexture(),
-				&glyph.atlasRect, &dest);
-
-			xPos += static_cast<int>(glyph.advance * args.scale.x);
-		}
-
-		yPos += static_cast<int>(args.glyphAtlas->GetAtlasInfo().fontHeight * args.scale.y);
-		currentPos = newlinePos + 1;
-	}
-}
+//using Alignment = Renderable::Text::Alignment;
+//
+//template <Alignment T>
+//void RenderGlyphsAligned(const RenderSystem::RenderGlyphsArgs& args);
+//
+//template <>
+//void RenderGlyphsAligned<Alignment::Left>(const RenderSystem::RenderGlyphsArgs& args)
+//{
+//	int xPos = args.startX;
+//	int yPos = args.startY;
+//
+//	for (size_t i = 0; i < args.text.size(); i++)
+//	{
+//		if (args.text[i] == '\n')
+//		{
+//			xPos = args.startX;
+//			yPos += args.glyphAtlas->GetAtlasInfo().fontHeight;
+//
+//			continue;
+//		}
+//
+//		auto glyph = args.glyphAtlas->GetGlyph(args.text[i]);
+//		assert(glyph.character != kInvalidChar);
+//
+//		SDL_Rect dest = { xPos, yPos, static_cast<int>(glyph.atlasRect.w * args.scale.x),
+//									  static_cast<int>(glyph.atlasRect.h * args.scale.y) };
+//
+//		SDL_RenderCopy(args.renderer, args.glyphAtlas->GetAtlasTexture(),
+//					   &glyph.atlasRect, &dest);
+//
+//		xPos += static_cast<int>(glyph.advance * args.scale.x);
+//	}
+//}
+//
+//template <>
+//void RenderGlyphsAligned<Alignment::Right>(const RenderSystem::RenderGlyphsArgs& args)
+//{
+//	int xPos = args.startX;
+//	int yPos = args.startY;
+//
+//	for (int i = args.text.size() - 1; i >= 0; i--)
+//	{
+//		if (args.text[i] == '\n')
+//		{
+//			xPos = args.startX;
+//			yPos += args.glyphAtlas->GetAtlasInfo().fontHeight;
+//
+//			continue;
+//		}
+//
+//		auto glyph = args.glyphAtlas->GetGlyph(args.text[i]);
+//		assert(glyph.character != kInvalidChar);
+//
+//		SDL_Rect dest = { xPos - static_cast<int>(glyph.atlasRect.w * args.scale.x), yPos,
+//						  static_cast<int>(glyph.atlasRect.w * args.scale.x),
+//						  static_cast<int>(glyph.atlasRect.h * args.scale.y) };
+//
+//		SDL_RenderCopy(args.renderer, args.glyphAtlas->GetAtlasTexture(),
+//			&glyph.atlasRect, &dest);
+//
+//		xPos -= static_cast<int>(glyph.advance * args.scale.x);
+//	}
+//}
+//
+//template <>
+//void RenderGlyphsAligned<Alignment::Center>(const RenderSystem::RenderGlyphsArgs& args)
+//{
+//	auto glyphs = args.glyphAtlas->GetGlyphsForString(args.text);
+//	assert(glyphs.size() == args.text.size());
+//
+//	int yPos = args.startY;
+//	int currentPos = 0;
+//	for (int i = 0; i <= args.numNewlines; i++)
+//	{
+//		size_t newlinePos = args.text.find_first_of('\n', currentPos);
+//		newlinePos = (std::min(newlinePos, args.text.length()));
+//
+//		int rowWidth = std::accumulate(
+//			glyphs.begin() + currentPos,
+//			glyphs.begin() + newlinePos,
+//			0, [scale = args.scale.x](int sum, const auto& glyph) {
+//				return sum + static_cast<int>(glyph.advance * scale);
+//			});
+//
+//		int xPos = args.startX - static_cast<int>(rowWidth / 2.0f);
+//
+//		for (size_t j = currentPos; j < newlinePos; j++)
+//		{
+//			auto& glyph = glyphs[j];
+//			assert(glyph.character != kInvalidChar);
+//
+//			SDL_Rect dest = { xPos , yPos, static_cast<int>(glyph.atlasRect.w * args.scale.x),
+//										   static_cast<int>(glyph.atlasRect.h * args.scale.y) };
+//
+//			SDL_RenderCopy(args.renderer, args.glyphAtlas->GetAtlasTexture(),
+//				&glyph.atlasRect, &dest);
+//
+//			xPos += static_cast<int>(glyph.advance * args.scale.x);
+//		}
+//
+//		yPos += static_cast<int>(args.glyphAtlas->GetAtlasInfo().fontHeight * args.scale.y);
+//		currentPos = newlinePos + 1;
+//	}
+//}
 
 std::vector<SDL_FPoint> MakeCirclePerimeterPoints(SDL_FPoint center, float radius)
 {
@@ -496,166 +495,166 @@ Result<Void> DrawB2ColliderShape(const Camera& camera, SDL_Renderer* renderer, c
 
 } // unnamed namespace
 
-void RenderSystem::Update(SDL_Renderer* renderer, const Camera& camera, const impl::TextureManager& atlasStore)
-{
-	auto entities = ECS::GetAllEntitiesWith<Renderable, Transform>();
+//void RenderSystem::Update(SDL_Renderer* renderer, const Camera& camera, const impl::TextureManager& atlasStore)
+//{
+//	auto entities = ECS::GetAllEntitiesWith<Renderable, Transform>();
+//
+//	std::sort(entities.begin(), entities.end(), [](const Entity& lhs, const Entity& rhs) {
+//		return lhs.GetComponent<Renderable>().drawOrder <
+//			   rhs.GetComponent<Renderable>().drawOrder;
+//		});
+//
+//	for (auto& entity : entities)
+//	{
+//		const auto& renderable = entity.GetComponent<Renderable>();
+//		const auto& transform = entity.GetComponent<Transform>();
+//
+//		if (auto spriteData = std::get_if<Renderable::Sprite>(&renderable.renderData))
+//		{
+//			auto spriteAtlas = atlasStore.GetAtlas(spriteData->sourceAtlas);
+//			if (!spriteAtlas)
+//			{
+//				LOG_WARNING_FMT("Sprite handle expired for sprite (seriesName: '{}', index: '{}')",
+//							    spriteData->seriesName, spriteData->currentIndex);			 
+//				continue;
+//			}
+//
+//			SDL_Rect srcRect = spriteAtlas->GetSprite(spriteData->seriesName,
+//													  spriteData->currentIndex).atlasRect;
+//			if (srcRect.w == 0 || srcRect.h == 0)
+//			{
+//				LOG_WARNING_FMT("SpriteInfo not found for sprite (seriesName: '{}', index: '{}')",
+//							    spriteData->seriesName, spriteData->currentIndex);
+//				continue;
+//			}
+//
+//			//SDL_Rect renderRect = MakeTransformedRect(transform, srcRect.w, srcRect.h);
+//			SDL_Rect renderRect = MakeScreenRect(camera, transform, srcRect.w, srcRect.h);
+//
+//			if (!camera.GetViewport().IntersectsBoundingBox(renderRect))
+//			{
+//				continue;
+//			}
+//
+//			SDL_RenderCopyEx(renderer, spriteAtlas->GetAtlasTexture(), &srcRect,
+//							 &renderRect, transform.rotation, nullptr, renderable.flip);
+//		}
+//
+//		// TODO : support non-overlay text that can move in world with camera
+//		else if (auto textData = std::get_if<Renderable::Text>(&renderable.renderData))
+//		{
+//			if (textData->text.empty()) { continue; }
+//
+//			auto glyphAtlas = atlasStore.GetAtlas(textData->sourceAtlas);
+//			if (!glyphAtlas)
+//			{
+//				LOG_WARNING_FMT("Glyph handle expired for text '{}'", textData->text);
+//				continue;
+//			}
+//
+//			const int numNewlines = std::count(textData->text.begin(), textData->text.end(), '\n');
+//			const int totalHeight =
+//				static_cast<int>(glyphAtlas->GetAtlasInfo().fontHeight * transform.scale.y) * (numNewlines + 1);
+//
+//			RenderGlyphsArgs args{
+//				.renderer = renderer,
+//				.glyphAtlas = glyphAtlas,
+//				.text = textData->text,
+//				.scale = transform.scale,
+//				.numNewlines = numNewlines,
+//				.startY = static_cast<int>(transform.position.y - (totalHeight / 2.0f))
+//			};
+//
+//			SDL_Rect renderRect = MakeTransformedRect(transform, textData->desiredDimensions);
+//			//SDL_Rect renderRect = MakeScreenRect(camera, transform, textData->desiredDimensions);
+//
+//			if (textData->scaleToFit)
+//			{
+//				float toFit = GetScaleToFitFactor(args, totalHeight, renderRect.w, renderRect.h);
+//
+//				args.scale.x *= toFit;
+//				args.scale.y *= toFit;
+//			}
+//
+//			switch (textData->align)
+//			{
+//			case Alignment::Left:
+//				args.startX = renderRect.x;
+//				RenderGlyphsAligned<Alignment::Left>(args);
+//				break;
+//
+//			case Alignment::Right:
+//				args.startX = renderRect.x + renderRect.w;
+//				RenderGlyphsAligned<Alignment::Right>(args);
+//				break;
+//
+//			case Alignment::Center:
+//				args.startX = static_cast<int>(transform.position.x);
+//				RenderGlyphsAligned<Alignment::Center>(args);
+//				break;
+//			}
+//		}
+//
+//		else if (auto geometryData = std::get_if<Renderable::Geometry>(&renderable.renderData))
+//		{
+//			if (!entity.HasComponent<Collider>())
+//			{
+//				LOG_ERROR("Entity with geometry render data did not have collider");
+//				continue;
+//			}
+//
+//			auto& collider = entity.GetComponent<Collider>();
+//			if (!collider.shape.GetData().IsValid())
+//			{
+//				LOG_ERROR("Collider shape was invalid");
+//				continue;
+//			}
+//
+//			auto origColor = GetRenderDrawColor(renderer);
+//			SetRenderDrawColor(renderer, geometryData->color);
+//
+//			LOG_IF_ERROR(DrawB2ColliderShape(camera, renderer, collider));
+//
+//			SetRenderDrawColor(renderer, origColor);
+//		}
+//
+//		else
+//		{
+//			LOG_ERROR("Renderable type not recognized");
+//		}
+//	}
+//}
 
-	std::sort(entities.begin(), entities.end(), [](const Entity& lhs, const Entity& rhs) {
-		return lhs.GetComponent<Renderable>().drawOrder <
-			   rhs.GetComponent<Renderable>().drawOrder;
-		});
-
-	for (auto& entity : entities)
-	{
-		const auto& renderable = entity.GetComponent<Renderable>();
-		const auto& transform = entity.GetComponent<Transform>();
-
-		if (auto spriteData = std::get_if<Renderable::Sprite>(&renderable.renderData))
-		{
-			auto spriteAtlas = atlasStore.GetAtlas(spriteData->sourceAtlas);
-			if (!spriteAtlas)
-			{
-				LOG_WARNING_FMT("Sprite handle expired for sprite (seriesName: '{}', index: '{}')",
-							    spriteData->seriesName, spriteData->currentIndex);			 
-				continue;
-			}
-
-			SDL_Rect srcRect = spriteAtlas->GetSprite(spriteData->seriesName,
-													  spriteData->currentIndex).atlasRect;
-			if (srcRect.w == 0 || srcRect.h == 0)
-			{
-				LOG_WARNING_FMT("SpriteInfo not found for sprite (seriesName: '{}', index: '{}')",
-							    spriteData->seriesName, spriteData->currentIndex);
-				continue;
-			}
-
-			//SDL_Rect renderRect = MakeTransformedRect(transform, srcRect.w, srcRect.h);
-			SDL_Rect renderRect = MakeScreenRect(camera, transform, srcRect.w, srcRect.h);
-
-			if (!camera.GetViewport().IntersectsBoundingBox(renderRect))
-			{
-				continue;
-			}
-
-			SDL_RenderCopyEx(renderer, spriteAtlas->GetAtlasTexture(), &srcRect,
-							 &renderRect, transform.rotation, nullptr, renderable.flip);
-		}
-
-		// TODO : support non-overlay text that can move in world with camera
-		else if (auto textData = std::get_if<Renderable::Text>(&renderable.renderData))
-		{
-			if (textData->text.empty()) { continue; }
-
-			auto glyphAtlas = atlasStore.GetAtlas(textData->sourceAtlas);
-			if (!glyphAtlas)
-			{
-				LOG_WARNING_FMT("Glyph handle expired for text '{}'", textData->text);
-				continue;
-			}
-
-			const int numNewlines = std::count(textData->text.begin(), textData->text.end(), '\n');
-			const int totalHeight =
-				static_cast<int>(glyphAtlas->GetAtlasInfo().fontHeight * transform.scale.y) * (numNewlines + 1);
-
-			RenderGlyphsArgs args{
-				.renderer = renderer,
-				.glyphAtlas = glyphAtlas,
-				.text = textData->text,
-				.scale = transform.scale,
-				.numNewlines = numNewlines,
-				.startY = static_cast<int>(transform.position.y - (totalHeight / 2.0f))
-			};
-
-			SDL_Rect renderRect = MakeTransformedRect(transform, textData->desiredDimensions);
-			//SDL_Rect renderRect = MakeScreenRect(camera, transform, textData->desiredDimensions);
-
-			if (textData->scaleToFit)
-			{
-				float toFit = GetScaleToFitFactor(args, totalHeight, renderRect.w, renderRect.h);
-
-				args.scale.x *= toFit;
-				args.scale.y *= toFit;
-			}
-
-			switch (textData->align)
-			{
-			case Alignment::Left:
-				args.startX = renderRect.x;
-				RenderGlyphsAligned<Alignment::Left>(args);
-				break;
-
-			case Alignment::Right:
-				args.startX = renderRect.x + renderRect.w;
-				RenderGlyphsAligned<Alignment::Right>(args);
-				break;
-
-			case Alignment::Center:
-				args.startX = static_cast<int>(transform.position.x);
-				RenderGlyphsAligned<Alignment::Center>(args);
-				break;
-			}
-		}
-
-		else if (auto geometryData = std::get_if<Renderable::Geometry>(&renderable.renderData))
-		{
-			if (!entity.HasComponent<Collider>())
-			{
-				LOG_ERROR("Entity with geometry render data did not have collider");
-				continue;
-			}
-
-			auto& collider = entity.GetComponent<Collider>();
-			if (!collider.shape.GetData().IsValid())
-			{
-				LOG_ERROR("Collider shape was invalid");
-				continue;
-			}
-
-			auto origColor = GetRenderDrawColor(renderer);
-			SetRenderDrawColor(renderer, geometryData->color);
-
-			LOG_IF_ERROR(DrawB2ColliderShape(camera, renderer, collider));
-
-			SetRenderDrawColor(renderer, origColor);
-		}
-
-		else
-		{
-			LOG_ERROR("Renderable type not recognized");
-		}
-	}
-}
-
-float RenderSystem::GetScaleToFitFactor(const RenderGlyphsArgs& args, int totalHeight,
-										int boundingWidth, int boundingHeight)
-{
-	assert(args.glyphAtlas);
-
-	auto glyphs = args.glyphAtlas->GetGlyphsForString(args.text);
-	assert(glyphs.size() == args.text.size());
-
-	int currentPos = 0;
-	int longestRowWidth = 0;
-	for (int i = 0; i <= args.numNewlines; i++)
-	{
-		size_t newlinePos = args.text.find_first_of('\n', currentPos);
-		newlinePos = (std::min(newlinePos, args.text.length()));
-
-		int rowWidth = std::accumulate(
-			glyphs.begin() + currentPos,
-			glyphs.begin() + newlinePos,
-			0, [scale = args.scale.x](int sum, const auto& glyph) {
-				return sum + static_cast<int>(glyph.advance * scale);
-			});
-
-		longestRowWidth = std::max(longestRowWidth, rowWidth);
-
-		currentPos = newlinePos + 1;
-	}
-
-	return std::min(boundingWidth / static_cast<float>(longestRowWidth),
-		boundingHeight / static_cast<float>(totalHeight));
-}
+//float RenderSystem::GetScaleToFitFactor(const RenderGlyphsArgs& args, int totalHeight,
+//										int boundingWidth, int boundingHeight)
+//{
+//	assert(args.glyphAtlas);
+//
+//	auto glyphs = args.glyphAtlas->GetGlyphsForString(args.text);
+//	assert(glyphs.size() == args.text.size());
+//
+//	int currentPos = 0;
+//	int longestRowWidth = 0;
+//	for (int i = 0; i <= args.numNewlines; i++)
+//	{
+//		size_t newlinePos = args.text.find_first_of('\n', currentPos);
+//		newlinePos = (std::min(newlinePos, args.text.length()));
+//
+//		int rowWidth = std::accumulate(
+//			glyphs.begin() + currentPos,
+//			glyphs.begin() + newlinePos,
+//			0, [scale = args.scale.x](int sum, const auto& glyph) {
+//				return sum + static_cast<int>(glyph.advance * scale);
+//			});
+//
+//		longestRowWidth = std::max(longestRowWidth, rowWidth);
+//
+//		currentPos = newlinePos + 1;
+//	}
+//
+//	return std::min(boundingWidth / static_cast<float>(longestRowWidth),
+//		boundingHeight / static_cast<float>(totalHeight));
+//}
 
 namespace {
 
@@ -775,9 +774,9 @@ void AdjustGlyphCacheForRotation(TextRenderable::GlyphCache& glyphCache,
 	float cosA = std::cos(radians);
 	float sinA = std::sin(radians);
 
-	for (auto& [glyphInfo, destRect, rotationCenter] : glyphCache)
+	for (auto& [glyph, destRect, rotationCenter] : glyphCache)
 	{
-		SDL_Rect srcRect = glyphInfo.atlasRect;
+		SDL_Rect srcRect = glyph.plot.rect;
 
 		SDL_FPoint destCenter = GetRectCenter(destRect);
 
@@ -805,7 +804,7 @@ void AdjustGlyphCacheForRotation(TextRenderable::GlyphCache& glyphCache,
 	}
 }
 
-void HandleBoundingBoxDebugDraw(NewRenderSystem::RenderContext& context, SDL_Rect renderRect, 
+void HandleBoundingBoxDebugDraw(RenderSystem::RenderContext& context, SDL_Rect renderRect, 
 							    const RenderProfile& profile, float rotation)
 {
 	assert(profile.debugDraw.boundingBox.on);
@@ -829,7 +828,7 @@ void HandleBoundingBoxDebugDraw(NewRenderSystem::RenderContext& context, SDL_Rec
 							context.debugDrawPoints.size());
 }
 
-void HandleColliderDebugDraw(NewRenderSystem::RenderContext& context, const RenderProfile& profile,
+void HandleColliderDebugDraw(RenderSystem::RenderContext& context, const RenderProfile& profile,
 							 const Collider& collider)
 {
 	assert(profile.debugDraw.collider.on);
@@ -853,11 +852,9 @@ void HandleColliderDebugDraw(NewRenderSystem::RenderContext& context, const Rend
 
 } // unnamed
 
-void NewRenderSystem::Update(SDL_Renderer* renderer, const Camera& camera, 
+void RenderSystem::Update(SDL_Renderer* renderer, const Camera& camera, 
 							 const TextureRepository& textureRepo)
 {
-	UpdateSpriteAnimations(textureRepo);
-
 	auto entities = ECS::GetAllEntitiesWith<NewRenderable>();
 
 	SortByDrawOrder(entities);
@@ -897,7 +894,7 @@ void NewRenderSystem::Update(SDL_Renderer* renderer, const Camera& camera,
 	}
 }
 
-void NewRenderSystem::UpdateRenderContext(SDL_Renderer* renderer, const TextureRepository& textureRepo, 
+void RenderSystem::UpdateRenderContext(SDL_Renderer* renderer, const TextureRepository& textureRepo, 
 										  const Camera& camera)
 {
 	context_.renderer = renderer;
@@ -906,7 +903,7 @@ void NewRenderSystem::UpdateRenderContext(SDL_Renderer* renderer, const TextureR
 	context_.currentDrawColor = GetRenderDrawColor(renderer);
 }
 
-void NewRenderSystem::RenderSprite(const SpriteRenderable& spriteRenderable, const Transform& transform,
+void RenderSystem::RenderSprite(const SpriteRenderable& spriteRenderable, const Transform& transform,
 								   const RenderProfile& renderProfile)
 {
 	SDL_Texture* atlasTexture = context_.textureRepo->GetAtlasTexture(spriteRenderable.sourceAtlas);
@@ -917,8 +914,9 @@ void NewRenderSystem::RenderSprite(const SpriteRenderable& spriteRenderable, con
 		return;
 	}
 
-	SDL_Rect renderRect = MakeScreenRect(*context_.camera, transform, spriteRenderable.sourcePlot.w,
-										 spriteRenderable.sourcePlot.h, 
+	SDL_Rect renderRect = MakeScreenRect(*context_.camera, transform, 
+										 spriteRenderable.sourcePlot.rect.w,
+										 spriteRenderable.sourcePlot.rect.h, 
 										 renderProfile.offset);
 
 	if (!context_.camera->GetViewport().IntersectsBoundingBox(renderRect))
@@ -926,8 +924,11 @@ void NewRenderSystem::RenderSprite(const SpriteRenderable& spriteRenderable, con
 		return;
 	}
 
-	SDL_RenderCopyEx(context_.renderer, atlasTexture, &spriteRenderable.sourcePlot,
-					 &renderRect, transform.rotation, nullptr, renderProfile.flip);
+	Draw(context_.renderer, atlasTexture, spriteRenderable.sourcePlot, 
+		 renderRect, transform, nullptr, renderProfile);
+
+	//SDL_RenderCopyEx(context_.renderer, atlasTexture, &spriteRenderable.sourcePlot,
+	//				 &renderRect, transform.rotation, nullptr, renderProfile.flip);
 
 	if (renderProfile.debugDraw.boundingBox.on)
 	{
@@ -935,10 +936,11 @@ void NewRenderSystem::RenderSprite(const SpriteRenderable& spriteRenderable, con
 	}
 }
 
-void NewRenderSystem::RenderText(TextRenderable& textRenderable, const Transform& transform, 
+void RenderSystem::RenderText(TextRenderable& textRenderable, const Transform& transform, 
 								 const RenderProfile& renderProfile)
 {
-	if (textRenderable.text.empty() || textRenderable.dimensions == Dimensions<int>{ 0, 0 })
+	if (textRenderable.text.empty() || 
+		textRenderable.dimensions.w <= 0 || textRenderable.dimensions.h <= 0)
 	{
 		return; 
 	}
@@ -1010,9 +1012,11 @@ void NewRenderSystem::RenderText(TextRenderable& textRenderable, const Transform
 			rotationCenter.y + screenAdjust.y
 		};
 
-		SDL_RenderCopyEx(context_.renderer, glyphAtlas->GetAtlasTexture(), &glyph.atlasRect, 
-						 &destRectScreenAdjusted, transform.rotation, &rotationCenterScreenAdjusted,
-						 renderProfile.flip);
+		//SDL_RenderCopyEx(context_.renderer, glyphAtlas->GetAtlasTexture(), &glyph.atlasRect, 
+		//				 &destRectScreenAdjusted, transform.rotation, &rotationCenterScreenAdjusted,
+		//				 renderProfile.flip);
+		Draw(context_.renderer, glyphAtlas->GetAtlasTexture(), glyph.plot, destRectScreenAdjusted,
+			 transform, &rotationCenterScreenAdjusted, renderProfile);
 	}
 
 	if (renderProfile.debugDraw.boundingBox.on)

@@ -5,12 +5,17 @@
 #include "RenderSystem.h"
 #include "SDLInputSystem.h"
 #include "EventCallbackSystem.h"
+#include "TimerSystem.h"
+#include "SpriteAnimationSystem.h"
+
+// TODO: Either make into type list or dont require strong typing like this for systems
 
 #define SYSTEM_REGISTRY \
 	CameraSystem, \
 	PhysicsSystem, \
-	RenderSystem, \
 	SDLInputSystem, \
 	EventCallbackSystem, \
-	NewRenderSystem
+	RenderSystem, \
+	TimerSystem, \
+	SpriteAnimationSystem
 

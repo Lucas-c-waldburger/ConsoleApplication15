@@ -27,9 +27,9 @@ bool SDLInputSystem::Update()
 		}
 	}
 
-	EventBus::DispatchEventGroup<events::GameControllerEventGroup>();
+	gameControllerHandler_.Finalize();
 
-	gameControllerHandler_.UpdateEntities();
+	EventBus::DispatchEventGroup<events::GameControllerEventGroup>();
 
 	return true;
 }

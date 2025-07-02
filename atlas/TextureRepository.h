@@ -1,61 +1,44 @@
 #pragma once
 #include "AtlasMap.h"
+#include "SpriteSeriesAtlas.h"
+#include "GlyphAtlas.h"
+
+template <typename T>
+concept SupportedAtlasType = std::same_as<T, SpriteSeriesAtlas> || std::same_as<T, GlyphAtlas>;
 
 class TextureRepository
 {
 public:
-	template <SomeTextureAtlas T>
-	Result<Handle<T>> LoadAtlas(SDL_Renderer* renderer, AtlasInfo<T> info)
-	{
-		if constexpr (std::same_as<T, SpriteSeriesAtlas>)
-		{
-			return spriteAtlases_.LoadAtlas(renderer, std::move(info));
-		}
-		else if constexpr (std::same_as<T, GlyphAtlas>)
-		{
-			return glyphAtlases_.LoadAtlas(renderer, std::move(info));
-		}
-		else
-		{
-			return MAKE_ERROR("Unrecognized atlas type");
-		}
+	template <SupportedAtlasType T, typename LoadData>
+	Result<Handle<T>> LoadNewAtlas(SDL_Renderer* renderer, LoadData&& loadData)
+	{ 
+		return std::get<AtlasMap<T>>(atlasMaps_).LoadNewAtlas(renderer, std::forward<LoadData>(loadData));
 	}
 
-	template <SomeTextureAtlas T>
+	template <SupportedAtlasType T, typename LoadData>
+	Result<Handle<T>> ReloadAtlas(const Handle<T>& handle, SDL_Renderer* renderer, LoadData&& loadData)
+	{
+		return std::get<AtlasMap<T>>(atlasMaps_).ReloadAtlas(handle, renderer, std::forward<LoadData>(loadData));
+	}
+
+	template <SupportedAtlasType T>
+	bool RemoveAtlas(const Handle<T>& handle) const
+	{
+		return std::get<AtlasMap<T>>(atlasMaps_).RemoveAtlas();
+	}
+
+	template <SupportedAtlasType T>
 	SDL_Texture* GetAtlasTexture(const Handle<T>& handle) const
 	{
-		if constexpr (std::same_as<T, SpriteSeriesAtlas>)
-		{
-			return spriteAtlases_.GetAtlasTexture(handle);
-		}
-		else if constexpr (std::same_as<T, GlyphAtlas>)
-		{
-			return glyphAtlases_.GetAtlasTexture(handle);
-		}
-		else
-		{
-			return MAKE_ERROR("Unrecognized atlas type");
-		}
+		return std::get<AtlasMap<T>>(atlasMaps_).GetAtlasTexture(handle);
 	}
 
-	template <SomeTextureAtlas T>
+	template <SupportedAtlasType T>
 	const T* GetAtlas(const Handle<T>& handle) const
 	{
-		if constexpr (std::same_as<T, SpriteSeriesAtlas>)
-		{
-			return spriteAtlases_.GetAtlas(handle);
-		}
-		else if constexpr (std::same_as<T, GlyphAtlas>)
-		{
-			return glyphAtlases_.GetAtlas(handle);
-		}
-		else
-		{
-			return MAKE_ERROR("Unrecognized atlas type");
-		}
+		return std::get<AtlasMap<T>>(atlasMaps_).GetAtlas(handle);
 	}
 
 private:
-	AtlasMap<SpriteSeriesAtlas> spriteAtlases_;
-	AtlasMap<GlyphAtlas> glyphAtlases_;
+	std::tuple<AtlasMap<SpriteSeriesAtlas>, AtlasMap<GlyphAtlas>> atlasMaps_;
 };

@@ -9,8 +9,12 @@
 #include "../systems/CameraSystem.h"
 #include "../systems/RenderSystem.h"
 #include "../systems/PhysicsSystem.h"
+#include "../systems/EventCallbackSystem.h"
 #include "../components/builder/RigidBodyComponentBuilder.h"
 #include "../components/builder/ColliderComponentBuilder.h"
+//#include "../callbacks/EventCallbackRegistry.h"
+//#include "callbacks/AnimationCallbacks.h"
+//#include "callbacks/GameControllerCallbacks.h"
 
 static Result<Entity> MakeColliderBoxEntity(B2World& world, SDL_FPoint position, Dimensions<float> dimensions, 
                                             B2Body::Type bodyType, const ColliderSettings& settings = {},
@@ -162,224 +166,44 @@ inline Result<Entity> MakeMultiColliderEntity(B2World& world)
 }
 
 
-//class SceneFixture
+namespace test {
+
+//static constexpr float kMaxImpulseValue = 8.0f;
+//static constexpr float kImpuseScale = kMaxImpulseValue / 32768.0f;
+//
+//class PremadeCallbacks
 //{
 //public:
+//    using MapType = std::unordered_map<std::string, 
+//        Handle<EventCallbackKey>, TransparentStringHash, std::equal_to<>>;
 //
+//    explicit PremadeCallbacks(EventCallbackRegistry& registry) : registry_(registry) {}
+//    
+//    MapType Create();
 //
+//    template <typename Fn>
+//    std::pair<std::string, Handle<EventCallbackKey>>
+//    Register(const char* callbackNm, Fn&& fn)
+//    {
+//        return std::make_pair(
+//            callbackNm,
+//            registry_.RegisterCallback(callbackNm, std::forward<Fn>(fn))
+//        );
+//    }
 //
 //private:
-//    B2World world_;
-//    impl::AtlasStore atlasStore_;
-//    EventSystem eventSystem_;
-//    RenderSystem renderSystem_;
-//    CameraSystem cameraSystem_;
-//    PhysicsSystem physicsSystem_;
+//    EventCallbackRegistry& registry_;
 //};
-
-
 //
-//static Result<Void> InitSimpleEnvironment(CollisionSystem& collisionSystem,
-//                                          Dimensions<int> sceneDims = { SDLite::kWindowWidth, SDLite::kWindowHeight })
-//{
-//    using namespace SDLite;
+//PremadeCallbacks::MapType PremadeCallbacks::Create() {
 //
-//    std::vector<Entity> entities;
-//    entities.reserve(4);
-//
-//    auto& floor = entities.emplace_back(MakeStaticColliderEntity({
-//        0.0f, static_cast<float>(sceneDims.h - 20),
-//        static_cast<float>(sceneDims.w), 20.0f }, kColorBrown));
-//    auto& leftWall = entities.emplace_back(MakeStaticColliderEntity({
-//        0.0f, 20.0f, 20.0f, 
-//        static_cast<float>(sceneDims.h - 40) }, kColorYellow));
-//    auto& rightWall = entities.emplace_back(MakeStaticColliderEntity({
-//        static_cast<float>(sceneDims.w - 20), 20.0f, 20.0f,
-//        static_cast<float>(sceneDims.h - 40) }, kColorYellow));
-//    auto& ceiling = entities.emplace_back(MakeStaticColliderEntity({
-//        0.0f, 0.0f,
-//        static_cast<float>(sceneDims.w), 20.0f }, kColorPurple));
-//
-//    collisionSystem.RebuildQuadTree(sceneDims, entities);
-//
-//    return Void{};
-//}
-//
-//
-//template <SomeComponent...Ts>
-//class EntityAsWrapper
-//{
-//protected:
-//    using RequiredComponentTypes = TypeList<Ts...>;
-//
-//    Result<Void> SetEntity(Entity&& ent)
+//    return PremadeCallbacks::MapType
 //    {
-//        if (!ent.HasComponents<Ts...>())
-//        {
-//            return MAKE_ERROR("Entity did not have all required components for wrapper");
-//        }
-//
-//        wrappedEntity_ = std::move(ent);
-//
-//        return Void{};
-//    }
-//
-//    Entity wrappedEntity_;
-//};
-//
-//template <typename T>
-//concept DerivedEntityAsWrapper = requires(T t, Entity&& ent) {
-//    typename T::RequiredComponentTypes;
-//    { t.SetEntity(ent) } -> std::same_as<Result<Void>>;
+//    Register(NAME_AND_CALL(ConnectToFirstController)),
+//    Register(NAME_AND_CALL(DisconnectController)),
+//    Register(NAME_AND_CALL(ApplyAxisInputToForce, kImpuseScale)),
+//    Register(NAME_AND_CALL(SpriteAdvanceOnDistanceTraveled, 30))
+//    };
 //};
 
-//template <SomeComponent T>
-//void RegisterLuaComponentDependencies(ScriptManager& scriptManager, ScriptInstance&& instance);
-//
-//template <>
-//void RegisterLuaComponentDependencies<Physics>(ScriptManager& scriptManager, ScriptInstance&& instance)
-//{
-//    scriptManager.RegisterScript<
-//        SDL_FPoint,
-//        AccumulatedForces,
-//        Physics>(std::move(instance));
-//};
-//
-//class PremadeScript
-//{
-//public:
-//    const std::string& GetScriptKey() const { return scriptKey_; }
-//
-//protected:
-//    PremadeScript(std::string bp, std::string lfn, std::string sk, ScriptInstance::Setup setup) : 
-//        boilerplate_(std::move(bp)), luaFileName_(std::move(lfn)), scriptKey_(std::move(sk)) {}
-//
-//    std::string boilerplate_;
-//    std::string luaFileName_;
-//    std::string scriptKey_;
-//};
-//
-//class ComponentTestScript : public PremadeScript
-//{
-//public:
-//    ComponentTestScript(std::string bp, std::string lfn, std::string sk, ScriptInstance::Setup setup) :
-//        PremadeScript(std::move(bp), std::move(lfn), std::move(sk), std::move(setup)) {}
-//
-//    template <typename Fn, SomeComponent...Ts>
-//    Result<Entity> Setup(ScriptManager& scriptManager, std::string_view scriptPath, Fn&& fn)
-//    {
-//        auto entity = ECS::CreateEntity();
-//        ((entity.AddComponent<Ts>()), ...);
-//
-//        assert(!scriptPath.empty());
-//        std::string assembledPath = std::string{ scriptPath } +
-//            ((scriptPath.back() != '\\') ? "\\" : "") + luaFileName_;
-//
-//        ScriptInstance instance{};
-//
-//        instance.scriptInfo = {
-//            .name = scriptKey_,
-//            .scriptType = ScriptType::File,
-//            .path = assembledPath;
-//        };
-//
-//        assert(fn);
-//        instance.setupFn = [&entity](Lua& lua) {
-//            fn(lua, ((entity.GetComponent<Ts>())...));
-//        };
-//
-//
-//    }
-//};
-
-//static constexpr const char* kPhysTestName = "test::physics";
-//static constexpr const char* kPhysTestFileFmt = "{}test_physics.lua";
-//
-//class PhysicsTestScript : public PremadeScript
-//{
-//public:
-//    PhysicsTestScript() : PremadeScript("", "test_physics.lua", "test::physics") {}
-//    Result<Void> Setup(ScriptManager& scriptManager, std::string_view scriptPath) override
-//    {
-//        auto entity = ECS::CreateEntity();
-//        auto& phys = entity.AddComponent(Physics{});
-//
-//        ScriptInstance instance{};
-//
-//        instance.scriptInfo = {
-//            .name = kPhysTestName,
-//            .scriptType = ScriptType::File,
-//            .path = std::format(kPhysTestFileFmt, scriptPath)
-//        };
-//
-//        instance.setupFn = [&phys](Lua& lua) {
-//            lua["physics"] = &phys;
-//        };
-//
-//        scriptManager.RegisterScript<
-//            SDL_FPoint,
-//            AccumulatedForces,
-//            Physics>(std::move(instance));
-//    }
-//};
-
-static std::string SetupPhysicsTestScript(ScriptManager& scriptManager, 
-                                          std::string_view scriptPath, 
-                                          RigidBody defaults = {})
-{
-    //static constexpr const char* kPhysTestName = "test::physics";
-    //static constexpr const char* kPhysTestFileFmt = "{}test_physics.lua";
-
-    //auto entity = ECS::CreateEntity();
-    //auto& phys = entity.AddComponent(std::move(defaults));
-
-    //ScriptInstance instance{};
-
-    //instance.scriptInfo = {
-    //    .name = kPhysTestName,
-    //    .scriptType = ScriptType::File,
-    //    .path = std::format(kPhysTestFileFmt, scriptPath)
-    //};
-
-    //instance.setupFn = [&phys](Lua& lua) {
-    //    lua["physics"] = &phys;
-    //};
-
-    //scriptManager.RegisterScript<
-    //    SDL_FPoint,
-    //    AccumulatedForces,
-    //    RigidBody>(std::move(instance));
-
-    //return std::string{kPhysTestName};
-}
-
-//class PhysicsTestScriptSetup
-//{
-//    static constexpr const char* kPhysicsTestName = "test::physics";
-//    static constexpr const char* kPhysicsTestFileFmt = "{}test_physics.lua";
-//
-//    std::string operator()(ScriptManager& scriptManager, std::string_view scriptPath, Physics defaults = {})
-//    {
-//        auto entity = ECS::CreateEntity();
-//        auto& phys = entity.AddComponent(std::move(defaults));
-//
-//        ScriptInstance instance{};
-//
-//        instance.scriptInfo = {
-//            .name = kPhysTestName,
-//            .scriptType = ScriptType::File,
-//            .path = std::format(kPhysTestFileFmt, scriptPath)
-//        };
-//
-//        instance.setupFn = [&phys](Lua& lua) {
-//            lua["physics"] = &phys;
-//        };
-//
-//        scriptManager.RegisterScript<
-//            SDL_FPoint,
-//            AccumulatedForces,
-//            Physics>(std::move(instance));
-//
-//        return std::string{kPhysTestName};
-//    }
-//}
+} // test

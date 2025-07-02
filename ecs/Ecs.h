@@ -86,7 +86,7 @@ public:
         return Entity{ ECS::Get().CreateEntity_t(), ecs };
     }
 
-    template <SomeComponent...Ts, typename Filter>
+    template <typename...Ts, typename Filter>
     static std::vector<Entity> GetAllEntitiesWith(Filter&& filter)
     {
         auto& ecs = ECS::Get();
@@ -100,6 +100,14 @@ public:
         auto& ecs = ECS::Get();
 
         return ecs.GetAllEntitiesWithInternal<Ts...>();
+    }
+
+    template <typename...Ts>
+    static std::vector<Entity> GetAllEntitiesWithAny()
+    {
+        auto& ecs = ECS::Get();
+
+        return ecs.GetAllEntitiesWithAnyInternal<Ts...>();
     }
 
     static Entity GetEntityByID(Entity_t id)
@@ -167,6 +175,9 @@ private:
         const uint64_t mask = (Ts::componentBit | ...);
 
         auto activeEntities = entityManager_.GetActiveEntities();
+
+        result.reserve(activeEntities.size());
+
         for (const auto& ent : activeEntities)
         {
             const uint64_t entitySig = componentManager_.GetSignature(ent);
@@ -216,6 +227,9 @@ private:
         const uint64_t includeMask = (makeMasks.template operator()<Ts>() | ...);
 
         auto activeEntities = entityManager_.GetActiveEntities();
+
+        result.reserve(activeEntities.size());
+
         for (const auto& ent : activeEntities)
         {
             const uint64_t entitySig = componentManager_.GetSignature(ent);
@@ -226,6 +240,27 @@ private:
             }
 
             result.emplace_back(ent, *this);
+        }
+
+        return result;
+    }
+
+    template <typename...Ts>
+    std::vector<Entity> GetAllEntitiesWithAnyInternal()
+    {
+        uint64_t includeMask = (Ts::componentBit | ...);
+
+        auto activeEntities = entityManager_.GetActiveEntities();
+
+        std::vector<Entity> result;
+        result.reserve(activeEntities.size());
+
+        for (const auto& entity : activeEntities)
+        {
+            if (componentManager_.GetSignature(entity) & includeMask)
+            {
+                result.emplace_back(entity, *this);
+            }  
         }
 
         return result;

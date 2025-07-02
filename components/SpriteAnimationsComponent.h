@@ -6,5 +6,4 @@
 struct SpriteAnimations : public BaseComponent<SpriteAnimations>
 {
     SpriteAnimationSeriesMap map;
-    bool dirty = true;
 };

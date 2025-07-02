@@ -2,10 +2,7 @@
 #include "../core/TypeListVectorMap.h"
 #include "EventConcepts.h"
 #include "EventDataTypeList.h"
-// TODO: Move these into Include.h and #include it
-#include "data/EntityActions.h"
-#include "data/EntityCollision.h"
-#include "data/GameControllerEvents.h"
+#include "data/EventDataIncludes.h"
 
 class EventDataStorage
 {

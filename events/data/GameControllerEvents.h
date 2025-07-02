@@ -1,7 +1,7 @@
 #pragma once
 #include "../IEventData.h"
 #include "../EventConcepts.h"
-#include "SDL_gamecontroller.h"
+#include "../../inputs/controller/GameControllerInputField.h"
 
 namespace events {
 
@@ -15,10 +15,17 @@ struct GameControllerDisconnected : IEventData<GameControllerDisconnected>
 	SDL_JoystickID joystickID = -1;
 };
 
+struct GameControllerInput : IEventData<GameControllerInput>
+{
+	SDL_JoystickID joystickID = -1;
+	GameControllerInputField input;
+};
+
 // GROUP
 using GameControllerEventGroup = EventGroup<
+	GameControllerDisconnected,
 	GameControllerConnected,
-	GameControllerDisconnected
+	GameControllerInput 
 >;
 
 } // events

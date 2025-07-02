@@ -3,6 +3,7 @@
 #include "../events/EventStage.h"
 #include "../events/EventCallbackRegistry.h"
 #include "../core/Monitoring.h"
+#include "../components/GameControllerInputCallbacksComponent.h"
 #include <algorithm>
 #include <unordered_set>
 
@@ -18,38 +19,87 @@ std::vector<uint32_t> ExtractEventTypes(EventSpan events)
 	return { eventTypes.begin(), eventTypes.end() };
 }
 
-//auto eventTypes = ExtractEventTypes(events);
-//
-//auto entities = ECS::GetAllEntitiesWith<EventCallbacks>(
-//	[&eventTypes](const EventCallbacks& callbacks) {
-//		for (auto eventType : eventTypes)
-//		{
-//			if (callbacks.table.contains(eventType))
-//			{
-//				return true;
-//			}
-//		}
-//		return false;
-//	});
-
 } // unnamed
 
 void EventCallbackSystem::EntityDestroyed(Entity_t entityId)
 {
-	auto entity = ECS::GetEntityByID(entityId);
+	callbackRegistry_.RemoveCallbacksWithOwner(entityId);
+}
+
+void EventCallbackSystem::HandleControllerInputCallback(Entity& entity, const Event& event)
+{
+	if (!(entity.IsValid() && entity.HasComponent<GameControllerInputCallbacks>()))
+	{
+		return;
+	}
+
+	auto& inputCallbacks = entity.GetComponent<GameControllerInputCallbacks>().table;
+
+	const auto* castEvent = EventDataCast<events::GameControllerInput>(event);
+	if (!castEvent)
+	{
+		return;
+	}
+
+	auto it = inputCallbacks.find(castEvent->input.source);
+	if (it == inputCallbacks.end())
+	{
+		return;
+	}
+
+	const auto& handle = it->second;
+
+	auto callbackView = callbackRegistry_.GetCallback(handle);
+	if (!callbackView)
+	{
+		inputCallbacks.erase(castEvent->input.source);
+
+		return;
+	}
+
+	if (callbackView(entity.GetID(), event) == ReturnSignal::StopObserving)
+	{
+		//if (key.uniqueOwner.has_value() && *key.uniqueOwner == entity.GetID())
+		//{
+		//	callbackRegistry_.RemoveCallback(key);
+		//}
+
+		inputCallbacks.erase(castEvent->input.source);
+	}
+}
+
+void EventCallbackSystem::HandleEventCallback(Entity& entity, const Event& event)
+{
 	if (!(entity.IsValid() && entity.HasComponent<EventCallbacks>()))
 	{
 		return;
 	}
 
-	auto& callbackTable = entity.GetComponent<EventCallbacks>().table;
-	for (auto& [_, key] : callbackTable)
+	auto& eventCallbacks = entity.GetComponent<EventCallbacks>().table;
+
+	auto it = eventCallbacks.find(event.type);
+	if (it == eventCallbacks.end())
 	{
-		// if the entity being destroyed 'owns' the callback
-		if (key.uniqueOwner.has_value() && *key.uniqueOwner == entityId)
-		{
-			callbackRegistry_.RemoveCallback(key);
-		}
+		return;
+	}
+
+	const auto& handle = it->second;
+
+	auto callbackView = callbackRegistry_.GetCallback(handle);
+	if (!callbackView)
+	{
+		eventCallbacks.erase(event.type);
+	}
+
+	auto ret = callbackView(entity.GetID(), event);
+	if (ret == ReturnSignal::StopObserving)
+	{
+		//if (key.uniqueOwner.has_value() && *key.uniqueOwner == entity.GetID())
+		//{
+		//	callbackRegistry_.RemoveCallback(key);
+		//}
+
+		eventCallbacks.erase(it);
 	}
 }
 
@@ -60,7 +110,7 @@ void EventCallbackSystem::Dispatch(EventSpan events)
 		return;
 	}
 
-	auto entities = ECS::GetAllEntitiesWith<EventCallbacks>();
+	auto entities = ECS::GetAllEntitiesWithAny<EventCallbacks, GameControllerInputCallbacks>();
 	if (entities.empty())
 	{
 		return;
@@ -70,38 +120,12 @@ void EventCallbackSystem::Dispatch(EventSpan events)
 	{
 		for (auto& entity : entities)
 		{
-			// double-check that an earlier callback didn't invalidate this entity
-			if (!(entity.IsValid() && entity.HasComponent<EventCallbacks>()))
+			if (event.type == events::GameControllerInput::eventType)
 			{
-				continue;
+				HandleControllerInputCallback(entity, event);
 			}
 
-			auto& callbacks = entity.GetComponent<EventCallbacks>().table;
-
-			auto it = callbacks.find(event.type);
-			if (it == callbacks.end())
-			{
-				continue;
-			}
-
-			const auto& key = it->second;
-
-			auto callbackView = callbackRegistry_.GetCallback(key);
-			if (!callbackView)
-			{
-				callbacks.erase(key.eventType);
-			}
-
-			auto ret = callbackView(event, entity.GetID());
-			if (ret == ReturnSignal::StopObserving)
-			{
-				if (key.uniqueOwner.has_value() && *key.uniqueOwner == entity.GetID())
-				{
-					callbackRegistry_.RemoveCallback(key);
-				}
-
-				callbacks.erase(it);
-			}
+			HandleEventCallback(entity, event);
 		}
 	}
 }

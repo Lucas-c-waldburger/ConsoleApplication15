@@ -1,4 +1,6 @@
 #include "Scene.h"
+#include "scripting/user_types/GameControllerLuaUserTypes.h"
+#include "atlas/SpriteSeriesAtlas.h"
 #include "core/Logger.h"
 #include "sdl/SDLite.h"
 #include "sdl/SDLUtils.h"
@@ -12,8 +14,11 @@
 #include "scripting/user_types/TransformLuaUserTypes.h"
 #include "scripting/user_types/SpriteAnimationLuaUserTypes.h"
 #include "components/GameControllerStateComponent.h"
+#include "components/builder/ColliderComponentBuilder.h"
+#include "components/builder/RigidBodyComponentBuilder.h"
 #include "components/SpriteAnimationsComponent.h"
 #include "test/ComponentTests.h"
+#include "test/Premades.h"
 #include "test/Fixtures.h"
 #include "systems/CameraSystem.h"
 #include "inputs/InputState.h"
@@ -27,6 +32,8 @@
 #include "events/data/GameControllerEvents.h"
 #include "events/data/EntityCollision.h"
 #include "events/data/EntityActions.h"
+#include "test/callbacks/AnimationCallbacks.h"
+#include "test/callbacks/GameControllerCallbacks.h"
 
 namespace {
     static constexpr const char* kFontPath =
@@ -64,7 +71,7 @@ namespace {
     static constexpr float kDynamicCircleRadius = 30.0f;
 
     static constexpr float kMaxImpulseValue = 8.0f;
-    static constexpr float kImpuseScale = kMaxImpulseValue / static_cast<float>(GameController::kAxisMax);
+    static constexpr float kImpulseScale = kMaxImpulseValue / static_cast<float>(GameController::kAxisMax);
     static constexpr float kMaxSpeed = 5.0f;
 
     struct Room
@@ -137,111 +144,40 @@ namespace {
     static constexpr std::string_view kSpritesPath = R"(resources/sprites)";
     static constexpr std::string_view kWalkSeriesName = "walk";
 
-    static SpriteSeriesAtlas::AtlasInfo MakeKnightAtlasInfo()
+    static SpriteSeriesResourcePackets MakeKnightAtlasInfo()
     {
         static constexpr std::string_view kWalkSpriteFilePrefix = 
             R"(\knight\walk_anim\knight_walk_)";
 
-        SpriteSeriesAtlas::AtlasInfo knightAtlasInfo{};
-        auto& walkSeries = knightAtlasInfo.seriesDatas.emplace_back();
+        SpriteSeriesResourcePackets knightResourcePackets{};
+        auto& walkSeries = knightResourcePackets.emplace_back();
 
-        walkSeries.seriesName = kWalkSeriesName;
-        walkSeries.spriteFilepaths.reserve(9);
+        walkSeries.SetMetadata(SpriteSeriesMetadata{ .seriesName = std::string{kWalkSeriesName} });
+        
+        std::vector<std::string> spriteFilepaths;
+        spriteFilepaths.reserve(9);
         for (int i = 0; i < 9; i++)
         {
             std::string filePath = std::string{ kSpritesPath } + 
                 std::string{kWalkSpriteFilePrefix} + std::to_string(i) + ".png";
 
-            walkSeries.spriteFilepaths.push_back(std::move(filePath));
+            spriteFilepaths.push_back(std::move(filePath));
         }
 
-        return knightAtlasInfo;
+        walkSeries.SetFilepaths(std::move(spriteFilepaths));
+
+        return knightResourcePackets;
     }
-
-    //ReturnSignal ConnectToFirstController(const SDL_Event& ev, Entity& ent)
-    //{
-    //    assert(ev.type == GameControllerConnected::GetEventType());
-
-    //    if (!ent.IsValid())
-    //    {
-    //        LOG_WARNING("Entity was invalid");
-    //        return ReturnSignal::StopObserving;
-    //    }
-    //    if (!ent.HasComponent<GameControllerState>())
-    //    {
-    //        LOG_WARNING("Entity did not have GameControllerState component");
-    //        return ReturnSignal::StopObserving;
-    //    }
-
-    //    auto& controllerState = ent.GetComponent<GameControllerState>();
-    //    if (controllerState.joystickID != GameController::kInvalidJoystickID)
-    //    {
-    //        LOG_WARNING("Entity already had a joystick id marked valid");
-    //        return ReturnSignal::Pause;
-    //    }
-
-    //    const auto* castEv = CustomEvents::CastEvent<GameControllerConnected>(ev);
-    //    if (!castEv)
-    //    {
-    //        return ReturnSignal::StopObserving;
-    //    }
-
-    //    controllerState.joystickID = castEv->joystickID;
-    //    LOG_INFO("Entity attached to new controller connection!");
-
-    //    return ReturnSignal::Pause;
-    //};
-
-    //ReturnSignal InvalidateEntityJoystickIDAndListenForNewConnection(const SDL_Event& ev, Entity& ent)
-    //{
-    //    assert(ev.type == GameControllerDisconnected::GetEventType());
-
-    //    if (!ent.IsValid())
-    //    {
-    //        LOG_WARNING("Entity was invalid");
-    //        return ReturnSignal::StopObserving;
-    //    }
-    //    if (!ent.HasComponent<GameControllerState>())
-    //    {
-    //        LOG_WARNING("Entity did not have GameControllerState component");
-    //        return ReturnSignal::StopObserving;
-    //    }
-
-    //    // 1. mark entity's joystickID as invalid in its controller state
-    //    const auto* disconnectEv = CustomEvents::CastEvent<GameControllerDisconnected>(ev);
-    //    assert(disconnectEv);
-
-    //    auto& controllerState = ent.GetComponent<GameControllerState>();
-    //    if (controllerState.joystickID != disconnectEv->joystickID)
-    //    {
-    //        LOG_DEBUG("Entity's connected controller different from the one that was disconnected");
-    //        return ReturnSignal::KeepObserving;
-    //    }
-
-    //    controllerState.joystickID = GameController::kInvalidJoystickID;
-
-    //    LOG_DEBUG("Set entity's controller state joystickID to invalid");
-
-    //    // 2. unpause listening for new controller connection
-    //    assert(ent.HasComponent<EventObserver>());
-    //    auto& entityEvents = ent.GetComponent<EventObserver>();
-    //   
-    //    auto connectEvIt = entityEvents.eventCallbacks.find(GameControllerConnected::GetEventType());
-
-    //    assert(connectEvIt != entityEvents.eventCallbacks.end());
-    //    assert(connectEvIt->second.status == ReturnSignal::Pause);
-
-    //    connectEvIt->second.status = ReturnSignal::KeepObserving;
-
-    //    LOG_DEBUG("Listening for a new connection on this entity...");
-
-    //    return ReturnSignal::KeepObserving;
-    //}
 
     bool AxisOutsideDeadzone(SDL_FPoint axisValue)
     {
         return (std::abs(axisValue.x) > GameController::kAxisDeadzone ||
                 std::abs(axisValue.y) > GameController::kAxisDeadzone);
+    }
+    bool AxisOutsideDeadzone(SDL_Point axisValue)
+    {
+        return (std::abs(axisValue.x) > GameController::kAxisDeadzone ||
+            std::abs(axisValue.y) > GameController::kAxisDeadzone);
     }
 
     SDL_FPoint Normalize(SDL_FPoint ax)
@@ -254,10 +190,15 @@ namespace {
         return { 0.0f, -1.0f };
     }
 
+    SDL_FPoint Normalize(SDL_Point ax)
+    {
+        return Normalize(SDL_FPoint{ static_cast<float>(ax.x), static_cast<float>(ax.y) });
+    }
+
     std::optional<SDL_FPoint> GetGrapplePoint(B2World& world, const GameControllerState& controller, 
                                               const RigidBody& rigidBody, float ropeLen)
     {
-        auto direction = Normalize(controller.axisInput.right.value);
+        auto direction = Normalize(controller.inputs[GameControllerInputSource::RightStickAxis].value.axis);
         auto playerPos = rigidBody.body.GetData().GetPosition();
 
         SDL_FPoint proj{
@@ -273,18 +214,6 @@ namespace {
         
         return std::nullopt;
     }
-
-
-    /*SDL_FPoint GetGrapplePoint(const GameControllerState& controller, const RigidBody& rigidBody, float ropeLen)
-    {
-        auto direction = NormalizeAxis(controller.axisInput.right.value);
-        auto playerPos = rigidBody.body.GetData().GetPosition();
-
-        return {
-           playerPos.x + direction.x * ropeLen,
-           playerPos.y + direction.y * ropeLen
-        };
-    }*/
 
     SDL_FPoint MoveTowards(const SDL_FPoint& current, const SDL_FPoint& target, float speed) 
     {
@@ -311,6 +240,8 @@ namespace {
     Result<Void> HandleGrapple(B2World& world, Entity& entity, B2DistanceJoint& joint, GrappleState& state,
                                float extendSpeed, std::pair<SDL_FPoint, SDL_FPoint>& extendingPoints)
     {
+        using Source = GameControllerInputSource;
+
         assert(entity.HasComponent<GameControllerState>());
         assert(entity.HasComponent<RigidBody>());
 
@@ -338,7 +269,7 @@ namespace {
         {
             assert(joint.IsValid());
 
-            if (controller.buttonInput[SDL_CONTROLLER_BUTTON_B].state == InputState::Pressed)
+            if (controller.inputs[Source::B].state == InputState::Pressed)
             {
                 state = GrappleState::None;
                 joint.Destroy();
@@ -350,7 +281,7 @@ namespace {
         // either extending or none
         if (state == GrappleState::None)
         {
-            if (controller.buttonInput[SDL_CONTROLLER_BUTTON_RIGHTSHOULDER].state == InputState::Pressed)
+            if (controller.inputs[Source::RightShoulder].state == InputState::Pressed)
             {
                 constexpr float grappleRopeLen = 1200.0f;
 
@@ -374,8 +305,8 @@ namespace {
         // extending
         assert(state == GrappleState::Extending);
         
-        if (!(controller.buttonInput[SDL_CONTROLLER_BUTTON_RIGHTSHOULDER].state == InputState::Held ||
-            controller.buttonInput[SDL_CONTROLLER_BUTTON_RIGHTSHOULDER].state == InputState::Pressed))
+        if (!(controller.inputs[Source::RightShoulder].state == InputState::Held ||
+            controller.inputs[Source::RightShoulder].state == InputState::Pressed))
         {
             state = GrappleState::None;
 
@@ -410,88 +341,26 @@ namespace {
         return Void{};
     }
 
-    auto ConnectToFirstController()
-    {
-        return [](const events::GameControllerConnected& ev, Entity_t id) -> ReturnSignal {
-            auto ent = ECS::GetEntityByID(id);
-
-            if (!ent.IsValid())
-            {
-                LOG_WARNING("Entity was invalid, can't connect controller");
-                return ReturnSignal::StopObserving;
-            }
-            if (!ent.HasComponent<GameControllerState>())
-            {
-                LOG_WARNING("Entity did not have GameControllerState component");
-                return ReturnSignal::StopObserving;
-            }
-
-            auto& controllerState = ent.GetComponent<GameControllerState>();
-            if (controllerState.joystickID == GameController::kInvalidJoystickID)
-            {
-                controllerState.joystickID = ev.joystickID;
-                LOG_INFO("Entity attached to new controller connection!");
-            }
-           
-            return ReturnSignal::KeepObserving;
-        };
-    }
-
-    auto DisconnectController()
-    {
-        return [](const events::GameControllerDisconnected& ev, Entity_t id) -> ReturnSignal {
-            auto ent = ECS::GetEntityByID(id);
-
-            if (!ent.IsValid())
-            {
-                LOG_WARNING("Entity was invalid");
-                return ReturnSignal::StopObserving;
-            }
-            if (!ent.HasComponent<GameControllerState>())
-            {
-                LOG_WARNING("Entity did not have GameControllerState component");
-                return ReturnSignal::StopObserving;
-            }
-
-            // 1. mark entity's joystickID as invalid in its controller state
-            auto& controllerState = ent.GetComponent<GameControllerState>();
-            if (controllerState.joystickID != ev.joystickID)
-            {
-                LOG_DEBUG("Entity's connected controller different from the one that was disconnected");
-                return ReturnSignal::KeepObserving;
-            }
-
-            controllerState.joystickID = GameController::kInvalidJoystickID;
-
-            LOG_DEBUG("Controller Disconnected. Listening for a new connection on this entity...");
-
-            return ReturnSignal::KeepObserving;
-        };
-    }
-
-#define NAME_AND_MOVE(x) #x, std::move(x)
-#define NAME_AND_CALL(callable) #callable, callable()
-
     void ConnectEntityToController(EventCallbackSystem& callbackSys, Entity& entity)
     {
         assert(entity.IsValid());
 
         using namespace events;
-        using Key = EventCallbackRegistry::Key;
+        //using Key = EventCallbackRegistry::Key;
 
         const uint32_t connectEvType = GameControllerConnected::eventType;
         const uint32_t disconnectEvType = GameControllerDisconnected::eventType;
 
         auto& registry = callbackSys.GetRegistry();
 
-        auto connectKey = registry.RegisterCallback("ConnectToFirstController",
-                                                     ConnectToFirstController()).key;
-        auto disconnectKey = registry.RegisterCallback("DisconnectController",
-                                                        DisconnectController()).key;
+        //auto connectKey = registry.RegisterCallback("ConnectToFirstController",
+        //                                             ConnectToFirstController()).key;
+        //auto disconnectKey = registry.RegisterCallback("DisconnectController",
+        //                                                DisconnectController()).key;
 
         auto& callbacks = entity.AddComponent<EventCallbacks>().table;
-        callbacks[connectEvType] = std::move(connectKey);
-        callbacks[disconnectEvType] = std::move(disconnectKey);
+        //callbacks[connectEvType] = std::move(connectKey);
+        //callbacks[disconnectEvType] = std::move(disconnectKey);
 
         entity.AddComponent(GameControllerState{});
     }
@@ -508,10 +377,10 @@ namespace {
             return;
         }
 
-        auto axisValue = controller.axisInput.left.value;
+        auto axisValue = controller.inputs[GameControllerInputSource::RightStickAxis].value.axis;
         if (AxisOutsideDeadzone(axisValue))
         {
-            axisValue *= kImpuseScale;
+            axisValue *= kImpulseScale;
 
             /*bool aPressed = controller.buttonInput[SDL_CONTROLLER_BUTTON_A].state == GameControllerState::Pressed;
 
@@ -525,7 +394,7 @@ namespace {
             }*/
 
             rigidBody.forceRequests.impulses.push_back(Force{
-                .value = axisValue
+                .value = static_cast<float>(axisValue.x)
             });
         }       
     }
@@ -658,46 +527,16 @@ namespace {
         };
          
         auto& registry = eventCallbackSystem.GetRegistry();
-        auto [key, _] = registry.RegisterCallback("handleBallCollision", std::move(handleBallCollision),
-                                                  entity.GetID());
+        //auto [key, _] = registry.RegisterCallback("handleBallCollision", std::move(handleBallCollision),
+        //                                          entity.GetID());
 
-        auto& callbacks = entity.AddComponent(EventCallbacks{}).table;
-        callbacks.AddKey(std::move(key));
+        //auto& callbacks = entity.AddComponent(EventCallbacks{}).table;
+        //callbacks.AddKey(std::move(key));
 
         return entity;
     }
 
-    /*class Counter
-    {
-    public:
-        double GetDeltaTime() const
-        {
-            return delta_;
-        }
-
-        void Refresh()
-        {
-            uint64_t now = SDL_GetPerformanceCounter();
-
-            delta_ = static_cast<double>(now - last_) /
-                static_cast<double>(SDL_GetPerformanceFrequency());
-
-            last_ = now;
-        }
-
-        void Init(HookManager& hooks)
-        {
-            hooks.Attach(HookPoint::LoopStart, [this]() {
-                this->Refresh();
-                return ReturnSignal::KeepObserving;
-            });
-        }
-
-    private:
-        uint64_t last_ = 0;
-        double delta_ = 0.0;
-    };*/
-
+   
     class Chain
     {
     public:
@@ -969,11 +808,11 @@ namespace {
                 }).Build(sensorLeadRigid.body));
 
             auto& registry = eventCallbackSystem.GetRegistry();
-            auto [key, _] = registry.RegisterCallback("HandleSensorConnection", HandleSensorConnection(),
-                                                      sensorLead.GetID());
+            //auto [key, _] = registry.RegisterCallback("HandleSensorConnection", HandleSensorConnection(),
+            //                                          sensorLead.GetID());
 
             auto& callbacks = sensorLead.AddComponent(EventCallbacks{}).table;
-            callbacks.AddKey(std::move(key));
+            //callbacks.AddKey(std::move(key));
 
             auto sensorLeadRelations = sensorLead.GetRelations();
 
@@ -999,11 +838,6 @@ namespace {
                 }).Build(childRigid.body));
             }
         }
-
-        //static SDL_FPoint GetDestinationPoint(SDL_FPoint direction, float len)
-        //{
-
-        //}
 
         Entity sourceEntity_;
         int numLinkPoints_;
@@ -1093,7 +927,7 @@ namespace {
             DebugDrawSet,
             RenderProfile,
             TextAlign,
-            GlyphInfo,
+            Glyph,
             Handle<GlyphAtlas>,
             TextRenderable,
             Transform>("text_render_test.lua", [&](Lua& lua) { 
@@ -1327,22 +1161,6 @@ namespace {
         );*/
     }
 
-    auto SpriteAdvanceOnDistanceTraveled(float target)
-    {
-        return [target, delta = 0.0f]
-        (const events::EntityPositionChanged& ev, Entity_t ent) mutable -> ReturnSignal
-        {
-            SDL_FPoint dist = { ev.newPosition - ev.oldPosition };
-            delta += std::sqrt(dist.x * dist.x + dist.y * dist.y);
-
-            if (delta >= target)
-            {
-
-            }
-
-            return ReturnSignal::KeepObserving;
-        };
-    }
 }
 
 //Result<Void> B2Scene::Run()
@@ -1431,6 +1249,8 @@ Result<Void> SimplePhysicsScene::Run()
     SDLite::Start();
 
     B2World world = B2World::Create(0, 9.8f);
+    
+    TextureRepository textureRepo{};
 
     RenderSystem renderSys{}; 
     PhysicsSystem physicsSys{};
@@ -1446,12 +1266,15 @@ Result<Void> SimplePhysicsScene::Run()
 
     HookManager hooks{};
 
-    impl::TextureManager store{};
-    TRY(store.LoadAtlas(SDLite::Renderer(), GlyphAtlas::AtlasInfo{
-        .fontPath = kFontPath, 
-        .fontSize = 48, 
+    FontResourcePacket fontResource{};
+    fontResource.SetMetadata(FontMetadata{
+        .fontName = "default",
+        .fontSize = 48,
         .fontColor = SDLite::kColorWhite
-    }), glyphAtlasHandle);
+    });
+    fontResource.SetFilepaths({ kFontPath });
+
+    TRY(textureRepo.LoadNewAtlas<GlyphAtlas>(SDLite::Renderer(), std::move(fontResource)), glyphAtlasHandle);
 
     TRY(MakeColliderBoxEntity(world, kGroundPosition, 
         kGroundCeilingDimensions, B2Body::Type::Static, {}, SDLite::kColorWhite), groundEntity);
@@ -1537,7 +1360,7 @@ Result<Void> SimplePhysicsScene::Run()
 
         SDLite::Renderer().Clear(SDLite::kColorBlack);
 
-        renderSys.Update(SDLite::Renderer(), cameraSys.GetCamera(), store);
+        renderSys.Update(SDLite::Renderer(), cameraSys.GetCamera(), textureRepo);
 
         SDLite::Renderer().Show();
     }
@@ -1557,6 +1380,8 @@ Result<Void> GrapplePhysicsScene::Run()
 
     B2World world = B2World::Create(0, 9.8f);
 
+    TextureRepository textureRepo{};
+
     RenderSystem renderSys{};
     PhysicsSystem physicsSys{};
     SDLInputSystem inputSys{};
@@ -1569,12 +1394,16 @@ Result<Void> GrapplePhysicsScene::Run()
 
     HookManager hooks{};
 
-    impl::TextureManager store{};
-    TRY(store.LoadAtlas(SDLite::Renderer(), GlyphAtlas::AtlasInfo{
-        .fontPath = kFontPath,
-            .fontSize = 48,
-            .fontColor = SDLite::kColorWhite
-    }), glyphAtlasHandle);
+    FontResourcePacket fontResource{};
+    fontResource.SetMetadata(FontMetadata{
+        .fontName = "default",
+        .fontSize = 48,
+        .fontColor = SDLite::kColorWhite
+        });
+    fontResource.SetFilepaths({ kFontPath });
+
+    TRY(textureRepo.LoadNewAtlas<GlyphAtlas>(SDLite::Renderer(), std::move(fontResource)), glyphAtlasHandle);
+
 
     TRY(Room::Create(world), room);
 
@@ -1641,7 +1470,7 @@ Result<Void> GrapplePhysicsScene::Run()
 
         SDLite::Renderer().Clear(SDLite::kColorBlack);
 
-        renderSys.Update(SDLite::Renderer(), cameraSys.GetCamera(), store);
+        renderSys.Update(SDLite::Renderer(), cameraSys.GetCamera(), textureRepo);
 
         if (grappleState == GrappleState::Extending)
         {
@@ -1683,11 +1512,15 @@ Result<Void> GrapplePhysicsScene::Run()
 
 Result<Void> ChainScene::Run(std::shared_ptr<SceneFixture> scene)
 {
-    TRY(scene->LoadTextureAtlas<GlyphAtlas>({
-        .fontPath = kFontPath,
-        .fontSize = 24,
+    FontResourcePacket fontResource{};
+    fontResource.SetMetadata(FontMetadata{
+        .fontName = "default",
+        .fontSize = 48,
         .fontColor = SDLite::kColorWhite
-    }), glyphAtlasHandle);
+        });
+    fontResource.SetFilepaths({ kFontPath });
+
+    TRY(scene->LoadTextureAtlas<GlyphAtlas>(std::move(fontResource)), glyphAtlasHandle);
 
     TRY(Room::Create(scene->GetWorld()), room);
 
@@ -1741,11 +1574,15 @@ Result<Void> ChainScene::Run(std::shared_ptr<SceneFixture> scene)
 
 Result<Void> TextScene::Run(std::shared_ptr<SceneFixture> scene)
 {
-    TRY(scene->LoadTextureAtlas<GlyphAtlas>({
-        .fontPath = kFontPath,
+    FontResourcePacket fontResource{};
+    fontResource.SetMetadata(FontMetadata{
+        .fontName = "default",
         .fontSize = 48,
         .fontColor = SDLite::kColorBlack
-    }), glyphAtlasHandle);
+    });
+    fontResource.SetFilepaths({ kFontPath });
+
+    TRY(scene->LoadTextureAtlas<GlyphAtlas>(std::move(fontResource)), glyphAtlasHandle);
 
     auto textEnt = ECS::CreateEntity();
 
@@ -1800,12 +1637,16 @@ Result<Void> TextScene::Run(std::shared_ptr<SceneFixture> scene)
 
 Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
 {
+    TRY(Room::Create(scene->GetWorld()), room);
+
     TRY(scene->LoadTextureAtlas<SpriteSeriesAtlas>(MakeKnightAtlasInfo()), 
         spriteAtlasHandle);
+
     const auto* spriteAtlas = scene->GetTextureRepository().GetAtlas(spriteAtlasHandle);
     assert(spriteAtlas);
-    auto spriteInfo = spriteAtlas->GetSprite(kWalkSeriesName, 0);
-    assert(spriteInfo.atlasRect.w != 0 && spriteInfo.atlasRect.h != 0);
+
+    auto spritePlots = spriteAtlas->GetSpritePlots(kWalkSeriesName);
+    assert(!spritePlots.empty());
 
     auto spriteEnt = ECS::CreateEntity();
 
@@ -1815,27 +1656,66 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
         .scale = { 1.0f, 1.0f }
         });
 
+    auto& rigidBody = spriteEnt.AddComponent(ComponentBuilder<RigidBody>{}.WithBodyParameters({
+       .bodyType = B2Body::Type::Dynamic,
+       .position = kScreenCenterPosition,
+       .fixedRotation = true
+    })
+    .WithBodyLimits({
+
+    })
+    .Build(scene->GetWorld()));
+
+    TRY(scene->GetWorld().GetBody(rigidBody.body.GetData().GetHandle()), body);
+    assert(body.IsValid());
+
+    spriteEnt.AddComponent(ComponentBuilder<Collider>{}
+    .WithShapeParameters({
+        .shapeType = B2Shape::Type::Polygon,
+        .dimensions = Dimensions<float>{ 55.0f, 115.0f },
+    })
+    .WithColliderSettings({ 
+        .friction = 15.0f,
+        .enableEvents{ .contact = true } 
+    })
+    .Build(body));
+
     SpriteRenderable spriteRenderable{
         .sourceAtlas = spriteAtlasHandle,
-        .sourcePlot = spriteInfo.atlasRect
+        .sourcePlot = spritePlots[0]
     };
     RenderProfile profile{
 
-    };
+    }; 
 
     auto& renderable = spriteEnt.AddComponent(NewRenderable{
         .renderData = std::move(spriteRenderable),
         .profile = std::move(profile)
     });
 
-    auto animSeries = spriteAtlas->GetSpriteAnimationSeries(kWalkSeriesName);
-    assert(!animSeries.spritePlots.empty());
-
     auto& spriteAnimations = spriteEnt.AddComponent(SpriteAnimations{});
-    spriteAnimations.map.Emplace(kWalkSeriesName, std::move(animSeries));
-    spriteAnimations.map.SetCurrent(kWalkSeriesName);
+    spriteAnimations.map.Emplace(kWalkSeriesName, SpriteAnimationSeries{
+        .sourceAtlas = spriteAtlasHandle,
+        .spritePlots = std::move(spritePlots)
+    });
+    
+    auto& registry = scene->GetSystem<EventCallbackSystem>()->GetRegistry();
 
-    SetUpSpriteRenderTestScript(spriteEnt, scene);
+    auto& controllerState = spriteEnt.AddComponent<GameControllerState>();
+    auto& eventCallbacks = spriteEnt.AddComponent<EventCallbacks>();
+
+#define REGISTER(callback, ...) do { \
+    auto oc__ = registry.RegisterCallback(#callback, callback(__VA_ARGS__)); \
+    eventCallbacks.table[oc__.eventType] = oc__.handle; \
+} while(0)
+    
+    using namespace test;
+    REGISTER(ConnectToFirstController);
+    REGISTER(DisconnectController);
+    REGISTER(SpriteAdvanceOnDistanceTraveled, 30);
+    REGISTER(ApplyAxisInputToForce, kImpulseScale);
+
+    //SetUpSpriteRenderTestScript(spriteEnt, scene);
 
     while (true)
     {
@@ -1853,10 +1733,6 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
         SDLite::Renderer().Clear(SDLite::kColorWhite);
 
         TRY(scene->UpdateRender());
-
-        SDL_Rect screenRect = { 0, 0, SDLite::kWindowWidth, SDLite::kWindowHeight };
-
-        SDL_RenderCopy(SDLite::Renderer(), spriteAtlas->GetAtlasTexture(), nullptr, &screenRect);
 
         SDLite::Renderer().Show();
 

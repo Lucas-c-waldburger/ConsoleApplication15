@@ -14,15 +14,13 @@ void SceneFixture::LoopStart()
 {
 	counter_.Update();
 
-	//systemOrder_.Reset();
-
 	hooks_.SetHookPoint<HookPoint::LoopStart>();
+
+	UpdateTimers();
 }
 
 Result<bool> SceneFixture::UpdateSDLInputs()
 {
-	//TRY(systemOrder_.MarkUpdated<EventSystem>());
-
 	assert(systems_.IsSystemInitialized<SDLInputSystem>());
 	auto& inputSys = systems_.GetSystem<SDLInputSystem>();
 
@@ -31,8 +29,6 @@ Result<bool> SceneFixture::UpdateSDLInputs()
 
 Result<Void> SceneFixture::UpdatePhysics()
 {
-	//TRY(systemOrder_.MarkUpdated<PhysicsSystem>());
-
 	assert(systems_.IsSystemInitialized<PhysicsSystem>());
 	assert(world_.IsValid());
 
@@ -43,8 +39,6 @@ Result<Void> SceneFixture::UpdatePhysics()
 
 Result<Void> SceneFixture::UpdateCamera()
 {
-	//TRY(systemOrder_.MarkUpdated<CameraSystem>());
-
 	assert(systems_.IsSystemInitialized<CameraSystem>());
 
 	systems_.GetSystem<CameraSystem>()->Update(counter_.GetDelta());
@@ -54,23 +48,27 @@ Result<Void> SceneFixture::UpdateCamera()
 
 Result<Void> SceneFixture::UpdateRender()
 {
-	//TRY(systemOrder_.MarkUpdated<RenderSystem>());
+	assert(systems_.IsSystemInitialized<RenderSystem>());
+	assert(systems_.IsSystemInitialized<SpriteAnimationSystem>());
 
-	//assert(systems_.IsSystemInitialized<RenderSystem>());
-	assert(systems_.IsSystemInitialized<NewRenderSystem>());
+	systems_.GetSystem<SpriteAnimationSystem>()->Update(textureRepo_);
 
 	auto& cam = systems_.GetSystem<CameraSystem>()->GetCamera();
 
-	//systems_.GetSystem<NewRenderSystem>()->Update(SDLite::Renderer(), cam, textures_);
-	systems_.GetSystem<NewRenderSystem>()->Update(SDLite::Renderer(), cam, textureRepo_);
+	systems_.GetSystem<RenderSystem>()->Update(SDLite::Renderer(), cam, textureRepo_);
 
 	return Void{};
 }
 
+void SceneFixture::UpdateTimers()
+{
+	assert(systems_.IsSystemInitialized<TimerSystem>());
+
+	systems_.GetSystem<TimerSystem>()->Update(counter_.GetDelta());
+}
+
 void SceneFixture::LoopEnd()
 {
-	//assert(systems_.IsSystemInitialized<EventSystem>());
-
 	EventBus::FlushEvents();
 }
 
@@ -83,10 +81,11 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 
 	fixture->world_ = B2World::Create(0, 9.8f);
 
-	//fixture->systems_.InitializeSystem<RenderSystem>();
-	fixture->systems_.InitializeSystem<NewRenderSystem>();
+	fixture->systems_.InitializeSystem<RenderSystem>();
+	fixture->systems_.InitializeSystem<SpriteAnimationSystem>();
 	fixture->systems_.InitializeSystem<PhysicsSystem>();
 	fixture->systems_.InitializeSystem<SDLInputSystem>();
+	fixture->systems_.InitializeSystem<TimerSystem>();
 
 	auto& callbackSystem = fixture->systems_.InitializeSystem<EventCallbackSystem>();
 	callbackSystem->ConnectToEventBus();
@@ -102,8 +101,6 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 	};
 
 	cameraSystem->GetCamera().SetPosition(screenCenter);
-
-	//assert(fixture->systems_.AllSystemsInitialized());
 
 	return Result<std::shared_ptr<SceneFixture>>{ std::move(fixture) };
 }
