@@ -143,28 +143,61 @@ namespace {
 
     static constexpr std::string_view kSpritesPath = R"(resources/sprites)";
     static constexpr std::string_view kWalkSeriesName = "walk";
+    static constexpr std::string_view kJumpSeriesName = "jump";
 
     static SpriteSeriesResourcePackets MakeKnightAtlasInfo()
     {
         static constexpr std::string_view kWalkSpriteFilePrefix = 
             R"(\knight\walk_anim\knight_walk_)";
+        static constexpr size_t kNumWalkSprites = 9;
+
+        static constexpr std::string_view kJumpSpriteFilePrefix =
+            R"(\knight\jump_anim\knight_jump_)";
+        static constexpr size_t kNumJumpSprites = 8;
 
         SpriteSeriesResourcePackets knightResourcePackets{};
-        auto& walkSeries = knightResourcePackets.emplace_back();
 
-        walkSeries.SetMetadata(SpriteSeriesMetadata{ .seriesName = std::string{kWalkSeriesName} });
-        
-        std::vector<std::string> spriteFilepaths;
-        spriteFilepaths.reserve(9);
-        for (int i = 0; i < 9; i++)
+        auto makeSeries = [](std::string_view seriesName, std::string_view filePrefix, size_t numSprites)
         {
-            std::string filePath = std::string{ kSpritesPath } + 
-                std::string{kWalkSpriteFilePrefix} + std::to_string(i) + ".png";
+            static constexpr std::string_view kFilepathFmt = "resources\\sprites{}{}.png";
 
-            spriteFilepaths.push_back(std::move(filePath));
-        }
+            ResourcePacket<SpriteSeriesMetadata> packet;
+            packet.SetMetadata(SpriteSeriesMetadata{ .seriesName = std::string{seriesName} });
 
-        walkSeries.SetFilepaths(std::move(spriteFilepaths));
+            std::vector<std::string> spriteFilepaths;
+            spriteFilepaths.reserve(numSprites);
+            for (size_t i = 0; i < numSprites; i++)
+            {
+                std::string filepath = std::format(kFilepathFmt, filePrefix, std::to_string(i));
+
+                spriteFilepaths.push_back(std::move(filepath));
+            }
+
+            packet.SetFilepaths(std::move(spriteFilepaths));
+
+            return packet;
+        };
+
+        knightResourcePackets.emplace_back(makeSeries(kWalkSeriesName, kWalkSpriteFilePrefix, kNumWalkSprites));
+        knightResourcePackets.emplace_back(makeSeries(kJumpSeriesName, kJumpSpriteFilePrefix, kNumJumpSprites));
+
+        //auto& walkSeries = knightResourcePackets.emplace_back();
+        //walkSeries.SetMetadata(SpriteSeriesMetadata{ .seriesName = std::string{kWalkSeriesName} });
+
+        //auto& jumpSeries = knightResourcePackets.emplace_back();
+        //jumpSeries.SetMetadata(SpriteSeriesMetadata{ .seriesName = std::string{kJumpSeriesName} });
+        //
+        //std::vector<std::string> spriteFilepaths;
+        //spriteFilepaths.reserve(kTotalNumSprites);
+        //for (int i = 0; i < kTotalNumSprites; i++)
+        //{
+        //    std::string filePath = std::string{ kSpritesPath } + 
+        //        std::string{kWalkSpriteFilePrefix} + std::to_string(i) + ".png";
+
+        //    spriteFilepaths.push_back(std::move(filePath));
+        //}
+
+        //walkSeries.SetFilepaths(std::move(spriteFilepaths));
 
         return knightResourcePackets;
     }
@@ -1161,7 +1194,17 @@ namespace {
         );*/
     }
 
+
+    class SpriteColliderPool
+    {
+    public:
+
+    private:
+        std::unordered_map<std::string, Entity_t> collidersForSpriteSequences_;
+    };
+
 }
+
 
 //Result<Void> B2Scene::Run()
 //{
@@ -1662,7 +1705,7 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
        .fixedRotation = true
     })
     .WithBodyLimits({
-
+        .linearVelocity = { .max = { 15.0f, 15.0f }}
     })
     .Build(scene->GetWorld()));
 
@@ -1672,7 +1715,9 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
     spriteEnt.AddComponent(ComponentBuilder<Collider>{}
     .WithShapeParameters({
         .shapeType = B2Shape::Type::Polygon,
-        .dimensions = Dimensions<float>{ 55.0f, 115.0f },
+        .dimensions = Dimensions<float>{ 49.0f, 116.0f }
+            //110,
+            //70}
     })
     .WithColliderSettings({ 
         .friction = 15.0f,
@@ -1712,7 +1757,7 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
     using namespace test;
     REGISTER(ConnectToFirstController);
     REGISTER(DisconnectController);
-    REGISTER(SpriteAdvanceOnDistanceTraveled, 30);
+    REGISTER(SpriteAdvanceOnDistanceTraveled, 20);
     REGISTER(ApplyAxisInputToForce, kImpulseScale);
 
     //SetUpSpriteRenderTestScript(spriteEnt, scene);

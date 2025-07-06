@@ -2,8 +2,9 @@
 #include <concepts>
 #include <typeindex>
 #include <optional>
-#include "../../core/commonObjects.h"
+#include "../../callbacks/CallbackRegistryTable.h"
 #include "../../deps/function2/function2.hpp"
+#include "../../core/commonObjects.h"
 #include "../../ecs/EntityT.h"
 
 namespace state {
@@ -19,15 +20,8 @@ enum EntityState : uint64_t
 
 //struct EntityStateNode;
 
-
-struct BaseCallbackKey
-{
-	std::string name;
-	std::optional<Entity_t> uniqueOwner;
-};
-
-struct ConditionCallbackKey : BaseCallbackKey {};
-struct OnTransitionCallbackKey : BaseCallbackKey {};
+struct ConditionCallbackDescriptor : BaseCallbackDescriptor {};
+struct TransitionCallbackDescriptor : BaseCallbackDescriptor {};
 
 using ConditionCallbackFn = fu2::unique_function<bool(Entity_t)>;
 using OnTransitionCallbackFn = fu2::unique_function<void(Entity_t)>;
@@ -35,8 +29,8 @@ using OnTransitionCallbackFn = fu2::unique_function<void(Entity_t)>;
 struct Transition
 {
 	struct {
-		ConditionCallbackKey condition;
-		OnTransitionCallbackKey onTransition;
+		ConditionCallbackDescriptor condition;
+		TransitionCallbackDescriptor onTransition;
 	} keys;
 	int priority = 0;
 };
@@ -55,6 +49,14 @@ private:
 };
 
 }
+
+class StateCallbackRegistry
+{
+public:
+
+private:
+
+};
 
 //template <typename StateEnum>
 //concept EntityStateEnum = std::is_enum_v<StateEnum> &&

@@ -5,4 +5,5 @@
 #include "EntityCollision.h"
 #include "GameControllerEvents.h"
 #include "TimeEvents.h"
+#include "SpriteAnimationEvents.h"
 

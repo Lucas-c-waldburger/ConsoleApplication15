@@ -55,7 +55,10 @@ public:
         SetAwake(wakeState);
     }
 
-    float GetAngle() const { return b2Rot_GetAngle(b2Body_GetRotation(bodyHandle_)); }
+    float GetAngle() const 
+    { 
+        return RadiansToAngleDegrees(b2Rot_GetAngle(b2Body_GetRotation(bodyHandle_))); 
+    }
     void SetAngle(float newAngle, bool wakeState = true)
     {
         b2Body_SetTransform(bodyHandle_, b2Body_GetPosition(bodyHandle_), AngleToB2Rot(newAngle));

@@ -1,9 +1,12 @@
 #pragma once
 #include "BaseComponent.h"
 #include "../sprite/SpriteAnimationSeriesMap.h"
+#include "../core/commonObjects.h"
 
-//struct SpriteAnimations : public BaseComponent<SpriteAnimations, 13>
 struct SpriteAnimations : public BaseComponent<SpriteAnimations>
 {
-    SpriteAnimationSeriesMap map;
+    //SpriteAnimationsTable table;
+
+    std::unordered_map<HashName, SpriteAnimationSeries> table;
+    HashName current;
 };

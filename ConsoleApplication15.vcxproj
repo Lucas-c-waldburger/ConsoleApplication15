@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="audio\Sound.cpp" />
+    <ClCompile Include="components\driver\SpriteAnimationDriver.cpp" />
     <ClCompile Include="components\util\TagsComponentUtils.cpp" />
     <ClCompile Include="core\WeightGenerator.cpp" />
     <ClCompile Include="deps\RectangleBinPack\GuillotineBinPack.cpp" />
@@ -209,7 +210,7 @@
     <ClInclude Include="atlas\ResourcePacket.h" />
     <ClInclude Include="atlas\TextureRepository.h" />
     <ClInclude Include="audio\Sound.h" />
-    <ClInclude Include="callbacks\BaseCallbackKey.h" />
+    <ClInclude Include="callbacks\BaseCallbackDescriptor.h" />
     <ClInclude Include="callbacks\CallbackRegistryTable.h" />
     <ClInclude Include="callbacks\EventCallbackRegistry.h" />
     <ClInclude Include="camera\Projection.h" />
@@ -220,8 +221,11 @@
     <ClInclude Include="components\CameraTargetComponent.h" />
     <ClInclude Include="components\ComponentIncludes.h" />
     <ClInclude Include="components\ComponentTypeList.h" />
+    <ClInclude Include="components\driver\BaseDriver.h" />
+    <ClInclude Include="components\driver\SpriteAnimationDriver.h" />
     <ClInclude Include="components\EventProductionFlagsComponent.h" />
     <ClInclude Include="components\GameControllerInputCallbacksComponent.h" />
+    <ClInclude Include="components\NeedsUpdateComponent.h" />
     <ClInclude Include="components\SpriteAnimationsComponent.h" />
     <ClInclude Include="components\TimerComponent.h" />
     <ClInclude Include="components\util\EntityStateComponentTemplate.h" />
@@ -230,6 +234,8 @@
     <ClInclude Include="core\CommonEntityMethods.h" />
     <ClInclude Include="core\CommonFunctions.h" />
     <ClInclude Include="core\Counter.h" />
+    <ClInclude Include="core\Direction.h" />
+    <ClInclude Include="core\EventProductionFlags.h" />
     <ClInclude Include="core\FuncTraits.h" />
     <ClInclude Include="core\Literals.h" />
     <ClInclude Include="core\ReadOnly.h" />
@@ -247,6 +253,7 @@
     <ClInclude Include="ecs\EntityDestructor.h" />
     <ClInclude Include="events\data\EntityActions.h" />
     <ClInclude Include="events\data\EventDataIncludes.h" />
+    <ClInclude Include="events\data\SpriteAnimationEvents.h" />
     <ClInclude Include="events\data\TimeEvents.h" />
     <ClInclude Include="events\EventCallbackFn.h" />
     <ClInclude Include="events\EventDispatchListenerInterface.h" />
@@ -470,6 +477,14 @@
     <ClInclude Include="test\Premades.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_0.png" />
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_1.png" />
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_2.png" />
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_3.png" />
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_4.png" />
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_5.png" />
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_6.png" />
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_7.png" />
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png" />
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_1.png" />
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_2.png" />

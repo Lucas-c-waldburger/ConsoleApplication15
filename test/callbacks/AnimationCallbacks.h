@@ -1,51 +1,75 @@
 #pragma once
 #include "../../events/data/EventDataIncludes.h"
 #include "../../components/ComponentIncludes.h"
-#include "../../ecs/Ecs.h"
+#include "../../components/driver/SpriteAnimationDriver.h"
+#include "../../core/Direction.h"
 
 namespace test {
 
-auto SpriteAdvanceOnDistanceTraveled(float targetDist)
+auto SpriteAdvanceOnDistanceTraveled(float targetDistance)
 {
-    struct
+    return [targetDistance, delta = 0.0f](Entity_t id, const events::EntityPositionChanged& ev) mutable
     {
-        float targetDistance;
-        mutable float delta = 0.0f;
-
-        ReturnSignal operator()(Entity_t id, const events::EntityPositionChanged& ev) const
+        auto entity = ECS::GetEntityByID(id);
+        if (!entity.IsValid())
         {
-            auto entity = ECS::GetEntityByID(id);
-            if (!entity.IsValid())
-            {
-                return ReturnSignal::StopObserving;
-            }
-
-            SDL_FPoint dist = { ev.newPosition - ev.oldPosition };
-            delta += std::sqrt(dist.x * dist.x + dist.y * dist.y);
-
-            if (delta >= targetDistance)
-            {
-                delta = 0.0f;
-
-                if (!entity.HasComponent<SpriteAnimations>())
-                {
-                    return ReturnSignal::KeepObserving;
-                }
-
-                auto& animations = entity.GetComponent<SpriteAnimations>().map;
-
-                bool didIncrement = animations.NextInSeries();
-                assert(didIncrement);
-            }
-
-            return ReturnSignal::KeepObserving;
+            return ReturnSignal::StopObserving;
         }
-    } callback{ .targetDistance = targetDist };
 
-    return callback;
+        SDL_FPoint dist = { ev.newPosition - ev.oldPosition };
+        delta += std::sqrt(dist.x * dist.x + dist.y * dist.y);
+
+        if (delta >= targetDistance)
+        {
+            delta = 0.0f;
+
+            auto driver = SpriteAnimationDriver::GetInstance(entity);
+            if (!driver.Success())
+            {
+                return ReturnSignal::KeepObserving;
+            }
+
+            driver->Step();
+        }
+
+        return ReturnSignal::KeepObserving;
+    };
 }
 
+auto FlipSpriteOnAxisDirection(Direction nativeDirection)
+{
+    return [nativeDirection]
+    (Entity_t id, const events::GameControllerInput& ev)
+    {
+        auto entity = ECS::GetEntityByID(id);
+        if (!entity.IsValid())
+        {
+            return ReturnSignal::StopObserving;
+        }
+        if (!entity.HasComponent<NewRenderable>())
+        {
+            return ReturnSignal::KeepObserving;
+        }
+        if (!entity.HasComponent<GameControllerState>() ||
+             entity.GetComponent<GameControllerState>().joystickID != ev.joystickID)
+        {
+            return ReturnSignal::KeepObserving;
+        }
 
+        assert(ev.input.source == GameControllerInputSource::LeftStickAxis ||
+               ev.input.source == GameControllerInputSource::RightStickAxis);
+
+        auto newDirection = GetDirectionFromPoint(ev.input.value.axis);
+        
+        SDL_RendererFlip newFlip = (ShouldFlipHorizontally(nativeDirection, newDirection))
+            ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+
+        auto& renderable = entity.GetComponent<NewRenderable>();
+        renderable.profile.flip = newFlip;
+
+        return ReturnSignal::KeepObserving;
+    };
+}
 
 
 } // test

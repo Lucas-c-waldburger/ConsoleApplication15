@@ -49,7 +49,7 @@ void EventCallbackSystem::HandleControllerInputCallback(Entity& entity, const Ev
 
 	const auto& handle = it->second;
 
-	auto callbackView = callbackRegistry_.GetCallback(handle);
+	auto callbackView = callbackRegistry_.GetCallbackView(handle);
 	if (!callbackView)
 	{
 		inputCallbacks.erase(castEvent->input.source);
@@ -85,7 +85,7 @@ void EventCallbackSystem::HandleEventCallback(Entity& entity, const Event& event
 
 	const auto& handle = it->second;
 
-	auto callbackView = callbackRegistry_.GetCallback(handle);
+	auto callbackView = callbackRegistry_.GetCallbackView(handle);
 	if (!callbackView)
 	{
 		eventCallbacks.erase(event.type);

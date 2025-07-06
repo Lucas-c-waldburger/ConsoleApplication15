@@ -5,7 +5,7 @@
 
 struct GameControllerInputCallbacks : public BaseComponent<GameControllerInputCallbacks>
 {
-	std::unordered_map<GameControllerInputSource, Handle<EventCallbackKey>> table;
+	std::unordered_map<GameControllerInputSource, Handle<EventCallbackDescriptor>> table;
 };
 
 //class GameControllerCallbackKeyTable

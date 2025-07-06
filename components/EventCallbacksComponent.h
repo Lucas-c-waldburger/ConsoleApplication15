@@ -5,7 +5,7 @@
 
 struct EventCallbacks : BaseComponent<EventCallbacks>
 { 
-	std::unordered_map<uint32_t, Handle<EventCallbackKey>> table;
+	std::unordered_map<uint32_t, Handle<EventCallbackDescriptor>> table;
 };
 
 //template <typename Ptr>

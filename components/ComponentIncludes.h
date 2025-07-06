@@ -17,4 +17,5 @@
 #include "EventProductionFlagsComponent.h"
 #include "GameControllerInputCallbacksComponent.h"
 #include "TimerComponent.h"
+#include "NeedsUpdateComponent.h"
 

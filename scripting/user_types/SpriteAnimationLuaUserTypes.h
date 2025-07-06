@@ -14,13 +14,13 @@ template <> inline void RegisterLuaUserType<SpriteAnimationSeries>(sol::state& l
 	}
 }
 
-template <> inline void RegisterLuaUserType<SpriteAnimationSeriesMap>(sol::state& lua)
+template <> inline void RegisterLuaUserType<SpriteAnimationsTable>(sol::state& lua)
 {
-	if (!lua["SpriteAnimationSeriesMap"].valid())
+	if (!lua["SpriteAnimationsTable"].valid())
 	{
-		lua.new_usertype<SpriteAnimationSeriesMap>("SpriteAnimationSeriesMap",
-			"NextInSeries", &SpriteAnimationSeriesMap::NextInSeries,
-			"SetCurrentIndex", &SpriteAnimationSeriesMap::SetCurrentIndex);
+		lua.new_usertype<SpriteAnimationsTable>("SpriteAnimationsTable",
+			"NextInSeries", &SpriteAnimationsTable::NextInSeries,
+			"SetCurrentIndex", &SpriteAnimationsTable::SetCurrentIndex);
 	}
 }
 
@@ -28,6 +28,6 @@ template <> inline void RegisterLuaUserType<SpriteAnimations>(sol::state& lua)
 {
 	if (!lua["SpriteAnimations"].valid())
 	{
-		lua.new_usertype<SpriteAnimations>("SpriteAnimations", "map", &SpriteAnimations::map);
+		lua.new_usertype<SpriteAnimations>("SpriteAnimations", "table", &SpriteAnimations::table);
 	}
 }

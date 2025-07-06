@@ -17,6 +17,9 @@ namespace events {
 	struct GameControllerInput;
 
 	struct TimerFired;
+
+	struct SpriteIndexChange;
+	struct SpriteSeriesChange;
 }
 
 using EventDataTypeList = TypeList <
@@ -34,5 +37,8 @@ using EventDataTypeList = TypeList <
 	events::GameControllerDisconnected,
 	events::GameControllerInput,
 
-	events::TimerFired
+	events::TimerFired,
+
+	events::SpriteIndexChange,
+	events::SpriteSeriesChange
 >;

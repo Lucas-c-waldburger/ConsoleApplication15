@@ -83,6 +83,7 @@ Result<Void> SpriteSeriesAtlas::LoadImpl(SDL_Renderer* renderer, SpriteSeriesRes
 	plotsBySeries_.reserve(resourcePackets_.size());
 
 	int totalArea = 0;
+	size_t surfacesIdx = 0;
 	for (const auto& packet : resourcePackets_)
 	{
 		if (!packet.IsValid())
@@ -93,13 +94,13 @@ Result<Void> SpriteSeriesAtlas::LoadImpl(SDL_Renderer* renderer, SpriteSeriesRes
 		const auto& metadata = packet.GetMetadata();
 		const auto& filepaths = packet.GetFilepaths();
 
-		for (size_t i = 0; i < filepaths.size(); i++)
+		for (const auto& filepath : filepaths)
 		{
-			auto& [seriesName, _, surface] = spriteSurfaces[i];
+			auto& [seriesName, _, surface] = spriteSurfaces[surfacesIdx++];
 
 			seriesName = metadata.seriesName;
 
-			surface = IMG_Load(filepaths[i].c_str());
+			surface = IMG_Load(filepath.c_str());
 			if (!surface)
 			{
 				freeResources();

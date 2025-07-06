@@ -3,7 +3,6 @@
 #include <string>
 #include <unordered_set>
 
-//struct Tags : BaseComponent<Tags, 6>
 struct Tags : BaseComponent<Tags>
 {
     std::unordered_set<std::string> tags;

@@ -1,6 +1,17 @@
 #pragma once
 #include <iostream>
 
+inline constexpr uint32_t fnv1aHash(std::string_view sv) 
+{
+    uint32_t hash = 2166136261u;
+    for (char c : sv) 
+    {
+        hash ^= static_cast<uint8_t>(c);
+        hash *= 16777619u;
+    }
+    return hash;    
+}
+
 inline void HashCombine(size_t& seed, size_t value)
 {
     seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);

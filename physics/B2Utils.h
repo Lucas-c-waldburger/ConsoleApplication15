@@ -4,7 +4,9 @@
 #include <numbers>
 #include <algorithm>
 
-static constexpr float kPixelsPerMeter = 30.0f;
+//inline constexpr float kPI = 3.14159265358979323846f;
+
+inline constexpr float kPixelsPerMeter = 30.0f;
 
 inline constexpr float ToMeters(float pixels) { return pixels / kPixelsPerMeter; }
 inline constexpr float ToPixels(float meters) { return meters * kPixelsPerMeter; }
@@ -31,6 +33,11 @@ inline b2Rot AngleToB2Rot(float angleDeg)
 {
     float angleRadians = angleDeg * (std::numbers::pi_v<float> / 180.0f);
     return b2MakeRot(angleRadians);
+}
+
+inline constexpr float RadiansToAngleDegrees(float rad)
+{
+    return rad * (180.0f / std::numbers::pi_v<float>);
 }
 
 inline std::vector<b2Vec2> SDLFPointsToB2Vecs(const std::vector<SDL_FPoint>& points)

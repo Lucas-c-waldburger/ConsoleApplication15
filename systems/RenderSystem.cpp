@@ -13,7 +13,7 @@ void Draw(SDL_Renderer* renderer, SDL_Texture* texture, const AtlasPlot& atlasPl
 		  const Transform& transform, SDL_Point* rotationCenter, const RenderProfile& profile)
 {
 	SDL_RenderCopyEx(renderer, texture, &atlasPlot.rect, &destRect, 
-					 transform.rotation + atlasPlot.rotation, rotationCenter, profile.flip);
+					 static_cast<double>(transform.rotation + atlasPlot.rotation), rotationCenter, profile.flip);
 }
 
 //void RenderTexture(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_Rect& srcRect, 
@@ -923,7 +923,8 @@ void RenderSystem::RenderSprite(const SpriteRenderable& spriteRenderable, const 
 	{
 		return;
 	}
-
+	//LOG_DEBUG_FMT("Transform Rotation: {}\nAtlas Plot Rotation: {}\n\n",
+	//	transform.rotation, spriteRenderable.sourcePlot.rotation);
 	Draw(context_.renderer, atlasTexture, spriteRenderable.sourcePlot, 
 		 renderRect, transform, nullptr, renderProfile);
 

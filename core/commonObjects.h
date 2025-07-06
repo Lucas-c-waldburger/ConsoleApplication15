@@ -1,8 +1,10 @@
 #pragma once
 #include <iostream>
 #include <cassert>
+#include "CommonFunctions.h"
 
 struct Void {};
+
 
 template <typename Tup, typename Fn, size_t... Is>
 static void ForEachInTupleImpl(Tup&& tup, Fn&& fn, std::index_sequence<Is...>)
@@ -38,12 +40,6 @@ struct DataRecord
 {
     T last;
     T now;
-
-    void Update(T newVal)
-    {
-        last = std::move(now);
-        now = std::move(newVal);
-    }
 };
 
 template <typename T>
@@ -53,47 +49,28 @@ struct HandedPair
     T right;
 };
 
-template <typename T>
-struct DirtyFlags
+struct HashName
 {
+    constexpr HashName() = default;
+    constexpr explicit HashName(std::string_view sv) : value(fnv1aHash(sv)) {}
 
+    constexpr bool operator==(const HashName& other) const = default;
+    constexpr bool operator==(std::string_view raw) const
+    {
+        return value == fnv1aHash(raw);
+    }
+
+    uint32_t value = 0;
 };
 
-//template <typename T> requires (std::is_default_constructible_v<T> && 
-//                                std::equality_comparable<T>)
-//struct DirtyMarker
-//{
-//    T data{};
-//    bool dirty = true;
-//
-//    constexpr DirtyMarker() = default;
-//    constexpr DirtyMarker(const T& val) : data(val) {}
-//    constexpr DirtyMarker(T&& val) : data(std::move(val)) {}
-//
-//    constexpr DirtyMarker& operator=(const T& val)
-//    {
-//        if (data != val) 
-//        { 
-//            data = val;
-//            dirty = true;
-//        }
-//        return *this;
-//    }
-//    constexpr DirtyMarker& operator=(T&& val)
-//    {
-//        if (data != val)
-//        {
-//            data = std::move(val);
-//            dirty = true;
-//        }
-//        return *this;
-//    }
-//
-//    constexpr bool operator==(const T& val) const { return data == val; }
-//
-//    constexpr operator T& () { return data; }
-//    constexpr operator const T& () const { return data; }
-//};
+namespace std {
+    template <>
+    struct hash<HashName> {
+        size_t operator()(const HashName& hashName) const noexcept {
+            return hashName.value;
+        }
+    };
+}
 
 static constexpr int GetNextPowerOfTwo(int x)
 {

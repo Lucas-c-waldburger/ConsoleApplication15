@@ -2,39 +2,40 @@
 #include "../ecs/Ecs.h"
 #include "../atlas/TextureRepository.h"
 
-namespace {
-
-bool NeedsAnimationHandling(const SpriteAnimations& animations, const NewRenderable& renderable)
-{
-	return animations.map.NeedsUpdate() && animations.map.HasCurrent() && 
-		   std::holds_alternative<SpriteRenderable>(renderable.renderData);
-}
-
-} // unnamed
-
 void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 {
-	// TODO: Figure out if we can just feed &NeedsHandling directly as filter arg
-	auto entities = ECS::GetAllEntitiesWith<SpriteAnimations, NewRenderable>(
-		[](const SpriteAnimations& animations, const NewRenderable& renderable) {
-			return NeedsAnimationHandling(animations, renderable);
+	auto entities = ECS::GetAllEntitiesWith<NewRenderable, NeedsUpdate, SpriteAnimations>(
+		[](const NeedsUpdate& update, const NewRenderable& renderable, const SpriteAnimations&)
+		{
+			return (update.components & SpriteAnimations::componentBit) &&
+					std::holds_alternative<SpriteRenderable>(renderable.renderData);
 		});
 
 	for (auto& entity : entities)
 	{
-		auto& animations = entity.GetComponent<SpriteAnimations>().map;
+		auto& animations = entity.GetComponent<SpriteAnimations>();
 
-		const auto* currentSeries = animations.GetCurrent();
-		assert(currentSeries);
+		Handle<SpriteSeriesAtlas> newAtlas{};
+		AtlasPlot newPlot{};
+
+		auto it = animations.table.find(animations.current);
+		if (it != animations.table.end())
+		{
+			const auto& series = it->second;
+
+			assert(series.index < series.spritePlots.size());
+
+			newAtlas = series.sourceAtlas;
+			newPlot = series.spritePlots[series.index];
+		}
 
 		auto& renderable = entity.GetComponent<NewRenderable>();
 		auto& spriteRenderable = std::get<SpriteRenderable>(renderable.renderData);
 
-		assert(currentSeries->index < currentSeries->spritePlots.size());
+		spriteRenderable.sourceAtlas = newAtlas;
+		spriteRenderable.sourcePlot = newPlot;
 
-		spriteRenderable.sourceAtlas = currentSeries->sourceAtlas;
-		spriteRenderable.sourcePlot = currentSeries->spritePlots[currentSeries->index];
-
-		animations.MarkUpdated();
+		auto& update = entity.GetComponent<NeedsUpdate>();
+		update.components &= ~(SpriteAnimations::componentBit);
 	}
 }

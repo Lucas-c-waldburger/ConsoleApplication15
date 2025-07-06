@@ -5,6 +5,16 @@
 
 namespace test {
 
+constexpr Direction GetControllerAxisDirection(SDL_Point p)
+{
+    using enum Direction;
+
+    Direction dirX = (p.x < 0) ? W : (p.x > 0) ? E : None;
+    Direction dirY = (p.y < 0) ? N : (p.y > 0) ? S : None;
+
+    return static_cast<Direction>((static_cast<uint8_t>(dirX) | static_cast<uint8_t>(dirY)));
+}
+
 auto ConnectToFirstController()
 {
     return [](Entity_t id, const events::GameControllerConnected& ev) -> ReturnSignal {
@@ -67,7 +77,7 @@ auto ApplyAxisInputToForce(float impulseScale)
 {
     return [impulseScale](Entity_t id, const events::GameControllerInput& ev) -> ReturnSignal
     {
-        int axisValueX = ev.input.value.axis.x;
+        int axisValueX = ev.input.value.axis.x;     
         if (axisValueX == 0)
         {
             return ReturnSignal::KeepObserving;

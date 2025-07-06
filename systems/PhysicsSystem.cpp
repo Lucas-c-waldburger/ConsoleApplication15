@@ -126,6 +126,7 @@ void PhysicsSystem::Update(B2World* world_, float timeStep, int subStepCount)
 	DispatchCollisionEvents(world_);
 
 	UpdateTransformComponents();
+
 	EventBus::DispatchEvents<events::EntityPositionChanged>();
 }
 

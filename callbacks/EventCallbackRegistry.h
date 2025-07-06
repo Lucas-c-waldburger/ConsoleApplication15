@@ -9,34 +9,36 @@
 #include "../core/CommonFunctions.h"
 #include "../inputs/controller/GameControllerInputSource.h"
 
-
-struct EventCallbackKey : BaseCallbackKey
+struct EventCallbackDescriptor : BaseCallbackDescriptor
 {
+	EventCallbackDescriptor() = default;
+	EventCallbackDescriptor(uint32_t evType, std::string_view name, std::optional<Entity_t> owner) :
+		BaseCallbackDescriptor{ std::string{name}, owner }, eventType(evType) {}
+
 	uint32_t eventType = kInvalidEventType;
-	friend bool operator==(const EventCallbackKey& lhs, const EventCallbackKey& rhs)
+	bool operator==(const EventCallbackDescriptor& rhs) const
 	{
-		return lhs.eventType == rhs.eventType && 
-			   static_cast<const BaseCallbackKey&>(lhs) == static_cast<const BaseCallbackKey&>(rhs);
+		return eventType == rhs.eventType && 
+			   static_cast<const BaseCallbackDescriptor&>(*this) == static_cast<const BaseCallbackDescriptor&>(rhs);
 	}
 };
 
 namespace std {
 	template <>
-	struct hash<EventCallbackKey> {
-		size_t operator()(const EventCallbackKey& k) const noexcept {
+	struct hash<EventCallbackDescriptor> {
+		size_t operator()(const EventCallbackDescriptor& desc) const noexcept {
 			size_t hash = 0;
-			HashCombine(hash, std::hash<uint32_t>{}(k.eventType));
-			HashCombine(hash, std::hash<BaseCallbackKey>{}(static_cast<const BaseCallbackKey&>(k)));
+			HashCombine(hash, std::hash<uint32_t>{}(desc.eventType));
+			HashCombine(hash, std::hash<BaseCallbackDescriptor>{}(static_cast<const BaseCallbackDescriptor&>(desc)));
 
 			return hash;
 		}
 	};
 }
 
-using EventCallbackRegistryTable = CallbackRegistryTable<EventCallbackKey, const Event&>;
+using EventCallbackRegistryTable = CallbackRegistryTable<EventCallbackDescriptor, const Event&>;
 using EventCallbackFn = EventCallbackRegistryTable::CallbackFn;
 using EventCallbackFnView = EventCallbackRegistryTable::CallbackFnView;
-using EventCallbackDetails = EventCallbackRegistryTable::CallbackDetails;
 
 namespace detail {
 template <typename Fn>
@@ -65,7 +67,7 @@ public:
 	struct RegistrationOutcome
 	{
 		uint32_t eventType = kInvalidEventType;
-		Handle<EventCallbackKey> handle = {};
+		Handle<EventCallbackDescriptor> handle = {};
 		bool newlyRegistered = false;
 	};
 
@@ -92,20 +94,16 @@ public:
 	{
 		using EventDataT = std::remove_cvref_t<type_at_index_t<1, typename func_traits<Fn>::arg_types>>;
 
-		EventCallbackKey key{
-			.eventType = EventDataT::eventType,
-			.callbackName = std::string{name},
-			.uniqueOwner = owner
-		};
+		EventCallbackDescriptor desc{ EventDataT::eventType, name, owner };
 
-		if (masterTable_.Contains(key))
+		if (masterTable_.Contains(desc))
 		{
 			LOG_INFO_FMT("Callback named '{}' already registered "
-				"for event type and owner", key.callbackName);
+				"for event type and owner", desc.callbackName);
 
 			return { 
 				.eventType = EventDataT::eventType,
-				.handle = masterTable_.GetHandle(key), 
+				.handle = masterTable_.GetHandle(desc), 
 				.newlyRegistered = false 
 			};
 		}
@@ -119,7 +117,7 @@ public:
 			return ReturnSignal::KeepObserving;
 		};
 
-		auto handle = masterTable_.Insert(std::move(key), std::move(rawCallback));
+		auto handle = masterTable_.Insert(std::move(desc), std::move(rawCallback));
 		assert(handle.IsValid());
 
 		return { 
@@ -142,20 +140,16 @@ public:
 										 const TypedLuaFunction<ReturnSignal(Entity_t, const T&)>& luaFn,
 										 std::optional<Entity_t> owner)
 	{
-		EventCallbackKey key{
-			.eventType = T::eventType,
-			.callbackName = std::string{name},
-			.uniqueOwner = owner
-		};
+		EventCallbackDescriptor desc{ T::eventType, name, owner };
 
-		if (masterTable_.Contains(key))
+		if (masterTable_.Contains(desc))
 		{
 			LOG_INFO_FMT("Callback named '{}' already registered "
-				"for event type and owner", key.callbackName);
+				"for event type and owner", desc.callbackName);
 
 			return { 
 				.eventType = T::eventType,
-				.handle = masterTable_.GetHandle(key), 
+				.handle = masterTable_.GetHandle(desc), 
 				.newlyRegistered = false 
 			};
 		}
@@ -177,7 +171,7 @@ public:
 			return ReturnSignal::KeepObserving;
 		};
 
-		auto handle = masterTable_.Insert(std::move(key), std::move(rawCallback));
+		auto handle = masterTable_.Insert(std::move(desc), std::move(rawCallback));
 		assert(handle.IsValid());
 
 		return { 
@@ -195,12 +189,17 @@ public:
 		return RegisterCallback(name, luaFn, {});
 	}
 
-	EventCallbackFnView GetCallback(const Handle<EventCallbackKey>& handle) const
+	EventCallbackFnView GetCallbackView(const Handle<EventCallbackDescriptor>& handle)
 	{
 		return masterTable_.GetCallbackView(handle);
 	}
 
-	bool RemoveCallback(const Handle<EventCallbackKey>& handle)
+	const EventCallbackDescriptor* GetCallbackDescriptor(const Handle<EventCallbackDescriptor>& handle) const
+	{
+		return masterTable_.GetCallbackDescriptor(handle);
+	}
+
+	bool RemoveCallback(const Handle<EventCallbackDescriptor>& handle)
 	{
 		return masterTable_.Erase(handle);
 	}
@@ -210,15 +209,15 @@ public:
 		return masterTable_.EraseAllWithOwner(owner);
 	}
 
-	std::vector<EventCallbackDetails> FindCallbackDetailsByName(std::string_view name) const
-	{
-		return masterTable_.FindCallbackDetailsByName(name);
-	}
+	//std::vector<EventCallbackDescriptor> FindCallbackDetailsByName(std::string_view name) const
+	//{
+	//	return masterTable_.FindCallbackDetailsByName(name);
+	//}
 
-	std::vector<EventCallbackDetails> FindCallbackDetailsByOwner(Entity_t owner) const
-	{
-		return masterTable_.FindCallbackDetailsByOwner(owner);
-	}
+	//std::vector<EventCallbackDescriptor> FindCallbackDetailsByOwner(Entity_t owner) const
+	//{
+	//	return masterTable_.FindCallbackDetailsByOwner(owner);
+	//}
 
 private:
 	EventCallbackRegistryTable masterTable_;

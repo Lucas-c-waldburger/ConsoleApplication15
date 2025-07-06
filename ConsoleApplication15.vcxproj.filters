@@ -189,6 +189,9 @@
     <ClCompile Include="systems\TimerSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="components\driver\SpriteAnimationDriver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -971,7 +974,7 @@
     <ClInclude Include="events\data\EventDataIncludes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="callbacks\BaseCallbackKey.h">
+    <ClInclude Include="callbacks\BaseCallbackDescriptor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="callbacks\CallbackRegistryTable.h">
@@ -984,6 +987,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\callbacks\AnimationCallbacks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\data\SpriteAnimationEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\NeedsUpdateComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\driver\SpriteAnimationDriver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\driver\BaseDriver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\EventProductionFlags.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Direction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1013,6 +1034,30 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_8.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_0.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_1.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_3.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_4.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_5.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_6.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\jump_anim\knight_jump_7.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
