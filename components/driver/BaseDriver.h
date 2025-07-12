@@ -8,13 +8,8 @@ class BaseDriver
 public:
 	using Super = BaseDriver<Derived, ReqComponents...>;
 
-	BaseDriver(const BaseDriver&) = delete;
-	BaseDriver& operator=(const BaseDriver&) = delete;
-	BaseDriver(BaseDriver&&) = delete;
-	BaseDriver& operator=(BaseDriver&&) = delete;
-
 	template <typename...Args>
-	static Result<Derived> GetInstance(Entity& entity, Args&&...args)
+	static Result<Derived> GetInstance(Entity entity, Args&&...args)
 	{
 		if (!entity.IsValid())
 		{
@@ -35,7 +30,7 @@ public:
 	}
 
 protected:
-	explicit BaseDriver(Entity& entity) : entity_(entity) {}
+	explicit BaseDriver(Entity entity) : entity_(entity) {}
 
 	template <SomeTypeInPack<ReqComponents...> T>
 	T& GetComponent() { return entity_.GetComponent<T>(); }

@@ -3,9 +3,8 @@
 #include <vector>
 #include <cassert>
 #include <algorithm>
-#include "../components/ComponentConcepts.h"
-#include "../components/ComponentIncludes.h"
 #include "EntityT.h"
+#include "../components/ComponentIncludes.h"
 
 template <typename T>
 class ComponentArray
@@ -96,126 +95,25 @@ private:
     std::array<uint16_t, kMaxEntities> isEntityHoldsComponentIndex_;
 };
 
-//template <SomeComponent...Ts>
-//class ComponentManagerTemplate
-//{
-//public:
-//    template <SomeComponent T>
-//    T& AddComponent(Entity_t entity, T component = {})
-//    {
-//        assert(entity < kMaxEntities);
-//
-//        isEntityHoldsSignature_[entity] |= T::componentBit;
-//
-//        auto& entry = GetEntry<T>();
-//
-//        return entry.AddComponent(entity, std::move(component));
-//    }
-//
-//    template <SomeComponent T>
-//    void RemoveComponent(Entity_t entity)
-//    {
-//        isEntityHoldsSignature_[entity] &= ~(T::componentBit);
-//
-//        auto& entry = GetEntry<T>();
-//
-//        return entry.RemoveComponent(entity);
-//    }
-//
-//    template <SomeComponent T>
-//    T& GetComponent(Entity_t entity)
-//    {
-//        assert(entity < kMaxEntities);
-//        assert(isEntityHoldsSignature_[entity] & T::componentBit);
-//
-//        auto& entry = GetEntry<T>();
-//
-//        return entry.GetComponent(entity);
-//    }
-//
-//    template <SomeComponent T>
-//    const T& GetComponent(Entity_t entity) const
-//    {
-//        assert(entity < kMaxEntities);
-//        assert(isEntityHoldsSignature_[entity] & T::componentBit);
-//
-//        const auto& entry = GetEntry<T>();
-//
-//        return entry.GetComponent(entity);
-//    }
-//
-//    template <SomeComponent T>
-//    bool HasComponent(Entity_t entity) const
-//    {
-//        assert(entity < kMaxEntities);
-//
-//        return isEntityHoldsSignature_[entity] & T::componentBit;
-//    }
-//
-//    void EntityCreated(Entity_t entity)
-//    {
-//        assert(entity < kMaxEntities);
-//
-//        isEntityHoldsSignature_[entity] = ActiveState::componentBit;
-//    }
-//
-//    void EntityDestroyed(Entity_t entity)
-//    {
-//        assert(entity < kMaxEntities);
-//
-//        ForEachInTuple(componentArrays_, [entity](auto& componentArray) {
-//            componentArray.RemoveComponent(entity);
-//            });
-//
-//        isEntityHoldsSignature_[entity] = 0;
-//    }
-//
-//    ComponentSignature GetSignature(Entity_t entity) const
-//    {
-//        assert(entity < kMaxEntities);
-//
-//        return isEntityHoldsSignature_[entity];
-//    }
-//
-//protected:
-//    template <typename T>
-//    ComponentArray<T>& GetEntry()
-//    {
-//        return std::get<ComponentArray<T>>(componentArrays_);
-//    }
-//    template <typename T>
-//    const ComponentArray<T>& GetEntry() const
-//    {
-//        return std::get<ComponentArray<T>>(componentArrays_);
-//    }
-//
-//    std::tuple<ComponentArray<Ts>...> componentArrays_;
-//    std::array<ComponentSignature, kMaxEntities> isEntityHoldsSignature_{};
-//};
-
-// IMPL //
-//namespace impl {
-//class ComponentManager : public ComponentManagerTemplate<COMPONENT_REGISTRY> {};
-//}
-
 namespace detail {
-template <typename TList>
-struct component_array_tuple;
+    template <typename TList>
+    struct component_array_tuple;
 
-template <typename...Ts>
-struct component_array_tuple<TypeList<Ts...>>
-{
-    using type = std::tuple<ComponentArray<Ts>...>;
-};
+    template <typename...Ts>
+    struct component_array_tuple<TypeList<Ts...>>
+    {
+        using type = std::tuple<ComponentArray<Ts>...>;
+    };
 } // detail
 
 using ComponentArrayTuple = detail::component_array_tuple<ComponentTypeList>::type;
 
+
 class ComponentManager
 {
 public:
-    template <SomeComponent T>
-    T& AddComponent(Entity_t entity, T component = {})
+    template <typename T>
+    T& AddComponent(Entity_t entity, T component)
     {
         assert(entity < kMaxEntities);
 
@@ -226,7 +124,19 @@ public:
         return entry.AddComponent(entity, std::move(component));
     }
 
-    template <SomeComponent T>
+    template <typename T>
+    T& AddComponent(Entity_t entity)
+    {
+        assert(entity < kMaxEntities);
+
+        isEntityHoldsSignature_[entity] |= T::componentBit;
+
+        auto& entry = GetEntry<T>();
+
+        return entry.AddComponent(entity, {});
+    }
+
+    template <typename T>
     void RemoveComponent(Entity_t entity)
     {
         isEntityHoldsSignature_[entity] &= ~(T::componentBit);
@@ -236,7 +146,7 @@ public:
         return entry.RemoveComponent(entity);
     }
 
-    template <SomeComponent T>
+    template <typename T>
     T& GetComponent(Entity_t entity)
     {
         assert(entity < kMaxEntities);
@@ -247,7 +157,7 @@ public:
         return entry.GetComponent(entity);
     }
 
-    template <SomeComponent T>
+    template <typename T>
     const T& GetComponent(Entity_t entity) const
     {
         assert(entity < kMaxEntities);
@@ -258,7 +168,7 @@ public:
         return entry.GetComponent(entity);
     }
 
-    template <SomeComponent T>
+    template <typename T>
     bool HasComponent(Entity_t entity) const
     {
         assert(entity < kMaxEntities);

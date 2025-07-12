@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <cassert>
+#include <unordered_map>
 #include "CommonFunctions.h"
 
 struct Void {};
@@ -54,14 +55,30 @@ struct HashName
     constexpr HashName() = default;
     constexpr explicit HashName(std::string_view sv) : value(fnv1aHash(sv)) {}
 
-    constexpr bool operator==(const HashName& other) const = default;
-    constexpr bool operator==(std::string_view raw) const
+    constexpr HashName& operator=(const HashName& other) 
     {
-        return value == fnv1aHash(raw);
+        if (this != &other)
+        {
+            value = other.value;
+        }
+        return *this;
+    }
+    constexpr HashName& operator=(std::string_view sv)
+    {
+        value = fnv1aHash(sv);
+        return *this;
+    }
+
+    constexpr bool operator==(const HashName&) const = default;
+    constexpr bool operator==(std::string_view sv) const
+    {
+        return value == fnv1aHash(sv);
     }
 
     uint32_t value = 0;
-};
+}; 
+
+inline constexpr HashName kInvalidHashName{};
 
 namespace std {
     template <>
@@ -71,6 +88,47 @@ namespace std {
         }
     };
 }
+
+struct HashNameHash
+{
+    using is_transparent = void;
+
+    size_t operator()(const HashName& hn) const noexcept {
+        return std::hash<HashName>{}(hn);
+    }
+    size_t operator()(const std::string_view sv) const noexcept {
+        return std::hash<HashName>{}(HashName{ sv });
+    }
+};
+
+struct HashNameEq
+{
+    using is_transparent = void;
+
+    bool operator()(const HashName& lhs, const HashName& rhs) const {
+        return lhs == rhs;
+    }
+    bool operator()(const std::string_view sv, const HashName& hn) const {
+        return hn == sv;
+    }
+};
+
+template <typename Value>
+class HashNameMap : public std::unordered_map<HashName, Value, HashNameHash, HashNameEq>
+{
+private:
+    using Super = std::unordered_map<HashName, Value, HashNameHash, HashNameEq>;
+
+public:
+    Value& operator[](std::string_view sv)
+    {
+        return Super::operator[](HashName{ sv });
+    }
+    Value& operator[](const HashName hn)
+    {
+        return Super::operator[](hn);
+    }
+};
 
 static constexpr int GetNextPowerOfTwo(int x)
 {

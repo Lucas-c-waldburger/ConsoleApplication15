@@ -1,7 +1,230 @@
 #pragma once
-#include <unordered_map>
-#include "SpriteAnimationSeries.h"
-#include "../core/TransparentStringHash.h"
+//#include <unordered_map>
+//#include "SpriteAnimationSeries.h"
+//#include "../core/commonObjects.h"
+//#include "../core/Algorithms.h"
+//#include "../deps/function2/function2.hpp"
+//#include <typeindex>
+//#include "../components/driver/BaseDriver.h"
+//#include "../components/EntityStateComponent.h"
+//#include "../ecs/Ecs.h";
+//#include "../callbacks/BaseCallbackDescriptor.h"
+
+
+
+
+//inline EntityState* GetCurrentEntityState(EntityStates& states)
+//{
+//	if (states.current == kInvalidHashName)
+//	{
+//		return nullptr;
+//	}
+//
+//	auto it = states.table.find(states.current);
+//
+//	return (it != states.table.end()) ? &it->second : nullptr;
+//}
+//
+//inline bool EntityStatesContainTransition(EntityStates& states, std::string_view transitionName)
+//{
+//	return std::any_of(states.table.begin(), states.table.end(), [transitionName](const auto& pair) {
+//		return pair.second.transitions.onEnter.name == transitionName ||
+//			   pair.second.transitions.onExit.name == transitionName;
+//	}); 
+//}
+
+//struct StateTransitionCallbackDescriptor : BaseCallbackDescriptor
+//{
+//	bool operator==(const StateTransitionCallbackDescriptor& rhs) const
+//	{
+//		return static_cast<const BaseCallbackDescriptor&>(*this) == 
+//			   static_cast<const BaseCallbackDescriptor&>(rhs);
+//	}
+//};
+//
+//namespace std {
+//	template <>
+//	struct hash<StateTransitionCallbackDescriptor> {
+//		size_t operator()(const StateTransitionCallbackDescriptor& desc) const noexcept {
+//			std::hash<BaseCallbackDescriptor>{}(static_cast<const BaseCallbackDescriptor&>(desc));
+//		}
+//	};
+//}
+//
+//using StateTransitionCallbackRegistryTable = CallbackRegistryTable<StateTransitionCallbackDescriptor>;
+//using StateTransitionCallbackFn = StateTransitionCallbackRegistryTable::CallbackFn;
+//using StateTransitionCallbackFnView = StateTransitionCallbackRegistryTable::CallbackFnView;
+//
+//class StateTransitionCallbackRegistry
+//{
+//public:
+//	struct RegistrationOutcome
+//	{
+//		Handle<StateTransitionCallbackDescriptor> handle = {};
+//		bool newlyRegistered = false;
+//	};
+//
+//	StateTransitionCallbackRegistry() = default;
+//	~StateTransitionCallbackRegistry() = default;
+//
+//	StateTransitionCallbackRegistry(const StateTransitionCallbackRegistry&) = delete;
+//	StateTransitionCallbackRegistry& operator=(const StateTransitionCallbackRegistry&) = delete;
+//
+//	StateTransitionCallbackRegistry(StateTransitionCallbackRegistry&& rhs) noexcept :
+//		masterTable_(std::move(rhs.masterTable_)) {}
+//	StateTransitionCallbackRegistry& operator=(StateTransitionCallbackRegistry&& other) noexcept
+//	{
+//		if (this != &other)
+//		{
+//			masterTable_ = std::move(other.masterTable_);
+//		}
+//		return *this;
+//	}
+//
+//
+//
+//
+//private:
+//	StateTransitionCallbackRegistryTable masterTable_;
+//};
+
+//class EntityStateManager
+//{
+//public:
+//
+//private:
+//};
+
+//inline bool NeedsTransitionUpdate()
+
+//using EntityStateTable = std::unordered_map<
+//
+//
+//class EntityStateTables
+//{
+//public:
+//
+//private:
+//};
+
+
+
+
+//class EntityStateDriver : public BaseDriver<EntityStateDriver, EntityStates>
+//{
+//public:
+//	friend class Super;
+//
+//	struct TransitionNamePair
+//	{
+//		std::string_view onEnterName;
+//		std::string_view onExitName;
+//	};
+//
+//	Result<Void> AddState(std::string_view stateName, TransitionNamePair transitionNames, 
+//						  std::initializer_list<std::string_view> links)
+//	{
+//		auto& states = GetComponent<EntityStates>();
+//		HashName stateNameHash{ stateName };
+//
+//		if (states.table.contains(stateNameHash))
+//		{
+//			return MAKE_ERROR_FMT("duplicate state name '{}' in entity's state table", stateName);
+//		}
+//
+//		auto& newState = states.table[stateNameHash];
+//		
+//		newState.transitions.onEnter.name = transitionNames.onEnterName;
+//		newState.transitions.onExit.name = transitionNames.onExitName;
+//		newState.stateLinks = { links.begin(), links.end() };
+//
+//		if (states.table.size() == 1)
+//		{
+//			states.current = stateNameHash;
+//		}
+//
+//		auto& update = GetEntity().AddComponent<NeedsUpdate>();
+//
+//		update.components |= EntityStates::componentBit;
+//
+//		return Void{};
+//	}
+//
+//	bool EraseState(std::string_view stateName)
+//	{
+//		auto& states = GetComponent<EntityStates>();
+//		HashName stateNameHash{ stateName };
+//
+//		bool erased = states.table.erase(stateNameHash);
+//		if (!erased)
+//		{
+//			return false;
+//		}
+//
+//		for (auto& [_, states] : states.table)
+//		{
+//			states.stateLinks.erase(stateNameHash);
+//		}
+//
+//		if (states.current == stateNameHash)
+//		{
+//			states.current = kInvalidHashName;
+//		}
+//
+//		return true;
+//	}
+//
+//	Result<Void> ChangeState(std::string_view nextStateName)
+//	{
+//		auto& states = GetComponent<EntityStates>();
+//		HashName nextStateNameHash{ nextStateName };
+//
+//		auto it = states.table.find(nextStateNameHash);
+//		if (it == states.table.end())
+//		{
+//			return MAKE_ERROR_FMT("State name '{}' not found in entity's state table", nextStateName);
+//		}
+//
+//		if (auto* currentState = GetCurrentEntityState(states))
+//		{
+//			if (!currentState->stateLinks.contains(nextStateNameHash))
+//			{
+//				return MAKE_ERROR_FMT("State name '{}' not linked to entity's current state: '{}'",
+//					nextStateName, states.current);
+//			}
+//
+//			if (currentState->transitions.onExit.fn)
+//			{
+//				currentState->transitions.onExit(GetEntity());
+//			}
+//		}
+//
+//		states.current = nextStateNameHash;
+//
+//		auto& newState = states.table[nextStateNameHash];
+//
+//		if (newState.transitions.onEnter.fn)
+//		{
+//			newState.transitions.onEnter(GetEntity());
+//		}
+//
+//		return Void{};
+//	}
+//
+//private:
+//	explicit EntityStateDriver(Entity ent) : BaseDriver(ent) {}
+//};
+
+
+//using EntityStateMap = std::unordered_map<HashName, 
+
+//class EntityStateMap
+//{
+//public:
+//
+//private:
+//};
+
 
 //// TODO: think about moving the dirty state logic into a tag component
 //class SpriteAnimationsTable

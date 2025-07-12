@@ -5,3 +5,5 @@ struct NeedsUpdate : public BaseComponent<NeedsUpdate>
 {
 	ComponentSignature components = 0;
 };
+
+

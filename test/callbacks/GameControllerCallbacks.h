@@ -17,21 +17,15 @@ constexpr Direction GetControllerAxisDirection(SDL_Point p)
 
 auto ConnectToFirstController()
 {
-    return [](Entity_t id, const events::GameControllerConnected& ev) -> ReturnSignal {
-        auto ent = ECS::GetEntityByID(id);
-
-        if (!ent.IsValid())
-        {
-            LOG_WARNING("Entity was invalid, can't connect controller");
-            return ReturnSignal::StopObserving;
-        }
-        if (!ent.HasComponent<GameControllerState>())
+    return [](Entity& entity, const events::GameControllerConnected& ev) -> ReturnSignal 
+    {
+        if (!entity.HasComponent<GameControllerState>())
         {
             LOG_WARNING("Entity did not have GameControllerState component");
             return ReturnSignal::StopObserving;
         }
 
-        auto& controllerState = ent.GetComponent<GameControllerState>();
+        auto& controllerState = entity.GetComponent<GameControllerState>();
         if (controllerState.joystickID == GameController::kInvalidJoystickID)
         {
             controllerState.joystickID = ev.joystickID;
@@ -44,21 +38,15 @@ auto ConnectToFirstController()
 
 auto DisconnectController()
 {
-    return [](Entity_t id, const events::GameControllerDisconnected& ev) -> ReturnSignal {
-        auto ent = ECS::GetEntityByID(id);
-
-        if (!ent.IsValid())
-        {
-            LOG_WARNING("Entity was invalid");
-            return ReturnSignal::StopObserving;
-        }
-        if (!ent.HasComponent<GameControllerState>())
+    return [](Entity& entity, const events::GameControllerDisconnected& ev) -> ReturnSignal 
+    {
+        if (!entity.HasComponent<GameControllerState>())
         {
             LOG_WARNING("Entity did not have GameControllerState component");
             return ReturnSignal::StopObserving;
         }
 
-        auto& controllerState = ent.GetComponent<GameControllerState>();
+        auto& controllerState = entity.GetComponent<GameControllerState>();
         if (controllerState.joystickID != ev.joystickID)
         {
             LOG_DEBUG("Entity's connected controller different from the one that was disconnected");
@@ -75,18 +63,12 @@ auto DisconnectController()
 
 auto ApplyAxisInputToForce(float impulseScale)
 {
-    return [impulseScale](Entity_t id, const events::GameControllerInput& ev) -> ReturnSignal
+    return [impulseScale](Entity& entity, const events::GameControllerInput& ev) -> ReturnSignal
     {
         int axisValueX = ev.input.value.axis.x;     
         if (axisValueX == 0)
         {
             return ReturnSignal::KeepObserving;
-        }
-
-        auto entity = ECS::GetEntityByID(id);
-        if (!entity.IsValid())
-        {
-            return ReturnSignal::StopObserving;
         }
 
         if (!entity.HasComponent<GameControllerState>() ||

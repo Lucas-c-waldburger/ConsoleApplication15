@@ -3,6 +3,11 @@
 
 inline constexpr uint32_t fnv1aHash(std::string_view sv) 
 {
+    if (sv.empty())
+    {
+        return 0;
+    }
+
     uint32_t hash = 2166136261u;
     for (char c : sv) 
     {

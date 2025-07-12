@@ -10,17 +10,32 @@ class EventCallbackSystem : public System,
 							public EventDispatchListener<EventCallbackSystem> 
 {
 public:
-	void EntityDestroyed(Entity_t entityId);
+	class CallbackRegistry
+	{
+	public:
+		template <typename T>
+		std::pair<uint32_t, EventCallbackView> RegisterCallback(std::string_view callbackName, T&& fnOrLua)
+		{
+			return impl_.RegisterCallback(callbackName, std::forward<T>(fnOrLua));
+		}
+
+		std::pair<uint32_t, EventCallbackView> GetCallback(uint32_t eventType, std::string_view callbackName);
+		std::pair<uint32_t, EventCallbackView> GetCallback(uint32_t eventType, HashName callbackNameHash);
+
+		bool EraseCallback(uint32_t eventType, std::string_view callbackName);
+
+	private:
+		EventCallbackRegistry impl_;
+	};
+
+	CallbackRegistry& GetCallbackRegistry() { return registry_; }
 
 	void Dispatch(EventSpan events);
-
-	EventCallbackRegistry& GetRegistry() { return callbackRegistry_; }
 
 private:
 	void HandleControllerInputCallback(Entity& entity, const Event& event);
 	void HandleEventCallback(Entity& entity, const Event& event);
 
-
-	EventCallbackRegistry callbackRegistry_;
+	CallbackRegistry registry_;
 }; 
 

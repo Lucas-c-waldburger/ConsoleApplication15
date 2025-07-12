@@ -1,6 +1,6 @@
 #pragma once
 #include "BaseDriver.h"
-#include "../../sprite/SpriteAnimationSeries.h"
+#include "../../components/SpriteAnimationsComponent.h"
 
 class SpriteAnimationDriver : public BaseDriver<SpriteAnimationDriver, SpriteAnimations>
 {
@@ -37,7 +37,7 @@ public:
 private:
 	static bool SeriesValid(const SpriteAnimationSeries& series);
 
-	explicit SpriteAnimationDriver(Entity& entity) : Super(entity) {}
+	explicit SpriteAnimationDriver(Entity entity) : Super(entity) {}
 
 	void MarkNeedsUpdate();
 };
@@ -48,7 +48,7 @@ inline bool SpriteAnimationDriver::EnableCurrentSeriesEvents()
 	auto& animations = GetComponent<SpriteAnimations>();
 
 	auto it = animations.table.find(animations.current);
-	if (it == animations.end())
+	if (it == animations.table.end())
 	{
 		return false;
 	}
@@ -58,11 +58,11 @@ inline bool SpriteAnimationDriver::EnableCurrentSeriesEvents()
 
 	if constexpr (sizeof...(Ts) == 0)
 	{
-		series.eventProductionFlags.EnableAll();
+		series.eventProductionFlags.set();
 	}
 	else
 	{
-		series.eventProductionFlags.Enable<Ts...>();
+		((series.eventProductionFlags.set(Ts::eventType)), ...);
 	}
 
 	return true;
@@ -74,7 +74,7 @@ inline bool SpriteAnimationDriver::DisableCurrentSeriesEvents()
 	auto& animations = GetComponent<SpriteAnimations>();
 
 	auto it = animations.table.find(animations.current);
-	if (it == animations.end())
+	if (it == animations.table.end())
 	{
 		return false;
 	}
@@ -84,11 +84,11 @@ inline bool SpriteAnimationDriver::DisableCurrentSeriesEvents()
 
 	if constexpr (sizeof...(Ts) == 0)
 	{
-		series.eventProductionFlags.DisableAll();
+		series.eventProductionFlags.reset();
 	}
 	else
 	{
-		series.eventProductionFlags.Disable<Ts...>();
+		((series.eventProductionFlags.set(Ts::eventType, false)), ...);
 	}
 
 	return true;

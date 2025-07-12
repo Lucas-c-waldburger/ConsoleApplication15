@@ -1,14 +1,16 @@
+#include <algorithm>
 #include "SpriteAnimationDriver.h"
 #include "../SpriteAnimationsComponent.h"
 #include "../NeedsUpdateComponent.h"
 #include "../../events/EventBus.h"
+#include "../../events/data/SpriteAnimationEvents.h"
 
 namespace {
 
 void ClampSpriteRangeToSeriesSize(Range<size_t>& spriteRange, const SpriteAnimationSeries& series)
 {
-	spriteRange.min = std::clamp(spriteRange.min, 0_uz, series.spritePlots.size());
-	spriteRange.max = std::clamp(spriteRange.max, 0_uz, series.spritePlots.size());
+	spriteRange.min = std::clamp(spriteRange.min, 0_uz, series.spritePlots.size() - 1);
+	spriteRange.max = std::clamp(spriteRange.max, 0_uz, series.spritePlots.size() - 1);
 }
 
 void AdvanceSeriesIndex(SpriteAnimationSeries& series)
@@ -26,8 +28,8 @@ constexpr bool IndexInSpriteRange(size_t index, const Range<size_t>& spriteRange
 bool ShouldProduceSeriesChangeEvent(const SpriteAnimationSeries& oldSeries,
 								    const SpriteAnimationSeries& newSeries)
 {
-	return oldSeries.eventProductionFlags.ShouldProduceEvent<events::SpriteSeriesChange>() ||
-		   newSeries.eventProductionFlags.ShouldProduceEvent<events::SpriteSeriesChange>();
+	return oldSeries.eventProductionFlags.test(events::SpriteSeriesChange::eventType) ||
+		   newSeries.eventProductionFlags.test(events::SpriteSeriesChange::eventType);
 }
 
 } // unnamed
@@ -52,7 +54,7 @@ bool SpriteAnimationDriver::AddSeries(std::string_view seriesName, const SpriteS
 
 	newSeries.sourceAtlas = spriteAtlas.GetHandle();
 	newSeries.spritePlots = std::move(spritePlots);
-	newSeries.spriteRange = { .min = 0, .max = newSeries.spritePlots.size() };
+	newSeries.spriteRange = { .min = 0, .max = newSeries.spritePlots.size() - 1 };
 
 	if (animations.table.size() == 1)
 	{
@@ -82,7 +84,7 @@ bool SpriteAnimationDriver::RemoveSeries(std::string_view seriesName)
 		}
 		else
 		{
-			animations.current = {};
+			animations.current = kInvalidHashName;
 		}
 
 		MarkNeedsUpdate();
@@ -112,7 +114,7 @@ bool SpriteAnimationDriver::SetCurrentSeries(std::string_view seriesName, ResetO
 	{
 		if (alreadySet) // sanity check if current doesn't map to a real series
 		{
-			animations.current = {}; 
+			animations.current = kInvalidHashName; 
 
 			MarkNeedsUpdate();
 		}
@@ -182,7 +184,7 @@ bool SpriteAnimationDriver::SetCurrentSeriesIndex(size_t newIndex)
 	size_t originalIndex = series.index;
 	series.index = newIndex;
 
-	if (series.eventProductionFlags.ShouldProduceEvent<events::SpriteIndexChange>())
+	if (series.eventProductionFlags.test(events::SpriteIndexChange::eventType))
 	{
 		EventBus::PushEvent(events::SpriteIndexChange{
 			.entity = GetEntity().GetID(),
@@ -250,7 +252,7 @@ bool SpriteAnimationDriver::Step()
 
 	AdvanceSeriesIndex(series);
 
-	if (series.eventProductionFlags.ShouldProduceEvent<events::SpriteIndexChange>())
+	if (series.eventProductionFlags.test(events::SpriteIndexChange::eventType))
 	{
 		EventBus::PushEvent(events::SpriteIndexChange{
 			.entity = GetEntity().GetID(),
@@ -258,6 +260,8 @@ bool SpriteAnimationDriver::Step()
 			.index = { .last = originalIndex, .now = series.index }
 		});
 	}
+
+	MarkNeedsUpdate();
 
 	return true;
 }

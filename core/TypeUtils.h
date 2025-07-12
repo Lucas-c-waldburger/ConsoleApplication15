@@ -46,6 +46,9 @@ static constexpr bool type_in_pack_v = (std::same_as<T, Ts> || ...);
 
 template <typename T, typename...Ts>
 concept SomeTypeInPack = type_in_pack_v<T, Ts...>;
+
+template <typename...Ts, typename...Us>
+concept AllTypesInPack = (type_in_pack_v<Ts, Us...> && ...);
 /**/
 
 /* TYPES IN PARAMETER PACK UNIQUE */

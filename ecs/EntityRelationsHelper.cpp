@@ -1,5 +1,6 @@
 #include "EntityRelationsHelper.h"
-//#include "ComponentManager.h"
+#include "EntityManager.h"
+#include "ComponentManager.h"
 #include <cassert>
 
 bool EntityRelationsHelper::IsParent(EntityManager& entityManager, ComponentManager& componentManager, Entity_t entity)

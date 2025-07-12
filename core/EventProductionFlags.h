@@ -1,41 +1,91 @@
 #pragma once
-#include "../events/EventConcepts.h"
-#include "../events/EventDataTypeList.h"
-#include <bitset>
+#include "../core/EventDataBitset.h"
 
-template <typename TList>
-struct EventProductionFlags;
+//template <typename TList>
+//class EventProductionFlagsTemplate;
+//
+//template <SomeEventData...RelevantEventTs>
+//class EventProductionFlagsTemplate<TypeList<RelevantEventTs...>>
+//{
+//public:
+//	template <typename...Ts>
+//	void Enable() requires (SomeTypeInPack<Ts, RelevantEventTs...> && ...)
+//	{
+//		((flags_.Set<Ts>(true)), ...);
+//	}
+//
+//	template <typename...Ts>
+//	void Disable() requires (SomeTypeInPack<Ts, RelevantEventTs...> && ...)
+//	{
+//		((flags_.Set<Ts>(false)), ...);
+//	}
+//
+//	void EnableAll() { flags_.Set(); }
+//	void DisableAll() { flags_.Reset(); }
+//
+//	template <typename T>
+//	bool ShouldProduceEvent() const requires SomeTypeInPack<T, RelevantEventTs...>
+//	{
+//		return flags_.Test<T>();
+//	}
+//
+//private:
+//	EventDataBitset flags_;
+//};
+//
+//using BaseEventProductionFlags = EventProductionFlagsTemplate<EventDataTypeList>;
+//
+//template <SomeEventGroup Group>
+//class GroupEventProductionFlags;
+//
+//template <SomeEventData...Ts>
+//class GroupEventProductionFlags<EventGroup<Ts...>> : public EventProductionFlagsTemplate<TypeList<Ts...>> {};
 
-template <SomeEventData...Ts> // <- Any subset of event flags we care about
-struct EventProductionFlags<TypeList<Ts...>>
-{
-	EventProductionFlags() : bitset(((1 << Ts::eventType) | ...)) {}
-
-	template <SomeTypeInPack<Ts...> Us...> void Enable() 
-	{ 
-		((flags.set(Us::eventType, true), ...);
-	}
-	template <SomeTypeInPack<Ts...> Us...> void Disable() 
-	{ 
-		((flags.set(Us::eventType, false), ...);
-	}
-	void EnableAll() { flags.set(); }
-	void DisableAll() { flags.reset(); }
-
-	template <SomeTypeInPack<Ts...> U> bool ShouldProduceEvent() const
-	{
-		return flags.test(U::eventType);
-	}
-
-	std::bitset<EventDataTypeList::size> bitset;
-};
-
-template <SomeEventGroup Group>
-struct EventGroupProductionFlags;
-
-template <typename...Ts>
-struct EventGroupProductionFlags<EventGroup<Ts...>> : EventProductionFlags<TypeList<Ts...>>
-{
-	// these will default to off, opt in
-	constexpr EventGroupProductionFlags() : EventProductionFlags<Ts...>() { bitset.reset(); }
-};
+//template <typename TList>
+//struct EventProductionFlags;
+//
+//// TODO <SomeEventData...RelevantEvent
+//template <SomeEventData...RelevantEventTs> // <- limit the type of events we can access to only those we care about
+//struct EventProductionFlags<TypeList<RelevantEventTs...>>
+//{
+//	template <typename Ts...> 
+//	void Enable() requires (SomeTypeInPack<Ts, RelevantEventTs...> && ...)
+//	{ 
+//		((flags.set(Ts::eventType, true), ...);
+//	}
+//	  
+//	template <typename Ts...>
+//	void EnableOnly() requires (SomeTypeInPack<Ts, RelevantEventTs...> && ...)
+//	{
+//		flags.reset();
+//		((flags.set(Ts::eventType, true), ...);
+//	}
+//
+//	template <typename Ts...> 
+//	void Disable() requires (SomeTypeInPack<Ts, RelevantEventTs...> && ...)
+//	{ 
+//		((flags.set(Ts::eventType, false), ...);
+//	}
+//
+//	void EnableAll() { flags.set(); }
+//	void DisableAll() { flags.reset(); }
+//
+//	template <typename T> 
+//	bool ShouldProduceEvent() const requires SomeTypeInPack<T, RelevantEventTs...>
+//	{
+//		return flags.test(T::eventType);
+//	}
+//
+//	std::bitset<EventDataTypeList::size> bitset = std::bitset<EventDataTypeList::size>{}.set();
+//};
+//
+//template <SomeEventGroup Group>
+//struct EventGroupProductionFlags;
+//
+//template <typename...RelaventEventTs>
+//struct EventGroupProductionFlags<EventGroup<RelaventEventTs...>> : EventProductionFlags<TypeList<RelaventEventTs...>>
+//{
+//	// TODO: Should make default on/off customizable per Event Group (configuration)
+//	// these will default to off, opt in
+//	constexpr EventGroupProductionFlags() : EventProductionFlags<RelaventEventTs...>() { bitset.reset(); }
+//};

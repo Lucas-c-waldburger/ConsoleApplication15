@@ -1,4 +1,4 @@
-//#include "SpriteAnimationSeriesMap.h"
+#include "SpriteAnimationSeriesMap.h"
 //#include "../core/Literals.h"
 //#include <algorithm>
 //

@@ -1,4 +1,5 @@
 #include "Ecs.h"
+#include "EntityDestructor.h"
 #include "EntityRelationsHelper.h"
 
 // ENTITY DEFS //
@@ -116,6 +117,17 @@ std::vector<Entity> EntityRelations::GetChildren()
 	}
 
 	return childEntities;
+}
+
+ECS& ECS::Get()
+{
+	static std::unique_ptr<ECS> ecs;
+	if (!ecs)
+	{
+		ecs = std::unique_ptr<ECS>(new ECS());
+	}
+
+	return *ecs;
 }
 
 

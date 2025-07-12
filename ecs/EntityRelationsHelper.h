@@ -1,10 +1,11 @@
 #pragma once
-#include "ComponentManager.h"
-#include "EntityManager.h"
+#include <unordered_set>
+#include "EntityT.h"
+//#include "EntityManager.h"
+//#include "ComponentManager.h"
 
-//namespace impl {
-//class ComponentManager;
-//}
+class EntityManager;
+class ComponentManager;
 
 class EntityRelationsHelper
 {

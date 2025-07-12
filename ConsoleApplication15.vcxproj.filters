@@ -192,6 +192,12 @@
     <ClCompile Include="components\driver\SpriteAnimationDriver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="callbacks\StateTransitionCallbackRegistry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\EntityStateSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -968,9 +974,6 @@
     <ClInclude Include="systems\TimerSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\util\EntityStateComponentTemplate.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="events\data\EventDataIncludes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1005,6 +1008,30 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\Direction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\ComponentBitset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\EventDataBitset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\EntityStateComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\StateTransitionCallbackRegistry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\EntityStateSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\EventCallback.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\StateTransitionCallback.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ecs\ComponentArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

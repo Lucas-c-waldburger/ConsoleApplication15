@@ -4,7 +4,7 @@
 
 void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 {
-	auto entities = ECS::GetAllEntitiesWith<NewRenderable, NeedsUpdate, SpriteAnimations>(
+	auto entities = ECS::GetAllEntitiesWith<NeedsUpdate, NewRenderable, SpriteAnimations>(
 		[](const NeedsUpdate& update, const NewRenderable& renderable, const SpriteAnimations&)
 		{
 			return (update.components & SpriteAnimations::componentBit) &&
@@ -27,6 +27,7 @@ void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 
 			newAtlas = series.sourceAtlas;
 			newPlot = series.spritePlots[series.index];
+			LOG_DEBUG_FMT("series index: {}", series.index);
 		}
 
 		auto& renderable = entity.GetComponent<NewRenderable>();

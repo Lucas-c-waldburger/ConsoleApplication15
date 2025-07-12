@@ -34,6 +34,7 @@
 #include "events/data/EntityActions.h"
 #include "test/callbacks/AnimationCallbacks.h"
 #include "test/callbacks/GameControllerCallbacks.h"
+#include "components/driver/SpriteAnimationDriver.h"
 
 namespace {
     static constexpr const char* kFontPath =
@@ -384,7 +385,7 @@ namespace {
         const uint32_t connectEvType = GameControllerConnected::eventType;
         const uint32_t disconnectEvType = GameControllerDisconnected::eventType;
 
-        auto& registry = callbackSys.GetRegistry();
+        auto& registry = callbackSys.GetCallbackRegistry();
 
         //auto connectKey = registry.RegisterCallback("ConnectToFirstController",
         //                                             ConnectToFirstController()).key;
@@ -559,7 +560,7 @@ namespace {
             return ReturnSignal::KeepObserving;
         };
          
-        auto& registry = eventCallbackSystem.GetRegistry();
+        auto& registry = eventCallbackSystem.GetCallbackRegistry();
         //auto [key, _] = registry.RegisterCallback("handleBallCollision", std::move(handleBallCollision),
         //                                          entity.GetID());
 
@@ -840,7 +841,7 @@ namespace {
                 .isSensor = true
                 }).Build(sensorLeadRigid.body));
 
-            auto& registry = eventCallbackSystem.GetRegistry();
+            auto& registry = eventCallbackSystem.GetCallbackRegistry();
             //auto [key, _] = registry.RegisterCallback("HandleSensorConnection", HandleSensorConnection(),
             //                                          sensorLead.GetID());
 
@@ -924,7 +925,7 @@ namespace {
             RenderProfile,
             Handle<SpriteSeriesAtlas>,
             SpriteAnimationSeries,
-            SpriteAnimationSeriesMap,
+            //SpriteAnimationSeriesMap,
             SpriteAnimations,
             Transform>("sprite_render_test.lua", [&](Lua& lua) {
                 lua["transform"] = &transform;
@@ -1688,8 +1689,8 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
     const auto* spriteAtlas = scene->GetTextureRepository().GetAtlas(spriteAtlasHandle);
     assert(spriteAtlas);
 
-    auto spritePlots = spriteAtlas->GetSpritePlots(kWalkSeriesName);
-    assert(!spritePlots.empty());
+    //auto spritePlots = spriteAtlas->GetSpritePlots(kWalkSeriesName);
+    //assert(!spritePlots.empty());
 
     auto spriteEnt = ECS::CreateEntity();
 
@@ -1705,7 +1706,7 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
        .fixedRotation = true
     })
     .WithBodyLimits({
-        .linearVelocity = { .max = { 15.0f, 15.0f }}
+        .linearVelocity = { .max = { 15.0f, 15.0f } }
     })
     .Build(scene->GetWorld()));
 
@@ -1725,40 +1726,65 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
     })
     .Build(body));
 
-    SpriteRenderable spriteRenderable{
-        .sourceAtlas = spriteAtlasHandle,
-        .sourcePlot = spritePlots[0]
-    };
+    //SpriteRenderable spriteRenderable{
+    //    .sourceAtlas = spriteAtlasHandle,
+    //    .sourcePlot = spritePlots[0]
+    //};
     RenderProfile profile{
 
     }; 
 
     auto& renderable = spriteEnt.AddComponent(NewRenderable{
-        .renderData = std::move(spriteRenderable),
+        .renderData = SpriteRenderable{},
         .profile = std::move(profile)
     });
 
-    auto& spriteAnimations = spriteEnt.AddComponent(SpriteAnimations{});
-    spriteAnimations.map.Emplace(kWalkSeriesName, SpriteAnimationSeries{
-        .sourceAtlas = spriteAtlasHandle,
-        .spritePlots = std::move(spritePlots)
-    });
+    spriteEnt.AddComponent(SpriteAnimations{});
+    TRY(SpriteAnimationDriver::GetInstance(spriteEnt), spriteAnimDriver);
+    spriteAnimDriver.AddSeries(kWalkSeriesName, *spriteAtlas);
+    spriteAnimDriver.AddSeries(kJumpSeriesName, *spriteAtlas);
+
+    //spriteAnimations.map.Emplace(kWalkSeriesName, SpriteAnimationSeries{
+    //    .sourceAtlas = spriteAtlasHandle,
+    //    .spritePlots = std::move(spritePlots)
+    //});
     
-    auto& registry = scene->GetSystem<EventCallbackSystem>()->GetRegistry();
+    auto& callbackRegistry = scene->GetSystem<EventCallbackSystem>()->GetCallbackRegistry();
 
     auto& controllerState = spriteEnt.AddComponent<GameControllerState>();
     auto& eventCallbacks = spriteEnt.AddComponent<EventCallbacks>();
+    auto& inputCallbacks = spriteEnt.AddComponent<GameControllerInputCallbacks>();
 
-#define REGISTER(callback, ...) do { \
-    auto oc__ = registry.RegisterCallback(#callback, callback(__VA_ARGS__)); \
-    eventCallbacks.table[oc__.eventType] = oc__.handle; \
-} while(0)
-    
+#define NAME_AND_CALL(fn, ...) #fn, fn(__VA_ARGS__)
+
     using namespace test;
-    REGISTER(ConnectToFirstController);
-    REGISTER(DisconnectController);
-    REGISTER(SpriteAdvanceOnDistanceTraveled, 20);
-    REGISTER(ApplyAxisInputToForce, kImpulseScale);
+    using enum GameControllerInputSource;
+
+    auto& evTable = eventCallbacks.table;
+    evTable.insert(callbackRegistry.RegisterCallback(NAME_AND_CALL(ConnectToFirstController)));
+    evTable.insert(callbackRegistry.RegisterCallback(NAME_AND_CALL(DisconnectController)));
+    evTable.insert(callbackRegistry.RegisterCallback(NAME_AND_CALL(SpriteAdvanceOnDistanceTraveled, 20)));
+
+    auto& inputTable = inputCallbacks.table;
+    inputTable.emplace(LeftStickAxis, 
+        callbackRegistry.RegisterCallback(NAME_AND_CALL(ApplyAxisInputToForce, kImpulseScale)).second);
+
+//#define REGISTER_CALLBACK(callback, opInpSource, ...) do { \
+//    auto oc__ = registry.RegisterCallback(#callback, callback(__VA_ARGS__)); \
+//    if (opInpSource != GameControllerInputSource::Invalid) { \
+//        assert(oc__.eventType == events::GameControllerInput::eventType); \
+//        inputCallbacks.table[opInpSource] = oc__.handle; \
+//    } else { \
+//        eventCallbacks.table[oc__.eventType] = oc__.handle; \
+//}} while(0)
+//    
+//    
+//
+//    REGISTER_CALLBACK(ConnectToFirstController, Invalid);
+//    REGISTER_CALLBACK(DisconnectController, Invalid);
+//    REGISTER_CALLBACK(SpriteAdvanceOnDistanceTraveled, Invalid, 20);
+//    REGISTER_CALLBACK(ApplyAxisInputToForce, Invalid, kImpulseScale);
+
 
     //SetUpSpriteRenderTestScript(spriteEnt, scene);
 

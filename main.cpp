@@ -146,9 +146,18 @@ static void UpdateControllerForce(Entity& entity)
 
     //phys.forces.normed.push_back(Force{ .vector = normed, .duration = 0 });
 }
+#include "sprite/SpriteAnimationSeriesMap.h"
 
 int main(int argc, char* argv[]) 
 {
+    std::string k = "there";
+    HashNameMap<int> map;
+    map["hello"] = 1;
+    map[k] = 3;
+
+    //bool b = map.contains("hello");
+    //bool b2 = map.contains(3);
+
     /*
     Logger::StartSession();
     SDLite::Start();

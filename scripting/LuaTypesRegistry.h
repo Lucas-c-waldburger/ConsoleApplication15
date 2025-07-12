@@ -9,6 +9,7 @@
 #include <SDL.h>
 #include "../physics/B2Body.h"
 #include "../physics/B2Joint.h"
+#include "../core/EventProductionFlags.h"
 
 template <typename>
 void RegisterLuaUserType(sol::state& lua);
@@ -37,21 +38,61 @@ template <> inline void RegisterLuaUserType<SDL_FRect>(sol::state& lua)
 template <> inline void RegisterLuaUserType<SDL_Color>(sol::state& lua)
 {
 	lua.new_usertype<SDL_Color>("SDL_Color", "r", &SDL_Color::r, "g", &SDL_Color::g,
-		"b", &SDL_Color::b, "a", &SDL_Color::a);
+								"b", &SDL_Color::b, "a", &SDL_Color::a);
 }
 
 // my core types
 template <> inline void RegisterLuaUserType<Dimensions<float>>(sol::state& lua)
 {
-	lua.new_usertype<Dimensions<float>>("Dimensions<float>",
-		"w", &Dimensions<float>::w, "h", &Dimensions<float>::h);
+	if (!lua["Dimensions<float>"].valid())
+	{
+		lua.new_usertype<Dimensions<float>>("Dimensions<float>",
+			"w", &Dimensions<float>::w, "h", &Dimensions<float>::h);
+	}
 }
 template <> inline void RegisterLuaUserType<Dimensions<int>>(sol::state& lua)
 {
-	lua.new_usertype<Dimensions<int>>("Dimensions<int>",
-		"w", &Dimensions<int>::w, "h", &Dimensions<int>::h);
+	if (!lua["Dimensions<int>"].valid())
+	{
+		lua.new_usertype<Dimensions<int>>("Dimensions<int>",
+			"w", &Dimensions<int>::w, "h", &Dimensions<int>::h);
+	}
+}
+template <> inline void RegisterLuaUserType<Range<size_t>>(sol::state& lua)
+{
+	if (!lua["Range<size_t>"].valid())
+	{
+		lua.new_usertype<Range<size_t>>("Range<size_t>",
+			"min", &Range<size_t>::min, "max", &Range<size_t>::max);
+	}
 }
 
+template <> inline void RegisterLuaUserType<HashName>(sol::state& lua)
+{
+	if (!lua["HashName"].valid())
+	{
+		lua.new_usertype<HashName>("HashName",
+			sol::constructors<HashName(), HashName(std::string_view)>(),
+			"value", &HashName::value,
+			sol::meta_function::equal_to, sol::overload(
+				[](const HashName& a, const HashName& b) {
+					return a.value == b.value;
+				},
+				[](const HashName& a, std::string_view b) {
+					return a.value == fnv1aHash(b);
+				}
+		));
+	}
+}
+
+//template <> inline void RegisterLuaUserType<EventProductionFlags<events::SpriteAnimationEventGroup>>(sol::state& lua)
+//{
+//	if (!lua["Range<size_t>"].valid())
+//	{
+//		lua.new_usertype<Range<size_t>>("Range<size_t>",
+//			"min", &Range<size_t>::min, "max", &Range<size_t>::max);
+//	}
+//}
 
 //// HANDLES
 //class GlyphAtlas;

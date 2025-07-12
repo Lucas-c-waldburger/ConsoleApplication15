@@ -1,8 +1,8 @@
 #pragma once
 #include "../IEventData.h"
 #include "../EventConcepts.h"
+#include "../../ecs/EntityT.h"
 #include "../../core/commonObjects.h"
-#include "../../components/SpriteAnimationsComponent.h"
  
 namespace events {
 

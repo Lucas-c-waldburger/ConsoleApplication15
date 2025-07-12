@@ -1,8 +1,8 @@
 #pragma once
-#include "ComponentManager.h"
-#include "EntityManager.h"
 #include "EntityT.h"
-#include "../core/ReadOnly.h"
+
+class EntityManager;
+class ComponentManager;
 
 class EntityDestructor 
 {

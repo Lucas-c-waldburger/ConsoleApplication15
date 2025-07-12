@@ -78,6 +78,8 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
+      <PreprocessToFile>false</PreprocessToFile>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -96,6 +98,8 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
+      <PreprocessToFile>false</PreprocessToFile>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -114,6 +118,8 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
+      <PreprocessToFile>false</PreprocessToFile>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -132,6 +138,8 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
+      <PreprocessToFile>false</PreprocessToFile>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,6 +152,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="audio\Sound.cpp" />
+    <ClCompile Include="callbacks\StateTransitionCallbackRegistry.cpp" />
     <ClCompile Include="components\driver\SpriteAnimationDriver.cpp" />
     <ClCompile Include="components\util\TagsComponentUtils.cpp" />
     <ClCompile Include="core\WeightGenerator.cpp" />
@@ -157,6 +166,7 @@
     <ClCompile Include="inputs\controller\GameControllerInputUpdater.cpp" />
     <ClCompile Include="inputs\controller\GameControllerInputMap.cpp" />
     <ClCompile Include="sprite\SpriteAnimationSeriesMap.cpp" />
+    <ClCompile Include="systems\EntityStateSystem.cpp" />
     <ClCompile Include="systems\EventCallbackSystem.cpp" />
     <ClCompile Include="events\EventDispatchListener.cpp" />
     <ClCompile Include="inputs\InputData.cpp" />
@@ -212,7 +222,10 @@
     <ClInclude Include="audio\Sound.h" />
     <ClInclude Include="callbacks\BaseCallbackDescriptor.h" />
     <ClInclude Include="callbacks\CallbackRegistryTable.h" />
+    <ClInclude Include="callbacks\EventCallback.h" />
     <ClInclude Include="callbacks\EventCallbackRegistry.h" />
+    <ClInclude Include="callbacks\StateTransitionCallback.h" />
+    <ClInclude Include="callbacks\StateTransitionCallbackRegistry.h" />
     <ClInclude Include="camera\Projection.h" />
     <ClInclude Include="components\builder\CameraTargetComponentBuilder.h" />
     <ClInclude Include="components\builder\ColliderComponentBuilder.h" />
@@ -223,18 +236,20 @@
     <ClInclude Include="components\ComponentTypeList.h" />
     <ClInclude Include="components\driver\BaseDriver.h" />
     <ClInclude Include="components\driver\SpriteAnimationDriver.h" />
+    <ClInclude Include="components\EntityStateComponent.h" />
     <ClInclude Include="components\EventProductionFlagsComponent.h" />
     <ClInclude Include="components\GameControllerInputCallbacksComponent.h" />
     <ClInclude Include="components\NeedsUpdateComponent.h" />
     <ClInclude Include="components\SpriteAnimationsComponent.h" />
     <ClInclude Include="components\TimerComponent.h" />
-    <ClInclude Include="components\util\EntityStateComponentTemplate.h" />
     <ClInclude Include="components\util\TagsComponentUtils.h" />
     <ClInclude Include="core\Algorithms.h" />
     <ClInclude Include="core\CommonEntityMethods.h" />
     <ClInclude Include="core\CommonFunctions.h" />
+    <ClInclude Include="core\ComponentBitset.h" />
     <ClInclude Include="core\Counter.h" />
     <ClInclude Include="core\Direction.h" />
+    <ClInclude Include="core\EventDataBitset.h" />
     <ClInclude Include="core\EventProductionFlags.h" />
     <ClInclude Include="core\FuncTraits.h" />
     <ClInclude Include="core\Literals.h" />
@@ -250,6 +265,7 @@
     <ClInclude Include="deps\RectangleBinPack\ShelfBinPack.h" />
     <ClInclude Include="deps\RectangleBinPack\ShelfNextFitBinPack.h" />
     <ClInclude Include="deps\RectangleBinPack\SkylineBinPack.h" />
+    <ClInclude Include="ecs\ComponentArray.h" />
     <ClInclude Include="ecs\EntityDestructor.h" />
     <ClInclude Include="events\data\EntityActions.h" />
     <ClInclude Include="events\data\EventDataIncludes.h" />
@@ -268,6 +284,7 @@
     <ClInclude Include="scripting\user_types\TransformLuaUserTypes.h" />
     <ClInclude Include="sprite\SpriteAnimationSeries.h" />
     <ClInclude Include="sprite\SpriteAnimationSeriesMap.h" />
+    <ClInclude Include="systems\EntityStateSystem.h" />
     <ClInclude Include="systems\EventCallbackSystem.h" />
     <ClInclude Include="events\Event.h" />
     <ClInclude Include="events\EventBus.h" />

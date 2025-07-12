@@ -1,12 +1,10 @@
 #pragma once
 #include "EntityManager.h"
-#include "EntityRelationsHelper.h"
-#include "EntityDestructor.h"
+#include "ComponentManager.h"
+#include "../components/ComponentConcepts.h"
 #include "../core/Logger.h"
 #include <cassert>
 #include <functional>
-
-// TODO: Do we need an ActiveComponent if we can just get that info directly from EntityManager?
 
 class ECS;
 class EntityRelations;
@@ -275,16 +273,7 @@ private:
     ComponentManager& GetComponentManager() { return componentManager_; }
     const ComponentManager& GetComponentManager() const { return componentManager_; }
 
-    static ECS& Get()
-    {
-        static std::unique_ptr<ECS> ecs;
-        if (!ecs)
-        {
-            ecs = std::unique_ptr<ECS>(new ECS());
-        }
-
-        return *ecs;
-    }
+    static ECS& Get();
 
     ECS() = default;
 

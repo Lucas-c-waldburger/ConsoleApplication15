@@ -1,8 +1,6 @@
 #include "EventCallbackSystem.h"
-#include "../ecs/Ecs.h"
 #include "../events/EventStage.h"
 #include "../events/EventCallbackRegistry.h"
-#include "../core/Monitoring.h"
 #include "../components/GameControllerInputCallbacksComponent.h"
 #include <algorithm>
 #include <unordered_set>
@@ -19,52 +17,101 @@ std::vector<uint32_t> ExtractEventTypes(EventSpan events)
 	return { eventTypes.begin(), eventTypes.end() };
 }
 
+GameControllerInputSource GetInputSource(const Event& event)
+{
+	const auto* inputEvent = EventDataCast<events::GameControllerInput>(event);
+	if (!inputEvent)
+	{
+		return GameControllerInputSource::Invalid;
+	}
+
+	return inputEvent->input.source;
+}
+
 } // unnamed
 
-void EventCallbackSystem::EntityDestroyed(Entity_t entityId)
+std::pair<uint32_t, EventCallbackView>
+EventCallbackSystem::CallbackRegistry::GetCallback(uint32_t eventType, std::string_view callbackName)
 {
-	callbackRegistry_.RemoveCallbacksWithOwner(entityId);
+	return impl_.GetCallback(eventType, callbackName);
+}
+
+std::pair<uint32_t, EventCallbackView>
+EventCallbackSystem::CallbackRegistry::GetCallback(uint32_t eventType, HashName callbackNameHash)
+{
+	return impl_.GetCallback(eventType, callbackNameHash);
+}
+
+bool EventCallbackSystem::CallbackRegistry::EraseCallback(uint32_t eventType, std::string_view callbackName)
+{
+	if (!impl_.EraseCallback(eventType, callbackName))
+	{
+		return false;
+	}
+
+	auto entities = ECS::GetAllEntitiesWith<EventCallbacks>(
+		[eventType, callbackName](const EventCallbacks& callbacks) {
+			auto it = callbacks.table.find(eventType);
+
+			return it != callbacks.table.end() && it->second.name == callbackName;
+		});
+
+	for (auto& entity : entities)
+	{
+		auto& callbacks = entity.GetComponent<EventCallbacks>();
+
+		callbacks.table[eventType].name = kInvalidHashName;
+		callbacks.table[eventType].fn = nullptr;
+	}
+	
+	return true;
 }
 
 void EventCallbackSystem::HandleControllerInputCallback(Entity& entity, const Event& event)
 {
-	if (!(entity.IsValid() && entity.HasComponent<GameControllerInputCallbacks>()))
+	if (!entity.HasComponent<GameControllerInputCallbacks>())
 	{
 		return;
 	}
 
-	auto& inputCallbacks = entity.GetComponent<GameControllerInputCallbacks>().table;
+	auto& callbacks = entity.GetComponent<GameControllerInputCallbacks>();
 
-	const auto* castEvent = EventDataCast<events::GameControllerInput>(event);
-	if (!castEvent)
+	auto inputSource = GetInputSource(event);
+	if (inputSource == GameControllerInputSource::Invalid)
 	{
 		return;
 	}
 
-	auto it = inputCallbacks.find(castEvent->input.source);
-	if (it == inputCallbacks.end())
+	auto it = callbacks.table.find(inputSource);
+	if (it == callbacks.table.end())
 	{
 		return;
 	}
 
-	const auto& handle = it->second;
-
-	auto callbackView = callbackRegistry_.GetCallbackView(handle);
-	if (!callbackView)
+	if (it->second.name == kInvalidHashName)
 	{
-		inputCallbacks.erase(castEvent->input.source);
+		callbacks.table.erase(it);
 
 		return;
 	}
 
-	if (callbackView(entity.GetID(), event) == ReturnSignal::StopObserving)
+	if (!it->second.fn) // name set but no view attached
 	{
-		//if (key.uniqueOwner.has_value() && *key.uniqueOwner == entity.GetID())
-		//{
-		//	callbackRegistry_.RemoveCallback(key);
-		//}
+		auto view = registry_.GetCallback(events::GameControllerInput::eventType, it->second.name);
+		if (!view.second.fn)
+		{
+			callbacks.table.erase(it);
 
-		inputCallbacks.erase(castEvent->input.source);
+			return;
+		}
+
+		it->second = view.second;
+	}
+
+	auto ret = it->second.fn(entity, event);
+	if (ret == ReturnSignal::StopObserving)
+	{
+		callbacks.table.erase(it);
 	}
 }
 
@@ -75,31 +122,38 @@ void EventCallbackSystem::HandleEventCallback(Entity& entity, const Event& event
 		return;
 	}
 
-	auto& eventCallbacks = entity.GetComponent<EventCallbacks>().table;
+	auto& callbacks = entity.GetComponent<EventCallbacks>();
 
-	auto it = eventCallbacks.find(event.type);
-	if (it == eventCallbacks.end())
+	auto it = callbacks.table.find(event.type);
+	if (it == callbacks.table.end())
 	{
 		return;
 	}
 
-	const auto& handle = it->second;
-
-	auto callbackView = callbackRegistry_.GetCallbackView(handle);
-	if (!callbackView)
+	if (it->second.name == kInvalidHashName)
 	{
-		eventCallbacks.erase(event.type);
+		callbacks.table.erase(it);
+
+		return;
+	}
+	
+	if (!it->second.fn) // name set but no view attached
+	{
+		auto view = registry_.GetCallback(event.type, it->second.name);
+		if (!view.second.fn)
+		{
+			callbacks.table.erase(it);
+
+			return;
+		}
+
+		it->second = view.second;
 	}
 
-	auto ret = callbackView(entity.GetID(), event);
+	auto ret = it->second.fn(entity, event);
 	if (ret == ReturnSignal::StopObserving)
 	{
-		//if (key.uniqueOwner.has_value() && *key.uniqueOwner == entity.GetID())
-		//{
-		//	callbackRegistry_.RemoveCallback(key);
-		//}
-
-		eventCallbacks.erase(it);
+		callbacks.table.erase(it);
 	}
 }
 
@@ -129,3 +183,5 @@ void EventCallbackSystem::Dispatch(EventSpan events)
 		}
 	}
 }
+
+

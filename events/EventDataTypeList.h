@@ -22,7 +22,7 @@ namespace events {
 	struct SpriteSeriesChange;
 }
 
-using EventDataTypeList = TypeList <
+using EventDataTypeList = TypeList<
 	events::EntityCreated,
 	events::EntityDestroyed,
 	events::EntityPositionChanged,

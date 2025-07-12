@@ -90,7 +90,7 @@ void UpdateTransformComponents()
 		float newRotation = rigidBody.body.GetData().GetAngle();
 
 		if (newPosition != transform.position && 
-			ShouldProduceEvent<events::EntityPositionChanged>(entity))
+			EntityShouldProduceEvent<events::EntityPositionChanged>(entity))
 		{
 			EventBus::PushEvent(events::EntityPositionChanged{
 				.entity = entity.GetID(),

@@ -2,11 +2,28 @@
 #include "Atlas.h"
 #include "../core/commonObjects.h"
 #include "../core/TransparentStringHash.h"
+#include "../core/Direction.h"
 #include <unordered_map>
+
+struct SpriteInstanceData
+{
+	std::string filename;
+	size_t index = 0;
+	Dimensions<int> dimensions = { 0, 0 };
+	Direction nativeDirection = Direction::None;
+};
 
 struct SpriteSeriesMetadata
 {
 	std::string seriesName;
+	std::string directoryPath;
+	std::unordered_set<std::string> tags;
+};
+
+struct SpriteSeriesResourcePacket
+{
+	std::vector<SpriteInstanceData> instances;
+	SpriteSeriesMetadata metadata;
 };
 
 using SpriteSeriesResourcePackets = ResourcePackets<SpriteSeriesMetadata>;

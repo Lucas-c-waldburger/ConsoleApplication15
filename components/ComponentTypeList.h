@@ -16,10 +16,11 @@ struct EventCallbacks;
 struct CameraTarget;
 struct SpriteAnimations;
 struct NewRenderable;
-struct EntityEventProductionFlags;
+struct EventProductionFlags;
 struct GameControllerInputCallbacks;
 struct Timer;
 struct NeedsUpdate;
+struct EntityStates;
 
 using ComponentTypeList = TypeList<
 	ActiveState,
@@ -37,8 +38,9 @@ using ComponentTypeList = TypeList<
 	CameraTarget,
 	SpriteAnimations,
 	NewRenderable,
-	EntityEventProductionFlags,
+	EventProductionFlags,
 	GameControllerInputCallbacks,
 	Timer,
-	NeedsUpdate
+	NeedsUpdate,
+	EntityStates
 >;

@@ -1,7 +1,7 @@
 #pragma once
 #pragma warning(disable: 4067) // will bitch at us for no newline eof
 
-#include "ActiveStateComponent.h";
+#include "ActiveStateComponent.h"
 #include "CameraTargetComponent.h"
 #include "ColliderComponent.h"
 #include "EventCallbacksComponent.h"
@@ -18,4 +18,5 @@
 #include "GameControllerInputCallbacksComponent.h"
 #include "TimerComponent.h"
 #include "NeedsUpdateComponent.h"
+#include "EntityStateComponent.h"
 
