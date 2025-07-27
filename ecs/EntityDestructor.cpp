@@ -45,27 +45,41 @@ std::vector<events::EntityDestroyed> GetAllEntitiesToDestroy(EntityManager& enti
 															 ComponentManager& componentManager, 
 															 Entity_t entityId)
 {
-	std::vector<events::EntityDestroyed> entitiesToDestroy{{ .entity = entityId }};
+	std::vector<events::EntityDestroyed> entitiesToDestroy{{ .entity = entityId }}; 
 
-	// don't need to manually unlink these children since parent is getting merked
-	if (EntityRelationsHelper::IsParent(entityManager, componentManager, entityId))
+	bool isParent = EntityRelationsHelper::IsParent(entityManager, componentManager, entityId);
+	bool isChild = EntityRelationsHelper::IsChild(entityManager, componentManager, entityId);
+
+	if (!(isParent || isChild))
 	{
-		auto& children = EntityRelationsHelper::GetChildren(entityManager, componentManager, entityId);
+		return entitiesToDestroy;
+	}
 
+	Entity_t root = (isChild) ? 
+		EntityRelationsHelper::GetParent(entityManager, componentManager, entityId) : entityId;
+	auto& children = EntityRelationsHelper::GetChildren(entityManager, componentManager, root);
+
+	if (isParent)
+	{
 		entitiesToDestroy.reserve(children.size() + 1);
 
 		for (auto child : children)
 		{
-			entitiesToDestroy.push_back({ .entity = child, .parent = entityId });
+			entitiesToDestroy.push_back({
+				.entity = child,
+				.parent = entityId
+			});
 		}
 	}
-	else if (EntityRelationsHelper::IsChild(entityManager, componentManager, entityId))
+	else // is child
 	{
-		entitiesToDestroy.front().parent = EntityRelationsHelper::GetParent(entityManager, componentManager, entityId);
+		entitiesToDestroy.front().parent = root;
 
-		EntityRelationsHelper::UnlinkChildFromParent(entityManager, componentManager, entityId);
+		assert(children.contains(entityId));
+
+		children.erase(entityId);
 	}
-
+	
 	return entitiesToDestroy;
 }
 

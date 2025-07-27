@@ -8,55 +8,55 @@
 #include "../core/ScopedInvoker.h"
 #include "../core/commonObjects.h"
 
-class RenderContext
-{
-public:
-
-private:
-	enum Option : uint8_t
-	{
-		ApplyOpacity = 1 << 0,
-		ApplyBlendMode = 1 << 1,
-		ApplyColorMod = 1 << 2
-	};
-
-	SDL_Texture* texture = nullptr;
-    SDL_Rect srcRect;
-    SDL_Rect destRect;
-    Renderable* renderable = nullptr;
-	uint8_t options = 0;
-};
-
-template <typename RenderFn> requires std::is_invocable_v<RenderFn, const Renderable&>
-void Render(const Renderable& renderable, RenderFn&& fn)
-{
-
-}
-
-struct RenderCache
-{
-    SDL_Texture* lastTexture = nullptr;
-    TextureModsOld lastMods;
-
-    void Update(SDL_Texture* texture, const TextureModsOld& mods) 
-    {
-        if (texture != lastTexture || lastMods.blend != mods.blend) 
-        {
-            SDL_SetTextureBlendMode(texture, mods.blend);
-        }
-        if (texture != lastTexture || lastMods.alpha != mods.alpha) 
-        {
-            SDL_SetTextureAlphaMod(texture, mods.alpha);
-        }
-        if (texture != lastTexture || lastMods.color != mods.color) 
-        {
-            SDL_SetTextureColorMod(texture, mods.color.r, mods.color.g, mods.color.b);
-        }
-
-        lastTexture = texture;
-        lastMods = mods;
-    }
-};
+//class RenderContext
+//{
+//public:
+//
+//private:
+//	enum Option : uint8_t
+//	{
+//		ApplyOpacity = 1 << 0,
+//		ApplyBlendMode = 1 << 1,
+//		ApplyColorMod = 1 << 2
+//	};
+//
+//	SDL_Texture* texture = nullptr;
+//    SDL_Rect srcRect;
+//    SDL_Rect destRect;
+//    Renderable* renderable = nullptr;
+//	uint8_t options = 0;
+//};
+//
+//template <typename RenderFn> requires std::is_invocable_v<RenderFn, const Renderable&>
+//void Render(const Renderable& renderable, RenderFn&& fn)
+//{
+//
+//}
+//
+//struct RenderCache
+//{
+//    SDL_Texture* lastTexture = nullptr;
+//    TextureModsOld lastMods;
+//
+//    void Update(SDL_Texture* texture, const TextureModsOld& mods) 
+//    {
+//        if (texture != lastTexture || lastMods.blend != mods.blend) 
+//        {
+//            SDL_SetTextureBlendMode(texture, mods.blend);
+//        }
+//        if (texture != lastTexture || lastMods.alpha != mods.alpha) 
+//        {
+//            SDL_SetTextureAlphaMod(texture, mods.alpha);
+//        }
+//        if (texture != lastTexture || lastMods.color != mods.color) 
+//        {
+//            SDL_SetTextureColorMod(texture, mods.color.r, mods.color.g, mods.color.b);
+//        }
+//
+//        lastTexture = texture;
+//        lastMods = mods;
+//    }
+//};
 
 
 

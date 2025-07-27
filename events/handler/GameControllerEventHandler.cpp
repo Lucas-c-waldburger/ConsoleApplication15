@@ -199,14 +199,16 @@ void GameControllerEventHandler::Finalize()
 
 void GameControllerEventHandler::UpdateControllerStateComponents()
 {
-	auto entities = ECS::GetAllEntitiesWith<GameControllerState>(
-		[](const GameControllerState& cmp) {
-			return cmp.joystickID != GameController::kInvalidJoystickID;
-		});
+	auto entities = ECS::GetAllEntitiesWith<GameControllerState>();
 
 	for (auto& entity : entities)
 	{
 		auto& controllerState = entity.GetComponent<GameControllerState>();
+
+		if (controllerState.joystickID == GameController::kInvalidJoystickID)
+		{
+			continue;
+		}
 
 		auto it = activeControllers_.find(controllerState.joystickID);
 		if (it == activeControllers_.end())

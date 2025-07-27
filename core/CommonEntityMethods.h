@@ -1,7 +1,5 @@
 #pragma once
 #include "../ecs/Ecs.h"
-#include "../components/EventProductionFlagsComponent.h"
-#include "../components/NeedsUpdateComponent.h"
 
 template <SomeEventData T>
 inline bool EntityShouldProduceEvent(const Entity& entity)
@@ -16,4 +14,27 @@ inline constexpr bool EntityNeedsComponentUpdate(const Entity& entity)
 {
 	return entity.HasComponent<NeedsUpdate>() &&
 		  (entity.GetComponent<NeedsUpdate>().components & T::componentBit);
+}
+
+inline Entity GetRootEntity(Entity& entity)
+{
+	if (!entity.IsValid())
+	{
+		return {};
+	}
+
+	auto relations = entity.GetRelations();
+	if (!relations.IsChild())
+	{
+		return entity;
+	}
+
+	return relations.GetParent();
+}
+
+inline Entity GetRootEntity(Entity_t id)
+{
+	auto entity = ECS::GetEntityByID(id);
+
+	return GetRootEntity(entity);
 }

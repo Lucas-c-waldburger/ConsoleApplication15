@@ -44,49 +44,6 @@ struct TextureMods
     }
 };
 
-
-//struct Renderable : BaseComponent<Renderable, 7>
-struct Renderable : BaseComponent<Renderable>
-{
-    struct Text
-    {
-        enum Alignment
-        {
-            Left,
-            Center,
-            Right
-        };
-
-        Handle<GlyphAtlas> sourceAtlas;
-        std::string text;
-        Dimensions<int> desiredDimensions = { 0, 0 }; // TODO: dont store this on here
-        Alignment align;
-        bool scaleToFit = false;
-    };
-
-    struct Sprite
-    {
-        Handle<SpriteSeriesAtlas> sourceAtlas;
-        std::string seriesName;
-        int currentIndex = -1;
-    };
-
-    struct Geometry
-    {
-        SDL_Color color = { 0, 0, 0, 255 };
-
-        /*struct {
-            bool draw = false;
-            SDL_Color color = { 0, 0, 0, 255 };
-        } lines;*/
-    };
-
-    std::variant<Text, Sprite, Geometry> renderData;
-    int drawOrder = -1;
-    TextureModsOld mods;
-    SDL_RendererFlip flip = SDL_FLIP_NONE;
-};
-
 struct DebugDraw
 {
     bool on;
@@ -155,10 +112,11 @@ struct SpriteRenderable
                                            // on your texture without additional checks"
 };
 
-//struct NewRenderable : BaseComponent<NewRenderable, 14>
-struct NewRenderable : BaseComponent<NewRenderable>
+struct Renderable : BaseComponent<Renderable>
 {
-    std::variant<SpriteRenderable, TextRenderable> renderData;
+    using RenderData = std::variant<std::monostate, SpriteRenderable, TextRenderable>;
+
+    RenderData renderData;
     RenderProfile profile;
 };
 

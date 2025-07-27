@@ -20,11 +20,13 @@ public:
 
     static Entity_t GetParent(EntityManager& entityManager, ComponentManager& componentManager,
                               Entity_t child);
-    static std::unordered_set<Entity_t>& GetChildren(EntityManager& entityManager, ComponentManager& componentManager,
+    static std::unordered_set<Entity_t>& GetChildren(EntityManager& entityManager, 
+                                                     ComponentManager& componentManager,
                                                      Entity_t parent);
 
     static Entity_t AddChild(EntityManager& entityManager, ComponentManager& componentManager,
                              Entity_t parent);
+
     static void UnlinkChildFromParent(EntityManager& entityManager, ComponentManager& componentManager,
                                       Entity_t child);
 

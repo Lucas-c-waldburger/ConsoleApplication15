@@ -7,8 +7,3 @@ struct GameControllerInputCallbacks : public BaseComponent<GameControllerInputCa
 {
 	std::unordered_map<GameControllerInputSource, EventCallbackView> table;
 };
-
-//struct GameControllerInputCallbacks : public BaseComponent<GameControllerInputCallbacks>
-//{
-//	std::unordered_map<GameControllerInputSource, Handle<EventCallbackDescriptor>> table;
-//};

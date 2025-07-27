@@ -76,14 +76,17 @@ void ApplyForceRequests(B2Body& body, ForceRequests& requests)
 
 void UpdateTransformComponents()
 {
-	auto entities = ECS::GetAllEntitiesWith<RigidBody, Transform>(
-		[](const RigidBody& rigidBody, const Transform&) {
-			return rigidBody.body.GetData().IsValid();
-	});
+	auto entities = ECS::GetAllEntitiesWith<RigidBody, Transform>();
 
 	for (auto& entity : entities)
 	{
 		auto& rigidBody = entity.GetComponent<RigidBody>();
+
+		if (!rigidBody.body.GetData().IsValid())
+		{
+			continue;
+		}
+
 		auto& transform = entity.GetComponent<Transform>();
 
 		SDL_FPoint newPosition = rigidBody.body.GetData().GetPosition();
@@ -132,13 +135,16 @@ void PhysicsSystem::Update(B2World* world_, float timeStep, int subStepCount)
 
 void PhysicsSystem::UpdateForces()
 {
-	auto entities = ECS::GetAllEntitiesWith<RigidBody>([](const RigidBody& rigidBody) {
-		return rigidBody.body.GetData().IsValid();
-	});
+	auto entities = ECS::GetAllEntitiesWith<RigidBody>();
 
 	for (auto& entity : entities)
 	{
 		auto& rigidBody = entity.GetComponent<RigidBody>();
+
+		if (!rigidBody.body.GetData().IsValid())
+		{
+			continue;
+		}
 
 		auto& bodyData = GetWriteAccess(rigidBody.body);
 
@@ -149,20 +155,3 @@ void PhysicsSystem::UpdateForces()
 }
 
 
-
-//void PhysicsSystem::RunEntityScripts(ScriptManager& scriptManager)
-//{
-//	auto entities = ECS::GetAllEntitiesWith<Script, Physics>(
-//		[](const Script& script, const Physics&) 
-//		{
-//			return !script.activeScript.name.empty() &&
-//				   (script.systemDomain == typeid(PhysicsSystem));
-//		});
-//
-//	for (auto& entity : entities)
-//	{
-//		auto& script = entity.GetComponent<Script>();
-//
-//		LOG_IF_ERROR(scriptManager.RunScript(script.activeScript.name));
-//	}
-//}

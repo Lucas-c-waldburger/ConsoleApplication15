@@ -1,6 +1,6 @@
 #pragma once
 #include "BaseComponent.h"
-
+#include "../core/Handle.h"
 
 struct Timer : BaseComponent<Timer>
 {
@@ -13,5 +13,5 @@ struct Timer : BaseComponent<Timer>
 
 	float time = 0.0f;
 	float duration = 0.0f;
-	uint8_t flags = Active;
+	uint8_t flags = 0;
 };

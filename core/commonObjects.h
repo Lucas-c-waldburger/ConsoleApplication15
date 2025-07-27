@@ -4,8 +4,9 @@
 #include <unordered_map>
 #include "CommonFunctions.h"
 
-struct Void {};
+#define STR(x) #x
 
+struct Void {};
 
 template <typename Tup, typename Fn, size_t... Is>
 static void ForEachInTupleImpl(Tup&& tup, Fn&& fn, std::index_sequence<Is...>)
@@ -54,6 +55,7 @@ struct HashName
 {
     constexpr HashName() = default;
     constexpr explicit HashName(std::string_view sv) : value(fnv1aHash(sv)) {}
+    //constexpr explicit HashName(const char* cc) : value(fnv1aHash(cc)) {}
 
     constexpr HashName& operator=(const HashName& other) 
     {
@@ -68,6 +70,11 @@ struct HashName
         value = fnv1aHash(sv);
         return *this;
     }
+    //constexpr HashName& operator=(const char* cc)
+    //{
+    //    value = fnv1aHash(cc);
+    //    return *this;
+    //}
 
     constexpr bool operator==(const HashName&) const = default;
     constexpr bool operator==(std::string_view sv) const

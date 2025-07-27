@@ -163,13 +163,13 @@ template <> inline void RegisterLuaUserType<SpriteRenderable>(sol::state& lua)
 }
 
 // NEW RENDERABLE COMPONENT
-template <> inline void RegisterLuaUserType<NewRenderable>(sol::state& lua)
+template <> inline void RegisterLuaUserType<Renderable>(sol::state& lua)
 {
-	if (!lua["NewRenderable"].valid())
+	if (!lua["Renderable"].valid())
 	{
-		lua.new_usertype<NewRenderable>("NewRenderable",
-			"renderData", &NewRenderable::renderData,
-			"profile", &NewRenderable::profile);
+		lua.new_usertype<Renderable>("Renderable",
+			"renderData", &Renderable::renderData,
+			"profile", &Renderable::profile);
 	}
 }
 

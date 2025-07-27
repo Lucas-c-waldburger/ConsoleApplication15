@@ -4,15 +4,25 @@
 
 void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 {
-	auto entities = ECS::GetAllEntitiesWith<NeedsUpdate, NewRenderable, SpriteAnimations>(
-		[](const NeedsUpdate& update, const NewRenderable& renderable, const SpriteAnimations&)
-		{
-			return (update.components & SpriteAnimations::componentBit) &&
-					std::holds_alternative<SpriteRenderable>(renderable.renderData);
-		});
+	auto entities = ECS::GetAllEntitiesWith<NeedsUpdate, Renderable, SpriteAnimations>();
 
 	for (auto& entity : entities)
 	{
+		auto& update = entity.GetComponent<NeedsUpdate>();
+
+		if ((update.components & SpriteAnimations::componentBit) == 0)
+		{
+			continue;
+		}
+
+		auto& renderable = entity.GetComponent<Renderable>();
+		auto* spriteRenderable = std::get_if<SpriteRenderable>(&renderable.renderData);
+
+		if (!spriteRenderable)
+		{
+			continue;
+		}
+
 		auto& animations = entity.GetComponent<SpriteAnimations>();
 
 		Handle<SpriteSeriesAtlas> newAtlas{};
@@ -29,14 +39,10 @@ void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 			newPlot = series.spritePlots[series.index];
 			LOG_DEBUG_FMT("series index: {}", series.index);
 		}
+		
+		spriteRenderable->sourceAtlas = newAtlas;
+		spriteRenderable->sourcePlot = newPlot;
 
-		auto& renderable = entity.GetComponent<NewRenderable>();
-		auto& spriteRenderable = std::get<SpriteRenderable>(renderable.renderData);
-
-		spriteRenderable.sourceAtlas = newAtlas;
-		spriteRenderable.sourcePlot = newPlot;
-
-		auto& update = entity.GetComponent<NeedsUpdate>();
 		update.components &= ~(SpriteAnimations::componentBit);
 	}
 }

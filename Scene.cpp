@@ -35,6 +35,7 @@
 #include "test/callbacks/AnimationCallbacks.h"
 #include "test/callbacks/GameControllerCallbacks.h"
 #include "components/driver/SpriteAnimationDriver.h"
+#include "test/stateTransitions/Transitions.h"
 
 namespace {
     static constexpr const char* kFontPath =
@@ -143,8 +144,6 @@ namespace {
     }
 
     static constexpr std::string_view kSpritesPath = R"(resources/sprites)";
-    static constexpr std::string_view kWalkSeriesName = "walk";
-    static constexpr std::string_view kJumpSeriesName = "jump";
 
     static SpriteSeriesResourcePackets MakeKnightAtlasInfo()
     {
@@ -154,7 +153,11 @@ namespace {
 
         static constexpr std::string_view kJumpSpriteFilePrefix =
             R"(\knight\jump_anim\knight_jump_)";
-        static constexpr size_t kNumJumpSprites = 8;
+        static constexpr size_t kNumJumpSprites = 4;
+
+        static constexpr std::string_view kFallSpriteFilePrefix =
+            R"(\knight\fall_anim\knight_fall_)";
+        static constexpr size_t kNumFallSprites = 4;
 
         SpriteSeriesResourcePackets knightResourcePackets{};
 
@@ -179,26 +182,15 @@ namespace {
             return packet;
         };
 
-        knightResourcePackets.emplace_back(makeSeries(kWalkSeriesName, kWalkSpriteFilePrefix, kNumWalkSprites));
-        knightResourcePackets.emplace_back(makeSeries(kJumpSeriesName, kJumpSpriteFilePrefix, kNumJumpSprites));
-
-        //auto& walkSeries = knightResourcePackets.emplace_back();
-        //walkSeries.SetMetadata(SpriteSeriesMetadata{ .seriesName = std::string{kWalkSeriesName} });
-
-        //auto& jumpSeries = knightResourcePackets.emplace_back();
-        //jumpSeries.SetMetadata(SpriteSeriesMetadata{ .seriesName = std::string{kJumpSeriesName} });
-        //
-        //std::vector<std::string> spriteFilepaths;
-        //spriteFilepaths.reserve(kTotalNumSprites);
-        //for (int i = 0; i < kTotalNumSprites; i++)
-        //{
-        //    std::string filePath = std::string{ kSpritesPath } + 
-        //        std::string{kWalkSpriteFilePrefix} + std::to_string(i) + ".png";
-
-        //    spriteFilepaths.push_back(std::move(filePath));
-        //}
-
-        //walkSeries.SetFilepaths(std::move(spriteFilepaths));
+        knightResourcePackets.emplace_back(
+            makeSeries(test::kWalkSeriesName, kWalkSpriteFilePrefix, kNumWalkSprites)
+        );
+        knightResourcePackets.emplace_back(
+            makeSeries(test::kJumpSeriesName, kJumpSpriteFilePrefix, kNumJumpSprites)
+        );
+        knightResourcePackets.emplace_back(
+            makeSeries(test::kFallSeriesName, kFallSpriteFilePrefix, kNumFallSprites)
+        );
 
         return knightResourcePackets;
     }
@@ -433,74 +425,74 @@ namespace {
         }       
     }
 
-    Entity MakeFPSCounterEntity(const Handle<GlyphAtlas>& atlas)
-    {
-        auto fpsCounter = ECS::CreateEntity();
-        assert(fpsCounter.IsValid());
+    //Entity MakeFPSCounterEntity(const Handle<GlyphAtlas>& atlas)
+    //{
+    //    auto fpsCounter = ECS::CreateEntity();
+    //    assert(fpsCounter.IsValid());
 
-        Renderable::Text textData{
-            .sourceAtlas = atlas,
-            .text = "FPS: ",
-            .desiredDimensions = { 100, 100 },
-            .align = Renderable::Text::Alignment::Left,
-            .scaleToFit = false
-        };
-        fpsCounter.AddComponent(Renderable{
-            .renderData = std::move(textData),
-            .drawOrder = 100
-        });
-        fpsCounter.AddComponent(Transform{
-            .position = { 100.0f, 100.0f }
-        });
+    //    Renderable::Text textData{
+    //        .sourceAtlas = atlas,
+    //        .text = "FPS: ",
+    //        .desiredDimensions = { 100, 100 },
+    //        .align = Renderable::Text::Alignment::Left,
+    //        .scaleToFit = false
+    //    };
+    //    fpsCounter.AddComponent(Renderable{
+    //        .renderData = std::move(textData),
+    //        .drawOrder = 100
+    //    });
+    //    fpsCounter.AddComponent(Transform{
+    //        .position = { 100.0f, 100.0f }
+    //    });
 
-        return fpsCounter;
-    }
+    //    return fpsCounter;
+    //}
 
-    class FPSCounter
-    {
-    public:
-        explicit FPSCounter(const Handle<GlyphAtlas>& atlas) : entity_(MakeFPSCounterEntity(atlas)) {}
-        void Init(HookManager& hooks)
-        {
-            hooks.Attach(HookPoint::LoopStart, [this]()
-            {
-                frameCount_++;
+    //class FPSCounter
+    //{
+    //public:
+    //    explicit FPSCounter(const Handle<GlyphAtlas>& atlas) : entity_(MakeFPSCounterEntity(atlas)) {}
+    //    void Init(HookManager& hooks)
+    //    {
+    //        hooks.Attach(HookPoint::LoopStart, [this]()
+    //        {
+    //            frameCount_++;
 
-                Uint32 currentTime = SDL_GetTicks();
-                if (currentTime - lastTime_ < 1000)  // Update every 1000 ms = 1 second
-                {
-                    return ReturnSignal::KeepObserving;
-                }
+    //            Uint32 currentTime = SDL_GetTicks();
+    //            if (currentTime - lastTime_ < 1000)  // Update every 1000 ms = 1 second
+    //            {
+    //                return ReturnSignal::KeepObserving;
+    //            }
 
-                float fps = frameCount_ * 1000.0f / (currentTime - lastTime_);
-                frameCount_ = 0;
-                lastTime_ = currentTime;
+    //            float fps = frameCount_ * 1000.0f / (currentTime - lastTime_);
+    //            frameCount_ = 0;
+    //            lastTime_ = currentTime;
 
-                if (!entity_.IsValid())
-                {
-                    return ReturnSignal::StopObserving;
-                }
-                if (!entity_.HasComponent<Renderable>())
-                {
-                    return ReturnSignal::Pause;
-                }
+    //            if (!entity_.IsValid())
+    //            {
+    //                return ReturnSignal::StopObserving;
+    //            }
+    //            if (!entity_.HasComponent<Renderable>())
+    //            {
+    //                return ReturnSignal::Pause;
+    //            }
 
-                auto& renderable = entity_.GetComponent<Renderable>();
-                auto textData = std::get_if<Renderable::Text>(&renderable.renderData);
-                assert(textData);
+    //            auto& renderable = entity_.GetComponent<Renderable>();
+    //            auto textData = std::get_if<Renderable::Text>(&renderable.renderData);
+    //            assert(textData);
 
-                textData->text = "FPS: " + std::to_string(fps);
+    //            textData->text = "FPS: " + std::to_string(fps);
 
-                return ReturnSignal::KeepObserving;
-            });
-        }
+    //            return ReturnSignal::KeepObserving;
+    //        });
+    //    }
 
-        Uint32 lastTime_ = SDL_GetTicks();
-        int frameCount_ = 0;
-        Entity entity_;
-    };
+    //    Uint32 lastTime_ = SDL_GetTicks();
+    //    int frameCount_ = 0;
+    //    Entity entity_;
+    //};
 
-    Entity MakeScoreboard(EventCallbackSystem& eventCallbackSystem, const Handle<GlyphAtlas>& atlas, 
+    /*Entity MakeScoreboard(EventCallbackSystem& eventCallbackSystem, const Handle<GlyphAtlas>& atlas,
         const Entity& player, const Entity& ball, const Entity& ground)
     {
         auto entity = ECS::CreateEntity();
@@ -568,7 +560,7 @@ namespace {
         //callbacks.AddKey(std::move(key));
 
         return entity;
-    }
+    }*/
 
    
     class Chain
@@ -611,11 +603,13 @@ namespace {
 
             }).Build(startRigid.body));
 
-            Renderable::Geometry startGeo{ .color = SDLite::kColorOrange };
-            startEnt.AddComponent(Renderable{
-                .renderData = startGeo,
-                .drawOrder = 10
-            });
+            RenderProfile profile{
+                .debugDraw = {
+                    .boundingBox = {.on = true },
+                    .collider = {.on = true }
+                }
+            };
+            startEnt.AddComponent(Renderable{ .profile = std::move(profile) });
 
             auto startEntRelations = startEnt.GetRelations();
             for (int i = 0; i < numLinkPoints + 1; i++)
@@ -901,11 +895,11 @@ namespace {
     {
         assert(entity.IsValid());
         assert(entity.HasComponent<Transform>());
-        assert(entity.HasComponent<NewRenderable>());
+        assert(entity.HasComponent<Renderable>());
         assert(entity.HasComponent<SpriteAnimations>());
 
         auto& transform = entity.GetComponent<Transform>();
-        auto& renderable = entity.GetComponent<NewRenderable>();
+        auto& renderable = entity.GetComponent<Renderable>();
         auto& sprite_animations = entity.GetComponent<SpriteAnimations>();
         auto& render_profile = renderable.profile;
 
@@ -940,10 +934,10 @@ namespace {
     {
         assert(entity.IsValid());
         assert(entity.HasComponent<Transform>());
-        assert(entity.HasComponent<NewRenderable>());
+        assert(entity.HasComponent<Renderable>());
 
         auto& transform = entity.GetComponent<Transform>();
-        auto& renderable = entity.GetComponent<NewRenderable>();
+        auto& renderable = entity.GetComponent<Renderable>();
         auto& render_profile = renderable.profile;
         
         assert(std::holds_alternative<TextRenderable>(renderable.renderData));
@@ -1206,87 +1200,6 @@ namespace {
 
 }
 
-
-//Result<Void> B2Scene::Run()
-//{
-//	Logger::StartSession();
-//	SDLite::Start();
-//
-//    B2World world = B2World::Create(0, 9.8f);
-//
-//    TRY(AddGroundBody(world), groundBody);
-//    TRY(AddDynamicBody(world), dynamicBody);
-//    TRY(AddPolyToDynamicBody(dynamicBody), dynamicPolyShape);
-//
-//    float timeStep = 1.0f / 60.0f;
-//    int subStepCount = 4;
-//    
-//    SDL_Event ev;
-//    while (true)
-//    {
-//        SDL_FPoint forceNewtons = { 0.0 };
-//
-//        while (SDL_PollEvent(&ev))
-//        {
-//            if (ev.type == SDL_QUIT)
-//            {
-//                break;
-//            }
-//            if (ev.type == SDL_KEYDOWN)
-//            {
-//                switch (ev.key.keysym.sym) 
-//                {
-//                case SDLK_LEFT:
-//                    forceNewtons.x -= 3.0f;
-//                    break;
-//                case SDLK_RIGHT:
-//                    forceNewtons.x += 3.0f;
-//                    break;
-//                case SDLK_UP:
-//                    forceNewtons.y -= 3.0f;
-//                    break;
-//                case SDLK_DOWN:
-//                    forceNewtons.y += 3.0f;
-//                    break;
-//                default:
-//                    break;
-//                }
-//            }
-//        }
-//
-//        dynamicBody.ApplyLinearImpulse(forceNewtons, forceNewtons);
-//
-//        world.Step(timeStep, subStepCount);
-//
-//        SDL_FPoint dynamicPos = dynamicBody.GetPosition();
-//        float dynamicAngle = dynamicBody.GetAngle();
-//
-//        LOG_INFO_FMT("position = [{:.2f}, {:.2f}], rotation = {:.2f}",
-//            dynamicPos.x, dynamicPos.y, dynamicAngle);
-//
-//        SDLite::Renderer().Clear();
-//
-//        assert(dynamicPolyShape.GetShapeType() == B2Shape::Type::Polygon);
-//        auto dynamicPolyVerts = dynamicPolyShape.GetAs<B2PolygonShape>().GetVertices();
-//
-//        auto origColor = GetRenderDrawColor(SDLite::Renderer());
-//        SetRenderDrawColor(SDLite::Renderer(), SDLite::kColorBlack);
-//
-//        SDL_RenderDrawLinesF(SDLite::Renderer(), dynamicPolyVerts.data(), dynamicPolyVerts.size());
-//
-//        SetRenderDrawColor(SDLite::Renderer(), origColor);
-//
-//        SDLite::Renderer().Show();
-//    }
-//
-//    world.Destroy();
-//
-//    Logger::EndSession();
-//    SDLite::Exit();
-//
-//	return Void{};
-//}
-
 Result<Void> SimplePhysicsScene::Run()
 {
     Logger::StartSession();
@@ -1343,42 +1256,42 @@ Result<Void> SimplePhysicsScene::Run()
         B2Body::Type::Dynamic, { .restitution = 0.9f, .enableEvents{ .contact = true } }, SDLite::kColorOrange),
     ball);
 
-    // scoreboard
-    auto scoreboard = MakeScoreboard(callbackSys, glyphAtlasHandle, player, ball, groundEntity);
-    assert(scoreboard.IsValid());
+    //// scoreboard
+    //auto scoreboard = MakeScoreboard(callbackSys, glyphAtlasHandle, player, ball, groundEntity);
+    //assert(scoreboard.IsValid());
 
-    // fps counter
-    auto fpsCounter = MakeFPSCounterEntity(glyphAtlasHandle);
+    //// fps counter
+    //auto fpsCounter = MakeFPSCounterEntity(glyphAtlasHandle);
 
     Uint32 lastTime = SDL_GetTicks(); 
     int frameCount = 0;
 
-    hooks.Attach(HookPoint::LoopStart, [&lastTime, &frameCount, entId = fpsCounter.GetID()]() 
-    {
-        frameCount++;
+    //hooks.Attach(HookPoint::LoopStart, [&lastTime, &frameCount, entId = fpsCounter.GetID()]() 
+    //{
+    //    frameCount++;
 
-        Uint32 currentTime = SDL_GetTicks();
-        if (currentTime - lastTime < 1000)  // Update every 1000 ms = 1 second
-        {
-            return ReturnSignal::KeepObserving;
-        }
+    //    Uint32 currentTime = SDL_GetTicks();
+    //    if (currentTime - lastTime < 1000)  // Update every 1000 ms = 1 second
+    //    {
+    //        return ReturnSignal::KeepObserving;
+    //    }
 
-        float fps = frameCount * 1000.0f / (currentTime - lastTime);
-        frameCount = 0;
-        lastTime = currentTime;
-        
-        auto fpsEnt = ECS::GetEntityByID(entId);
-        assert(fpsEnt.IsValid());
-        assert(fpsEnt.HasComponent<Renderable>());
+    //    float fps = frameCount * 1000.0f / (currentTime - lastTime);
+    //    frameCount = 0;
+    //    lastTime = currentTime;
+    //    
+    //    auto fpsEnt = ECS::GetEntityByID(entId);
+    //    assert(fpsEnt.IsValid());
+    //    assert(fpsEnt.HasComponent<Renderable>());
 
-        auto& renderable = fpsEnt.GetComponent<Renderable>();
-        auto textData = std::get_if<Renderable::Text>(&renderable.renderData);
-        assert(textData);
+    //    auto& renderable = fpsEnt.GetComponent<Renderable>();
+    //    auto textData = std::get_if<Renderable::Text>(&renderable.renderData);
+    //    assert(textData);
 
-        textData->text = "FPS: " + std::to_string(fps);
+    //    textData->text = "FPS: " + std::to_string(fps);
 
-        return ReturnSignal::KeepObserving;
-    });
+    //    return ReturnSignal::KeepObserving;
+    //});
 
     cameraSys.SetCameraTarget(player);
 
@@ -1647,7 +1560,7 @@ Result<Void> TextScene::Run(std::shared_ptr<SceneFixture> scene)
         
     };
 
-    auto& renderable = textEnt.AddComponent(NewRenderable{
+    auto& renderable = textEnt.AddComponent(Renderable{
         .renderData = std::move(textRenderable),
         .profile = std::move(profile)
     });
@@ -1688,9 +1601,6 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
 
     const auto* spriteAtlas = scene->GetTextureRepository().GetAtlas(spriteAtlasHandle);
     assert(spriteAtlas);
-
-    //auto spritePlots = spriteAtlas->GetSpritePlots(kWalkSeriesName);
-    //assert(!spritePlots.empty());
 
     auto spriteEnt = ECS::CreateEntity();
 
@@ -1734,21 +1644,16 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
 
     }; 
 
-    auto& renderable = spriteEnt.AddComponent(NewRenderable{
+    auto& renderable = spriteEnt.AddComponent(Renderable{
         .renderData = SpriteRenderable{},
         .profile = std::move(profile)
     });
 
     spriteEnt.AddComponent(SpriteAnimations{});
     TRY(SpriteAnimationDriver::GetInstance(spriteEnt), spriteAnimDriver);
-    spriteAnimDriver.AddSeries(kWalkSeriesName, *spriteAtlas);
-    spriteAnimDriver.AddSeries(kJumpSeriesName, *spriteAtlas);
+    spriteAnimDriver.AddSeries(test::kWalkSeriesName, *spriteAtlas);
+    spriteAnimDriver.AddSeries(test::kJumpSeriesName, *spriteAtlas);
 
-    //spriteAnimations.map.Emplace(kWalkSeriesName, SpriteAnimationSeries{
-    //    .sourceAtlas = spriteAtlasHandle,
-    //    .spritePlots = std::move(spritePlots)
-    //});
-    
     auto& callbackRegistry = scene->GetSystem<EventCallbackSystem>()->GetCallbackRegistry();
 
     auto& controllerState = spriteEnt.AddComponent<GameControllerState>();
@@ -1769,21 +1674,23 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
     inputTable.emplace(LeftStickAxis, 
         callbackRegistry.RegisterCallback(NAME_AND_CALL(ApplyAxisInputToForce, kImpulseScale)).second);
 
-//#define REGISTER_CALLBACK(callback, opInpSource, ...) do { \
-//    auto oc__ = registry.RegisterCallback(#callback, callback(__VA_ARGS__)); \
-//    if (opInpSource != GameControllerInputSource::Invalid) { \
-//        assert(oc__.eventType == events::GameControllerInput::eventType); \
-//        inputCallbacks.table[opInpSource] = oc__.handle; \
-//    } else { \
-//        eventCallbacks.table[oc__.eventType] = oc__.handle; \
-//}} while(0)
-//    
-//    
-//
-//    REGISTER_CALLBACK(ConnectToFirstController, Invalid);
-//    REGISTER_CALLBACK(DisconnectController, Invalid);
-//    REGISTER_CALLBACK(SpriteAdvanceOnDistanceTraveled, Invalid, 20);
-//    REGISTER_CALLBACK(ApplyAxisInputToForce, Invalid, kImpulseScale);
+    auto& transitionRegistry = scene->GetSystem<EntityStateSystem>()->GetTransitionRegistry();
+    transitionRegistry.RegisterTransition(NAME_AND_CALL(OnWalkStateEnter));
+    //transitionRegistry.RegisterTransition(NAME_AND_CALL(OnJumpStateEnter));
+    //transitionRegistry.RegisterTransition(NAME_AND_CALL(OnJumpStateExit));
+
+    spriteEnt.AddComponent(EntityStates{});
+
+    TRY(EntityStateDriver::GetInstance(spriteEnt), stateDriver);
+    stateDriver.AddState(kWalkStateName, 
+        { .onEnterName = STR(OnWalkStateEnter) }, 
+        {}
+    );
+    //stateDriver.AddState(kJumpStateName,
+    //    { .onEnterName = STR(OnJumpStateEnter),
+    //      .onExitName = STR(OnJumpStateExit) },
+    //    { kWalkStateName }
+    //);
 
 
     //SetUpSpriteRenderTestScript(spriteEnt, scene);
@@ -1800,6 +1707,9 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
 
         TRY(scene->UpdatePhysics());
         TRY(scene->UpdateCamera());
+
+        auto vel = rigidBody.body.GetData().GetLinearVelocity();
+        LOG_DEBUG_FMT("Velocity: [{}, {}]", vel.x, vel.y);
 
         SDLite::Renderer().Clear(SDLite::kColorWhite);
 

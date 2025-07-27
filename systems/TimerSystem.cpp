@@ -5,11 +5,6 @@
 
 namespace {
 
-//constexpr bool IsRepeating(const Timer& timer)
-//{
-//
-//}
-
 void PushTimerFiredEvent(Entity& entity, const Timer& timer)
 {
 	events::TimerFired firedEvent{
@@ -22,7 +17,7 @@ void PushTimerFiredEvent(Entity& entity, const Timer& timer)
 		auto parent = relations.GetParent();
 		if (parent.IsValid())
 		{
-			firedEvent.parent = parent.GetID();
+			firedEvent.owner = parent.GetID();
 		}
 	}
 
@@ -33,13 +28,16 @@ void PushTimerFiredEvent(Entity& entity, const Timer& timer)
 
 void TimerSystem::Update(float delta)
 {
-	auto entities = ECS::GetAllEntitiesWith<Timer>([](const Timer& timer) {
-			return timer.flags & Timer::Flag::Active;
-		});
+	auto entities = ECS::GetAllEntitiesWith<Timer>();
 
 	for (auto& entity : entities)
 	{
 		auto& timer = entity.GetComponent<Timer>();
+
+		if ((timer.flags & Timer::Flag::Active) == 0)
+		{
+			continue;
+		}
 
 		timer.time += delta;
 		if (timer.time < timer.duration)

@@ -8,8 +8,8 @@ namespace events {
 
 struct TimerFired : IEventData<TimerFired> 
 {
+	Entity_t owner = kInvalidEntity;
 	float duration = 0.0f;
-	std::optional<Entity_t> parent;
 };
 
 } // events

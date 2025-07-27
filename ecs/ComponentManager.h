@@ -19,7 +19,7 @@ public:
         isEntityHoldsComponentIndex_.fill(invalidIndex);
     }
 
-    T& AddComponent(Entity_t entity, T component = {})
+    T& AddComponent(Entity_t entity, T&& component)
     {
         assert(entity < kMaxEntities);
 
@@ -35,7 +35,12 @@ public:
         isComponentIndexHoldsEntity_.emplace_back(entity);
         isEntityHoldsComponentIndex_[entity] = cmpIndex;
 
-        return components_.emplace_back(std::move(component));
+        return components_.emplace_back(std::forward<T>(component));
+    }
+
+    T& AddComponent(Entity_t entity)
+    {
+        return AddComponent(entity, T{});
     }
 
     void RemoveComponent(Entity_t entity)
@@ -113,7 +118,7 @@ class ComponentManager
 {
 public:
     template <typename T>
-    T& AddComponent(Entity_t entity, T component)
+    T& AddComponent(Entity_t entity, T&& component)
     {
         assert(entity < kMaxEntities);
 
@@ -121,7 +126,7 @@ public:
 
         auto& entry = GetEntry<T>();
 
-        return entry.AddComponent(entity, std::move(component));
+        return entry.AddComponent(entity, std::forward<T>(component));
     }
 
     template <typename T>
@@ -133,7 +138,7 @@ public:
 
         auto& entry = GetEntry<T>();
 
-        return entry.AddComponent(entity, {});
+        return entry.AddComponent(entity);
     }
 
     template <typename T>

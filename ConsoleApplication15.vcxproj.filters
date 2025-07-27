@@ -183,9 +183,6 @@
     <ClCompile Include="inputs\controller\GameControllerInputMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="systems\TimeSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="systems\TimerSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -196,6 +193,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="systems\EntityStateSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="components\driver\EntityStateDriver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\DelegateCleanupSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="state\EntityStateBuilder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1034,6 +1040,21 @@
     <ClInclude Include="ecs\ComponentArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="components\driver\EntityStateDriver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\stateTransitions\Transitions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\driver\EventDriver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\DelegateCleanupSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="state\EntityStateBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -1085,6 +1106,18 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="resources\sprites\knight\jump_anim\knight_jump_7.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\fall_anim\knight_fall_0.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\fall_anim\knight_fall_1.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\fall_anim\knight_fall_2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\fall_anim\knight_fall_3.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

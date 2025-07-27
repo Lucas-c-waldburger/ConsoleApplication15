@@ -9,21 +9,105 @@
 //#include "../components/EntityStateComponent.h"
 //#include "../ecs/Ecs.h";
 //#include "../callbacks/BaseCallbackDescriptor.h"
+#include "../ecs/Ecs.h"
+#include "../physics/B2Shape.h"
+#include "../callbacks/EventCallbackRegistry.h"
+#include "../callbacks/StateTransitionCallbackRegistry.h"
 
 
+template <typename Fn>
+concept FunctionReturningCallable = 
+	HasFuncTraits<Fn> && HasFuncTraits<typename func_traits<Fn>::return_type>;
+
+template <typename Fn, auto* wrapper = nullptr> requires FunctionReturningCallable<Fn>
+class CurryableCallback  
+{
+public:
+	template <typename F>
+	CurryableCallback(std::string_view nm, F&& fn) :
+		name_(std::string{nm}), callback_(std::forward<F>(fn)) {}
+
+	template <typename...Args> requires std::invocable<Fn, Args...>
+	auto MakeInstance(Args&&...args)
+	{
+		if constexpr (wrapper)
+		{
+			return std::invoke(wrapper, callback_, args...);
+		}
+		return std::invoke(callback_, args...);
+	}
+
+	const std::string& GetName() const { return name_; }
+
+private:	
+	std::string name_;
+	Fn callback_;
+};
 
 
-//inline EntityState* GetCurrentEntityState(EntityStates& states)
+//inline Result<Entity> GetRootBodyEntity(const CollisionData& collisionData)
 //{
-//	if (states.current == kInvalidHashName)
+//	auto shapeEntity = ECS::GetEntityByID(collisionData.entity);
+//	if (!shapeEntity.IsValid())
 //	{
-//		return nullptr;
+//		return MAKE_ERROR("Shape entity invalid");
 //	}
 //
-//	auto it = states.table.find(states.current);
+//	if (!shapeEntity.HasComponent<Collider>())
+//	{
+//		return MAKE_ERROR("Shape entity did not have a collider component");
+//	}
+//	
+//	if (shapeEntity.GetComponent<Collider>().shape.GetData().GetHandle() !=
+//		collisionData.shapeHandle)
+//	{
+//		return MAKE_ERROR("Collision data shape handle did not belong to shape entity");
+//	}
 //
-//	return (it != states.table.end()) ? &it->second : nullptr;
+//	if (shapeEntity.HasComponent<RigidBody>())
+//	{
+//		if (!shapeEntity.GetComponent<RigidBody>().body.GetData()
+//			.OwnsShape(collisionData.shapeHandle))
+//		{
+//			return MAKE_ERROR("Shape entity had a rigid body component that did not "
+//				"own the shape from its collider component");
+//		}
+//
+//		return shapeEntity;
+//	}
+//
+//	auto shapeEntityRelations = shapeEntity.GetRelations();
+//	if (!shapeEntityRelations.IsChild())
+//	{
+//		return MAKE_ERROR("Entity had a collider component without a rigid body component "
+//			"but was not a child of a parent's rigid body");
+//	}
+//
+//	auto parent = shapeEntityRelations.GetParent();
+//
+//	if (!parent.IsValid())
+//	{
+//		return MAKE_ERROR("Parent body entity was invalid");
+//	}
+//	if (!parent.HasComponent<RigidBody>())
+//	{
+//		return MAKE_ERROR("Parent body did not have a rigid body component");
+//	}
+//	if (!parent.GetComponent<RigidBody>().body.GetData()
+//		.OwnsShape(collisionData.shapeHandle))
+//	{
+//		return MAKE_ERROR("Parent body did not own child's shape");
+//	}
+//
+//	return parent;
 //}
+
+
+
+
+
+
+
 //
 //inline bool EntityStatesContainTransition(EntityStates& states, std::string_view transitionName)
 //{

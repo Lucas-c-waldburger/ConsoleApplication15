@@ -224,24 +224,24 @@ template <> inline void RegisterLuaUserType<Parent>(sol::state& lua)
 //}
 
 // RENDERABLE
-template <> inline void RegisterLuaUserType<Renderable::Text::Alignment>(sol::state& lua)
-{
-	using Alignment = Renderable::Text::Alignment;
-	lua.new_enum("Renderable::Text::Alignment", 
-		"Left", Alignment::Left, "Right", Alignment::Right, "Center", Alignment::Center);
-}
-template <> inline void RegisterLuaUserType<Renderable::Text>(sol::state& lua)
-{
-	using Text = Renderable::Text;
-	lua.new_usertype<Text>("Renderable::Text", "sourceAtlas", &Renderable::Text::sourceAtlas,
-		"text", &Text::text, "align", &Text::align, "scaleToFit", &Text::scaleToFit);
-}
-template <> inline void RegisterLuaUserType<Renderable::Sprite>(sol::state& lua)
-{
-	using Sprite = Renderable::Sprite;
-	lua.new_usertype<Sprite>("Renderable::Sprite", "sourceAtlas", &Renderable::Sprite::sourceAtlas,
-		"seriesName", &Sprite::seriesName, "currentIndex", &Sprite::currentIndex);
-}
+//template <> inline void RegisterLuaUserType<Renderable::Text::Alignment>(sol::state& lua)
+//{
+//	using Alignment = Renderable::Text::Alignment;
+//	lua.new_enum("Renderable::Text::Alignment", 
+//		"Left", Alignment::Left, "Right", Alignment::Right, "Center", Alignment::Center);
+//}
+//template <> inline void RegisterLuaUserType<Renderable::Text>(sol::state& lua)
+//{
+//	using Text = Renderable::Text;
+//	lua.new_usertype<Text>("Renderable::Text", "sourceAtlas", &Renderable::Text::sourceAtlas,
+//		"text", &Text::text, "align", &Text::align, "scaleToFit", &Text::scaleToFit);
+//}
+//template <> inline void RegisterLuaUserType<Renderable::Sprite>(sol::state& lua)
+//{
+//	using Sprite = Renderable::Sprite;
+//	lua.new_usertype<Sprite>("Renderable::Sprite", "sourceAtlas", &Renderable::Sprite::sourceAtlas,
+//		"seriesName", &Sprite::seriesName, "currentIndex", &Sprite::currentIndex);
+//}
 
 //template <> inline void RegisterLuaUserType<Handle<B2Body>>(sol::state& lua)
 //{

@@ -95,10 +95,10 @@ void EntityRelationsHelper::UnlinkChildFromParent(EntityManager& entityManager, 
 
     parentsChildren.erase(child);
 
-    if (parentsChildren.empty())
-    {
-        componentManager.RemoveComponent<Children>(parent);
-    }
+    //if (parentsChildren.empty())
+    //{
+    //    componentManager.RemoveComponent<Children>(parent);
+    //}
 }
 
 

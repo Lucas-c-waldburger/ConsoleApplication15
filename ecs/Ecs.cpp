@@ -1,6 +1,7 @@
 #include "Ecs.h"
 #include "EntityDestructor.h"
 #include "EntityRelationsHelper.h"
+#include "../core/Algorithms.h"
 
 // ENTITY DEFS //
 void Entity::Destroy()
@@ -139,6 +140,7 @@ Entity_t ECS::CreateEntity_t()
 	return entity;
 }
 
+// TODO: call into systems with an "EntityDestroyed(...)" method
 void ECS::DestroyEntity(Entity_t entity)
 {
 	assert(IsEntityValid(entity));

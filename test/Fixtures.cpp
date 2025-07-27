@@ -86,6 +86,7 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 	fixture->systems_.InitializeSystem<PhysicsSystem>();
 	fixture->systems_.InitializeSystem<SDLInputSystem>();
 	fixture->systems_.InitializeSystem<TimerSystem>();
+	fixture->systems_.InitializeSystem<EntityStateSystem>();
 
 	auto& callbackSystem = fixture->systems_.InitializeSystem<EventCallbackSystem>();
 	callbackSystem->ConnectToEventBus();

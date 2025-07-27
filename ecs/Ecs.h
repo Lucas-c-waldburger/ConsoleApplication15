@@ -1,6 +1,7 @@
 #pragma once
 #include "EntityManager.h"
 #include "ComponentManager.h"
+#include "EntityRelationsHelper.h"
 #include "../components/ComponentConcepts.h"
 #include "../core/Logger.h"
 #include <cassert>
@@ -16,13 +17,15 @@ public:
     Entity() : id_(kInvalidEntity), ecs_(nullptr) {}
     Entity(Entity_t id, ECS& ecs) : id_(id), ecs_(&ecs) {}
 
-    template <SomeComponent T> requires (!RelationalComponentType<T>) T& AddComponent(T cmp = {});
+    template <SomeComponent T> requires (!RelationalComponentType<T>) T& AddComponent(T&& cmp);
+    template <SomeComponent T> requires (!RelationalComponentType<T>) T& AddComponent();
     template <SomeComponent T> requires (!RelationalComponentType<T>) void RemoveComponent();
 
     template <SomeComponent T> requires (!RelationalComponentType<T>) T& GetComponent();
     template <SomeComponent T> const T& GetComponent() const;
 
-    template <SomeComponent...Ts> requires (!RelationalComponentType<Ts> && ...) std::tuple<Ts&...> GetComponents();
+    template <SomeComponent...Ts> requires (!RelationalComponentType<Ts> && ...) 
+    std::tuple<Ts&...> GetComponents();
 
     template <SomeComponent T> bool HasComponent() const;
     template <SomeComponent...Ts> bool HasComponents() const;
@@ -92,20 +95,45 @@ public:
         return ecs.GetAllEntitiesWithInternalFiltered<Ts...>(std::forward<Filter>(filter));
     }
 
+    // grabs all active entities with all of the desired components
     template <typename...Ts>
     static std::vector<Entity> GetAllEntitiesWith()
     {
         auto& ecs = ECS::Get();
 
-        return ecs.GetAllEntitiesWithInternal<Ts...>();
+        uint64_t withMask = (Ts::componentBit | ...);
+
+        return ecs.GetAllEntitiesWithImpl(withMask, 
+            [](uint64_t sig, uint64_t mask) -> bool { return (sig & mask) == mask; });
+
+        //return ecs.GetAllEntitiesWithInternal<Ts...>();
     }
 
+    // grabs all active entities with at least one of the desired components
     template <typename...Ts>
     static std::vector<Entity> GetAllEntitiesWithAny()
     {
         auto& ecs = ECS::Get();
 
-        return ecs.GetAllEntitiesWithAnyInternal<Ts...>();
+        uint64_t anyMask = (Ts::componentBit | ...);
+
+        return ecs.GetAllEntitiesWithImpl(anyMask, 
+            [](uint64_t sig, uint64_t mask) -> bool { return sig & mask; });
+
+        //return ecs.GetAllEntitiesWithAnyInternal<Ts...>();
+    }
+
+    // grabs all active entities with signature matching requested components exactly
+    // (ActiveState signature is added by default)
+    template <typename...Ts>
+    static std::vector<Entity> GetAllEntitiesWithOnly()
+    {
+        auto& ecs = ECS::Get();
+
+        uint64_t exactMask = (ActiveState::componentBit | ... | Ts::componentBit);
+
+        return ecs.GetAllEntitiesWithImpl(exactMask, 
+            [](uint64_t sig, uint64_t mask) -> bool { return sig == mask; });
     }
 
     static Entity GetEntityByID(Entity_t id)
@@ -125,15 +153,15 @@ private:
     void DestroyEntity(Entity_t entity);
 
     template <SomeComponent T>
-    T& AddComponent(Entity_t entity, T cmp = {})
+    T& AddComponent(Entity_t entity, T&& cmp)
     {
-        return componentManager_.AddComponent<T>(entity, std::move(cmp));
+        return componentManager_.AddComponent<T>(entity, std::forward<T>(cmp));
     }
 
-    template <RelationalComponentType T>
-    T& AddComponent(Entity_t entity, T cmp)
+    template <SomeComponent T>
+    T& AddComponent(Entity_t entity)
     {
-        return componentManager_.AddComponent<T>(entity, std::move(cmp));
+        return componentManager_.AddComponent<T>(entity);
     }
 
     template <SomeComponent T>
@@ -149,7 +177,7 @@ private:
     }
 
     template <SomeComponent T>
-    const T& GetComponent(Entity_t entity) const // all relationship stuff has to be done through relations API
+    const T& GetComponent(Entity_t entity) const 
     {
         return componentManager_.GetComponent<T>(entity);
     }
@@ -204,6 +232,24 @@ private:
         return result;
     }
 
+    std::vector<Entity> GetAllEntitiesWithImpl(uint64_t mask, bool(*testFn)(uint64_t, uint64_t))
+    {
+        auto activeEntities = entityManager_.GetActiveEntities();
+
+        std::vector<Entity> result;
+        result.reserve(activeEntities.size());
+
+        for (const auto& entity : activeEntities)
+        {
+            if (testFn(componentManager_.GetSignature(entity), mask))
+            {
+                result.emplace_back(entity, *this);
+            }
+        }
+
+        return result;
+    }
+
     template <typename...Ts>
     std::vector<Entity> GetAllEntitiesWithInternal()
     {
@@ -233,7 +279,7 @@ private:
             const uint64_t entitySig = componentManager_.GetSignature(ent);
 
             if (((entitySig & includeMask) != includeMask) || (entitySig & excludeMask))
-            {
+            { 
                 continue;
             }
 
@@ -251,7 +297,7 @@ private:
         auto activeEntities = entityManager_.GetActiveEntities();
 
         std::vector<Entity> result;
-        result.reserve(activeEntities.size());
+        result.reserve(activeEntities.size()); 
 
         for (const auto& entity : activeEntities)
         {
@@ -283,12 +329,21 @@ private:
 
 // ENTITY DEFS //
 template <SomeComponent T> requires (!RelationalComponentType<T>)
-inline T& Entity::AddComponent(T cmp)
+inline T& Entity::AddComponent(T&& cmp)
 {
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
-    return ecs_->AddComponent<T>(id_, std::move(cmp));
+    return ecs_->AddComponent<T>(id_, std::forward<T>(cmp));
+}
+
+template <SomeComponent T> requires (!RelationalComponentType<T>)
+inline T& Entity::AddComponent()
+{
+    assert(ecs_);
+    assert(id_ != kInvalidEntity);
+
+    return ecs_->AddComponent<T>(id_);
 }
 
 template <SomeComponent T> requires (!RelationalComponentType<T>)
@@ -318,7 +373,7 @@ inline const T& Entity::GetComponent() const
     return ecs_->GetComponent<T>(id_);
 }
 
-template<SomeComponent...Ts> requires (!RelationalComponentType<Ts> && ...)
+template <SomeComponent...Ts> requires (!RelationalComponentType<Ts> && ...)
 inline std::tuple<Ts&...> Entity::GetComponents()
 {
     assert(ecs_);
@@ -327,7 +382,7 @@ inline std::tuple<Ts&...> Entity::GetComponents()
     return ecs_->GetComponents<Ts...>(id_);
 }
 
-template<SomeComponent T>
+template <SomeComponent T>
 inline bool Entity::HasComponent() const
 {
     assert(ecs_);
@@ -336,7 +391,7 @@ inline bool Entity::HasComponent() const
     return ecs_->HasComponent<T>(id_);
 }
 
-template<SomeComponent...Ts>
+template <SomeComponent...Ts>
 inline bool Entity::HasComponents() const
 {
     assert(ecs_);

@@ -7,8 +7,9 @@
 #include "EventCallbackSystem.h"
 #include "TimerSystem.h"
 #include "SpriteAnimationSystem.h"
+#include "EntityStateSystem.h"
 
-// TODO: Either make into type list or dont require strong typing like this for systems
+// TODO: Either make into type list or dont require strong typing like this for system managing
 
 #define SYSTEM_REGISTRY \
 	CameraSystem, \
@@ -17,5 +18,6 @@
 	EventCallbackSystem, \
 	RenderSystem, \
 	TimerSystem, \
-	SpriteAnimationSystem
+	SpriteAnimationSystem, \
+	EntityStateSystem
 

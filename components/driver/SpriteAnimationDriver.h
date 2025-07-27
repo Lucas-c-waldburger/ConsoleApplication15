@@ -20,6 +20,11 @@ public:
 	bool RemoveSeries(std::string_view seriesName);
 
 	bool HasCurrentSeries() const;
+	
+	HashName GetCurrentSeriesName() const;
+	size_t GetCurrentSeriesSize() const;
+	size_t GetCurrentSeriesIndex() const;
+	Range<size_t> GetCurrentSeriesRange() const;
 
 	bool SetCurrentSeries(std::string_view seriesName, ResetOption resetOptions);
 	bool SetCurrentSeries(std::string_view seriesName); // resetOptions = ALL
@@ -35,6 +40,9 @@ public:
 	bool DisableCurrentSeriesEvents();
 
 private:
+	SpriteAnimationSeries* GetCurrentSeries();
+	const SpriteAnimationSeries* GetCurrentSeries() const;
+
 	static bool SeriesValid(const SpriteAnimationSeries& series);
 
 	explicit SpriteAnimationDriver(Entity entity) : Super(entity) {}

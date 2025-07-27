@@ -10,14 +10,29 @@ public:
 	class TransitionRegistry
 	{
 	public:
-		template <typename T>
-		StateTransitionView RegisterTransition(std::string_view transitionName, T&& fnOrLua)
+		template <typename Name, typename T> 
+			requires (std::same_as<Name, std::string_view> || std::same_as<Name, HashName>)
+		StateTransitionView RegisterTransition(Name transitionName, T&& fnOrLua)
 		{
 			return impl_.RegisterTransition(transitionName, std::forward<T>(fnOrLua));
 		}
 
-		StateTransitionView GetTransition(std::string_view transitionName);
-		StateTransitionView GetTransition(HashName transitionHashName);
+		StateTransitionView RegisterTransition(StateTransitionFulfillmentRequest&& request)
+		{
+			return impl_.RegisterTransition(std::move(request));
+		}
+
+		StateTransitionView RegisterOrRetrieveTransition(StateTransitionFulfillmentRequest&& request)
+		{
+			return impl_.RegisterOrRetrieveTransition(std::move(request));
+		}
+
+		template <typename Name> 
+			requires (std::same_as<Name, std::string_view> || std::same_as<Name, HashName>)
+		StateTransitionView GetTransition(Name transitionName)
+		{
+			return impl_.GetTransition(transitionName);
+		}
 
 		bool EraseTransition(std::string_view transitionName);
 
@@ -30,7 +45,7 @@ public:
 	void Update();
 
 private:
-	void FulfillTransitionRequest(StateTransitionView& transition);
+	void HandleTransitionFulfillmentRequest(Entity& entity);
 
 	TransitionRegistry registry_;
 };

@@ -12,7 +12,7 @@
 #include "../systems/EventCallbackSystem.h"
 #include "../components/builder/RigidBodyComponentBuilder.h"
 #include "../components/builder/ColliderComponentBuilder.h"
-//#include "../callbacks/EventCallbackRegistry.h"
+#include "../callbacks/StateTransitionCallbackRegistry.h"
 //#include "callbacks/AnimationCallbacks.h"
 //#include "callbacks/GameControllerCallbacks.h"
 
@@ -52,11 +52,13 @@ static Result<Entity> MakeColliderBoxEntity(B2World& world, SDL_FPoint position,
         .WithColliderSettings(settings)
         .Build(body));
 
-    Renderable::Geometry geo{ .color = color };
-    entity.AddComponent(Renderable{  
-        .renderData = geo, 
-        .drawOrder = 0
-    });
+    RenderProfile profile{
+        .debugDraw = {
+            .boundingBox = {.on = true },
+            .collider = {.on = true }
+        }
+    };
+    entity.AddComponent(Renderable{ .profile = std::move(profile) });
 
 	return entity;
 }
@@ -98,11 +100,13 @@ static Result<Entity> MakeColliderCircleEntity(B2World& world, SDL_FPoint positi
     .WithColliderSettings(settings)
     .Build(body));
 
-    Renderable::Geometry geo{.color = color };
-    entity.AddComponent(Renderable{
-        .renderData = geo,
-        .drawOrder = 0
-    });
+    RenderProfile profile{
+        .debugDraw = {
+            .boundingBox = {.on = true },
+            .collider = {.on = true }
+        }
+    };
+    entity.AddComponent(Renderable{ .profile = std::move(profile) });
 
     return entity;
 }
@@ -151,11 +155,13 @@ inline Result<Entity> MakeMultiColliderEntity(B2World& world)
         .enableEvents{ .contact = true }
     }).Build(parentBodyMutable));
 
-    Renderable::Geometry geo{.color = SDLite::kColorBlue };
-    childEnt.AddComponent(Renderable{
-        .renderData = geo,
-        .drawOrder = 0
-    });
+    RenderProfile profile{
+        .debugDraw = {
+            .boundingBox = {.on = true },
+            .collider = {.on = true }
+        }
+    };
+    childEnt.AddComponent(Renderable{ .profile = std::move(profile) });
 
     auto allChildren = parentRelations.GetChildren();
     assert(allChildren.size() == 1);
@@ -167,6 +173,8 @@ inline Result<Entity> MakeMultiColliderEntity(B2World& world)
 
 
 namespace test {
+
+
 
 //static constexpr float kMaxImpulseValue = 8.0f;
 //static constexpr float kImpuseScale = kMaxImpulseValue / 32768.0f;

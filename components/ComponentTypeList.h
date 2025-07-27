@@ -8,14 +8,13 @@ struct RigidBody;
 struct Parent;
 struct Children;
 struct Tags;
-struct Renderable;
 struct Collider;
 struct GameControllerState;
 struct Script;
 struct EventCallbacks;
 struct CameraTarget;
 struct SpriteAnimations;
-struct NewRenderable;
+struct Renderable;
 struct EventProductionFlags;
 struct GameControllerInputCallbacks;
 struct Timer;
@@ -30,14 +29,13 @@ using ComponentTypeList = TypeList<
 	Parent,
 	Children,
 	Tags,
-	Renderable,
 	Collider,
 	GameControllerState,
 	Script,
 	EventCallbacks,
 	CameraTarget,
 	SpriteAnimations,
-	NewRenderable,
+	Renderable,
 	EventProductionFlags,
 	GameControllerInputCallbacks,
 	Timer,

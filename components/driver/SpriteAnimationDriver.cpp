@@ -102,6 +102,43 @@ bool SpriteAnimationDriver::HasCurrentSeries() const
 	return animations.table.contains(animations.current);
 }
 
+HashName SpriteAnimationDriver::GetCurrentSeriesName() const
+{
+	auto& animations = GetComponent<SpriteAnimations>();
+
+	return animations.current;
+}
+
+size_t SpriteAnimationDriver::GetCurrentSeriesSize() const
+{
+	if (const auto* current = GetCurrentSeries())
+	{
+		return current->spritePlots.size();
+	}
+
+	return 0;
+}
+
+size_t SpriteAnimationDriver::GetCurrentSeriesIndex() const
+{
+	if (const auto* current = GetCurrentSeries())
+	{
+		return current->index;
+	}
+
+	return 0;
+}
+
+Range<size_t> SpriteAnimationDriver::GetCurrentSeriesRange() const
+{
+	if (const auto* current = GetCurrentSeries())
+	{
+		return current->spriteRange;
+	}
+
+	return { 0, 0 };
+}
+
 bool SpriteAnimationDriver::SetCurrentSeries(std::string_view seriesName, ResetOption resetOptions)
 {
 	auto& animations = GetComponent<SpriteAnimations>();
@@ -264,6 +301,42 @@ bool SpriteAnimationDriver::Step()
 	MarkNeedsUpdate();
 
 	return true;
+}
+
+SpriteAnimationSeries* SpriteAnimationDriver::GetCurrentSeries()
+{
+	auto& animations = GetComponent<SpriteAnimations>();
+
+	if (animations.current == kInvalidHashName)
+	{
+		return nullptr;
+	}
+
+	auto it = animations.table.find(animations.current);
+	if (it == animations.table.end())
+	{
+		return nullptr;
+	}
+
+	return &it->second;
+}
+
+const SpriteAnimationSeries* SpriteAnimationDriver::GetCurrentSeries() const
+{
+	auto& animations = GetComponent<SpriteAnimations>();
+
+	if (animations.current == kInvalidHashName)
+	{
+		return nullptr;
+	}
+
+	auto it = animations.table.find(animations.current);
+	if (it == animations.table.end())
+	{
+		return nullptr;
+	}
+
+	return &it->second;
 }
 
 bool SpriteAnimationDriver::SeriesValid(const SpriteAnimationSeries& series)

@@ -19,6 +19,10 @@ public:
 			return impl_.RegisterCallback(callbackName, std::forward<T>(fnOrLua));
 		}
 
+		std::pair<uint32_t, EventCallbackView> RegisterCallback(EventCallbackFulfillmentRequest&& request);
+
+		std::pair<uint32_t, EventCallbackView> RegisterOrRetrieveCallback(EventCallbackFulfillmentRequest&& request);
+
 		std::pair<uint32_t, EventCallbackView> GetCallback(uint32_t eventType, std::string_view callbackName);
 		std::pair<uint32_t, EventCallbackView> GetCallback(uint32_t eventType, HashName callbackNameHash);
 
@@ -33,6 +37,7 @@ public:
 	void Dispatch(EventSpan events);
 
 private:
+	void HandleEventCallbackFulfillmentRequests();
 	void HandleControllerInputCallback(Entity& entity, const Event& event);
 	void HandleEventCallback(Entity& entity, const Event& event);
 

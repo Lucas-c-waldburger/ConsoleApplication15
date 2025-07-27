@@ -24,10 +24,8 @@ public:
 	}
 
 	template <typename Fn>
-	StateTransitionView RegisterTransition(std::string_view transitionName, Fn&& fn)
+	StateTransitionView RegisterTransition(HashName transitionNameHash, Fn&& fn)
 	{
-		HashName hashTransitionName{ transitionName };
-
 		if (masterTable_.contains(hashTransitionName))
 		{
 			return {};
@@ -42,12 +40,16 @@ public:
 		};
 	}
 
-	StateTransitionView RegisterTransition(std::string_view transitionName,
+	template <typename Fn>
+	StateTransitionView RegisterTransition(std::string_view transitionName, Fn&& fn)
+	{
+		return RegisterTransition(HashName{ transitionName }, std::forward<Fn>(fn));
+	}
+
+	StateTransitionView RegisterTransition(HashName transitionNameHash,
 										   TypedLuaFunction<Void(Entity&)> luaFn)
 	{
-		HashName hashTransitionName{ transitionName };
-
-		if (masterTable_.contains(hashTransitionName))
+		if (masterTable_.contains(transitionNameHash))
 		{
 			return {};
 		}
@@ -60,13 +62,19 @@ public:
 			}
 		};
 
-		auto [it, inserted] = masterTable_.emplace(hashTransitionName, std::move(wrapped));
+		auto [it, inserted] = masterTable_.emplace(transitionNameHash, std::move(wrapped));
 		assert(inserted);
 
 		return StateTransitionView{
-			.name = hashTransitionName,
+			.name = transitionNameHash,
 			.fn = it->second
 		};
+	}
+
+	StateTransitionView RegisterTransition(std::string_view transitionName,
+										   TypedLuaFunction<Void(Entity&)> luaFn)
+	{
+		return RegisterTransition(HashName{ transitionName }, std::move(luaFn));
 	}
 
 	bool EraseTransition(std::string_view transitionName)

@@ -2,6 +2,7 @@
 #include <unordered_set>
 #include <cassert>
 #include "B2Shape.h"
+#include "../sdl/SDLUtils.h"
 #include "../core/Result.h"
 #include "../core/HandleFactory.h"
 #include "../core/ReadOnly.h"
@@ -123,6 +124,34 @@ public:
         }
 
         return b2Distance(b2Body_GetPosition(bodyHandle_), ToB2VecScaled(point));
+    }
+
+    float GetMass() const
+    {
+        return (IsValid()) ? b2Body_GetMass(bodyHandle_) : 0.0f;
+    }
+
+    float GetGravityScale() const
+    {
+        return (IsValid()) ? b2Body_GetGravityScale(bodyHandle_) : 0.0f;
+    }
+
+    SDL_FPoint GetEffectiveGravity() const
+    {
+        if (!IsValid())
+        {
+            return { 0.0f, 0.0f };
+        }
+
+        auto world = b2Body_GetWorld(bodyHandle_);
+        if (!b2World_IsValid(world))
+        {
+            return { 0.0f, 0.0f };
+        }
+
+        SDL_FPoint gravity = ToSDLFPoint(b2World_GetGravity(world));
+
+        return gravity * GetGravityScale();
     }
 
     bool operator==(const B2Body& rhs) const noexcept { return bodyHandle_ == rhs.bodyHandle_; }
