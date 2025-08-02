@@ -15,34 +15,7 @@
 #include "../callbacks/StateTransitionCallbackRegistry.h"
 
 
-template <typename Fn>
-concept FunctionReturningCallable = 
-	HasFuncTraits<Fn> && HasFuncTraits<typename func_traits<Fn>::return_type>;
 
-template <typename Fn, auto* wrapper = nullptr> requires FunctionReturningCallable<Fn>
-class CurryableCallback  
-{
-public:
-	template <typename F>
-	CurryableCallback(std::string_view nm, F&& fn) :
-		name_(std::string{nm}), callback_(std::forward<F>(fn)) {}
-
-	template <typename...Args> requires std::invocable<Fn, Args...>
-	auto MakeInstance(Args&&...args)
-	{
-		if constexpr (wrapper)
-		{
-			return std::invoke(wrapper, callback_, args...);
-		}
-		return std::invoke(callback_, args...);
-	}
-
-	const std::string& GetName() const { return name_; }
-
-private:	
-	std::string name_;
-	Fn callback_;
-};
 
 
 //inline Result<Entity> GetRootBodyEntity(const CollisionData& collisionData)

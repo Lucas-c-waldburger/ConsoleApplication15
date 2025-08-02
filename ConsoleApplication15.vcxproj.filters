@@ -983,10 +983,10 @@
     <ClInclude Include="events\data\EventDataIncludes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="callbacks\BaseCallbackDescriptor.h">
+    <ClInclude Include="callbacks\BaseCallbackDetails.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="callbacks\CallbackRegistryTable.h">
+    <ClInclude Include="callbacks\CallbackTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="callbacks\EventCallbackRegistry.h">
@@ -1053,6 +1053,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="state\EntityStateBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\CurryableCallback.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\EventCallbackTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\StateTransitionCallbackTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\CallbackRegistry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\Callback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
