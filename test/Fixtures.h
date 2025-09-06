@@ -72,7 +72,6 @@ private:
 	HookManager hooks_;
 	B2World world_;
 	ScriptManager scripts_;
-	Counter counter_;
 	TestScript testScript_;
 };
 

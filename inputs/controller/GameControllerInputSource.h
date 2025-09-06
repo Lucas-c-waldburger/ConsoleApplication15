@@ -1,6 +1,6 @@
 #pragma once
 #include <SDL.h>
-#include <concepts>
+#include "../../core/SizedEnum.h"
 
 enum class GameControllerInputSource
 {
@@ -29,11 +29,13 @@ enum class GameControllerInputSource
 	LeftStickAxis = SDL_CONTROLLER_BUTTON_MAX,
 	RightStickAxis,
 	LeftTrigger,
-	RightTrigger
+	RightTrigger,
+	ENUM_SIZE_
 };
+static_assert(SomeSizedEnum<GameControllerInputSource>);
 
-static constexpr size_t kGameControllerInputSourceStart = static_cast<size_t>(GameControllerInputSource::A);
-static constexpr size_t kGameControllerInputSourceEnd = static_cast<size_t>(GameControllerInputSource::RightTrigger);
+static constexpr GameControllerInputSource kInvalidGameControllerInputSource = 
+	GameControllerInputSource::ENUM_SIZE_;
 
 template <typename T>
 concept SomeSDLGameControllerInputEnum = std::same_as<T, SDL_GameControllerAxis> || 

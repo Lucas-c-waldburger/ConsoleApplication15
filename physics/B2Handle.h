@@ -51,10 +51,10 @@ struct B2BodyShapeJointIdHash
 
 // TODO: can use one template for all these i think
 template <> 
-class Handle<B2Body> : public HandleBase<Handle<B2Body>>
+class Handle<B2Body> : public IHandle<Handle<B2Body>>
 {
 public:
-    friend class HandleBase<Handle<B2Body>>;
+    friend class IHandle<Handle<B2Body>>;
     using B2IdType = b2BodyId;
 
     Handle() = default;
@@ -75,10 +75,10 @@ private:
 };
 
 template <>
-class Handle<B2Shape> : public HandleBase<Handle<B2Shape>>
+class Handle<B2Shape> : public IHandle<Handle<B2Shape>>
 {
 public:
-    friend class HandleBase<Handle<B2Shape>>;
+    friend class IHandle<Handle<B2Shape>>;
     using B2IdType = b2ShapeId;
 
     Handle() = default;
@@ -99,10 +99,10 @@ private:
 };
 
 template <>
-class Handle<B2Joint> : public HandleBase<Handle<B2Joint>>
+class Handle<B2Joint> : public IHandle<Handle<B2Joint>>
 {
 public:
-    friend class HandleBase<Handle<B2Joint>>;
+    friend class IHandle<Handle<B2Joint>>;
     using B2IdType = b2JointId;
 
     Handle() = default;

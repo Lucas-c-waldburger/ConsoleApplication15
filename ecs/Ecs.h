@@ -13,23 +13,64 @@ class EntityRelations;
 // ENTITY //
 class Entity
 {
-public:
+private:
+    // components that can't be mutated through Entity API
+    template <SomeComponent T>
+    static constexpr bool public_mutable_component_v = (
+        !RelationalComponentType<T>   &&
+        !std::same_as<T, EntityFlags> &&
+        !std::same_as<T, ActiveState>
+    );
+
+    // components that can't be added/removed through Entity API
+    template <SomeComponent T>
+    static constexpr bool public_attachable_component_v = (
+        !RelationalComponentType<T>   && 
+        !std::same_as<T, EntityFlags> &&
+        !std::same_as<T, ActiveState>
+    );
+
+public: 
     Entity() : id_(kInvalidEntity), ecs_(nullptr) {}
     Entity(Entity_t id, ECS& ecs) : id_(id), ecs_(&ecs) {}
 
-    template <SomeComponent T> requires (!RelationalComponentType<T>) T& AddComponent(T&& cmp);
-    template <SomeComponent T> requires (!RelationalComponentType<T>) T& AddComponent();
-    template <SomeComponent T> requires (!RelationalComponentType<T>) void RemoveComponent();
+    template <SomeComponent T> requires Entity::public_attachable_component_v<T> 
+    T& AddComponent(T&& cmp);
+    template <SomeComponent T> requires Entity::public_attachable_component_v<T>
+    T& AddComponent();
+    template <SomeComponent T> requires Entity::public_attachable_component_v<T>
+    void RemoveComponent();
 
-    template <SomeComponent T> requires (!RelationalComponentType<T>) T& GetComponent();
-    template <SomeComponent T> const T& GetComponent() const;
+    template <SomeComponent T> requires Entity::public_mutable_component_v<T>
+    T& GetComponent();
+    template <SomeComponent T> 
+    const T& GetComponent() const;
+    template <SomeComponent T> requires Entity::public_mutable_component_v<T>
+    Result<std::reference_wrapper<T>> TryGetComponent();
+    template <SomeComponent T>
+    Result<std::reference_wrapper<const T>> TryGetComponent() const;
 
-    template <SomeComponent...Ts> requires (!RelationalComponentType<Ts> && ...) 
+    template <SomeComponent...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
     std::tuple<Ts&...> GetComponents();
 
-    template <SomeComponent T> bool HasComponent() const;
-    template <SomeComponent...Ts> bool HasComponents() const;
+    template <SomeComponent T> 
+    bool HasComponent() const;
+    template <SomeComponent...Ts> 
+    bool HasComponents() const;
 
+    // component visibility
+    template <SomeComponent T> 
+    bool GetComponentVisibility() const;
+    template <SomeComponent...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
+    void SetComponentVisibility(bool vis);
+
+    // event production
+    template <SomeEventData T>
+    bool ShouldProduceEvent() const;
+    template <SomeEventData T>
+    void SetEventProduction(bool tf);
+
+    // relations
     EntityRelations GetRelations();
 
     void Destroy();
@@ -52,6 +93,9 @@ public:
     ~EntityRelations() = default;
 
     Entity AddChild();
+    Entity AddChild(std::string_view childName);
+    Entity AddProxyChild(); // to spoof extra copies of components for parent
+    Entity AddProxyChild(std::string_view childName);
 
     bool IsParent() const;
     bool IsChild() const;
@@ -62,8 +106,12 @@ public:
     bool IsChildOf(Entity_t parent) const;
     bool IsChildOf(const Entity& parent) const;
 
+    bool HasChildren() const;
+
     Entity GetParent();
     std::vector<Entity> GetChildren();
+    Entity FindChild(Entity_t childId);
+    Entity FindChild(std::string_view childName);
 };
 
 // ECS //
@@ -80,12 +128,7 @@ public:
     ECS& operator=(const ECS&) = delete;
     ECS& operator=(ECS&&) = delete;
 
-    static Entity CreateEntity()
-    {
-        auto& ecs = ECS::Get();
-
-        return Entity{ ECS::Get().CreateEntity_t(), ecs };
-    }
+    static Entity CreateEntity();
 
     template <typename...Ts, typename Filter>
     static std::vector<Entity> GetAllEntitiesWith(Filter&& filter)
@@ -102,11 +145,9 @@ public:
         auto& ecs = ECS::Get();
 
         uint64_t withMask = (Ts::componentBit | ...);
-
+      
         return ecs.GetAllEntitiesWithImpl(withMask, 
             [](uint64_t sig, uint64_t mask) -> bool { return (sig & mask) == mask; });
-
-        //return ecs.GetAllEntitiesWithInternal<Ts...>();
     }
 
     // grabs all active entities with at least one of the desired components
@@ -119,8 +160,6 @@ public:
 
         return ecs.GetAllEntitiesWithImpl(anyMask, 
             [](uint64_t sig, uint64_t mask) -> bool { return sig & mask; });
-
-        //return ecs.GetAllEntitiesWithAnyInternal<Ts...>();
     }
 
     // grabs all active entities with signature matching requested components exactly
@@ -136,16 +175,7 @@ public:
             [](uint64_t sig, uint64_t mask) -> bool { return sig == mask; });
     }
 
-    static Entity GetEntityByID(Entity_t id)
-    {
-        auto& ecs = ECS::Get();
-
-        if (!ecs.IsEntityActive(id))
-        {
-            return Entity{ kInvalidEntity, ecs };
-        }
-        return Entity{ id, ecs };
-    }
+    static Entity GetEntityByID(Entity_t id);
 
 private:
     Entity_t CreateEntity_t();
@@ -241,7 +271,16 @@ private:
 
         for (const auto& entity : activeEntities)
         {
-            if (testFn(componentManager_.GetSignature(entity), mask))
+            // get full list of components that entity has
+            uint64_t entitySig = componentManager_.GetSignature(entity);
+
+            assert(componentManager_.HasComponent<EntityFlags>(entity));
+            const auto& flags = componentManager_.GetComponent<EntityFlags>(entity);
+
+            // remove bits for components marked invisible
+            entitySig &= flags.componentVisibilityFlags;
+
+            if (testFn(entitySig, mask))
             {
                 result.emplace_back(entity, *this);
             }
@@ -250,65 +289,68 @@ private:
         return result;
     }
 
-    template <typename...Ts>
-    std::vector<Entity> GetAllEntitiesWithInternal()
-    {
-        std::vector<Entity> result;
-        uint64_t excludeMask = 0;
+    //template <typename...Ts>
+    //std::vector<Entity> GetAllEntitiesWithInternal()
+    //{
+    //    std::vector<Entity> result;
+    //    uint64_t excludeMask = 0;
 
-        auto makeMasks = [&excludeMask]<typename T>() -> uint64_t {
-            if constexpr (is_exclude<T>::value)
-            {
-                excludeMask |= T::WrappedType::componentBit;
-                return 0;
-            }
-            else
-            {
-                return T::componentBit;
-            }
-        };
+    //    auto makeMasks = [&excludeMask]<typename T>() -> uint64_t {
+    //        if constexpr (is_exclude<T>::value)
+    //        {
+    //            excludeMask |= T::WrappedType::componentBit;
+    //            return 0;
+    //        }
+    //        else
+    //        {
+    //            return T::componentBit;
+    //        }
+    //    };
 
-        const uint64_t includeMask = (makeMasks.template operator()<Ts>() | ...);
+    //    const uint64_t includeMask = (makeMasks.template operator()<Ts>() | ...);
 
-        auto activeEntities = entityManager_.GetActiveEntities();
+    //    auto activeEntities = entityManager_.GetActiveEntities();
 
-        result.reserve(activeEntities.size());
+    //    result.reserve(activeEntities.size());
 
-        for (const auto& ent : activeEntities)
-        {
-            const uint64_t entitySig = componentManager_.GetSignature(ent);
+    //    for (const auto& ent : activeEntities)
+    //    {
+    //        const uint64_t entitySig = componentManager_.GetSignature(ent);
 
-            if (((entitySig & includeMask) != includeMask) || (entitySig & excludeMask))
-            { 
-                continue;
-            }
+    //        const auto& visibilityFlags = 
+    //            componentManager_.GetComponent<EntityFlags>(ent).componentVisibilityFlags;
 
-            result.emplace_back(ent, *this);
-        }
+    //        if (((entitySig & includeMask) != includeMask) || (entitySig & excludeMask))
+    //        { 
+    //            continue;
+    //        }
 
-        return result;
-    }
+    //        result.emplace_back(ent, *this);
+    //    }
 
-    template <typename...Ts>
-    std::vector<Entity> GetAllEntitiesWithAnyInternal()
-    {
-        uint64_t includeMask = (Ts::componentBit | ...);
+    //    return result;
+    //}
 
-        auto activeEntities = entityManager_.GetActiveEntities();
+    //template <typename...Ts>
+    //std::vector<Entity> GetAllEntitiesWithAnyInternal()
+    //{
+    //    uint64_t includeMask = (Ts::componentBit | ...);
 
-        std::vector<Entity> result;
-        result.reserve(activeEntities.size()); 
+    //    auto activeEntities = entityManager_.GetActiveEntities();
 
-        for (const auto& entity : activeEntities)
-        {
-            if (componentManager_.GetSignature(entity) & includeMask)
-            {
-                result.emplace_back(entity, *this);
-            }  
-        }
+    //    std::vector<Entity> result;
+    //    result.reserve(activeEntities.size()); 
 
-        return result;
-    }
+    //    for (const auto& entity : activeEntities)
+    //    {
+    //        if (componentManager_.GetSignature(entity) & includeMask)
+    //        {
+    //            result.emplace_back(entity, *this);
+    //        }  
+    //    }
+
+    //    return result;
+    //}
 
     bool IsEntityActive(Entity_t entity) const;
     bool IsEntityValid(Entity_t entity) const;
@@ -328,7 +370,7 @@ private:
 };
 
 // ENTITY DEFS //
-template <SomeComponent T> requires (!RelationalComponentType<T>)
+template <SomeComponent T> requires Entity::public_attachable_component_v<T>
 inline T& Entity::AddComponent(T&& cmp)
 {
     assert(ecs_);
@@ -337,7 +379,7 @@ inline T& Entity::AddComponent(T&& cmp)
     return ecs_->AddComponent<T>(id_, std::forward<T>(cmp));
 }
 
-template <SomeComponent T> requires (!RelationalComponentType<T>)
+template <SomeComponent T> requires Entity::public_attachable_component_v<T>
 inline T& Entity::AddComponent()
 {
     assert(ecs_);
@@ -346,7 +388,7 @@ inline T& Entity::AddComponent()
     return ecs_->AddComponent<T>(id_);
 }
 
-template <SomeComponent T> requires (!RelationalComponentType<T>)
+template <SomeComponent T> requires Entity::public_attachable_component_v<T>
 inline void Entity::RemoveComponent()
 {
     assert(ecs_);
@@ -355,7 +397,7 @@ inline void Entity::RemoveComponent()
     return ecs_->RemoveComponent<T>(id_);
 }
 
-template <SomeComponent T> requires (!RelationalComponentType<T>)
+template <SomeComponent T> requires Entity::public_mutable_component_v<T>
 inline T& Entity::GetComponent()
 {
     assert(ecs_);
@@ -373,7 +415,35 @@ inline const T& Entity::GetComponent() const
     return ecs_->GetComponent<T>(id_);
 }
 
-template <SomeComponent...Ts> requires (!RelationalComponentType<Ts> && ...)
+template<SomeComponent T> requires Entity::public_mutable_component_v<T>
+inline Result<std::reference_wrapper<T>> Entity::TryGetComponent()
+{
+    assert(ecs_);
+    assert(id_ != kInvalidEntity);
+
+    if (!ecs_->HasComponent<T>(id_))
+    {
+        return MAKE_ERROR("entity did not have requested component");
+    }
+    
+    return std::ref(ecs_->GetComponent<T>(id_));
+}
+
+template<SomeComponent T>
+inline Result<std::reference_wrapper<const T>> Entity::TryGetComponent() const
+{
+    assert(ecs_);
+    assert(id_ != kInvalidEntity);
+
+    if (!ecs_->HasComponent<T>(id_))
+    {
+        return MAKE_ERROR("entity did not have requested component");
+    }
+
+    return std::cref(ecs_->GetComponent<T>(id_));
+}
+
+template <SomeComponent...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
 inline std::tuple<Ts&...> Entity::GetComponents()
 {
     assert(ecs_);
@@ -398,5 +468,63 @@ inline bool Entity::HasComponents() const
     assert(id_ != kInvalidEntity);
 
     return (ecs_->HasComponent<Ts>(id_) && ...);
+}
+
+template <SomeComponent T>
+inline bool Entity::GetComponentVisibility() const
+{
+    assert(HasComponent<EntityFlags>());
+
+    const auto& visibilityFlags = ecs_->GetComponent<EntityFlags>(id_).componentVisibilityFlags;
+
+    return visibilityFlags.Test<T>();
+}
+
+template <SomeComponent...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
+inline void Entity::SetComponentVisibility(bool vis)
+{
+    assert(HasComponent<EntityFlags>());
+
+    auto& visibilityFlags = ecs_->GetComponent<EntityFlags>(id_).componentVisibilityFlags;
+
+    if constexpr (sizeof...(Ts) == 0) // set/unset all
+    {
+        // skips setting/unsetting visibility of publicly immutable components
+        auto setVisibleComponents = [vis, &visibilityFlags]<typename...Cmps>() {
+            (
+                    (
+                    public_mutable_component_v<Cmps>
+                        ? visibilityFlags.Set<Cmps>(vis) 
+                        : (void)0
+                    ), 
+            ...);
+        };
+
+        ComponentTypeList::Apply(setVisibleComponents);
+    }
+    else
+    {
+        visibilityFlags.Set<Ts...>(vis);
+    }
+}
+
+template <SomeEventData T>
+inline bool Entity::ShouldProduceEvent() const
+{
+    assert(HasComponent<EntityFlags>());
+
+    const auto& eventProductionFlags = ecs_->GetComponent<EntityFlags>(id_).eventProductionFlags;
+
+    return eventProductionFlags.Test<T>();
+}
+
+template <SomeEventData T>
+inline void Entity::SetEventProduction(bool tf)
+{
+    assert(HasComponent<EntityFlags>());
+
+    auto& eventProductionFlags = ecs_->GetComponent<EntityFlags>(id_).eventProductionFlags;
+
+    eventProductionFlags.Set<T>(tf);
 }
 

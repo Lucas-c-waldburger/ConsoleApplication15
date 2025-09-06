@@ -1,6 +1,5 @@
 #pragma once
 #include "BaseComponent.h"
-#include "../core/EventProductionFlags.h"
 
 // If entity does not have EventProductionFlags, will produce all events
 // all event types are opt-out, must specify which events to disable producing

@@ -8,18 +8,19 @@ namespace {
 void PushTimerFiredEvent(Entity& entity, const Timer& timer)
 {
 	events::TimerFired firedEvent{
+		.producer = entity.GetID(),
 		.duration = timer.duration
 	};
 
-	auto relations = entity.GetRelations();
-	if (relations.IsChild())
-	{
-		auto parent = relations.GetParent();
-		if (parent.IsValid())
-		{
-			firedEvent.owner = parent.GetID();
-		}
-	}
+	//auto relations = entity.GetRelations();
+	//if (relations.IsChild())
+	//{
+	//	auto parent = relations.GetParent();
+	//	if (parent.IsValid())
+	//	{
+	//		firedEvent.producer = parent.GetID();
+	//	}
+	//}
 
 	EventBus::PushEvent(std::move(firedEvent));
 }
@@ -39,15 +40,15 @@ void TimerSystem::Update(float delta)
 			continue;
 		}
 
-		timer.time += delta;
-		if (timer.time < timer.duration)
+		timer.elapsed += delta;
+		if (timer.elapsed < timer.duration)
 		{
 			continue;
 		}
 		
 		PushTimerFiredEvent(entity, timer);
 
-		timer.time = 0.0f;
+		timer.elapsed = 0.0f;
 
 		if ((timer.flags & Timer::Flag::Repeating) == 0)
 		{

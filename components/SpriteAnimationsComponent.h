@@ -2,9 +2,10 @@
 #include "BaseComponent.h"
 #include "../sprite/SpriteAnimationSeries.h"
 #include "../core/commonObjects.h"
+#include "../core/Dictionary.h"
 
 struct SpriteAnimations : public BaseComponent<SpriteAnimations>
 {
-    std::unordered_map<HashName, SpriteAnimationSeries> table;
-    HashName current;
+    UnorderedDictionary<SpriteAnimationSeries> table;
+    std::string current;
 };

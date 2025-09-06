@@ -21,7 +21,7 @@ public:
 
 	bool HasCurrentSeries() const;
 	
-	HashName GetCurrentSeriesName() const;
+	std::string_view GetCurrentSeriesName() const;
 	size_t GetCurrentSeriesSize() const;
 	size_t GetCurrentSeriesIndex() const;
 	Range<size_t> GetCurrentSeriesRange() const;
@@ -32,7 +32,7 @@ public:
 	bool SetCurrentSeriesIndex(size_t newIndex);
 	bool SetCurrentSeriesRange(const Range<size_t>& newRange);
 
-	bool Step();
+	bool AdvanceCurrentSeries();
 
 	template <typename...Ts> requires (SomeTypeInList<Ts, events::SpriteAnimationEventGroup> && ...)
 	bool EnableCurrentSeriesEvents();

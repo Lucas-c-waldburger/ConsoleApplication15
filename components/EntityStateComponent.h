@@ -1,23 +1,40 @@
 #pragma once
 #include "BaseComponent.h"
-#include "../callbacks/StateTransitionCallback.h"
+#include "../core/commonObjects.h"
+#include "../state/EntityState.h"
 
-struct EntityState
+//struct EntityState
+//{
+//	using StateLinks = std::unordered_set<std::string>;
+//
+//	struct Transitions
+//	{
+//		StateTransitionCallback::View onEnter;
+//		StateTransitionCallback::View onExit;
+//	};
+//
+//	Transitions transitions;
+//	StateLinks stateLinks;
+//};
+
+//struct StateHandle 
+//{
+//	size_t slotIndex = kInvalidIndex;
+//	size_t gen = kInvalidIndex;
+//
+//	bool operator==(const StateHandle&) const = default;
+//};
+
+//struct StateNode
+//{
+//	StateHandle stateHandle;
+//
+//};
+
+struct EntityStateComponent : BaseComponent<EntityStateComponent>
 {
-	using StateLinks = std::unordered_set<HashName, HashNameHash, HashNameEq>;
-
-	struct Transitions
-	{
-		StateTransitionView onEnter;
-		StateTransitionView onExit;
-	};
-
-	Transitions transitions;
-	StateLinks stateLinks;
+	Requestable<size_t> stateID;
 };
 
-struct EntityStates : BaseComponent<EntityStates>
-{
-	HashNameMap<EntityState> table;
-	HashName current;
-};
+
+

@@ -12,7 +12,8 @@ SceneFixture::~SceneFixture()
 
 void SceneFixture::LoopStart()
 {
-	counter_.Update();
+	assert(systems_.IsSystemInitialized<GameLoopSystem>());
+	systems_.GetSystem<GameLoopSystem>()->UpdateLoopStepStart();
 
 	hooks_.SetHookPoint<HookPoint::LoopStart>();
 
@@ -40,8 +41,10 @@ Result<Void> SceneFixture::UpdatePhysics()
 Result<Void> SceneFixture::UpdateCamera()
 {
 	assert(systems_.IsSystemInitialized<CameraSystem>());
+	assert(systems_.IsSystemInitialized<GameLoopSystem>());
+	float delta = systems_.GetSystem<GameLoopSystem>()->GetDeltaTime();
 
-	systems_.GetSystem<CameraSystem>()->Update(counter_.GetDelta());
+	systems_.GetSystem<CameraSystem>()->Update(delta);
 
 	return Void{};
 }
@@ -50,11 +53,13 @@ Result<Void> SceneFixture::UpdateRender()
 {
 	assert(systems_.IsSystemInitialized<RenderSystem>());
 	assert(systems_.IsSystemInitialized<SpriteAnimationSystem>());
+	assert(systems_.IsSystemInitialized<GameLoopSystem>());
 
 	systems_.GetSystem<SpriteAnimationSystem>()->Update(textureRepo_);
 
-	auto& cam = systems_.GetSystem<CameraSystem>()->GetCamera();
+	systems_.GetSystem<GameLoopSystem>()->UpdateLoopStepRender();
 
+	auto& cam = systems_.GetSystem<CameraSystem>()->GetCamera();
 	systems_.GetSystem<RenderSystem>()->Update(SDLite::Renderer(), cam, textureRepo_);
 
 	return Void{};
@@ -63,13 +68,16 @@ Result<Void> SceneFixture::UpdateRender()
 void SceneFixture::UpdateTimers()
 {
 	assert(systems_.IsSystemInitialized<TimerSystem>());
+	assert(systems_.IsSystemInitialized<GameLoopSystem>());
+	float delta = systems_.GetSystem<GameLoopSystem>()->GetDeltaTime();
 
-	systems_.GetSystem<TimerSystem>()->Update(counter_.GetDelta());
+	systems_.GetSystem<TimerSystem>()->Update(delta);
 }
 
 void SceneFixture::LoopEnd()
 {
-	EventBus::FlushEvents();
+	assert(systems_.IsSystemInitialized<GameLoopSystem>());
+	systems_.GetSystem<GameLoopSystem>()->UpdateLoopStepRender();
 }
 
 Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
@@ -87,6 +95,7 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 	fixture->systems_.InitializeSystem<SDLInputSystem>();
 	fixture->systems_.InitializeSystem<TimerSystem>();
 	fixture->systems_.InitializeSystem<EntityStateSystem>();
+	fixture->systems_.InitializeSystem<GameLoopSystem>();
 
 	auto& callbackSystem = fixture->systems_.InitializeSystem<EventCallbackSystem>();
 	callbackSystem->ConnectToEventBus();

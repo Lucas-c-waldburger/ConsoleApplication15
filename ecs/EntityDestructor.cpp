@@ -99,6 +99,12 @@ void EntityDestructor::EntityDestroyed(EntityManager& entityManager, ComponentMa
 
 		componentManager.EntityDestroyed(destructionEvent.entity);
 
-		EventBus::PushEvent(std::move(destructionEvent));
+		assert(componentManager.HasComponent<EntityFlags>(destructionEvent.entity));
+		const auto& flags = componentManager.GetComponent<EntityFlags>(destructionEvent.entity);
+
+		if (flags.eventProductionFlags.Test<events::EntityDestroyed>())
+		{
+			EventBus::PushEvent(std::move(destructionEvent));
+		}
 	}
 }

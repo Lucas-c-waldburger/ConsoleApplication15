@@ -20,6 +20,10 @@ namespace events {
 
 	struct SpriteIndexChange;
 	struct SpriteSeriesChange;
+
+	struct GameLoopStepStart;
+	struct GameLoopStepEnd;
+	struct GameLoopStepRender;
 }
 
 using EventDataTypeList = TypeList<
@@ -40,5 +44,9 @@ using EventDataTypeList = TypeList<
 	events::TimerFired,
 
 	events::SpriteIndexChange,
-	events::SpriteSeriesChange
+	events::SpriteSeriesChange,
+
+	events::GameLoopStepStart,
+	events::GameLoopStepEnd,
+	events::GameLoopStepRender
 >;

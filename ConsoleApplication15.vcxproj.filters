@@ -189,19 +189,25 @@
     <ClCompile Include="components\driver\SpriteAnimationDriver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="callbacks\StateTransitionCallbackRegistry.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="systems\EntityStateSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="components\driver\EntityStateDriver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="systems\DelegateCleanupSystem.cpp">
+    <ClCompile Include="state\EntityStateBuilder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="state\EntityStateBuilder.cpp">
+    <ClCompile Include="callbacks\StateTransitionCallback.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\GameLoopSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="core\Counter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="state\EntityState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -869,9 +875,6 @@
     <ClInclude Include="events\EventBus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\EventCallbackRegistry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="systems\EventCallbackSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -879,9 +882,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\FuncTraits.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="events\EventCallbackFn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scripting\TypedLuaFunction.h">
@@ -983,12 +983,6 @@
     <ClInclude Include="events\data\EventDataIncludes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="callbacks\BaseCallbackDescriptor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="callbacks\CallbackRegistryTable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="callbacks\EventCallbackRegistry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1010,7 +1004,7 @@
     <ClInclude Include="components\driver\BaseDriver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="core\EventProductionFlags.h">
+    <ClInclude Include="core\Bitset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\Direction.h">
@@ -1046,13 +1040,76 @@
     <ClInclude Include="test\stateTransitions\Transitions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\driver\EventDriver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="systems\DelegateCleanupSystem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="state\EntityStateBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\driver\ControllerInputCallbackDriver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\driver\EventCallbackDriver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\ICallbackSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\SystemFeature.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Dictionary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\EntityFlagsComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\data\GameLoopStepEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\GameLoopSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\setups\KnightSetups.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\Resources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\setups\SetupsUtil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\EventCallbackHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="callbacks\EventCallbackMasterTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\util\CallbackUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Signal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="state\EntityState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\CatTypeID.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\util\SpriteAnimationUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventSignal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventStorage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventBus2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\SizedEnum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\ControllerInputSignal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1118,6 +1175,30 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="resources\sprites\knight\fall_anim\knight_fall_3.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim231.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim224.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim225.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim226.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim227.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim228.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim229.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim230.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

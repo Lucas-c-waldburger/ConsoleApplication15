@@ -64,15 +64,15 @@ template <> inline void RegisterLuaUserType<SpriteAnimations>(sol::state& lua)
 		lua.new_usertype<SpriteAnimations>("SpriteAnimations",
 			"get", [](SpriteAnimations& self, std::string_view name) 
 			{
-				return self.table[HashName{name}];
+				return self.table[name];
 			},
 			"set", [](SpriteAnimations& self, std::string_view name, const SpriteAnimationSeries& series)
 			{
-				self.table[HashName{name}] = series;
+				self.table[name] = series;
 			},
 			"remove", [](SpriteAnimations& self, std::string_view name)
 			{
-				self.table.erase(HashName{ name });
+				self.table.erase(name);
 			},
 			"current", &SpriteAnimations::current
 		);

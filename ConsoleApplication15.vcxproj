@@ -152,7 +152,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="audio\Sound.cpp" />
-    <ClCompile Include="callbacks\StateTransitionCallbackRegistry.cpp" />
+    <ClCompile Include="callbacks\StateTransitionCallback.cpp" />
+    <ClCompile Include="core\Counter.cpp" />
+    <ClCompile Include="state\EntityState.cpp" />
     <ClCompile Include="state\EntityStateBuilder.cpp" />
     <ClCompile Include="components\driver\EntityStateDriver.cpp" />
     <ClCompile Include="components\driver\SpriteAnimationDriver.cpp" />
@@ -168,7 +170,6 @@
     <ClCompile Include="inputs\controller\GameControllerInputUpdater.cpp" />
     <ClCompile Include="inputs\controller\GameControllerInputMap.cpp" />
     <ClCompile Include="sprite\SpriteAnimationSeriesMap.cpp" />
-    <ClCompile Include="systems\DelegateCleanupSystem.cpp" />
     <ClCompile Include="systems\EntityStateSystem.cpp" />
     <ClCompile Include="systems\EventCallbackSystem.cpp" />
     <ClCompile Include="events\EventDispatchListener.cpp" />
@@ -205,6 +206,7 @@
     <ClCompile Include="sdl\SDLUtils.cpp" />
     <ClCompile Include="atlas\SpriteSeriesAtlas.cpp" />
     <ClCompile Include="systems\CollisionSystem.cpp" />
+    <ClCompile Include="systems\GameLoopSystem.cpp" />
     <ClCompile Include="systems\RenderSystem.cpp" />
     <ClCompile Include="systems\PhysicsSystem.cpp" />
     <ClCompile Include="core\AABB.cpp" />
@@ -222,16 +224,31 @@
     <ClInclude Include="atlas\ResourcePacket.h" />
     <ClInclude Include="atlas\TextureRepository.h" />
     <ClInclude Include="audio\Sound.h" />
-    <ClInclude Include="callbacks\BaseCallbackDescriptor.h" />
-    <ClInclude Include="callbacks\CallbackRegistryTable.h" />
     <ClInclude Include="callbacks\EventCallback.h" />
+    <ClInclude Include="callbacks\EventCallbackHandle.h" />
+    <ClInclude Include="callbacks\EventCallbackMasterTable.h" />
     <ClInclude Include="callbacks\EventCallbackRegistry.h" />
+    <ClInclude Include="callbacks\ICallbackSource.h" />
     <ClInclude Include="callbacks\StateTransitionCallback.h" />
     <ClInclude Include="callbacks\StateTransitionCallbackRegistry.h" />
     <ClInclude Include="camera\Projection.h" />
     <ClInclude Include="components\builder\CameraTargetComponentBuilder.h" />
     <ClInclude Include="components\builder\ColliderComponentBuilder.h" />
     <ClInclude Include="components\builder\ComponentBuilder.h" />
+    <ClInclude Include="components\EntityFlagsComponent.h" />
+    <ClInclude Include="components\driver\ControllerInputCallbackDriver.h" />
+    <ClInclude Include="components\util\CallbackUtils.h" />
+    <ClInclude Include="components\util\SpriteAnimationUtils.h" />
+    <ClInclude Include="core\CatTypeID.h" />
+    <ClInclude Include="core\Dictionary.h" />
+    <ClInclude Include="core\Signal.h" />
+    <ClInclude Include="core\SizedEnum.h" />
+    <ClInclude Include="events\ControllerInputSignal.h" />
+    <ClInclude Include="events\data\GameLoopStepEvents.h" />
+    <ClInclude Include="events\EventBus2.h" />
+    <ClInclude Include="events\EventSignal.h" />
+    <ClInclude Include="events\EventStorage.h" />
+    <ClInclude Include="state\EntityState.h" />
     <ClInclude Include="state\EntityStateBuilder.h" />
     <ClInclude Include="components\builder\RigidBodyComponentBuilder.h" />
     <ClInclude Include="components\CameraTargetComponent.h" />
@@ -239,7 +256,7 @@
     <ClInclude Include="components\ComponentTypeList.h" />
     <ClInclude Include="components\driver\BaseDriver.h" />
     <ClInclude Include="components\driver\EntityStateDriver.h" />
-    <ClInclude Include="components\driver\EventDriver.h" />
+    <ClInclude Include="components\driver\EventCallbackDriver.h" />
     <ClInclude Include="components\driver\SpriteAnimationDriver.h" />
     <ClInclude Include="components\EntityStateComponent.h" />
     <ClInclude Include="components\EventProductionFlagsComponent.h" />
@@ -255,7 +272,7 @@
     <ClInclude Include="core\Counter.h" />
     <ClInclude Include="core\Direction.h" />
     <ClInclude Include="core\EventDataBitset.h" />
-    <ClInclude Include="core\EventProductionFlags.h" />
+    <ClInclude Include="core\Bitset.h" />
     <ClInclude Include="core\FuncTraits.h" />
     <ClInclude Include="core\Literals.h" />
     <ClInclude Include="core\ReadOnly.h" />
@@ -276,7 +293,6 @@
     <ClInclude Include="events\data\EventDataIncludes.h" />
     <ClInclude Include="events\data\SpriteAnimationEvents.h" />
     <ClInclude Include="events\data\TimeEvents.h" />
-    <ClInclude Include="events\EventCallbackFn.h" />
     <ClInclude Include="events\EventDispatchListenerInterface.h" />
     <ClInclude Include="inputs\controller\GameControllerInputField.h" />
     <ClInclude Include="inputs\controller\GameControllerInputUpdater.h" />
@@ -289,12 +305,10 @@
     <ClInclude Include="scripting\user_types\TransformLuaUserTypes.h" />
     <ClInclude Include="sprite\SpriteAnimationSeries.h" />
     <ClInclude Include="sprite\SpriteAnimationSeriesMap.h" />
-    <ClInclude Include="systems\DelegateCleanupSystem.h" />
     <ClInclude Include="systems\EntityStateSystem.h" />
     <ClInclude Include="systems\EventCallbackSystem.h" />
     <ClInclude Include="events\Event.h" />
     <ClInclude Include="events\EventBus.h" />
-    <ClInclude Include="events\EventCallbackRegistry.h" />
     <ClInclude Include="events\EventConcepts.h" />
     <ClInclude Include="events\EventDataStorage.h" />
     <ClInclude Include="events\EventDataTypeList.h" />
@@ -483,6 +497,7 @@
     <ClInclude Include="sdl\SDLUtils.h" />
     <ClInclude Include="atlas\SpriteSeriesAtlas.h" />
     <ClInclude Include="systems\CollisionSystem.h" />
+    <ClInclude Include="systems\GameLoopSystem.h" />
     <ClInclude Include="systems\RenderSystem.h" />
     <ClInclude Include="systems\PhysicsSystem.h" />
     <ClInclude Include="core\TypeUtils.h" />
@@ -490,6 +505,7 @@
     <ClInclude Include="systems\SDLInputSystem.h" />
     <ClInclude Include="systems\SpriteAnimationSystem.h" />
     <ClInclude Include="systems\System.h" />
+    <ClInclude Include="systems\SystemFeature.h" />
     <ClInclude Include="systems\SystemManager.h" />
     <ClInclude Include="systems\SystemRegistry.h" />
     <ClInclude Include="systems\TimerSystem.h" />
@@ -498,9 +514,20 @@
     <ClInclude Include="test\ComponentTests.h" />
     <ClInclude Include="test\Fixtures.h" />
     <ClInclude Include="test\Premades.h" />
+    <ClInclude Include="test\Resources.h" />
+    <ClInclude Include="test\setups\SetupsUtil.h" />
+    <ClInclude Include="test\setups\KnightSetups.h" />
     <ClInclude Include="test\stateTransitions\Transitions.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim224.png" />
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim225.png" />
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim226.png" />
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim227.png" />
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim228.png" />
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim229.png" />
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim230.png" />
+    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim231.png" />
     <Image Include="resources\sprites\knight\fall_anim\knight_fall_0.png" />
     <Image Include="resources\sprites\knight\fall_anim\knight_fall_1.png" />
     <Image Include="resources\sprites\knight\fall_anim\knight_fall_2.png" />

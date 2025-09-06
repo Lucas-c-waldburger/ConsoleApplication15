@@ -39,6 +39,62 @@ Entity EntityRelations::AddChild()
 	return Entity{ newChild, *ecs_ };
 }
 
+Entity EntityRelations::AddChild(std::string_view childName)
+{
+	assert(ecs_);
+
+	if (IsChild())
+	{
+		return {};
+	}
+
+	auto nameTag = Tag::Compose(TagCategory::kChildName, childName);
+
+	if (!IsParent())
+	{
+		ecs_->componentManager_.AddComponent<Children>(id_);
+	}
+
+	const auto& existingChildren = EntityRelationsHelper::GetChildren(ecs_->GetEntityManager(),
+																	  ecs_->GetComponentManager(), 
+																	  id_);
+	for (const auto& child : existingChildren)
+	{
+		if (ecs_->componentManager_.HasComponent<Tags>(child) &&
+			ecs_->componentManager_.GetComponent<Tags>(child).tags.contains(nameTag))
+		{
+			LOG_ERROR_FMT("Child already exists with child name '{}'", childName);
+			return {};
+		}
+	}
+
+	auto newChild = EntityRelationsHelper::AddChild(ecs_->GetEntityManager(),
+												    ecs_->GetComponentManager(), id_);
+
+	auto& tags = ecs_->AddComponent<Tags>(newChild).tags;
+	tags.emplace(std::move(nameTag));
+
+	return Entity{ newChild, *ecs_ };
+}
+
+Entity EntityRelations::AddProxyChild()
+{
+	auto newChildEntity = AddChild();
+
+	newChildEntity.SetComponentVisibility(false);
+
+	return newChildEntity;
+}
+
+Entity EntityRelations::AddProxyChild(std::string_view childName)
+{
+	auto newChildEntity = AddChild(childName);
+
+	newChildEntity.SetComponentVisibility(false);
+
+	return newChildEntity;
+}
+
 bool EntityRelations::IsParent() const
 {
 	assert(ecs_);
@@ -81,6 +137,14 @@ bool EntityRelations::IsChildOf(const Entity& parent) const
 	return IsChildOf(parent.GetID());
 }
 
+bool EntityRelations::HasChildren() const
+{
+	return IsParent() && 
+		   !EntityRelationsHelper::GetChildren(ecs_->GetEntityManager(), 
+											   ecs_->GetComponentManager(), 
+											   id_).empty();
+}
+
 Entity EntityRelations::GetParent()
 {
 	if (!IsChild())
@@ -96,9 +160,14 @@ Entity EntityRelations::GetParent()
 
 std::vector<Entity> EntityRelations::GetChildren()
 {
-	if (!IsParent())
+	if (IsChild())
 	{
 		return {};
+	}
+
+	if (!IsParent())
+	{
+		ecs_->AddComponent<Children>(id_);
 	}
 
 	const auto& children = EntityRelationsHelper::GetChildren(ecs_->GetEntityManager(),
@@ -120,6 +189,48 @@ std::vector<Entity> EntityRelations::GetChildren()
 	return childEntities;
 }
 
+Entity EntityRelations::FindChild(Entity_t childId)
+{
+	if (!IsParent())
+	{
+		return {};
+	}
+	if (!ecs_->IsEntityValid(childId))
+	{
+		return {};
+	}
+
+	const auto& existingChildren = EntityRelationsHelper::GetChildren(ecs_->GetEntityManager(),
+																	  ecs_->GetComponentManager(),
+																	  id_);
+
+	return (existingChildren.contains(childId)) ? Entity{ childId, *ecs_ } : Entity{};
+}
+
+Entity EntityRelations::FindChild(std::string_view childName)
+{
+	if (!IsParent())
+	{
+		return {};
+	}
+
+	auto nameTag = Tag::Compose(TagCategory::kChildName, childName);
+
+	const auto& existingChildren = EntityRelationsHelper::GetChildren(ecs_->GetEntityManager(),
+																	  ecs_->GetComponentManager(),
+																	  id_);
+	for (const auto& child : existingChildren)
+	{
+		if (ecs_->componentManager_.HasComponent<Tags>(child) &&
+			ecs_->componentManager_.GetComponent<Tags>(child).tags.contains(nameTag))
+		{
+			return { child, *ecs_ };
+		}
+	}
+
+	return {};
+}
+
 ECS& ECS::Get()
 {
 	static std::unique_ptr<ECS> ecs;
@@ -132,12 +243,34 @@ ECS& ECS::Get()
 }
 
 
+Entity ECS::GetEntityByID(Entity_t id)
+{
+	auto& ecs = ECS::Get();
+
+	if (!ecs.IsEntityActive(id))
+	{
+		return Entity{ kInvalidEntity, ecs };
+	}
+	return Entity{ id, ecs };
+}
+
 Entity_t ECS::CreateEntity_t()
 {
 	Entity_t entity = entityManager_.CreateEntity();
 	componentManager_.EntityCreated(entity);
 
 	return entity;
+}
+
+Entity ECS::CreateEntity()
+{
+	auto& ecs = ECS::Get();
+
+	Entity_t newEntity = ecs.CreateEntity_t();
+
+	ecs.componentManager_.AddComponent<EntityFlags>(newEntity);
+
+	return Entity{ newEntity, ecs };
 }
 
 // TODO: call into systems with an "EntityDestroyed(...)" method

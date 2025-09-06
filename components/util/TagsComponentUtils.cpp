@@ -1,32 +1,41 @@
 #include "TagsComponentUtils.h"
 
-Tag::Tag(std::string_view input)
+std::string Tag::Compose(std::string_view category, std::string_view value)
 {
-	size_t pos = input.find(kSeparator);
-	if (pos != std::string_view::npos)
-	{
-		category_ = input.substr(0, pos);
-		value_ = input.substr(pos + 1);
-	}
+    std::string composed{};
+    composed.reserve(category.size() + value.size() +
+        (!category.empty()) ? 1 : 0);
+
+    if (!category.empty())
+    {
+        composed.append(category);
+        composed.push_back(kSeparator);
+    }
+
+    composed.append(value);
+
+    return composed;
 }
 
-std::string Tag::Compose() const
+std::string Tag::Compose(const Tag& tag)
 {
-	if (!IsValid())
-	{
-		return {};
-	}
-
-	return category_ + kSeparator + value_;
+    return Compose(tag.category, tag.value);
 }
 
-Result<Tag> Tag::Decompose(std::string_view input)
+Tag Tag::Decompose(std::string_view input) 
 {
-	size_t pos = input.find(kSeparator); 
-	if (pos == std::string_view::npos)
-	{
-		return MAKE_ERROR_FMT("Tag input ill-formed ('{}')", input);
-	}
+    Tag decomposed{};
+    size_t pos = input.find(':');
 
-	return Tag{ input.substr(0, pos), input.substr(pos + 1) };
+    if (pos != std::string_view::npos) 
+    {
+        decomposed.category = input.substr(0, pos);
+        decomposed.value = input.substr(pos + 1);
+    }
+    else 
+    {
+        decomposed.value = input;
+    }
+
+    return decomposed;
 }

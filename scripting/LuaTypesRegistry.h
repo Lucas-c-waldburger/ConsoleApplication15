@@ -9,7 +9,6 @@
 #include <SDL.h>
 #include "../physics/B2Body.h"
 #include "../physics/B2Joint.h"
-#include "../core/EventProductionFlags.h"
 
 template <typename>
 void RegisterLuaUserType(sol::state& lua);
@@ -67,23 +66,23 @@ template <> inline void RegisterLuaUserType<Range<size_t>>(sol::state& lua)
 	}
 }
 
-template <> inline void RegisterLuaUserType<HashName>(sol::state& lua)
-{
-	if (!lua["HashName"].valid())
-	{
-		lua.new_usertype<HashName>("HashName",
-			sol::constructors<HashName(), HashName(std::string_view)>(),
-			"value", &HashName::value,
-			sol::meta_function::equal_to, sol::overload(
-				[](const HashName& a, const HashName& b) {
-					return a.value == b.value;
-				},
-				[](const HashName& a, std::string_view b) {
-					return a.value == fnv1aHash(b);
-				}
-		));
-	}
-}
+//template <> inline void RegisterLuaUserType<HashName>(sol::state& lua)
+//{
+//	if (!lua["HashName"].valid())
+//	{
+//		lua.new_usertype<HashName>("HashName",
+//			sol::constructors<HashName(), HashName(std::string_view)>(),
+//			"value", &HashName::value,
+//			sol::meta_function::equal_to, sol::overload(
+//				[](const HashName& a, const HashName& b) {
+//					return a.value == b.value;
+//				},
+//				[](const HashName& a, std::string_view b) {
+//					return a.value == fnv1aHash(b);
+//				}
+//		));
+//	}
+//}
 
 //template <> inline void RegisterLuaUserType<EventProductionFlags<events::SpriteAnimationEventGroup>>(sol::state& lua)
 //{

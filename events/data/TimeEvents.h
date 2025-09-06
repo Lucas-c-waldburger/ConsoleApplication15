@@ -8,7 +8,7 @@ namespace events {
 
 struct TimerFired : IEventData<TimerFired> 
 {
-	Entity_t owner = kInvalidEntity;
+	Entity_t producer = kInvalidEntity;
 	float duration = 0.0f;
 };
 

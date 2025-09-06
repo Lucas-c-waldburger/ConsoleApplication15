@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <vector>
 
+namespace core {
+
 template <typename Container, typename Value>
 inline bool Erase(Container& c, Value&& val)
 {
@@ -26,6 +28,13 @@ inline bool EraseIf(Container& c, Pred&& pred)
     return c.size() < oldSize;
 }
 
+// TODO: Add concepts to distinguish find() from find_if()
+template <typename Container, typename Object>
+inline auto Find(Container& c, Object&& obj)
+{
+    return std::find_if(std::begin(c), std::end(c), std::forward<Object>(obj));
+}
+
 template <typename Container, typename Pred>
 inline auto FindIf(Container& c, Pred&& pred)
 {
@@ -42,4 +51,6 @@ template <typename Container, typename Pred>
 inline auto AllOf(Container& c, Pred&& pred)
 {
     return std::all_of(std::begin(c), std::end(c), std::forward<Pred>(pred));
+}
+
 }

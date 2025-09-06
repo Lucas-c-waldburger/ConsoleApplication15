@@ -4,8 +4,63 @@
 #include "../../ecs/Ecs.h"
 #include "../../core/CommonEntityMethods.h"
 #include "../../components/driver/SpriteAnimationDriver.h"
+#include "../Resources.h"
 
 namespace test {
+
+static constexpr std::string_view kLastTransformProxyChildName = "last_transform_proxy";
+
+auto ResetWalkSpriteIfNoMovementAndUpdate()
+{
+    return [](Entity& entity, const events::GameLoopStepRender& ev) 
+    {
+        auto tfProxy = entity.GetRelations().FindChild(kLastTransformProxyChildName);
+        if (!tfProxy.IsValid())
+        {
+            LOG_ERROR("last frame transform proxy child was invalid");
+            return ReturnSignal::KeepObserving;
+        }
+        if (!tfProxy.HasComponent<Transform>())
+        {
+            LOG_ERROR("last frame transform proxy child did not have transform component");
+            return ReturnSignal::KeepObserving;
+        }
+
+        auto& lastTransform = tfProxy.GetComponent<Transform>();
+        
+        if (!entity.HasComponent<Transform>())
+        {
+            LOG_ERROR("entity did not have transform component");
+            return ReturnSignal::KeepObserving;
+        }
+
+        const auto& currentTransform = entity.GetComponent<Transform>();
+
+        if (lastTransform.position == currentTransform.position) // no movement since last frame
+        {
+            auto animDriver = SpriteAnimationDriver::GetInstance(entity);
+            if (!animDriver.Success())
+            {
+                LOG_ERROR(animDriver.GetError());
+                return ReturnSignal::KeepObserving;
+            }
+
+            auto currentSeriesName = animDriver->GetCurrentSeriesName();
+            if (currentSeriesName != kWalkSeriesName)
+            {
+                LOG_ERROR_FMT("expected sprite series '{}', got '{}'", 
+                    kWalkSeriesName, currentSeriesName);
+                return ReturnSignal::KeepObserving;
+            }
+
+            animDriver->SetCurrentSeriesIndex(0);
+        }
+
+        lastTransform = currentTransform;
+
+        return ReturnSignal::KeepObserving;
+    };
+}
 
 auto SpriteAdvanceOnDistanceTraveled(float targetDist)
 {
@@ -31,7 +86,7 @@ auto SpriteAdvanceOnDistanceTraveled(float targetDist)
                     return ReturnSignal::KeepObserving;
                 }
 
-                driver.GetValue().Step();
+                driver.GetValue().AdvanceCurrentSeries();
             }
 
             return ReturnSignal::KeepObserving;

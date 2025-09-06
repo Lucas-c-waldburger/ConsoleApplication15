@@ -36,10 +36,8 @@ bool ShouldProduceSeriesChangeEvent(const SpriteAnimationSeries& oldSeries,
 
 bool SpriteAnimationDriver::AddSeries(std::string_view seriesName, const SpriteSeriesAtlas& spriteAtlas)
 {
-	HashName seriesNameHashed{ seriesName };
-
 	auto& animations = GetComponent<SpriteAnimations>();
-	if (animations.table.contains(seriesNameHashed))
+	if (animations.table.contains(seriesName))
 	{
 		return false;
 	}
@@ -50,7 +48,7 @@ bool SpriteAnimationDriver::AddSeries(std::string_view seriesName, const SpriteS
 		return false;
 	}
 
-	auto& newSeries = animations.table[seriesNameHashed];
+	auto& newSeries = animations.table[seriesName];
 
 	newSeries.sourceAtlas = spriteAtlas.GetHandle();
 	newSeries.spritePlots = std::move(spritePlots);
@@ -58,7 +56,7 @@ bool SpriteAnimationDriver::AddSeries(std::string_view seriesName, const SpriteS
 
 	if (animations.table.size() == 1)
 	{
-		animations.current = seriesNameHashed;
+		animations.current = std::string{ seriesName };
 
 		MarkNeedsUpdate();
 	}
@@ -70,13 +68,13 @@ bool SpriteAnimationDriver::RemoveSeries(std::string_view seriesName)
 {
 	auto& animations = GetComponent<SpriteAnimations>();
 
-	auto it = animations.table.find(HashName{ seriesName });
+	auto it = animations.table.find(seriesName);
 	if (it == animations.table.end())
 	{
 		return false;
 	}
 
-	if (it->first == animations.current)
+	if (it->first == animations.current) 
 	{
 		if (!animations.table.empty())
 		{
@@ -84,7 +82,7 @@ bool SpriteAnimationDriver::RemoveSeries(std::string_view seriesName)
 		}
 		else
 		{
-			animations.current = kInvalidHashName;
+			animations.current.clear();
 		}
 
 		MarkNeedsUpdate();
@@ -102,7 +100,7 @@ bool SpriteAnimationDriver::HasCurrentSeries() const
 	return animations.table.contains(animations.current);
 }
 
-HashName SpriteAnimationDriver::GetCurrentSeriesName() const
+std::string_view SpriteAnimationDriver::GetCurrentSeriesName() const
 {
 	auto& animations = GetComponent<SpriteAnimations>();
 
@@ -136,22 +134,21 @@ Range<size_t> SpriteAnimationDriver::GetCurrentSeriesRange() const
 		return current->spriteRange;
 	}
 
-	return { 0, 0 };
+	return { 0, 0 }; 
 }
 
 bool SpriteAnimationDriver::SetCurrentSeries(std::string_view seriesName, ResetOption resetOptions)
 {
 	auto& animations = GetComponent<SpriteAnimations>();
 
-	HashName seriesNameHash{ seriesName };
-	bool alreadySet = animations.current == seriesNameHash;
-
+	bool alreadySet = animations.current == seriesName;
+	 
 	auto originalIt = animations.table.find(animations.current);
 	if (originalIt == animations.table.end())
 	{
 		if (alreadySet) // sanity check if current doesn't map to a real series
 		{
-			animations.current = kInvalidHashName; 
+			animations.current.clear();
 
 			MarkNeedsUpdate();
 		}
@@ -174,7 +171,7 @@ bool SpriteAnimationDriver::SetCurrentSeries(std::string_view seriesName, ResetO
 		oldSeries.spriteRange = { .min = 0, .max = oldSeries.spritePlots.size() };
 	}
 
-	animations.current = seriesNameHash;
+	animations.current = std::string{ seriesName };
 
 	auto& newSeries = animations.table[animations.current];
 
@@ -267,7 +264,7 @@ bool SpriteAnimationDriver::SetCurrentSeriesRange(const Range<size_t>& newRange)
 	return true;
 }
 
-bool SpriteAnimationDriver::Step()
+bool SpriteAnimationDriver::AdvanceCurrentSeries()
 {
 	auto& animations = GetComponent<SpriteAnimations>();
 
@@ -307,7 +304,7 @@ SpriteAnimationSeries* SpriteAnimationDriver::GetCurrentSeries()
 {
 	auto& animations = GetComponent<SpriteAnimations>();
 
-	if (animations.current == kInvalidHashName)
+	if (animations.current.empty())
 	{
 		return nullptr;
 	}
@@ -325,7 +322,7 @@ const SpriteAnimationSeries* SpriteAnimationDriver::GetCurrentSeries() const
 {
 	auto& animations = GetComponent<SpriteAnimations>();
 
-	if (animations.current == kInvalidHashName)
+	if (animations.current.empty())
 	{
 		return nullptr;
 	}

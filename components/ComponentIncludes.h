@@ -19,5 +19,6 @@
 #include "TimerComponent.h"
 #include "NeedsUpdateComponent.h"
 #include "EntityStateComponent.h"
-#include "DynamicRegistrationComponents.h"
+#include "EntityFlagsComponent.h"
+
 

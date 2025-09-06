@@ -1,6 +1,8 @@
 #pragma once
 #include <concepts>
 
+class Entity;
+
 class System {};
 
 template <typename T>

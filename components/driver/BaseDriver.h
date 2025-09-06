@@ -51,3 +51,14 @@ protected:
 private:
 	Entity entity_;
 };
+
+
+namespace detail {
+template <typename T>
+struct is_base_driver : std::false_type {};
+template <typename T, typename...Ts>
+struct is_base_driver<BaseDriver<T, Ts...>> : std::true_type {};
+} // detail
+
+template <typename T>
+concept SomeDerivedBaseDriver = detail::is_base_driver<typename T::Super>::value;

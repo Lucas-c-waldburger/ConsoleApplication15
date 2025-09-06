@@ -19,7 +19,9 @@ struct EventProductionFlags;
 struct GameControllerInputCallbacks;
 struct Timer;
 struct NeedsUpdate;
-struct EntityStates;
+struct EntityStateComponent;
+struct EntityFlags;
+struct SignalTokenStorage;
 
 using ComponentTypeList = TypeList<
 	ActiveState,
@@ -40,5 +42,7 @@ using ComponentTypeList = TypeList<
 	GameControllerInputCallbacks,
 	Timer,
 	NeedsUpdate,
-	EntityStates
+	EntityStateComponent,
+	EntityFlags,
+	SignalTokenStorage
 >;

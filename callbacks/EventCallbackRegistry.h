@@ -1,9 +1,10 @@
 #pragma once
 #include <cassert>
-#include "EventCallback.h"
+#include "EventCallbackHandle.h"
 #include "../ecs/Ecs.h"
 #include "../events/EventUtils.h"
 #include "../scripting/TypedLuaFunction.h"
+#include "EventCallbackMasterTable.h"
 
 class EventCallbackRegistry
 {
@@ -14,8 +15,9 @@ public:
 	EventCallbackRegistry(const EventCallbackRegistry&) = delete;
 	EventCallbackRegistry& operator=(const EventCallbackRegistry&) = delete;
 
-	EventCallbackRegistry(EventCallbackRegistry&& rhs) noexcept : 
-		masterTable_(std::move(rhs.masterTable_)) {}
+	EventCallbackRegistry(EventCallbackRegistry&& rhs) noexcept :
+		masterTable_(std::move(rhs.masterTable_)) {
+	}
 	EventCallbackRegistry& operator=(EventCallbackRegistry&& other) noexcept
 	{
 		if (this != &other)
@@ -26,97 +28,62 @@ public:
 	}
 
 	template <typename Fn> requires EventCallbackFnCompatible<Fn>
-	std::pair<uint32_t, EventCallbackView> RegisterCallback(std::string_view callbackName, Fn&& callbackFn)
+	Handle<EventCallback> RegisterCallback(std::string_view callbackName, Fn&& callbackFn)
 	{
-		using EventDataT = std::remove_cvref_t<type_at_index_t<1, typename func_traits<Fn>::arg_types>>;
-
-		HashName callbackNameHash{ callbackName };
-
-		if (masterTable_[EventDataT::eventType].contains(callbackNameHash))
-		{
-			return {};
-		}
-
-		auto wrapped = [fn = std::forward<Fn>(callbackFn)](Entity& entity, const Event& ev) -> ReturnSignal {
-			if (const auto* castEv = EventDataCast<EventDataT>(ev))
-			{
-				return std::invoke(fn, entity, *castEv);
-			}
-
-			return ReturnSignal::KeepObserving;
-		};
-
-		auto [it, inserted] = masterTable_[EventDataT::eventType].emplace(callbackNameHash, std::move(wrapped));
-		assert(inserted);
-
-		return std::make_pair(EventDataT::eventType, EventCallbackView{ callbackNameHash, it->second });
+		return masterTable_.Insert(
+			EventCallback{ callbackName, std::forward<Fn>(callbackFn) }
+		);
 	}
 
 	template <SomeEventData T>
-	std::pair<uint32_t, EventCallbackView> RegisterCallback(std::string_view callbackName,
-															TypedLuaFunction<ReturnSignal(Entity&, const T&)> luaFn)
+	Handle<EventCallback> RegisterCallback(std::string_view callbackName,
+										   TypedLuaFunction<ReturnSignal(Entity&, const T&)> luaFn)
 	{
-		HashName callbackNameHash{ callbackName };
+		return masterTable_.Insert(
+			EventCallback{ callbackName, luaFn }
+		);
+	}
 
-		if (masterTable_[T::eventType].contains(callbackNameHash))
+	template <typename Fn> requires EventCallbackFnCompatible<Fn>
+	Handle<EventCallback> RegisterOrRetrieveCallback(std::string_view callbackName, Fn&& callbackFn)
+	{
+		const uint32_t eventType = ExtractEventDataTypeFromFnArgs<Fn>::eventType;
+		
+		auto handle = masterTable_.GetCallbackHandle(eventType, callbackName);
+
+		if (!handle.IsValid())
 		{
-			return {};
+			handle = masterTable_.Insert(
+				EventCallback{ callbackName, std::forward<Fn>(callbackFn) }
+			);
 		}
 
-		auto wrapped = [fn = std::move(luaFn)](Entity& entity, const Event& ev) -> ReturnSignal {
-			if (const auto* castEv = EventDataCast<T>(ev))
-			{
-				auto result = fn(entity, *castEv);
-				if (!result.Success())
-				{
-					LOG_ERROR(result.GetError());
-
-					return ReturnSignal::StopObserving;
-				}
-
-				return result.GetValue();
-			}
-
-			return ReturnSignal::KeepObserving;
-		};
-
-		auto [it, inserted] = masterTable_[T::eventType].emplace(callbackNameHash, std::move(wrapped));
-		assert(inserted);
-
-		return std::make_pair(T::eventType, EventCallbackView{ callbackNameHash, it->second });
+		return handle;
 	}
 
 	bool EraseCallback(uint32_t eventType, std::string_view callbackName)
 	{
-		HashName callbackNameHash{ callbackName };
-
-		auto it = masterTable_[eventType].find(callbackNameHash);
-		if (it == masterTable_[eventType].end())
-		{
-			return false;
-		}
-
-		masterTable_[eventType].erase(it);
-
-		return true;
+		return masterTable_.Erase(eventType, callbackName);
 	}
 
-	std::pair<uint32_t, EventCallbackView> GetCallback(uint32_t eventType, HashName callbackNameHash)
+	Result<EventCallback::View> GetCallbackView(uint32_t eventType, std::string_view callbackName) const
 	{
-		auto it = masterTable_[eventType].find(callbackNameHash);
-		if (it == masterTable_[eventType].end())
-		{
-			return {};
-		}
-
-		return std::make_pair(eventType, EventCallbackView{ callbackNameHash, it->second });
+		return masterTable_.GetCallbackView(eventType, callbackName);
+	}
+	Result<EventCallback::View> GetCallbackView(const Handle<EventCallback>& handle) const
+	{
+		return masterTable_.GetCallbackView(handle);
 	}
 
-	std::pair<uint32_t, EventCallbackView> GetCallback(uint32_t eventType, std::string_view callbackName)
+	bool HasCallback(uint32_t eventType, std::string_view callbackName) const
 	{
-		return GetCallback(eventType, HashName{ callbackName });
+		return masterTable_.Contains(eventType, callbackName);
+	}
+	bool HasCallback(const Handle<EventCallback>& handle) const
+	{
+		return HasCallback(handle);
 	}
 
 private:
-	std::array<std::unordered_map<HashName, EventCallback>, EventDataTypeList::size> masterTable_;
+	EventCallbackMasterTable masterTable_;
 };

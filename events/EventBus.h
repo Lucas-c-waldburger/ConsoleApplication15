@@ -46,6 +46,11 @@ public:
 		((stageAll.template operator()<Ts>(self->storage_, self->stage_)), ...);
 
 		auto stagedEvents = self->stage_.GetStagedEvents();
+		if (stagedEvents.empty())
+		{
+			return;
+		}
+
 		for (auto& [_, listener] : self->dispatchListeners_)
 		{
 			if (listener)
@@ -74,7 +79,7 @@ public:
 		Group::template Apply<UnpackGroupAndDispatch>();
 	}
 
-	static void FlushEvents()
+	static void ClearEvents()
 	{
 		auto& self = Get();
 

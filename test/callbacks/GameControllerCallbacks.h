@@ -2,6 +2,7 @@
 #include "../../events/data/EventDataIncludes.h"
 #include "../../components/ComponentIncludes.h"
 #include "../../ecs/Ecs.h"
+#include "../Resources.h"
 
 namespace test {
 

@@ -11,7 +11,7 @@ struct Timer : BaseComponent<Timer>
 		RemoveOnExpiry = 1 << 2
 	};
 
-	float time = 0.0f;
+	float elapsed = 0.0f;
 	float duration = 0.0f;
 	uint8_t flags = 0;
 };

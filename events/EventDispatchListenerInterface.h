@@ -5,7 +5,7 @@ template <typename Derived>
 class EventDispatchListener 
 {
 public:
-	// implements Dispatch()
+	/** implements Dispatch() **/
 
 	void ConnectToEventBus()
 	{
@@ -25,7 +25,7 @@ private:
 	{
 		return [this](EventSpan span) -> void {
 			static_cast<Derived*>(this)->Dispatch(span);
-		};
+		}; 
 	}
 
 	EventDispatchListenerToken token_;

@@ -52,7 +52,8 @@ bool EntityRelationsHelper::IsParentOf(EntityManager& entityManager, ComponentMa
     return true;
 }
 
-Entity_t EntityRelationsHelper::GetParent(EntityManager& entityManager, ComponentManager& componentManager, 
+Entity_t EntityRelationsHelper::GetParent(EntityManager& entityManager, 
+                                          ComponentManager& componentManager, 
                                           Entity_t child)
 {
     assert(IsChild(entityManager, componentManager, child));
@@ -81,6 +82,8 @@ Entity_t EntityRelationsHelper::AddChild(EntityManager& entityManager, Component
 
     componentManager.AddComponent<Parent>(newChild).entityId = parent;
     children.insert(newChild);
+
+    componentManager.AddComponent<EntityFlags>(newChild);
 
     return newChild;
 }

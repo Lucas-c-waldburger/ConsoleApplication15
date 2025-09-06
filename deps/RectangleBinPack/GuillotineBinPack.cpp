@@ -62,7 +62,7 @@ void GuillotineBinPack::Insert(std::vector<RectSize> &rects, bool merge,
 	int bestRect = 0;
 	bool bestFlipped = false;
 
-	// Pack rectangles one at a time until we have cleared the rects array of all rectangles.
+	// Pack rectangles one at a elapsed until we have cleared the rects array of all rectangles.
 	// rects will get destroyed in the process.
 	while(rects.size() > 0)
 	{
@@ -227,7 +227,7 @@ void GuillotineBinPack::InsertMaxFitting(std::vector<RectSize> &rects, std::vect
 	bool bestFlipped = false;
 	bool bestSplitHorizontal = false;
 
-	// Pick rectangles one at a time and pack the one that leaves the most choices still open.
+	// Pick rectangles one at a elapsed and pack the one that leaves the most choices still open.
 	while(rects.size() > 0 && freeRectangles.size() > 0)
 	{
 		int bestScore1 = -1;

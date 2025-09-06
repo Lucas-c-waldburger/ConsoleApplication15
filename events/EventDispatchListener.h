@@ -62,7 +62,7 @@ public:
 	{
 		if (token.IsConnected())
 		{
-			EraseIf(listeners_, [id = token.id_](const auto& pair) {
+			core::EraseIf(listeners_, [id = token.id_](const auto& pair) {
 				return pair.first == id;
 			});
 		}

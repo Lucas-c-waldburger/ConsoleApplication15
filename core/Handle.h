@@ -3,14 +3,15 @@
 #include "CommonFunctions.h"
 
 template <typename HandleDerived>
-class HandleBase;
+class IHandle;
 
 template <template <typename> class HandleDerived, typename T>
-class HandleBase<HandleDerived<T>>
+class IHandle<HandleDerived<T>>
 {
-public:
-    HandleBase() = default;
-    //bool operator==(const HandleBase& rhs) const { return static_cast<const HandleDerived*>(this).operator==(rhs); }
+public: 
+    using Super = IHandle<HandleDerived<T>>;
+
+    IHandle() = default;
 
     bool IsValid() const { return static_cast<const HandleDerived<T>*>(this)->IsValidImpl(); }
     size_t GetHash() const noexcept { return static_cast<const HandleDerived<T>*>(this)->GetHashImpl(); }
@@ -22,12 +23,11 @@ public:
     }
 };
 
-
 template <typename T>
-class Handle : public HandleBase<Handle<T>>
+class Handle : public IHandle<Handle<T>>
 {
 public:   
-    friend class HandleBase<Handle<T>>;
+    friend class IHandle<Handle<T>>;
     template <typename...Ts>
     friend class HandleFactory;
 

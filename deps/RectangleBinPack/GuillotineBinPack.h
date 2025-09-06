@@ -56,7 +56,7 @@ public:
 	/// struct will have the width and height values swapped.
 	/// @param merge If true, performs free Rectangle Merge procedure after packing the new rectangle. This procedure
 	///		tries to defragment the list of disjoint free rectangles to improve packing performance, but also takes up 
-	///		some extra time.
+	///		some extra elapsed.
 	/// @param rectChoice The free rectangle choice heuristic rule to use.
 	/// @param splitMethod The free rectangle split heuristic rule to use.
 	Rect Insert(int width, int height, bool merge, FreeRectChoiceHeuristic rectChoice, GuillotineSplitHeuristic splitMethod);
@@ -85,7 +85,7 @@ public:
 	std::vector<Rect> &GetUsedRectangles() { return usedRectangles; }
 
 	/// Performs a Rectangle Merge operation. This procedure looks for adjacent free rectangles and merges them if they
-	/// can be represented with a single rectangle. Takes up Theta(|freeRectangles|^2) time.
+	/// can be represented with a single rectangle. Takes up Theta(|freeRectangles|^2) elapsed.
 	void MergeFreeList();
 
 private:
@@ -105,7 +105,7 @@ private:
 #endif
 
 	/// Goes through the list of free rectangles and finds the best one to place a rectangle of given size into.
-	/// Running time is Theta(|freeRectangles|).
+	/// Running elapsed is Theta(|freeRectangles|).
 	/// @param nodeIndex [out] The index of the free rectangle in the freeRectangles array into which the new
 	///		rect was placed.
 	/// @return A Rect structure that represents the placement of the new rect into the best free rectangle.

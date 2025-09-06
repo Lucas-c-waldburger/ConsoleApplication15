@@ -1,12 +1,15 @@
 #pragma once
+#include "commonObjects.h"
 #include <concepts>
 #include <type_traits>
 #include <unordered_set>
-#include "commonObjects.h"
 
 template <typename...Ts> struct TypeList 
 {
 	static constexpr size_t size = sizeof...(Ts);
+
+	template <typename T>
+	static constexpr bool contains = (std::same_as<T, Ts> || ...);
 
 	template <typename Fn, typename...Args>
 	static constexpr decltype(auto) Apply(Fn&& fn, Args&&...args)
@@ -23,7 +26,7 @@ template <typename...Ts> struct TypeList
 	}
 };
 
-/* TYPE PRESENT IN TYPE LIST/PARAMETER PACK */
+/* TYPE PRESENT IN TYPE LIST/PARAMETER PACK/TUPLE */
 namespace detail {
 template <typename T, typename TList>
 struct type_in_list;
@@ -31,6 +34,15 @@ struct type_in_list;
 template <typename T, typename...Ts>
 struct type_in_list<T, TypeList<Ts...>> 
 { 
+	static constexpr bool value = (std::same_as<T, Ts> || ...);
+};
+
+template <typename T, typename Tuple>
+struct type_in_tuple;
+
+template <typename T, typename...Ts>
+struct type_in_tuple<T, std::tuple<Ts...>>
+{
 	static constexpr bool value = (std::same_as<T, Ts> || ...);
 };
 } // detail
@@ -42,13 +54,19 @@ template <typename T, typename TList>
 concept SomeTypeInList = type_in_list_v<T, TList>;
 
 template <typename T, typename...Ts>
-static constexpr bool type_in_pack_v = (std::same_as<T, Ts> || ...);
+inline constexpr bool type_in_pack_v = (std::same_as<T, Ts> || ...);
 
 template <typename T, typename...Ts>
 concept SomeTypeInPack = type_in_pack_v<T, Ts...>;
 
 template <typename...Ts, typename...Us>
 concept AllTypesInPack = (type_in_pack_v<Ts, Us...> && ...);
+
+template <typename T, typename Tuple>
+inline constexpr bool type_in_tuple_v = detail::type_in_tuple<T, Tuple>::value;
+
+template <typename T, typename Tuple>
+concept SomeTypeInTuple = type_in_tuple_v<T, Tuple>;
 /**/
 
 /* TYPES IN PARAMETER PACK UNIQUE */
@@ -136,6 +154,10 @@ struct type_at_index<Idx, Counter, TypeList<T, Ts...>> {
 template <size_t Idx, typename TList>
 using type_at_index_t = typename detail::type_at_index<Idx, 0, TList>::type;
 /**/
+
+/* RAW TYPE */
+template <typename T>
+using raw_type_t = std::remove_pointer_t<std::remove_cvref_t<T>>;
 
 /* IS CONST REFERENCE */
 namespace detail {

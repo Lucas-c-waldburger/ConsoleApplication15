@@ -182,7 +182,7 @@ public:
 
 		const HookPoint hp = handle.GetHookPoint();
 
-		return EraseIf(hooks_[hp], [&handle](const auto& attachment) { 
+		return core::EraseIf(hooks_[hp], [&handle](const auto& attachment) { 
 			return attachment.handle == handle; 
 		});
 	}
@@ -196,7 +196,7 @@ public:
 
 		const HookPoint hp = handle.GetHookPoint();
 
-		auto it = FindIf(hooks_[hp], [&handle](const auto& attachment) {
+		auto it = core::FindIf(hooks_[hp], [&handle](const auto& attachment) {
 			return attachment.handle == handle;
 		});
 

@@ -12,7 +12,7 @@
 #include "../systems/EventCallbackSystem.h"
 #include "../components/builder/RigidBodyComponentBuilder.h"
 #include "../components/builder/ColliderComponentBuilder.h"
-#include "../callbacks/StateTransitionCallbackRegistry.h"
+//#include "../callbacks/StateTransitionCallbackRegistry.h"
 //#include "callbacks/AnimationCallbacks.h"
 //#include "callbacks/GameControllerCallbacks.h"
 

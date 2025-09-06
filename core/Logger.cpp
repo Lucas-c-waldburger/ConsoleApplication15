@@ -97,7 +97,7 @@ void Logger::LogTime(std::ostream& os)
     }
     else
     {
-        os << "Error converting time";
+        os << "Error converting elapsed";
     }
 }
 

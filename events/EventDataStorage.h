@@ -19,6 +19,8 @@ public:
 		return storage_.GetEntry<T>();
 	}
 
+	const TypeListVectorMap<EventDataTypeList>& GetStorage() const { return storage_; }
+
 	template <SomeEventData T>
 	void Clear()
 	{

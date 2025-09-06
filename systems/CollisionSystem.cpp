@@ -116,7 +116,7 @@ std::pair<Handle<B2Shape>, Handle<B2Shape>> GetShapeHandles(T* b2Ev)
 
 Entity_t FindShapeEntity(const std::vector<Entity>& entities, const Handle<B2Shape>& handle)
 {
-	auto it = FindIf(entities, [&handle](const auto& entity) {
+	auto it = core::FindIf(entities, [&handle](const auto& entity) {
 		assert(entity.HasComponent<Collider>());
 		return entity.GetComponent<Collider>().shape.GetData().GetHandle() == handle;
 	});

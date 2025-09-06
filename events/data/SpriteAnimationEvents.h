@@ -9,15 +9,16 @@ namespace events {
 struct SpriteIndexChange : IEventData<SpriteIndexChange>
 {
 	Entity_t entity = kInvalidEntity;
-	HashName seriesName;
+	std::string seriesName;
 	DataRecord<size_t> index = { 0, 0 };
 };
 
 struct SpriteSeriesChange : IEventData<SpriteSeriesChange>
 { 
 	Entity_t entity = kInvalidEntity;
-	DataRecord<HashName> seriesName;
+	DataRecord<std::string> seriesName;
 };
+
 
 // GROUP
 using SpriteAnimationEventGroup = EventGroup<

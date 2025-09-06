@@ -107,5 +107,5 @@ private:
 
 
 namespace impl {
-	using SystemManager = SystemManagerTemplate<SYSTEM_REGISTRY>;
+	using SystemManager = SystemManagerTemplate<SYSTEM_REGISTRY_LIST>;
 }

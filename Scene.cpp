@@ -17,6 +17,8 @@
 #include "components/builder/ColliderComponentBuilder.h"
 #include "components/builder/RigidBodyComponentBuilder.h"
 #include "components/SpriteAnimationsComponent.h"
+#include "components/driver/EventCallbackDriver.h"
+#include "components/driver/ControllerInputCallbackDriver.h"
 #include "test/ComponentTests.h"
 #include "test/Premades.h"
 #include "test/Fixtures.h"
@@ -36,6 +38,8 @@
 #include "test/callbacks/GameControllerCallbacks.h"
 #include "components/driver/SpriteAnimationDriver.h"
 #include "test/stateTransitions/Transitions.h"
+#include "test/setups/KnightSetups.h"
+#include "test/setups/SetupsUtil.h"
 
 namespace {
     static constexpr const char* kFontPath =
@@ -377,7 +381,7 @@ namespace {
         const uint32_t connectEvType = GameControllerConnected::eventType;
         const uint32_t disconnectEvType = GameControllerDisconnected::eventType;
 
-        auto& registry = callbackSys.GetCallbackRegistry();
+        auto& registry = callbackSys.GetEventCallbackRegistry();
 
         //auto connectKey = registry.RegisterCallback("ConnectToFirstController",
         //                                             ConnectToFirstController()).key;
@@ -552,7 +556,7 @@ namespace {
             return ReturnSignal::KeepObserving;
         };
          
-        auto& registry = eventCallbackSystem.GetCallbackRegistry();
+        auto& registry = eventCallbackSystem.GetEventCallbackRegistry();
         //auto [key, _] = registry.RegisterCallback("handleBallCollision", std::move(handleBallCollision),
         //                                          entity.GetID());
 
@@ -835,7 +839,7 @@ namespace {
                 .isSensor = true
                 }).Build(sensorLeadRigid.body));
 
-            auto& registry = eventCallbackSystem.GetCallbackRegistry();
+            auto& registry = eventCallbackSystem.GetEventCallbackRegistry();
             //auto [key, _] = registry.RegisterCallback("HandleSensorConnection", HandleSensorConnection(),
             //                                          sensorLead.GetID());
 
@@ -1654,46 +1658,56 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
     spriteAnimDriver.AddSeries(test::kWalkSeriesName, *spriteAtlas);
     spriteAnimDriver.AddSeries(test::kJumpSeriesName, *spriteAtlas);
 
-    auto& callbackRegistry = scene->GetSystem<EventCallbackSystem>()->GetCallbackRegistry();
+    auto& eventCallbackRegistry = scene->GetSystem<EventCallbackSystem>()->GetEventCallbackRegistry();
+    //auto& transitionCallbackRegistry = scene->GetSystem<EntityStateSystem>()->GetTransitionCallbackRegistry();
 
     auto& controllerState = spriteEnt.AddComponent<GameControllerState>();
     auto& eventCallbacks = spriteEnt.AddComponent<EventCallbacks>();
     auto& inputCallbacks = spriteEnt.AddComponent<GameControllerInputCallbacks>();
+    auto& entityStates = spriteEnt.AddComponent(EntityStateComponent{});
 
-#define NAME_AND_CALL(fn, ...) #fn, fn(__VA_ARGS__)
-
+    using namespace events; 
     using namespace test;
     using enum GameControllerInputSource;
 
     auto& evTable = eventCallbacks.table;
-    evTable.insert(callbackRegistry.RegisterCallback(NAME_AND_CALL(ConnectToFirstController)));
-    evTable.insert(callbackRegistry.RegisterCallback(NAME_AND_CALL(DisconnectController)));
-    evTable.insert(callbackRegistry.RegisterCallback(NAME_AND_CALL(SpriteAdvanceOnDistanceTraveled, 20)));
 
-    auto& inputTable = inputCallbacks.table;
-    inputTable.emplace(LeftStickAxis, 
-        callbackRegistry.RegisterCallback(NAME_AND_CALL(ApplyAxisInputToForce, kImpulseScale)).second);
+    auto registerAndAssignEvent = [&eventCallbackRegistry, &eventCallbacks]
+    (std::string_view nm, auto&& fn) {
+        auto handle = eventCallbackRegistry.RegisterCallback(nm, std::move(fn));
+        assert(handle.IsValid());
+        eventCallbacks.table[handle.GetEventType()].push_back(handle);
+    };
+    auto registerAndAssignInput = [&eventCallbackRegistry, &inputCallbacks]
+    (auto src, std::string_view nm, auto&& fn) {
+        auto handle = eventCallbackRegistry.RegisterCallback(nm, std::move(fn));
+        assert(handle.IsValid());
+        inputCallbacks.table[src].push_back(handle);
+    };
+    //auto registerAndAssignTransition = [&transitionCallbackRegistry]
+    //(auto& trans, std::string_view nm, auto&& fn) {
+    //    auto view = transitionCallbackRegistry.RegisterCallback(nm, std::move(fn));
+    //    assert(view.fn);
+    //    trans = view;
+    //};
 
-    auto& transitionRegistry = scene->GetSystem<EntityStateSystem>()->GetTransitionRegistry();
-    transitionRegistry.RegisterTransition(NAME_AND_CALL(OnWalkStateEnter));
-    //transitionRegistry.RegisterTransition(NAME_AND_CALL(OnJumpStateEnter));
-    //transitionRegistry.RegisterTransition(NAME_AND_CALL(OnJumpStateExit));
+    registerAndAssignEvent(NAME_AND_CALL(ConnectToFirstController));
+    registerAndAssignEvent(NAME_AND_CALL(DisconnectController));
+    registerAndAssignEvent(NAME_AND_CALL(SpriteAdvanceOnDistanceTraveled, 20));
+    
+    registerAndAssignInput(LeftStickAxis, NAME_AND_CALL(ApplyAxisInputToForce, kImpulseScale));
 
-    spriteEnt.AddComponent(EntityStates{});
-
-    TRY(EntityStateDriver::GetInstance(spriteEnt), stateDriver);
-    stateDriver.AddState(kWalkStateName, 
-        { .onEnterName = STR(OnWalkStateEnter) }, 
-        {}
-    );
-    //stateDriver.AddState(kJumpStateName,
-    //    { .onEnterName = STR(OnJumpStateEnter),
-    //      .onExitName = STR(OnJumpStateExit) },
-    //    { kWalkStateName }
-    //);
-
-
+    //auto& walkState = entityStates.table[std::string{ kWalkStateName }];
+    //auto& [onEnter, onExit] = walkState.transitions;
+    //registerAndAssignTransition(onEnter, NAME_AND_CALL(OnWalkStateEnter));
+    //registerAndAssignTransition(onExit, NAME_AND_CALL(OnWalkStateExit));
+    //walkState.stateLinks = { std::string{kJumpStateName}, std::string{kFallStateName} };
     //SetUpSpriteRenderTestScript(spriteEnt, scene);
+
+    //TRY(test::SetUpWalkResetProxyChild(spriteEnt, eventCallbackRegistry));
+    TRY(test::SpinTimer(spriteEnt, eventCallbackRegistry, 2.0f,
+        []() { LOG_DEBUG("TIMER FIRED!"); })
+    );
 
     while (true)
     {
@@ -1709,7 +1723,7 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
         TRY(scene->UpdateCamera());
 
         auto vel = rigidBody.body.GetData().GetLinearVelocity();
-        LOG_DEBUG_FMT("Velocity: [{}, {}]", vel.x, vel.y);
+        //LOG_DEBUG_FMT("Velocity: [{}, {}]", vel.x, vel.y);
 
         SDLite::Renderer().Clear(SDLite::kColorWhite);
 

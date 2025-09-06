@@ -12,7 +12,7 @@
 #include "../ecs/Ecs.h"
 #include "../physics/B2Shape.h"
 #include "../callbacks/EventCallbackRegistry.h"
-#include "../callbacks/StateTransitionCallbackRegistry.h"
+//#include "../callbacks/StateTransitionCallbackRegistry.h"
 
 
 template <typename Fn>
@@ -234,7 +234,7 @@ private:
 //		return Void{};
 //	}
 //
-//	bool EraseState(std::string_view stateName)
+//	bool RemoveState(std::string_view stateName)
 //	{
 //		auto& states = GetComponent<EntityStates>();
 //		HashName stateNameHash{ stateName };
