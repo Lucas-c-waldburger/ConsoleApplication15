@@ -1,5 +1,6 @@
 #pragma once
 #include "../Resources.h"
+#include "../../ecs/ECS.h"
 #include "../../components/driver/SpriteAnimationDriver.h"
 #include "../../components/driver/EntityStateDriver.h"
 #include "../../components/EntityStateComponent.h"
@@ -353,7 +354,7 @@ class KnightLookDownState;
 class KnightJumpState;
 
 
-class KnightWalkState : public EntityStateContract<KnightWalkState>
+class KnightWalkState
 {
 public:
 	static constexpr float kFrameDistance = 20.0f;
@@ -382,14 +383,14 @@ public:
 			entity.GetComponents<EntityStateComponent, GameControllerState, 
 								 SpriteAnimations, Renderable>();
 
-		assert(stateComponent.stateID.value == EntityStateID::value<KnightIdleState>());
+		assert(stateComponent.stateID.value == EntityState<KnightIdleState>::GetStateID());
 
 		using enum GameControllerInputSource;
 
 		auto pressedA = controller.inputs[A].state == InputState::Pressed;
 		if (pressedA)
 		{
-			stateComponent.stateID.requested = EntityStateID::value<KnightJumpState>();
+			stateComponent.stateID.requested = EntityState<KnightJumpState>::GetStateID();
 			return;
 		}
 
@@ -405,7 +406,7 @@ public:
 		}
 		else
 		{
-			stateComponent.stateID.requested = EntityStateID::value<KnightIdleState>();
+			stateComponent.stateID.requested = EntityState<KnightIdleState>::GetStateID();
 			return;
 		}
 
@@ -431,7 +432,7 @@ public:
 
 
 // IDLE STATE
-class KnightIdleState : public EntityStateContract<KnightIdleState>
+class KnightIdleState
 {
 public:
 	static constexpr float kFrameDuration = 0.25f;
@@ -458,14 +459,14 @@ public:
 		auto [stateComponent, controller, animations] = 
 			entity.GetComponents<EntityStateComponent, GameControllerState, SpriteAnimations>();
 
-		assert(stateComponent.stateID.value == EntityStateID::value<KnightIdleState>());
+		assert(stateComponent.stateID.value == EntityState<KnightIdleState>::GetStateID());
 
 		using enum GameControllerInputSource;
 
 		bool pressedA = controller.inputs[A].state == InputState::Pressed;
 		if (pressedA)
 		{
-			stateComponent.stateID.requested = EntityStateID::value<KnightJumpState>();
+			stateComponent.stateID.requested = EntityState<KnightJumpState>::GetStateID();
 			return;
 		}
 
@@ -476,11 +477,11 @@ public:
 
 			if (axisValue.y > std::abs(axisValue.x)) 
 			{
-				stateComponent.stateID.requested = EntityStateID::value<KnightLookUpState>();
+				stateComponent.stateID.requested = EntityState<KnightLookUpState>::GetStateID();
 			}
 			else
 			{
-				stateComponent.stateID.requested = EntityStateID::value<KnightWalkState>();
+				stateComponent.stateID.requested = EntityState<KnightWalkState>::GetStateID();
 			}
 		
 			return;
@@ -508,7 +509,7 @@ public:
 };
 
 
-class KnightLookUpState : public EntityStateContract<KnightIdleState>
+class KnightLookUpState
 {
 public:
 	static constexpr float kFrameDuration = 0.25f;
@@ -532,14 +533,14 @@ public:
 		auto [stateComponent, controller, animations] =
 			entity.GetComponents<EntityStateComponent, GameControllerState, SpriteAnimations>();
 
-		assert(stateComponent.stateID.value == EntityStateID::value<KnightLookUpState>());
+		assert(stateComponent.stateID.value == EntityState<KnightLookUpState>::GetStateID());
 
 		using enum GameControllerInputSource;
 
 		auto pressedA = controller.inputs[A].state == InputState::Pressed;
 		if (pressedA)
 		{
-			stateComponent.stateID.requested = EntityStateID::value<KnightJumpState>();
+			stateComponent.stateID.requested = EntityState<KnightJumpState>::GetStateID();
 			return;
 		}
 
@@ -551,13 +552,13 @@ public:
 
 			if (std::abs(axisValue.x) > axisValue.y)
 			{
-				stateComponent.stateID.requested = EntityStateID::value<KnightWalkState>();
+				stateComponent.stateID.requested = EntityState<KnightWalkState>::GetStateID();
 				return;
 			}
 		}
 		else // released or none
 		{
-			stateComponent.stateID.requested = EntityStateID::value<KnightLookDownState>();
+			stateComponent.stateID.requested = EntityState<KnightLookDownState>::GetStateID();
 			return;
 		}
 

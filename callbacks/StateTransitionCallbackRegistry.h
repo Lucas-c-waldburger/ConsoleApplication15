@@ -1,7 +1,7 @@
 #pragma once
-#include "StateTransitionCallback.h"
-#include "../core/commonObjects.h"
-#include "../scripting/TypedLuaFunction.h"
+//#include "StateTransitionCallback.h"
+//#include "../core/commonObjects.h"
+//#include "../scripting/TypedLuaFunction.h"
 
 //class StateTransitionCallbackRegistry
 //{

@@ -3,14 +3,84 @@
 
 class Entity;
 
+/* ENTITY STATE TABLE */
+struct EntityStateTable
+{
+	using UpdateProcess = void(*)(Entity&, float);
+	using TransitionProcess = void(*)(Entity&);
+
+	TransitionProcess onEnter = nullptr;
+	TransitionProcess onExit = nullptr;
+	UpdateProcess onUpdate = nullptr;
+};
+/**/
+
+
+/* ENTITY STATE IMPLEMENTS */
+template <typename T>
+concept ImplementsOnEnter = std::is_invocable_r_v<void, typename T::OnEnter, Entity&>;
+template <typename T>
+concept ImplementsOnExit = std::is_invocable_r_v<void, typename T::OnExit, Entity&>;
+template <typename T>
+concept ImplementsOnUpdate = std::is_invocable_r_v<void, typename T::OnUpdate, Entity&, float>;
+/**/
+
+/* ENTITY STATE CONCEPT */
+// FWD DECL
+template <typename T>
+class EntityState;
+
+template <typename T>
+concept SomeEntityState = requires() {
+	(ImplementsOnEnter<T> || ImplementsOnExit<T> || ImplementsOnUpdate<T>);
+	{ EntityState<T>::GetStateTable() } -> std::same_as<EntityStateTable>;
+	{ EntityState<T>::GetStateID() } -> std::same_as<size_t>;
+};
+/**/
+
+
+/* ENTITY STATE FAMILY/ID */
+struct EntityStateFamily;
+
+template <SomeEntityState T>
+struct TypeInFamily<EntityStateFamily, T> : std::true_type {};
+
+using EntityStateID = FamilyTypeID<EntityStateFamily>;
+/**/
+
+
+/* ENTITY STATE WRAPPER */
+template <typename State>
 class EntityState
 {
 public:
-	virtual ~EntityState() = 0;
-	virtual void OnEnter(Entity& entity);
-	virtual void OnExit(Entity& entity);
-	virtual void OnUpdate(Entity& entity);
-};
+	static EntityStateTable GetStateTable()
+	{
+		EntityStateTable stateTable{};
 
-//using EntityStateID = CatTypeID<EntityState>;
+		if constexpr (ImplementsOnEnter<State>)
+		{
+			stateTable.onEnter = &State::OnEnter;
+		}
+		if constexpr (ImplementsOnExit<State>)
+		{
+			stateTable.onExit = &State::OnExit;
+		}
+		if constexpr (ImplementsOnUpdate<State>)
+		{
+			stateTable.onUpdate = &State::OnUpdate;
+		}
+
+		return stateTable;
+	}
+
+	static constexpr size_t GetStateID()
+	{
+		return EntityStateID::value<State>;
+	}
+};
+/**/
+
+
+
 

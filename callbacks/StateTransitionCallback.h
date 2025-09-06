@@ -1,8 +1,5 @@
 #pragma once
-#include "ICallbackSource.h"
-#include "../scripting/TypedLuaFunction.h"
-#include "../core/Result.h"
-#include "../systems/SystemRegistry.h"
+
 
 //using EventCallback2 = fu2::unique_function<ReturnSignal(Entity&, const Event&)>;
 //

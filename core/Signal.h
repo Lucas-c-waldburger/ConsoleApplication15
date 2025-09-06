@@ -106,11 +106,12 @@ public:
 
 	Signal(const Signal&) = delete;
 	Signal& operator=(const Signal&) = delete;
-	Signal(Signal&& other) noexcept : slots_(std:move(other.slots_)), 
-									  disconnectFn_(GetDisconnectLambda()) 
-	{
-		other.disconnectFn_ = nullptr;
-	}
+
+	Signal(Signal&& other) noexcept : 
+		slots_(std:move(other.slots_)), disconnectFn_(GetDisconnectLambda()) {}
+	//{
+	//	other.disconnectFn_ = nullptr;
+	//}
 	Signal& operator=(Signal&& other) noexcept
 	{
 		if (this != &other)
@@ -131,7 +132,8 @@ public:
 			{
 				assert(slot.id >= 0);
 
-				if constexpr (std::move_c)
+				//if constexpr (std::is_reference_v<)
+
 				slot.callback(std::decay_t<Ts>(ts)...);
 			}
 		}

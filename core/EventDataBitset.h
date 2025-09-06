@@ -1,7 +1,5 @@
 #pragma once
-#include <bitset>
-#include "../events/EventConcepts.h"
-#include "../events/EventDataTypeList.h"
+
 
 //class EventDataBitset
 //{

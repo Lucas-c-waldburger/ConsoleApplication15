@@ -1,10 +1,10 @@
 #pragma once
+#include <bitset>
 #include <algorithm>
 #include "../atlas/SpriteSeriesAtlas.h"
 #include "../core/Literals.h"
 #include "../sdl/SDLUtils.h"
 #include "../events/data/SpriteAnimationEvents.h"
-#include "../core/EventDataBitset.h"
 
 // MAKE THIS A SEPARATE COMPONENT
 struct SeriesMetrics

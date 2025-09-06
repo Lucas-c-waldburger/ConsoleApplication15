@@ -1,5 +1,4 @@
 #include "StateTransitionCallback.h"
-#include "../ecs/Ecs.h"
 
 //auto StateTransitionCallback::WrapLua(TypedLuaFunction<Void(Entity&)> luaFn)
 //{

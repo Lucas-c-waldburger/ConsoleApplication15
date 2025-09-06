@@ -18,7 +18,7 @@ public:
 	{
 		auto idx = static_cast<std::underlying_type_t<GameControllerInputSource>>(source);
 
-		assert(idx >= 0 && idx <= kGameControllerInputSourceEnd);
+		assert(idx >= 0 && idx < enum_size_v<GameControllerInputSource>);
 
 		return fields_[static_cast<size_t>(idx)];
 	}
@@ -27,7 +27,7 @@ public:
 	{
 		auto idx = static_cast<std::underlying_type_t<GameControllerInputSource>>(source);
 
-		assert(idx >= 0 && idx <= kGameControllerInputSourceEnd);
+		assert(idx >= 0 && idx < enum_size_v<GameControllerInputSource>);
 
 		return fields_[static_cast<size_t>(idx)];
 	}
@@ -35,5 +35,5 @@ public:
 	constexpr size_t Size() const { return fields_.size(); }
 
 private:
-    std::array<GameControllerInputField, kGameControllerInputSourceEnd + 1> fields_;
+    std::array<GameControllerInputField, enum_size_v<GameControllerInputSource>> fields_;
 };

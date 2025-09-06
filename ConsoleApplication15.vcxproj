@@ -243,6 +243,7 @@
     <ClInclude Include="core\Dictionary.h" />
     <ClInclude Include="core\Signal.h" />
     <ClInclude Include="core\SizedEnum.h" />
+    <ClInclude Include="core\UniqueVoidPtr.h" />
     <ClInclude Include="events\ControllerInputSignal.h" />
     <ClInclude Include="events\data\GameLoopStepEvents.h" />
     <ClInclude Include="events\EventBus2.h" />

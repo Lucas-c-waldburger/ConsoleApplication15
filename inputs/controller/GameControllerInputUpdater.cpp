@@ -117,7 +117,7 @@ void GameControllerInputUpdater::Update(const SDL_Event& ev)
 
 void GameControllerInputUpdater::FinalizeAndPushEvents(SDL_JoystickID ownerId)
 {
-	for (size_t i = 0; i < inputs_.Size(); i++)
+	for (size_t i = enum_start_v<GameControllerInputSource>; i < inputs_.Size(); i++)
 	{
 		auto& input = inputs_[static_cast<GameControllerInputSource>(i)];
 

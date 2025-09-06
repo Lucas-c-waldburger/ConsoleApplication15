@@ -1,7 +1,7 @@
 #pragma once
 #include "BaseComponent.h"
 #include "../core/commonObjects.h"
-#include "../state/EntityState.h"
+
 
 //struct EntityState
 //{

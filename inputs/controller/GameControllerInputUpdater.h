@@ -20,8 +20,8 @@ private:
 	public:
 		constexpr Tracker() : updated() { timestamps.fill(0); }
 
-		std::bitset<kGameControllerInputSourceEnd + 1> updated;
-		std::array<uint32_t, kGameControllerInputSourceEnd + 1> timestamps;
+		std::bitset<enum_size_v<GameControllerInputSource>> updated;
+		std::array<uint32_t, enum_size_v<GameControllerInputSource>> timestamps;
 	};
 
 	GameControllerInputMap inputs_;
