@@ -64,28 +64,28 @@ R"(C:\Windows\WinSxS\amd64_microsoft-windows-font-truetype-arial_31bf3856ad364e3
 
 static void InitGameControllerInputTest(ScriptManager& scriptManager)
 {
-    auto entity = ECS::CreateEntity();
-    auto& controllerState = entity.AddComponent(GameControllerState{});
+    //auto entity = ECS::CreateEntity();
+    //auto& controllerState = entity.AddComponent(GameControllerState{});
 
-    ScriptInstance instance{};
+    //ScriptInstance instance{};
 
-    instance.scriptInfo = {
-        .name = "game controller test",
-        .scriptType = ScriptType::File,
-        .path = "resources\\scripts\\game_controller_test.lua"
-    };
+    //instance.scriptInfo = {
+    //    .name = "game controller test",
+    //    .scriptType = ScriptType::File,
+    //    .path = "resources\\scripts\\game_controller_test.lua"
+    //};
 
-    instance.setupFn = [&controllerState](Lua& lua) {
-        lua["gameControllerState"] = &controllerState;
-    };
+    //instance.setupFn = [&controllerState](Lua& lua) {
+    //    lua["gameControllerState"] = &controllerState;
+    //};
 
-    scriptManager.RegisterScript<
-        SDL_FPoint,
-        SDL_GameControllerButton,
-        HandedPair<AxisInputData>,
-        AxisInputData,
-        ButtonInputData,
-        GameControllerState>(std::move(instance));
+    //scriptManager.RegisterScript<
+    //    SDL_FPoint,
+    //    SDL_GameControllerButton,
+    //    HandedPair<AxisInputData>,
+    //    AxisInputData,
+    //    ButtonInputData,
+    //    GameControllerState>(std::move(instance));
 }
 
 //static void SetKnightControllerConnectedCallback(EventObserver& knightEvents)
@@ -314,7 +314,8 @@ int main(int argc, char* argv[])
 
     //ASSERT_RESULT(ChainScene::Run(sceneFixture.GetValue()));
     //ASSERT_RESULT(TextScene::Run(sceneFixture.GetValue()));
-    ASSERT_RESULT(SpriteScene::Run(sceneFixture.GetValue()));
+    //ASSERT_RESULT(SpriteScene::Run(sceneFixture.GetValue()));
+    ASSERT_RESULT(MouseScene::Run(sceneFixture.GetValue()));
 
     return 0;
 }

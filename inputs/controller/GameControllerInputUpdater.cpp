@@ -115,11 +115,13 @@ void GameControllerInputUpdater::Update(const SDL_Event& ev)
 	return;
 }
 
-void GameControllerInputUpdater::FinalizeAndPushEvents(SDL_JoystickID ownerId)
+void GameControllerInputUpdater::FinalizeAndPushEvents(SDL_JoystickID ownerId, EventBus2& bus)
 {
-	for (size_t i = enum_start_v<GameControllerInputSource>; i < inputs_.Size(); i++)
+	using Source = GameControllerInputSource;
+
+	for (size_t i = enum_start_v<Source>; i < enum_size_v<Source>; i++)
 	{
-		auto& input = inputs_[static_cast<GameControllerInputSource>(i)];
+		auto& input = inputs_[static_cast<Source>(i)];
 
 		if (!tracker_.updated.test(i)) // not updated
 		{
@@ -148,10 +150,14 @@ void GameControllerInputUpdater::FinalizeAndPushEvents(SDL_JoystickID ownerId)
 
 		if (input.state != InputState::None)
 		{
-			EventBus::PushEvent(events::GameControllerInput{
-				.joystickID = ownerId,
-				.input = input
+			bus.PushEvent(events::GameControllerInput{ 
+				.joystickID = ownerId, 
+				.input = input 
 			});
+			//EventBus::PushEvent(events::GameControllerInput{
+			//	.joystickID = ownerId,
+			//	.input = input
+			//});
 		}
 	}
 

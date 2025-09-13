@@ -1,6 +1,7 @@
 #pragma once
 #include "../../inputs/controller/GameController.h"
 #include "../../inputs/controller/GameControllerInputUpdater.h"
+#include "../EventBus2.h"
 #include <unordered_map>
 #include <set>
 
@@ -10,9 +11,9 @@ public:
 	GameControllerEventHandler() = default;
 	~GameControllerEventHandler();
 
-	void HandleDeviceEvent(const SDL_Event& ev);
+	void HandleDeviceEvent(const SDL_Event& ev, EventBus2& bus);
 	void HandleInputEvent(const SDL_Event& ev);
-	void Finalize();
+	void Finalize(EventBus2& bus);
 
 private:
 	void UpdateControllerStateComponents();

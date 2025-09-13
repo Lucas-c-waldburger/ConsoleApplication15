@@ -21,6 +21,7 @@ struct Timer;
 struct NeedsUpdate;
 struct EntityStateComponent;
 struct EntityFlags;
+struct SignalTokenStorage;
 
 using ComponentTypeList = TypeList<
 	ActiveState,
@@ -42,5 +43,6 @@ using ComponentTypeList = TypeList<
 	Timer,
 	NeedsUpdate,
 	EntityStateComponent,
-	EntityFlags
+	EntityFlags,
+	SignalTokenStorage
 >;

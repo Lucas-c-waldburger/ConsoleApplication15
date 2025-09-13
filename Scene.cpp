@@ -40,6 +40,7 @@
 #include "test/stateTransitions/Transitions.h"
 #include "test/setups/KnightSetups.h"
 #include "test/setups/SetupsUtil.h"
+#include "file/Asset.h"
 
 namespace {
     static constexpr const char* kFontPath =
@@ -203,11 +204,6 @@ namespace {
     {
         return (std::abs(axisValue.x) > GameController::kAxisDeadzone ||
                 std::abs(axisValue.y) > GameController::kAxisDeadzone);
-    }
-    bool AxisOutsideDeadzone(SDL_Point axisValue)
-    {
-        return (std::abs(axisValue.x) > GameController::kAxisDeadzone ||
-            std::abs(axisValue.y) > GameController::kAxisDeadzone);
     }
 
     SDL_FPoint Normalize(SDL_FPoint ax)
@@ -408,7 +404,7 @@ namespace {
         }
 
         auto axisValue = controller.inputs[GameControllerInputSource::RightStickAxis].value.axis;
-        if (AxisOutsideDeadzone(axisValue))
+        if (AxisOutsideDeadzone(SDL_FPoint{ static_cast<float>(axisValue.x), static_cast<float>(axisValue.y) }))
         {
             axisValue *= kImpulseScale;
 
@@ -1217,8 +1213,9 @@ Result<Void> SimplePhysicsScene::Run()
     PhysicsSystem physicsSys{};
     SDLInputSystem inputSys{};
 
-    EventCallbackSystem callbackSys{};
-    callbackSys.ConnectToEventBus();
+    //EventCallbackSystem callbackSys{};
+    //callbackSys.ConnectToEventBus();
+    EventBus2 eventBus{};
 
     Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
                                    static_cast<float>(SDLite::kWindowHeight) };
@@ -1254,7 +1251,7 @@ Result<Void> SimplePhysicsScene::Run()
     auto& playerBody = player.GetComponent<RigidBody>();
     playerBody.limits.linearVelocity.max = { 15.0f, 15.0f };
 
-    ConnectEntityToController(callbackSys, player);
+    //ConnectEntityToController(callbackSys, player);
 
     TRY(MakeColliderCircleEntity(world, kScreenCenterPosition + SDL_FPoint{ 100.0f, 0.0f }, kDynamicCircleRadius,
         B2Body::Type::Dynamic, { .restitution = 0.9f, .enableEvents{ .contact = true } }, SDLite::kColorOrange),
@@ -1297,6 +1294,8 @@ Result<Void> SimplePhysicsScene::Run()
     //    return ReturnSignal::KeepObserving;
     //});
 
+    Counter counter;
+
     cameraSys.SetCameraTarget(player);
 
     float timeStep = 1.0f / 60.0f;
@@ -1304,16 +1303,18 @@ Result<Void> SimplePhysicsScene::Run()
 
     while (true)
     {
+        counter.Update();
+
         hooks.SetHookPoint<HookPoint::LoopStart>();
 
-        if (!inputSys.Update())
+        if (!inputSys.Update(counter.GetDelta(), eventBus))
         {
             break;
         }
 
         ApplyImpulseFromControllerInput(player);
 
-        physicsSys.Update(&world, timeStep, subStepCount);
+        physicsSys.Update(&world, eventBus, timeStep, subStepCount);
 
         world.Step(timeStep, subStepCount);
 
@@ -1347,6 +1348,7 @@ Result<Void> GrapplePhysicsScene::Run()
     PhysicsSystem physicsSys{};
     SDLInputSystem inputSys{};
     EventCallbackSystem callbackSys{};
+    EventBus2 eventBus{};
 
     Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
                                    static_cast<float>(SDLite::kWindowHeight) };
@@ -1410,11 +1412,13 @@ Result<Void> GrapplePhysicsScene::Run()
     float timeStep = 1.0f / 60.0f;
     int subStepCount = 4;
 
+    Counter counter{};
+
     while (true)
     {
         hooks.SetHookPoint<HookPoint::LoopStart>();
 
-        if (!inputSys.Update())
+        if (!inputSys.Update(counter.GetDelta(), eventBus))
         {
             break;
         }
@@ -1423,7 +1427,7 @@ Result<Void> GrapplePhysicsScene::Run()
 
         ApplyImpulseFromControllerInput(player);
 
-        physicsSys.Update(&world, timeStep, subStepCount);
+        physicsSys.Update(&world, eventBus, timeStep, subStepCount);
 
         world.Step(timeStep, subStepCount);
 
@@ -1558,7 +1562,7 @@ Result<Void> TextScene::Run(std::shared_ptr<SceneFixture> scene)
         .text = "Dude he fucking turns himself into a pickle.\nFunniest shit I've ever seen",
         .dimensions = { 400, 250 },
         .align = TextAlign::Left,
-        .dirtyFlags = TextRenderable::DirtyFlag::NewText
+        .flags = TextRenderable::Flag::DirtyText
     };
     RenderProfile profile{
         
@@ -1600,9 +1604,15 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
 {
     TRY(Room::Create(scene->GetWorld()), room);
 
-    TRY(scene->LoadTextureAtlas<SpriteSeriesAtlas>(MakeKnightAtlasInfo()), 
+    SpriteSeriesResourcePackets spritePackets{};
+    TRY(LoadSpriteDirectory(R"(resources/sprites/knight_new)", spritePackets));
+
+    TRY(scene->LoadTextureAtlas<SpriteSeriesAtlas>(std::move(spritePackets)),
         spriteAtlasHandle);
 
+    //TRY(scene->LoadTextureAtlas<SpriteSeriesAtlas>(MakeKnightAtlasInfo()), 
+    //    spriteAtlasHandle);
+     
     const auto* spriteAtlas = scene->GetTextureRepository().GetAtlas(spriteAtlasHandle);
     assert(spriteAtlas);
 
@@ -1630,9 +1640,8 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
     spriteEnt.AddComponent(ComponentBuilder<Collider>{}
     .WithShapeParameters({
         .shapeType = B2Shape::Type::Polygon,
-        .dimensions = Dimensions<float>{ 49.0f, 116.0f }
-            //110,
-            //70}
+        .dimensions = Dimensions<float>{ 50.0f, 122.0f },
+        .localPosition = SDL_FPoint{ 0.0f, 26.0f }
     })
     .WithColliderSettings({ 
         .friction = 15.0f,
@@ -1655,24 +1664,28 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
 
     spriteEnt.AddComponent(SpriteAnimations{});
     TRY(SpriteAnimationDriver::GetInstance(spriteEnt), spriteAnimDriver);
-    spriteAnimDriver.AddSeries(test::kWalkSeriesName, *spriteAtlas);
-    spriteAnimDriver.AddSeries(test::kJumpSeriesName, *spriteAtlas);
+    spriteAnimDriver.AddSeries(test::KnightIdleState::kIdleSpriteSeriesName, *spriteAtlas);
+    spriteAnimDriver.AddSeries(test::KnightWalkState::kWalkSpriteSeriesName, *spriteAtlas);
+    spriteAnimDriver.AddSeries(test::KnightLookUpState::kLookUpSpriteSeriesName, *spriteAtlas);
 
-    auto& eventCallbackRegistry = scene->GetSystem<EventCallbackSystem>()->GetEventCallbackRegistry();
+    //spriteAnimDriver.AddSeries(test::kWalkSeriesName, *spriteAtlas);
+    //spriteAnimDriver.AddSeries(test::kJumpSeriesName, *spriteAtlas);
+
+    //auto& eventCallbackRegistry = scene->GetSystem<EventCallbackSystem>()->GetEventCallbackRegistry();
     //auto& transitionCallbackRegistry = scene->GetSystem<EntityStateSystem>()->GetTransitionCallbackRegistry();
 
     auto& controllerState = spriteEnt.AddComponent<GameControllerState>();
-    auto& eventCallbacks = spriteEnt.AddComponent<EventCallbacks>();
-    auto& inputCallbacks = spriteEnt.AddComponent<GameControllerInputCallbacks>();
-    auto& entityStates = spriteEnt.AddComponent(EntityStateComponent{});
+    //auto& eventCallbacks = spriteEnt.AddComponent<EventCallbacks>();
+    //auto& inputCallbacks = spriteEnt.AddComponent<GameControllerInputCallbacks>();
+    //auto& entityStates = spriteEnt.AddComponent(EntityStateComponent{});
 
     using namespace events; 
     using namespace test;
     using enum GameControllerInputSource;
 
-    auto& evTable = eventCallbacks.table;
+    //auto& evTable = eventCallbacks.table;
 
-    auto registerAndAssignEvent = [&eventCallbackRegistry, &eventCallbacks]
+    /*auto registerAndAssignEvent = [&eventCallbackRegistry, &eventCallbacks]
     (std::string_view nm, auto&& fn) {
         auto handle = eventCallbackRegistry.RegisterCallback(nm, std::move(fn));
         assert(handle.IsValid());
@@ -1683,19 +1696,35 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
         auto handle = eventCallbackRegistry.RegisterCallback(nm, std::move(fn));
         assert(handle.IsValid());
         inputCallbacks.table[src].push_back(handle);
-    };
+    };*/
     //auto registerAndAssignTransition = [&transitionCallbackRegistry]
     //(auto& trans, std::string_view nm, auto&& fn) {
     //    auto view = transitionCallbackRegistry.RegisterCallback(nm, std::move(fn));
-    //    assert(view.fn);
+    //    assert(view.fn); 
     //    trans = view;
     //};
 
-    registerAndAssignEvent(NAME_AND_CALL(ConnectToFirstController));
-    registerAndAssignEvent(NAME_AND_CALL(DisconnectController));
-    registerAndAssignEvent(NAME_AND_CALL(SpriteAdvanceOnDistanceTraveled, 20));
+    auto& signalTokens = spriteEnt.AddComponent(SignalTokenStorage{}).signalTokens;
+
+    auto& eventBus = scene->GetEventBus();
+    signalTokens.push_back(
+        eventBus.ConnectToEvent(NewConnectToFirstController(spriteEnt))
+    );
+    signalTokens.push_back(
+        eventBus.ConnectToEvent(NewDisconnectController(spriteEnt))
+    );
+    //signalTokens.push_back(
+    //    eventBus.ConnectToEvent(SpriteAdvanceOnDistanceTraveled(spriteEnt, 20))
+    //);
+
+    //registerAndAssignEvent(NAME_AND_CALL(ConnectToFirstController));
+    //registerAndAssignEvent(NAME_AND_CALL(DisconnectController));
+    //registerAndAssignEvent(NAME_AND_CALL(SpriteAdvanceOnDistanceTraveled, 20));
     
-    registerAndAssignInput(LeftStickAxis, NAME_AND_CALL(ApplyAxisInputToForce, kImpulseScale));
+    //signalTokens.push_back(
+    //    eventBus.ConnectToInput<LeftStickAxis>(NewApplyAxisInputToForce(spriteEnt, kImpulseScale))
+    //);
+    //registerAndAssignInput(LeftStickAxis, NAME_AND_CALL(ApplyAxisInputToForce, kImpulseScale));
 
     //auto& walkState = entityStates.table[std::string{ kWalkStateName }];
     //auto& [onEnter, onExit] = walkState.transitions;
@@ -1705,9 +1734,18 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
     //SetUpSpriteRenderTestScript(spriteEnt, scene);
 
     //TRY(test::SetUpWalkResetProxyChild(spriteEnt, eventCallbackRegistry));
-    TRY(test::SpinTimer(spriteEnt, eventCallbackRegistry, 2.0f,
-        []() { LOG_DEBUG("TIMER FIRED!"); })
-    );
+    //TRY(test::SpinTimer(spriteEnt, eventCallbackRegistry, 2.0f,
+    //    []() { LOG_DEBUG("TIMER FIRED!"); })
+    //);
+    auto& stateSys = scene->GetSystem<EntityStateSystem>();
+    stateSys->RegisterState<KnightWalkState>();
+    stateSys->RegisterState<KnightIdleState>();
+    stateSys->RegisterState<KnightLookUpState>();
+
+    static_assert(ImplementsOnUpdate<KnightWalkState>);
+
+    auto& states = spriteEnt.AddComponent<EntityStateComponent>();
+    states.stateID.requested = EntityState<KnightIdleState>::GetStateID();
 
     while (true)
     {
@@ -1718,6 +1756,8 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
         {
             break;
         }
+
+        TRY(scene->UpdateEntityStates());
 
         TRY(scene->UpdatePhysics());
         TRY(scene->UpdateCamera());
@@ -1730,6 +1770,72 @@ Result<Void> SpriteScene::Run(std::shared_ptr<SceneFixture> scene)
         TRY(scene->UpdateRender());
 
         SDLite::Renderer().Show();
+
+        scene->LoopEnd();
+    }
+
+    return Void{};
+}
+
+
+Result<Void> MouseScene::Run(std::shared_ptr<SceneFixture> scene)
+{
+    auto mouseEnt = ECS::CreateEntity();
+
+    FontResourcePacket fontResource{};
+    fontResource.SetMetadata(FontMetadata{
+        .fontName = "default",
+        .fontSize = 24,
+        .fontColor = SDLite::kColorBlack
+    });
+    fontResource.SetFilepaths({ kFontPath });
+
+    TRY(scene->LoadTextureAtlas<GlyphAtlas>(std::move(fontResource)), glyphAtlasHandle);
+
+    auto textEnt = ECS::CreateEntity();
+
+    auto& transform = textEnt.AddComponent(Transform{
+        .position = kScreenCenterPosition,
+        .rotation = 0.0f,
+        .scale = { 0.9f, 0.9f }
+    });
+
+    RenderProfile profile{
+        .offset = { 30.0f, -30.0f }
+    };
+
+    auto& renderable = textEnt.AddComponent(Renderable{
+        .renderData = TextRenderable{
+            .sourceAtlas = glyphAtlasHandle,
+            .dimensions = { 50, 50 },
+            .align = TextAlign::Left,
+            //.flags = (TextRenderable::DirtyText | TextRenderable::FixedSize)
+        },
+        .profile = std::move(profile)
+        });
+
+    auto& mouseState = textEnt.AddComponent<MouseState>();
+
+    SDL_FPoint mousePos = { -1.0f, -1.0f };
+
+    while (true)
+    {
+        scene->LoopStart();
+
+        TRY(scene->UpdateSDLInputs(), cont);
+        if (!cont)
+        {
+            break;
+        }
+
+        TRY(scene->UpdateEntityStates());
+
+        TRY(scene->UpdatePhysics());
+        TRY(scene->UpdateCamera());
+
+        mousePos = test::UpdateMouseTextEnt(textEnt, mousePos);
+
+        TRY(scene->RenderScene());
 
         scene->LoopEnd();
     }

@@ -5,6 +5,6 @@
 struct GameControllerState : public BaseComponent<GameControllerState>
 {
     SDL_JoystickID joystickID = -1;
-    GameControllerInputMap inputs;
+    GameControllerInputMap inputs = MakeGameControllerInputMap();
 };
 

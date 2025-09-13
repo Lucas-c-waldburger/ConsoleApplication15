@@ -10,7 +10,7 @@
 struct SeriesMetrics
 {
 	std::optional<ThresholdTracker<float>> time;
-	std::optional<ThresholdTracker<float>> distance;
+	std::optional<ThresholdTracker<float, SDL_FPoint>> distance;
 };
 
 struct SpriteAnimationSeries

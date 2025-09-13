@@ -62,15 +62,19 @@ auto ResetWalkSpriteIfNoMovementAndUpdate()
     };
 }
 
-auto SpriteAdvanceOnDistanceTraveled(float targetDist)
+auto SpriteAdvanceOnDistanceTraveled(Entity& entity, float targetDist)
 {
     struct
     {
         float targetDistance;
+        Entity_t id;
         mutable float delta = 0.0f;
 
-        ReturnSignal operator()(Entity& entity, const events::EntityPositionChanged& ev) const
+        void operator()(const events::EntityPositionChanged& ev) const
         {
+            auto entity = ECS::GetEntityByID(id);
+            assert(entity.IsValid());
+
             SDL_FPoint dist = { ev.newPosition - ev.oldPosition };
             delta += std::sqrt(dist.x * dist.x + dist.y * dist.y);
 
@@ -83,15 +87,13 @@ auto SpriteAdvanceOnDistanceTraveled(float targetDist)
                 {
                     LOG_ERROR(driver.GetError());
 
-                    return ReturnSignal::KeepObserving;
+                    return;
                 }
 
                 driver.GetValue().AdvanceCurrentSeries();
             }
-
-            return ReturnSignal::KeepObserving;
         }
-    } callback{ .targetDistance = targetDist };
+    } callback{ .targetDistance = targetDist, .id = entity.GetID() };
 
     return callback;
 }

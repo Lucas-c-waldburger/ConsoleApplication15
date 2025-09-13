@@ -210,6 +210,9 @@
     <ClCompile Include="state\EntityState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1115,6 +1118,24 @@
     <ClInclude Include="core\UniqueVoidPtr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="file\Asset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\mouse\MouseInputSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\mouse\MouseInputMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\SizedEnumMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\mouse\MouseInputUpdater.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\data\MouseEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -1202,6 +1223,297 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="..\..\..\Downloads\ezgif-split\knight_anim230.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\0.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\1.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\3.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\4.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\5.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\6.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\7.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\8.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\9.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\10.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\11.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\Airborne_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\Airborne_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\Airborne_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\Airborne_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\Airborne_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\Airborne_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\Airborne_006.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\Airborne_007.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\Airborne_008.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\Airborne_009.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\Airborne_010.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\airborne\Airborne_011.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\fall\Fall_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\fall\Fall_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\fall\Fall_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\fall\Fall_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\fall\Fall_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight\fall\Fall_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\airborne\Airborne_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\airborne\Airborne_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\airborne\Airborne_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\airborne\Airborne_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\airborne\Airborne_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\airborne\Airborne_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\airborne\Airborne_006.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\airborne\Airborne_007.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\airborne\Airborne_008.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\airborne\Airborne_009.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\airborne\Airborne_010.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\airborne\Airborne_011.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\fall\Fall_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\fall\Fall_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\fall\Fall_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\fall\Fall_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\fall\Fall_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\fall\Fall_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle\Idle_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle\Idle_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle\Idle_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle\Idle_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle\Idle_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle\Idle_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle\Idle_006.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle\Idle_007.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle\Idle_008.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle_to_run\idle_to_run_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle_to_run\idle_to_run_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle_to_run\idle_to_run_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle_to_run\idle_to_run_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\idle_to_run\idle_to_run_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\look_down\LookDown_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\look_down\LookDown_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\look_down\LookDown_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\look_down\LookDown_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\look_down\LookDown_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\look_down\LookDown_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\look_up\LookUp_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\look_up\LookUp_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\look_up\LookUp_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\look_up\LookUp_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\look_up\LookUp_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\look_up\LookUp_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run\run_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run\run_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run\run_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run\run_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run\run_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run\run_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run\run_006.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run\run_007.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run_to_idle\Run To Idle_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run_to_idle\Run To Idle_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run_to_idle\Run To Idle_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run_to_idle\Run To Idle_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run_to_idle\Run To Idle_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\run_to_idle\Run To Idle_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\turn\Turn_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\turn\Turn_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\walk\Walk_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\walk\Walk_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\walk\Walk_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\walk\Walk_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\walk\Walk_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\walk\Walk_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\knight_new\walk\Walk_006.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

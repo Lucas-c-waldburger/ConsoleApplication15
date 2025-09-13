@@ -19,10 +19,9 @@ void EntityStateSystem::Update(float delta)
 	{
 		auto& stateComponent = entity.GetComponent<EntityStateComponent>();
 		auto& [currentState, requestedState] = stateComponent.stateID;
-		
-		bool processState = true;
-		do
-		{
+
+		//do
+		//{
 			if (StateNeedsProcessing(stateComponent))
 			{
 				auto curIt = stateTables_.find(currentState);
@@ -47,7 +46,7 @@ void EntityStateSystem::Update(float delta)
 				curIt->second.onUpdate(entity, delta);
 			}
 
-		} while (StateNeedsProcessing(stateComponent)); // did onUpdate change state?
+		//} while (StateNeedsProcessing(stateComponent)); // did onUpdate change state?
 	}
 }
 

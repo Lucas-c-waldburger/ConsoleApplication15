@@ -122,8 +122,8 @@ template <> inline void RegisterLuaUserType<TextRenderable>(sol::state& lua)
 	if (!lua["DirtyFlag"].valid())
 	{
 		lua.new_enum("DirtyFlag",
-			"NewText", TextRenderable::DirtyFlag::NewText,
-			"NewTransforms", TextRenderable::DirtyFlag::NewTransforms);
+			"NewText", TextRenderable::Flag::DirtyText,
+			"NewTransforms", TextRenderable::Flag::DirtyTransform);
 	}
 	if (!lua["TextRenderable"].valid())
 	{
@@ -133,7 +133,7 @@ template <> inline void RegisterLuaUserType<TextRenderable>(sol::state& lua)
 			"dimensions", &TextRenderable::dimensions,
 			"align", &TextRenderable::align,
 			"glyphCache", &TextRenderable::glyphCache,
-			"dirtyFlags", &TextRenderable::dirtyFlags);
+			"dirtyFlags", &TextRenderable::flags);
 	}
 }
 

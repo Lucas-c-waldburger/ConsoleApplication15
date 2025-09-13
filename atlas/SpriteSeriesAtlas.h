@@ -9,15 +9,15 @@ struct SpriteInstanceData
 {
 	std::string filename;
 	size_t index = 0;
-	Dimensions<int> dimensions = { 0, 0 };
-	Direction nativeDirection = Direction::None;
+	//Dimensions<int> dimensions = { 0, 0 };
+	//Direction nativeDirection = Direction::None;
 };
 
 struct SpriteSeriesMetadata
 {
 	std::string seriesName;
-	std::string directoryPath;
-	std::unordered_set<std::string> tags;
+	//std::string directoryPath;
+	//std::unordered_set<std::string> tags;
 };
 
 struct SpriteSeriesResourcePacket

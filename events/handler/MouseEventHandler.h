@@ -1,26 +1,21 @@
 #pragma once
 #include "../../components/MouseStateComponent.h"
+#include "../../inputs/mouse/MouseInputUpdater.h"
 #include <bitset>
+
+class EventBus2;
 
 class MouseEventHandler
 {
 public:
-	void HandleMotionEvent(const SDL_Event& ev);
-	void HandleButtonEvent(const SDL_Event& ev);
-	void HandleWheelEvent(const SDL_Event& ev);
+	MouseEventHandler() = default;
+	~MouseEventHandler() = default;
 
-	void UpdateEntities();
+	void HandleMouseEvent(const SDL_Event& ev);
+	void Finalize(float delta, EventBus2& bus);
 
 private:
-	struct InputCache
-	{
-		static constexpr size_t kMousePositionShiftedIndex = 6;
+	void UpdateMouseStateComponents();
 
-		MouseState data;
-		std::bitset<6> updatedTracker;
-		void MarkUpdated(size_t shiftedIdx);
-		void UpdateSkippedInputs();
-	};
-
-	InputCache inputCache;
+	MouseInputUpdater inputUpdater_;
 };

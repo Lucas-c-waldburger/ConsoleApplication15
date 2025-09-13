@@ -74,7 +74,6 @@ template <> inline void RegisterLuaUserType<GameControllerInputMap>(sol::state& 
 	if (!lua["GameControllerInputMap"].valid())
 	{
 		lua.new_usertype<GameControllerInputMap>("GameControllerInputMap",
-			"Size", &GameControllerInputMap::Size,
 			sol::meta_function::index, [](GameControllerInputMap& map, GameControllerInputSource source) -> GameControllerInputField& {
 				return map[source];
 			}

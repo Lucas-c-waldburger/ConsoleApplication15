@@ -200,6 +200,8 @@ void RepopulateGlyphCacheGlyphs(TextRenderable& textRenderable, const GlyphAtlas
 
 	for (size_t i = 0; i < textRenderable.text.size(); i++)
 	{
+		textRenderable.glyphCache[i].destRect = { 0, 0, 0, 0 };
+
 		char c = textRenderable.text[i];
 		if (c == '\n')
 		{
@@ -210,8 +212,6 @@ void RepopulateGlyphCacheGlyphs(TextRenderable& textRenderable, const GlyphAtlas
 
 		textRenderable.glyphCache[i].glyph = glyphAtlas->GetGlyph(c);
 	}
-
-	auto glyphs = glyphAtlas->GetGlyphsForString(textRenderable.text);
 }
 
 void ReprojectGlyphCacheGeometry(TextRenderable& textRenderable, const Transform& transform,
@@ -230,15 +230,18 @@ void ReprojectGlyphCacheGeometry(TextRenderable& textRenderable, const Transform
 		.text = textRenderable.text,
 		.bounds = textRenderable.dimensions,
 		.scale = transform.scale,
-		.start = { 0, static_cast<int>(transform.position.y - (totalHeight / 2.0f)) },
+		//.start = { 0, static_cast<int>(transform.position.y - (totalHeight / 2.0f)) },
+		.start = { 0, renderRect.y },
 		.numNewlines = numNewlines,
 		.fontHeight = fontHeight,
 		.totalHeight = totalHeight
 	};
 
-	float toFit = GetScaleToFitFactor(textRenderable.glyphCache, textParams);
-	textParams.scale.x *= toFit;
-	textParams.scale.y *= toFit;
+	if ((textRenderable.flags & TextRenderable::FixedSize) != TextRenderable::FixedSize)
+	{
+		float toFit = GetScaleToFitFactor(textRenderable.glyphCache, textParams);
+		textParams.scale *= toFit;
+	} 
 
 	switch (textRenderable.align)
 	{
@@ -251,7 +254,7 @@ void ReprojectGlyphCacheGeometry(TextRenderable& textRenderable, const Transform
 		FillGlyphRectsRightAlign(textRenderable.glyphCache, textParams);
 		break;
 	case TextAlign::Center: default:
-		textParams.start.x = static_cast<int>(transform.position.x);
+		textParams.start.x = renderRect.x + (renderRect.w / 2);
 		FillGlyphRectsCenterAlign(textRenderable.glyphCache, textParams);
 		break;
 	}
@@ -295,7 +298,7 @@ std::vector<SDL_FPoint> MakeCirclePerimeterPoints(SDL_FPoint center, float radiu
 }
 
 SDL_Rect MakeTransformedRect(const Transform& transform, int w, int h, 
-							 SDL_FPoint offset = { 0.0f, 0.0f })
+							 SDL_FPoint offset)
 {
 	float scaledW = w * transform.scale.x;
 	float scaledH = h * transform.scale.y;
@@ -309,7 +312,7 @@ SDL_Rect MakeTransformedRect(const Transform& transform, int w, int h,
 }
 
 SDL_Rect MakeTransformedRect(const Transform& transform, Dimensions<int> dimensions, 
-							 SDL_FPoint offset = { 0.0f, 0.0f })
+							 SDL_FPoint offset)
 {
 	return MakeTransformedRect(transform, dimensions.w, dimensions.h, offset);
 }
@@ -664,9 +667,6 @@ void RenderSystem::RenderSprite(const SpriteRenderable& spriteRenderable, const 
 	Draw(context_.renderer, atlasTexture, spriteRenderable.sourcePlot, 
 		 renderRect, transform, nullptr, renderProfile);
 
-	//SDL_RenderCopyEx(context_.renderer, atlasTexture, &spriteRenderable.sourcePlot,
-	//				 &renderRect, transform.rotation, nullptr, renderProfile.flip);
-
 	if (renderProfile.debugDraw.boundingBox.on)
 	{
 		HandleBoundingBoxDebugDraw(context_, renderRect, renderProfile, transform.rotation);
@@ -711,15 +711,15 @@ void RenderSystem::RenderText(TextRenderable& textRenderable, const Transform& t
 	}
 
 	// Update glyph cache as needed
-	using DirtyFlag = TextRenderable::DirtyFlag;
-	if (textRenderable.dirtyFlags & DirtyFlag::NewText)
+	if (textRenderable.flags & TextRenderable::DirtyText)
 	{
 		RepopulateGlyphCacheGlyphs(textRenderable, glyphAtlas);
 	}
-	if (textRenderable.dirtyFlags & (DirtyFlag::NewText | DirtyFlag::NewTransforms))
+	if (textRenderable.flags & (TextRenderable::DirtyText | TextRenderable::DirtyTransform))
 	{
 		ReprojectGlyphCacheGeometry(textRenderable, transform, glyphAtlas, renderRect);
 
+		////TODO: change rotation detection to account for if transform.rotation wasn't 0.0f last time
 		// reprojecting geometry has them at 0 deg rotation, skip if no transform rotation
 		//textRenderable.dirtyFlags = (transform.rotation != 0.0f) ? DirtyFlag::NewRotation : 0;
 		if (transform.rotation != 0.0f)
@@ -732,7 +732,7 @@ void RenderSystem::RenderText(TextRenderable& textRenderable, const Transform& t
 	//	AdjustGlyphCacheForRotation(textRenderable.glyphCache, renderRect, transform.rotation);
 	//}
 
-	textRenderable.dirtyFlags = 0;
+	textRenderable.flags &= ~(TextRenderable::DirtyText | TextRenderable::DirtyTransform);
 
 	// adjust for screen projection and render
 	for (const auto& [glyph, destRect, rotationCenter] : textRenderable.glyphCache)
@@ -749,9 +749,6 @@ void RenderSystem::RenderText(TextRenderable& textRenderable, const Transform& t
 			rotationCenter.y + screenAdjust.y
 		};
 
-		//SDL_RenderCopyEx(context_.renderer, glyphAtlas->GetAtlasTexture(), &glyph.atlasRect, 
-		//				 &destRectScreenAdjusted, transform.rotation, &rotationCenterScreenAdjusted,
-		//				 renderProfile.flip);
 		Draw(context_.renderer, glyphAtlas->GetAtlasTexture(), glyph.plot, destRectScreenAdjusted,
 			 transform, &rotationCenterScreenAdjusted, renderProfile);
 	}

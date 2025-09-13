@@ -61,11 +61,12 @@ struct Requestable
     std::optional<T> requested;
 };
 
-template <typename T>
+template <typename T, typename U = T>
 struct ThresholdTracker
 {
     T accumulated;
     T threshold;
+    DataRecord<U> recorded;
 };
 
 

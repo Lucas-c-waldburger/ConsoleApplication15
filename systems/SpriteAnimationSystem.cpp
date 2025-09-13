@@ -47,7 +47,6 @@ void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 
 		newAtlas = series.sourceAtlas;
 		newPlot = series.spritePlots[series.index];
-		LOG_DEBUG_FMT("series index: {}", series.index);
 			
 		spriteRenderable->sourceAtlas = newAtlas;
 		spriteRenderable->sourcePlot = newPlot;

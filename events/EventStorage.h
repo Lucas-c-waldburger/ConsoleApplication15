@@ -1,6 +1,9 @@
 #pragma once
 #include "EventSignal.h"
 #include "ControllerInputSignal.h"
+#include "Event.h"
+#include "EventDataTypeList.h"
+#include "data/EventDataIncludes.h"
 
 template <typename TList>
 class EventStorageImpl;
@@ -31,12 +34,20 @@ public:
 		heldEventHead_ = 0;
 	}
 
-	void Discard(EventSignalList& eventSignals, ControllerInputSignalList& inputSignals)
+	//template <SomeEventData T>
+	//void Discard()
+	//{
+	//	for (size_t i = 0; i < heldEventHead_; i++)
+	//	{
+	//		dispatchTable_[heldEventIndices_[i]](storage_, eventSignals, inputSignals, false);
+	//	}
+
+	//	heldEventHead_ = 0;
+	//}
+
+	void Discard()
 	{
-		for (size_t i = 0; i < heldEventHead_; i++)
-		{
-			dispatchTable_[heldEventIndices_[i]](storage_, eventSignals, inputSignals, false);
-		}
+		((std::get<std::vector<Ts>>(storage_).clear()), ...);
 
 		heldEventHead_ = 0;
 	}
@@ -59,7 +70,7 @@ private:
 	}
 
 	using StorageTuple = std::tuple<std::vector<Ts>...>;
-	using FnType = void(*)(StorageTuple&, EventSignalList&, bool);
+	using FnType = void(*)(StorageTuple&, EventSignalList&, ControllerInputSignalList&, bool);
 
 	static inline constexpr std::array<FnType, N> dispatchTable_ = {
 		(+[](StorageTuple& store, EventSignalList& eventSignals, 

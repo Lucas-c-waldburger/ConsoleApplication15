@@ -10,6 +10,7 @@
 #include "../core/Counter.h"
 #include "../systems/SystemManager.h"
 #include "../atlas/TextureRepository.h"
+#include "../events/EventBus2.h"
 
 class SceneFixture
 {
@@ -29,6 +30,7 @@ public:
 
 	// updates
 	void LoopStart();
+	Result<Void> UpdateEntityStates();
 	Result<bool> UpdateSDLInputs();
 	Result<Void> UpdatePhysics();
 	Result<Void> UpdateCamera();	
@@ -57,6 +59,13 @@ public:
 	{
 		return textureRepo_.LoadNewAtlas<GlyphAtlas>(SDLite::Renderer(), std::move(packet));
 	}
+
+	// bundled processes
+	Result<Void> RenderScene(SDL_Color bgColor = SDLite::kColorWhite);
+
+	EventBus2& GetEventBus() { return eventBus_; }
+
+	void TearDown();
 	
 	template <typename...Ts>
 	void SetTestScriptFile(std::string_view scriptFileName, std::function<void(Lua&)>&& setupFn);
@@ -73,6 +82,7 @@ private:
 	B2World world_;
 	ScriptManager scripts_;
 	TestScript testScript_;
+	EventBus2 eventBus_;
 };
 
 template<typename...Ts>

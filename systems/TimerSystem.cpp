@@ -5,29 +5,29 @@
 
 namespace {
 
-void PushTimerFiredEvent(Entity& entity, const Timer& timer)
-{
-	events::TimerFired firedEvent{
-		.producer = entity.GetID(),
-		.duration = timer.duration
-	};
-
-	//auto relations = entity.GetRelations();
-	//if (relations.IsChild())
-	//{
-	//	auto parent = relations.GetParent();
-	//	if (parent.IsValid())
-	//	{
-	//		firedEvent.producer = parent.GetID();
-	//	}
-	//}
-
-	EventBus::PushEvent(std::move(firedEvent));
-}
+//void PushTimerFiredEvent(Entity& entity, const Timer& timer)
+//{
+//	events::TimerFired firedEvent{
+//		.producer = entity.GetID(),
+//		.duration = timer.duration
+//	};
+//
+//	//auto relations = entity.GetRelations();
+//	//if (relations.IsChild())
+//	//{
+//	//	auto parent = relations.GetParent();
+//	//	if (parent.IsValid())
+//	//	{
+//	//		firedEvent.producer = parent.GetID();
+//	//	}
+//	//}
+//
+//	EventBus::PushEvent(std::move(firedEvent));
+//}
 
 } // unnamed
 
-void TimerSystem::Update(float delta)
+void TimerSystem::Update(float delta, EventBus2& bus)
 {
 	auto entities = ECS::GetAllEntitiesWith<Timer>();
 
@@ -46,7 +46,11 @@ void TimerSystem::Update(float delta)
 			continue;
 		}
 		
-		PushTimerFiredEvent(entity, timer);
+		bus.PushEvent(events::TimerFired{
+			.producer = entity.GetID(),
+			.duration = timer.duration
+		});
+		//PushTimerFiredEvent(entity, timer);
 
 		timer.elapsed = 0.0f;
 
@@ -63,5 +67,6 @@ void TimerSystem::Update(float delta)
 		}
 	}
 
-	EventBus::DispatchEvents<events::TimerFired>();
+	bus.DispatchEvents();
+	//EventBus::DispatchEvents<events::TimerFired>();
 }

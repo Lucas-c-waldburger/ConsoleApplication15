@@ -29,8 +29,7 @@ public:
 	 
 	void DispatchEvents() { eventStorage_.Dispatch(eventSignalList_, controllerInputSignalList_); }
 
-	template <SomeEventData T>
-	void DiscardEvents() { eventStorage_.Discard<T>(); }
+	void DiscardEvents() { eventStorage_.Discard(); }
 
 	template <SomeEventData T>
 	const auto& PeekEvents() const { return eventStorage_.Peek<T>(); }

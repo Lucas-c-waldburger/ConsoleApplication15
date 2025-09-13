@@ -91,18 +91,19 @@ struct TextRenderable
     Handle<GlyphAtlas> sourceAtlas;
     std::string text;
     Dimensions<int> dimensions = { 0, 0 };
-    TextAlign align;
+    TextAlign align = TextAlign::Left;
     GlyphCache glyphCache;
 
-    enum DirtyFlag : uint8_t
+    enum Flag : uint8_t
     {
-       NewText = 1 << 0,
-       NewTransforms = 1 << 1,
+       DirtyText = 1 << 0,
+       DirtyTransform = 1 << 1,
+       FixedSize = 1 << 2
        //NewRotation = 1 << 2,
        //All = (NewText | NewTransforms | NewRotation)
     };
 
-    uint8_t dirtyFlags = DirtyFlag::NewText;
+    uint8_t flags = Flag::DirtyText;
 };
 
 struct SpriteRenderable 

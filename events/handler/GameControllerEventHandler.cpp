@@ -30,7 +30,7 @@ GameControllerEventHandler::~GameControllerEventHandler()
 	}
 }
 
-void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev)
+void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev, EventBus2& bus)
 {
 	switch (ev.type)
 	{
@@ -54,7 +54,8 @@ void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev)
 
 		activeControllers_[joystickId].first = std::move(newController);
 
-		EventBus::PushEvent(events::GameControllerConnected{ .joystickID = joystickId });
+		bus.PushEvent(events::GameControllerConnected{ .joystickID = joystickId });
+		//EventBus::PushEvent(events::GameControllerConnected{ .joystickID = joystickId });
 
 		break;
 	}
@@ -71,7 +72,8 @@ void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev)
 
 		activeControllers_.erase(ev.cdevice.which);
 
-		EventBus::PushEvent(events::GameControllerDisconnected{ .joystickID = deadJoystickId });
+		bus.PushEvent(events::GameControllerDisconnected{ .joystickID = deadJoystickId });
+		//EventBus::PushEvent(events::GameControllerDisconnected{ .joystickID = deadJoystickId });
 
 		break;
 	}
@@ -101,97 +103,13 @@ void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
 	inputUpdater.Update(ev);
 }
 
-//void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
-//{
-//	auto getAffectedAxisSide = [](auto axisType, auto& axisInputPair) -> AxisInputData& {
-//		auto& [left, right] = axisInputPair;
-//		return (axisType == SDL_CONTROLLER_AXIS_LEFTX ||
-//				axisType == SDL_CONTROLLER_AXIS_LEFTY) ? left : right;
-//	};
-//	auto getAffectedAxisValue = [](auto axisType, auto& axisInputSide) -> float& {
-//		auto& [x, y] = axisInputSide.value;
-//		return (axisType == SDL_CONTROLLER_AXIS_LEFTX ||
-//			    axisType == SDL_CONTROLLER_AXIS_RIGHTX) ? x : y;
-//	};
-//
-//	switch (ev.type)
-//	{
-//	case SDL_CONTROLLERAXISMOTION:
-//	{
-//		if (!activeControllers_.contains(ev.caxis.which))
-//		{
-//			LOG_ERROR("Controller active but wasn't properly connected\n");
-//			return;
-//		}
-//
-//		auto& lastInput = activeControllers_[ev.caxis.which].second.cachedControllerState.axisInput;
-//		auto& lastInputSide = getAffectedAxisSide(ev.caxis.axis, lastInput);
-//
-//		auto& xOrY = getAffectedAxisValue(ev.caxis.axis, lastInputSide);
-//
-//		//bool inDeadzone = (std::abs(ev.caxis.value) <= GameController::kAxisDeadzone);
-//		//xOrY = (inDeadzone) ? 0.0f : static_cast<float>(ev.caxis.value);
-//
-//		xOrY = static_cast<float>(ev.caxis.value);
-//
-//		bool markAsHeld = (lastInputSide.state == InputState::Pressed ||
-//						   lastInputSide.state == InputState::Held);
-//		if (markAsHeld)
-//		{
-//			lastInputSide.state = InputState::Held;
-//			lastInputSide.stateDuration = lastInputSide.stateDuration +
-//				(ev.caxis.timestamp - lastInputSide.timestamp);
-//		}
-//		else
-//		{
-//			lastInputSide.state = InputState::Pressed;
-//			lastInputSide.stateDuration = 0;
-//		}
-//
-//		lastInputSide.timestamp = ev.caxis.timestamp;
-//
-//		uint8_t cacheAxisIndex = InputDataCache::GetAxisIndexForEnum(ev.caxis.axis);
-//		activeControllers_[ev.caxis.which].second.inputUpdatedTracker.set(cacheAxisIndex, true);
-//
-//		break;
-//	}
-//	case SDL_CONTROLLERBUTTONDOWN: case SDL_CONTROLLERBUTTONUP:
-//	{
-//		if (!activeControllers_.contains(ev.cbutton.which))
-//		{
-//			std::cout << "Controller active but wasn't properly connected\n";
-//			return;
-//		}
-//
-//		ButtonInputData newButtonInput{};
-//		newButtonInput.button = static_cast<SDL_GameControllerButton>(ev.cbutton.button);
-//		newButtonInput.timestamp = ev.cbutton.timestamp;
-//
-//		auto& inputCache = activeControllers_[ev.cbutton.which].second;
-//		auto& lastButtonInput = inputCache.cachedControllerState.buttonInput[ev.cbutton.button];
-//
-//
-//		newButtonInput.state = (ev.type == SDL_CONTROLLERBUTTONUP) ? InputState::Released :
-//																	 InputState::Pressed;
-//		newButtonInput.stateDuration = 0;
-//
-//		lastButtonInput = std::move(newButtonInput);
-//		inputCache.inputUpdatedTracker.set(ev.cbutton.button, true);
-//
-//		break;
-//	}
-//	default:
-//		break;
-//	}
-//}
-
-void GameControllerEventHandler::Finalize()
+void GameControllerEventHandler::Finalize(EventBus2& bus)
 {
 	for (auto& [joystickId, pair] : activeControllers_)
 	{
 		auto& updater = pair.second;
 
-		updater.FinalizeAndPushEvents(joystickId);
+		updater.FinalizeAndPushEvents(joystickId, bus);
 	}
 
 	UpdateControllerStateComponents();

@@ -40,7 +40,7 @@ public:
 			return SignalToken{};
 		}
 
-		signals_[static_cast<size_t>(src)].Connect(std::forward<Fn>(fn));
+		return signals_[static_cast<size_t>(src)].Connect(std::forward<Fn>(fn));
 	}
 
 	// templated source flavor

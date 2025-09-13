@@ -125,7 +125,8 @@ Entity_t FindShapeEntity(const std::vector<Entity>& entities, const Handle<B2Sha
 };
 
 template <SomeCustomCollisionEvent T, SomeB2CollisionEvent U>
-void BufferCollisionEventsImpl(std::vector<Entity>& entities, U* b2EventArray, int count)
+void BufferCollisionEventsImpl(std::vector<Entity>& entities, EventBus2& bus, 
+							   U* b2EventArray, int count)
 {
 	for (int i = 0; i < count; ++i)
 	{
@@ -146,16 +147,21 @@ void BufferCollisionEventsImpl(std::vector<Entity>& entities, U* b2EventArray, i
 			continue;
 		}
 
-		EventBus::PushEvent(T{
-			.a = { .entity = entityA, .shapeHandle = shapeHandleA },
-			.b = { .entity = entityB, .shapeHandle = shapeHandleB }
+		bus.PushEvent(T{
+			.a = {.entity = entityA, .shapeHandle = shapeHandleA },
+			.b = {.entity = entityB, .shapeHandle = shapeHandleB }
 		});
+
+		//EventBus::PushEvent(T{
+		//	.a = { .entity = entityA, .shapeHandle = shapeHandleA },
+		//	.b = { .entity = entityB, .shapeHandle = shapeHandleB }
+		//});
 	}
 }
 
 } // unnamed namespace
 
-Result<Void> DispatchCollisionEvents(const B2World* world)
+Result<Void> DispatchCollisionEvents(const B2World* world, EventBus2& bus)
 {
 	assert(world);
 	assert(world->IsValid());
@@ -173,23 +179,22 @@ Result<Void> DispatchCollisionEvents(const B2World* world)
 	auto sensorEvs = b2World_GetSensorEvents(world->GetID());
 
 	BufferCollisionEventsImpl<events::ContactCollisionEnd>(
-		entities, contactEvs.endEvents, contactEvs.endCount
+		entities, bus, contactEvs.endEvents, contactEvs.endCount
 	);
 	BufferCollisionEventsImpl<events::SensorCollisionEnd>(
-		entities, sensorEvs.endEvents, sensorEvs.endCount
+		entities, bus, sensorEvs.endEvents, sensorEvs.endCount
 	);
 	BufferCollisionEventsImpl<events::ContactCollisionBegin>(
-		entities, contactEvs.beginEvents, contactEvs.beginCount
+		entities, bus, contactEvs.beginEvents, contactEvs.beginCount
 	);
 	BufferCollisionEventsImpl<events::SensorCollisionBegin>(
-		entities, sensorEvs.beginEvents, sensorEvs.beginCount
+		entities, bus, sensorEvs.beginEvents, sensorEvs.beginCount
 	); 
 	BufferCollisionEventsImpl<events::HitCollision>(
-		entities, contactEvs.hitEvents, contactEvs.hitCount
+		entities, bus, contactEvs.hitEvents, contactEvs.hitCount
 	);
 
-	EventBus::DispatchEventGroup<events::CollisionEventGroup>();
-
+	//EventBus::DispatchEventGroup<events::CollisionEventGroup>();
 	return Void{};
 }
 

@@ -2,7 +2,7 @@
 #include "../events/EventBus.h"
 #include "../events/data/GameControllerEvents.h"
 
-bool SDLInputSystem::Update()
+bool SDLInputSystem::Update(float delta, EventBus2& bus)
 {
 	while (SDL_PollEvent(&sdlEvent_))
 	{
@@ -13,7 +13,7 @@ bool SDLInputSystem::Update()
 
 		case SDL_CONTROLLERDEVICEADDED:
 		case SDL_CONTROLLERDEVICEREMOVED:
-			gameControllerHandler_.HandleDeviceEvent(sdlEvent_);
+			gameControllerHandler_.HandleDeviceEvent(sdlEvent_, bus);
 			break;
 
 		case SDL_CONTROLLERAXISMOTION:
@@ -22,14 +22,22 @@ bool SDLInputSystem::Update()
 			gameControllerHandler_.HandleInputEvent(sdlEvent_);
 			break;
 
+		case SDL_MOUSEMOTION:
+		case SDL_MOUSEWHEEL:
+		case SDL_MOUSEBUTTONDOWN:
+		case SDL_MOUSEBUTTONUP:
+			mouseHandler_.HandleMouseEvent(sdlEvent_);
+			break;
+
 		default:
 			break;
 		}
 	}
 
-	gameControllerHandler_.Finalize();
+	gameControllerHandler_.Finalize(bus);
+	mouseHandler_.Finalize(delta, bus);
 
-	EventBus::DispatchEventGroup<events::GameControllerEventGroup>();
+	bus.DispatchEvents();
 
 	return true;
 }

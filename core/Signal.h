@@ -108,10 +108,10 @@ public:
 	Signal& operator=(const Signal&) = delete;
 
 	Signal(Signal&& other) noexcept : 
-		slots_(std:move(other.slots_)), disconnectFn_(GetDisconnectLambda()) {}
-	//{
-	//	other.disconnectFn_ = nullptr;
-	//}
+		slots_(std::move(other.slots_)), disconnectFn_(GetDisconnectLambda()) 
+	{
+		other.disconnectFn_ = nullptr;
+	}
 	Signal& operator=(Signal&& other) noexcept
 	{
 		if (this != &other)

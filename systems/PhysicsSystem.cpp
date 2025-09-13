@@ -74,7 +74,7 @@ void ApplyForceRequests(B2Body& body, ForceRequests& requests)
 	ApplyForceRequestsImpl(body, requests.impulses, &B2Body::ApplyLinearImpulse);
 }
 
-void UpdateTransformComponents()
+void UpdateTransformComponents(EventBus2& bus)
 {
 	auto entities = ECS::GetAllEntitiesWith<RigidBody, Transform>();
 
@@ -95,7 +95,12 @@ void UpdateTransformComponents()
 		if (newPosition != transform.position && 
 			EntityShouldProduceEvent<events::EntityPositionChanged>(entity))
 		{
-			EventBus::PushEvent(events::EntityPositionChanged{
+			//EventBus::PushEvent(events::EntityPositionChanged{
+			//	.entity = entity.GetID(),
+			//	.newPosition = newPosition,
+			//	.oldPosition = transform.position
+			//});
+			bus.PushEvent(events::EntityPositionChanged{
 				.entity = entity.GetID(),
 				.newPosition = newPosition,
 				.oldPosition = transform.position
@@ -109,7 +114,7 @@ void UpdateTransformComponents()
 
 } // unnamed namespace
 
-void PhysicsSystem::Update(B2World* world_, float timeStep, int subStepCount)
+void PhysicsSystem::Update(B2World* world_, EventBus2& bus, float timeStep, int subStepCount)
 {
 	if (!world_)
 	{
@@ -126,11 +131,12 @@ void PhysicsSystem::Update(B2World* world_, float timeStep, int subStepCount)
 
 	world_->Step(timeStep, subStepCount);
 
-	DispatchCollisionEvents(world_);
+	DispatchCollisionEvents(world_, bus);
 
-	UpdateTransformComponents();
+	UpdateTransformComponents(bus);
 
-	EventBus::DispatchEvents<events::EntityPositionChanged>();
+	//EventBus::DispatchEvents<events::EntityPositionChanged>();
+	bus.DispatchEvents();
 }
 
 void PhysicsSystem::UpdateForces()

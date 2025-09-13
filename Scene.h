@@ -38,3 +38,8 @@ public:
 	static Result<Void> Run(std::shared_ptr<SceneFixture> scene);
 };
 
+class MouseScene
+{
+public:
+	static Result<Void> Run(std::shared_ptr<SceneFixture> scene);
+};

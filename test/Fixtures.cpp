@@ -4,20 +4,29 @@
 
 SceneFixture::~SceneFixture()
 {
-	world_.Destroy();
-
-	Logger::EndSession();
-	SDLite::Exit();
+	TearDown();
 }
 
 void SceneFixture::LoopStart()
 {
 	assert(systems_.IsSystemInitialized<GameLoopSystem>());
-	systems_.GetSystem<GameLoopSystem>()->UpdateLoopStepStart();
+	systems_.GetSystem<GameLoopSystem>()->UpdateLoopStepStart(eventBus_);
 
 	hooks_.SetHookPoint<HookPoint::LoopStart>();
 
 	UpdateTimers();
+}
+
+Result<Void> SceneFixture::UpdateEntityStates()
+{
+	assert(systems_.IsSystemInitialized<EntityStateSystem>());
+	assert(systems_.IsSystemInitialized<GameLoopSystem>());
+
+	float delta = systems_.GetSystem<GameLoopSystem>()->GetDeltaTime();
+
+	systems_.GetSystem<EntityStateSystem>()->Update(delta);
+
+	return Void{};
 }
 
 Result<bool> SceneFixture::UpdateSDLInputs()
@@ -25,7 +34,10 @@ Result<bool> SceneFixture::UpdateSDLInputs()
 	assert(systems_.IsSystemInitialized<SDLInputSystem>());
 	auto& inputSys = systems_.GetSystem<SDLInputSystem>();
 
-	return inputSys->Update();
+	assert(systems_.IsSystemInitialized<GameLoopSystem>());
+	float delta = systems_.GetSystem<GameLoopSystem>()->GetDeltaTime();
+
+	return inputSys->Update(delta, eventBus_);
 }
 
 Result<Void> SceneFixture::UpdatePhysics()
@@ -33,7 +45,7 @@ Result<Void> SceneFixture::UpdatePhysics()
 	assert(systems_.IsSystemInitialized<PhysicsSystem>());
 	assert(world_.IsValid());
 
-	systems_.GetSystem<PhysicsSystem>()->Update(&world_, 1.0f / 60.0f, 4);
+	systems_.GetSystem<PhysicsSystem>()->Update(&world_, eventBus_, 1.0f / 60.0f, 4);
 
 	return Void{};
 }
@@ -57,7 +69,7 @@ Result<Void> SceneFixture::UpdateRender()
 
 	systems_.GetSystem<SpriteAnimationSystem>()->Update(textureRepo_);
 
-	systems_.GetSystem<GameLoopSystem>()->UpdateLoopStepRender();
+	systems_.GetSystem<GameLoopSystem>()->UpdateLoopStepRender(eventBus_);
 
 	auto& cam = systems_.GetSystem<CameraSystem>()->GetCamera();
 	systems_.GetSystem<RenderSystem>()->Update(SDLite::Renderer(), cam, textureRepo_);
@@ -71,13 +83,38 @@ void SceneFixture::UpdateTimers()
 	assert(systems_.IsSystemInitialized<GameLoopSystem>());
 	float delta = systems_.GetSystem<GameLoopSystem>()->GetDeltaTime();
 
-	systems_.GetSystem<TimerSystem>()->Update(delta);
+	systems_.GetSystem<TimerSystem>()->Update(delta, eventBus_);
 }
 
 void SceneFixture::LoopEnd()
 {
 	assert(systems_.IsSystemInitialized<GameLoopSystem>());
-	systems_.GetSystem<GameLoopSystem>()->UpdateLoopStepRender();
+	systems_.GetSystem<GameLoopSystem>()->UpdateLoopStepRender(eventBus_);
+}
+
+Result<Void> SceneFixture::RenderScene(SDL_Color bgColor)
+{
+	SDLite::Renderer().Clear(bgColor);
+
+	TRY(UpdateRender());
+
+	SDLite::Renderer().Show();
+
+	return Void{};
+}
+
+void SceneFixture::TearDown()
+{
+	auto activeEntities = ECS::GetAllActiveEntities();
+	for (auto& entity : activeEntities)
+	{
+		entity.Destroy();
+	}
+
+	world_.Destroy();
+
+	Logger::EndSession();
+	SDLite::Exit();
 }
 
 Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
@@ -97,8 +134,8 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 	fixture->systems_.InitializeSystem<EntityStateSystem>();
 	fixture->systems_.InitializeSystem<GameLoopSystem>();
 
-	auto& callbackSystem = fixture->systems_.InitializeSystem<EventCallbackSystem>();
-	callbackSystem->ConnectToEventBus();
+	//auto& callbackSystem = fixture->systems_.InitializeSystem<EventCallbackSystem>();
+	//callbackSystem->ConnectToEventBus();
 
 	Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
 								   static_cast<float>(SDLite::kWindowHeight) };

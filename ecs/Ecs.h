@@ -17,17 +17,17 @@ private:
     // components that can't be mutated through Entity API
     template <SomeComponent T>
     static constexpr bool public_mutable_component_v = (
-        !RelationalComponentType<T>   &&
-        !std::same_as<T, EntityFlags> &&
-        !std::same_as<T, ActiveState>
+        !(RelationalComponentType<T>   ||
+          std::same_as<T, EntityFlags> ||
+          std::same_as<T, ActiveState>)
     );
 
     // components that can't be added/removed through Entity API
     template <SomeComponent T>
     static constexpr bool public_attachable_component_v = (
-        !RelationalComponentType<T>   && 
-        !std::same_as<T, EntityFlags> &&
-        !std::same_as<T, ActiveState>
+        !(RelationalComponentType<T>   ||
+          std::same_as<T, EntityFlags> ||
+          std::same_as<T, ActiveState>)
     );
 
 public: 
@@ -129,6 +129,21 @@ public:
     ECS& operator=(ECS&&) = delete;
 
     static Entity CreateEntity();
+
+    static std::vector<Entity> GetAllActiveEntities()
+    {
+        auto& ecs = ECS::Get();
+
+        auto active = ecs.entityManager_.GetActiveEntities();
+
+        std::vector<Entity> entities{ active.size() };
+
+        std::transform(active.begin(), active.end(), entities.begin(), [&ecs](Entity_t id) {
+            return Entity{ id, ecs };
+        });
+
+        return entities;
+    }
 
     template <typename...Ts, typename Filter>
     static std::vector<Entity> GetAllEntitiesWith(Filter&& filter)

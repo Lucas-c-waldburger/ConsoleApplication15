@@ -173,7 +173,34 @@ inline Result<Entity> MakeMultiColliderEntity(B2World& world)
 
 
 namespace test {
+    
+inline SDL_FPoint UpdateMouseTextEnt(Entity& entity, SDL_FPoint lastMousePos)
+{
+    assert(entity.IsValid());
+    assert((entity.HasComponents<MouseState, Renderable, Transform>()));
 
+    auto [mouse, renderable, transform] = 
+        entity.GetComponents<MouseState, Renderable, Transform>();
+
+    auto mousePos = mouse.cursorValue.position.absolute;
+
+    if (mousePos == lastMousePos || transform.position == mousePos)
+    {
+        return mousePos;
+    }
+
+    transform.position = mouse.cursorValue.position.absolute;
+
+    assert(std::holds_alternative<TextRenderable>(renderable.renderData));
+
+    auto& textData = std::get<TextRenderable>(renderable.renderData);
+
+    textData.text = std::format("x: {}\ny: {}", transform.position.x, transform.position.y);
+
+    textData.flags |= TextRenderable::Flag::DirtyText;
+
+    return mousePos;
+}
 
 
 //static constexpr float kMaxImpulseValue = 8.0f;

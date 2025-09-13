@@ -18,11 +18,26 @@ struct EntityStateTable
 
 /* ENTITY STATE IMPLEMENTS */
 template <typename T>
-concept ImplementsOnEnter = std::is_invocable_r_v<void, typename T::OnEnter, Entity&>;
+concept ImplementsOnEnter = requires {
+	{ &T::OnEnter } -> std::convertible_to<EntityStateTable::TransitionProcess>;
+};
 template <typename T>
-concept ImplementsOnExit = std::is_invocable_r_v<void, typename T::OnExit, Entity&>;
+concept ImplementsOnExit = requires {
+	{ &T::OnExit } -> std::convertible_to<EntityStateTable::TransitionProcess>;
+};
 template <typename T>
-concept ImplementsOnUpdate = std::is_invocable_r_v<void, typename T::OnUpdate, Entity&, float>;
+concept ImplementsOnUpdate = requires {
+	{ &T::OnUpdate } -> std::convertible_to<EntityStateTable::UpdateProcess>;
+};
+//template <typename T>
+//concept ImplementsOnEnter = 
+//	std::same_as<decltype(T::OnEnter), EntityStateTable::TransitionProcess>;
+//template <typename T>
+//concept ImplementsOnExit = 
+//	std::same_as<typename T::OnExit, EntityStateTable::TransitionProcess>;
+//template <typename T>
+//concept ImplementsOnUpdate = 
+//	std::same_as<typename T::OnUpdate, EntityStateTable::UpdateProcess>;
 /**/
 
 /* ENTITY STATE CONCEPT */

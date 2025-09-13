@@ -7,10 +7,18 @@
 #include "../callbacks/AnimationCallbacks.h"
 #include "../../state/EntityState.h"
 #include "../../components/util/SpriteAnimationUtils.h"
+#include "../../inputs/controller/GameController.h"
 
 namespace test {
 
 namespace {
+
+template <SDLPointType T>
+constexpr bool AxisOutsideDeadzone(T axisValue)
+{
+	return (std::abs(static_cast<int>(axisValue.x)) > GameController::kAxisDeadzone ||
+		    std::abs(static_cast<int>(axisValue.y)) > GameController::kAxisDeadzone);
+}
 
 bool UpdateFaceDirection(const GameControllerState& controller, Renderable& renderable)
 {
@@ -77,15 +85,23 @@ void HandleKnightAnimationStateEnter(Entity& entity, std::string_view stateName,
 
 	series.seriesMetrics.time.reset();
 	series.seriesMetrics.distance.reset();
-	ThresholdTracker<float> tracker{ .threshold = thresholdValue };
 
 	if (trackedType == TrackedValueType::ByTime)
 	{
-		series.seriesMetrics.time = tracker;
+		series.seriesMetrics.time = ThresholdTracker<float>{ 
+			.threshold = thresholdValue 
+		};
 	}
 	else
 	{
-		series.seriesMetrics.distance = tracker;
+		series.seriesMetrics.distance = ThresholdTracker<float, SDL_FPoint>{
+			.threshold = thresholdValue
+		};
+
+		assert(entity.HasComponent<Transform>());
+		auto pos = entity.GetComponent<Transform>().position;
+
+		series.seriesMetrics.distance->recorded = { pos, pos };
 	}
 
 	animations.current = std::string{ stateName };
@@ -358,11 +374,13 @@ class KnightWalkState
 {
 public:
 	static constexpr float kFrameDistance = 20.0f;
+	static constexpr std::string_view kWalkSpriteSeriesName = "walk";
 
 	static void OnEnter(Entity& entity)
 	{
-		HandleKnightAnimationStateEnter(entity, kWalkSeriesName,
+		HandleKnightAnimationStateEnter(entity, kWalkSpriteSeriesName,
 										TrackedValueType::ByTravelDistance, kFrameDistance);
+		//entity.GetComponent<EntityStateComponent>().stateID.value = EntityState<KnightWalkState>::GetStateID();
 	}
 
 	static void OnExit(Entity& entity)
@@ -383,7 +401,7 @@ public:
 			entity.GetComponents<EntityStateComponent, GameControllerState, 
 								 SpriteAnimations, Renderable>();
 
-		assert(stateComponent.stateID.value == EntityState<KnightIdleState>::GetStateID());
+		assert(stateComponent.stateID.value == EntityState<KnightWalkState>::GetStateID());
 
 		using enum GameControllerInputSource;
 
@@ -410,14 +428,21 @@ public:
 			return;
 		}
 
-		assert(animations.current == std::string{ kWalkSeriesName });
-		auto walkIt = animations.table.find(kWalkSeriesName);
+		assert(animations.current == std::string{ kWalkSpriteSeriesName });
+		auto walkIt = animations.table.find(kWalkSpriteSeriesName);
 		assert(walkIt != animations.table.end());
 
 		auto& walkSeries = walkIt->second;
 
 		assert(walkSeries.seriesMetrics.distance.has_value());
 		auto& travelDistance = *walkSeries.seriesMetrics.distance;
+
+		assert(entity.HasComponent<Transform>());
+		auto pos = entity.GetComponent<Transform>().position;
+
+		SDL_FPoint dist = { travelDistance.recorded.now - travelDistance.recorded.last };
+		travelDistance.accumulated += std::sqrt(dist.x * dist.x + dist.y * dist.y);
+		travelDistance.recorded.last = travelDistance.recorded.now;
 
 		if (travelDistance.accumulated >= travelDistance.threshold)
 		{
@@ -435,12 +460,15 @@ public:
 class KnightIdleState
 {
 public:
-	static constexpr float kFrameDuration = 0.25f;
+	static constexpr float kFrameDuration = 0.13f;
+	static constexpr std::string_view kIdleSpriteSeriesName = "idle";
 
 	static void OnEnter(Entity& entity)
 	{
-		HandleKnightAnimationStateEnter(entity, kIdleSeriesName,
+		HandleKnightAnimationStateEnter(entity, kIdleSpriteSeriesName,
 										TrackedValueType::ByTime, kFrameDuration);
+		//entity.GetComponent<EntityStateComponent>().stateID.value = EntityState<KnightIdleState>::GetStateID();
+
 	}
 
 	static void OnExit(Entity& entity)
@@ -470,7 +498,9 @@ public:
 			return;
 		}
 
-		bool movedLeftStick = controller.inputs[LeftStickAxis].state == InputState::Pressed;
+		auto ls = controller.inputs[LeftStickAxis];
+		bool movedLeftStick = ls.state == InputState::Pressed && AxisOutsideDeadzone(ls.value.axis);
+
 		if (movedLeftStick)
 		{
 			auto axisValue = controller.inputs[LeftStickAxis].value.axis;
@@ -487,8 +517,8 @@ public:
 			return;
 		}
 
-		assert(animations.current == std::string{ kIdleSeriesName });
-		auto idleIt = animations.table.find(kIdleSeriesName);
+		assert(animations.current == std::string{ kIdleSpriteSeriesName });
+		auto idleIt = animations.table.find(kIdleSpriteSeriesName);
 		assert(idleIt != animations.table.end());
 
 		auto& idleSeries = idleIt->second;
@@ -512,14 +542,15 @@ public:
 class KnightLookUpState
 {
 public:
-	static constexpr float kFrameDuration = 0.25f;
+	static constexpr float kFrameDuration = 0.15f;
 	static constexpr size_t kLoopSectionStartIndex = 1;
+	static constexpr std::string_view kLookUpSpriteSeriesName = "look_up";
 
 	static void OnEnter(Entity& entity)
 	{
-		HandleKnightAnimationStateEnter(entity, kLookUpSeriesName, 
+		HandleKnightAnimationStateEnter(entity, kLookUpSpriteSeriesName,
 										TrackedValueType::ByTime, kFrameDuration);
-				
+		//entity.GetComponent<EntityStateComponent>().stateID.value = EntityState<KnightLookUpState>::GetStateID();
 	}
 
 	static void OnUpdate(Entity& entity, float delta) 
@@ -544,8 +575,11 @@ public:
 			return;
 		}
 
-		auto leftStickEngaged = controller.inputs[LeftStickAxis].state == InputState::Pressed ||
-								 controller.inputs[LeftStickAxis].state == InputState::Held;
+		auto ls = controller.inputs[LeftStickAxis];
+		auto leftStickEngaged = ls.state == 
+			(InputState::Pressed || ls.state == InputState::Held) &&
+			AxisOutsideDeadzone(ls.value.axis);
+
 		if (leftStickEngaged)
 		{
 			auto axisValue = controller.inputs[LeftStickAxis].value.axis;
@@ -562,8 +596,8 @@ public:
 			return;
 		}
 
-		assert(animations.current == std::string{ kLookUpSeriesName });
-		auto lookupIt = animations.table.find(kLookUpSeriesName);
+		assert(animations.current == std::string{ kLookUpSpriteSeriesName });
+		auto lookupIt = animations.table.find(kLookUpSpriteSeriesName);
 		assert(lookupIt != animations.table.end());
 
 		auto& lookupSeries = lookupIt->second;
@@ -589,5 +623,207 @@ public:
 
 private:
 };
+
+class KnightJumpState
+{
+public:
+	static constexpr float kFrameDistance = 30.0f;
+	static constexpr size_t kJumpApexSeriesIndex = 5;
+	static constexpr std::string_view kJumpSpriteSeriesName = "airborne";
+
+	static void OnEnter(Entity& entity)
+	{
+		HandleKnightAnimationStateEnter(entity, kJumpSpriteSeriesName,
+			TrackedValueType::ByTravelDistance, kFrameDistance);
+	}
+
+	static void OnUpdate(Entity& entity, float delta)
+	{
+		if (!entity.HasComponents<EntityStateComponent, GameControllerState, SpriteAnimations>())
+		{
+			LOG_ERROR("Entity did not have required components for look-up state update");
+			return;
+		}
+
+		auto [stateComponent, controller, animations] =
+			entity.GetComponents<EntityStateComponent, GameControllerState, SpriteAnimations>();
+
+		assert(stateComponent.stateID.value == EntityState<KnightJumpState>::GetStateID());
+
+		using enum GameControllerInputSource;
+
+		auto pressedA = controller.inputs[A].state == InputState::Pressed;
+		if (pressedA)
+		{
+			stateComponent.stateID.requested = EntityState<KnightJumpState>::GetStateID();
+			return;
+		}
+
+		auto ls = controller.inputs[LeftStickAxis];
+		auto leftStickEngaged = (ls.state ==
+			InputState::Pressed || ls.state == InputState::Held) &&
+			AxisOutsideDeadzone(ls.value.axis);
+
+		if (leftStickEngaged)
+		{
+			auto axisValue = controller.inputs[LeftStickAxis].value.axis;
+
+			if (std::abs(axisValue.x) > axisValue.y)
+			{
+				stateComponent.stateID.requested = EntityState<KnightWalkState>::GetStateID();
+				return;
+			}
+		}
+		else // released or none
+		{
+			stateComponent.stateID.requested = EntityState<KnightLookDownState>::GetStateID();
+			return;
+		}
+
+		/*assert(animations.current == std::string{ kLookUpSpriteSeriesName });
+		auto lookupIt = animations.table.find(kLookUpSpriteSeriesName);
+		assert(lookupIt != animations.table.end());
+
+		auto& lookupSeries = lookupIt->second;
+
+		assert(lookupSeries.seriesMetrics.time.has_value());
+		auto& time = *lookupSeries.seriesMetrics.time;
+
+		time.accumulated += delta;
+		if (time.accumulated >= time.threshold)
+		{
+			AdvanceSpriteSeries(lookupSeries);
+
+			if (lookupSeries.index > 0)
+			{
+				lookupSeries.spriteRange.min = kLoopSectionStartIndex;
+			}
+
+			entity.AddComponent<NeedsUpdate>().components |= SpriteAnimations::componentBit;
+
+			time.accumulated = 0.0f;
+		}*/
+	}
+
+	static void ConnectCollisionCallback(Entity& entity, EventBus2& bus)
+	{
+		auto& signalTokens = entity.AddComponent<SignalTokenStorage>().signalTokens;
+
+		signalTokens.push_back(
+			bus.ConnectToEvent([id = entity.GetID()](const events::ContactCollisionBegin& ev) {
+
+				auto entity = ECS::GetEntityByID(id);
+				if (!entity.IsValid())
+				{
+					return;
+				}
+
+				if (ev.a.entity == entity || ev.b.entity == entity)
+				{
+					assert(entity.HasComponent<EntityStateComponent>());
+					auto& state = entity.GetComponent<EntityStateComponent>();
+
+					state.stateID.requested = EntityState<KnightIdleState>::GetStateID();
+				}
+		}));
+	}
+
+private:
+};
+
+
+
+//class KnightLookUpState
+//{
+//public:
+//	static constexpr float kFrameDuration = 0.25f;
+//	static constexpr size_t kLoopSectionStartIndex = 1;
+//	static constexpr std::string_view kLookDownSpriteSeriesName = "look_up";
+//
+//	static void OnEnter(Entity& entity)
+//	{
+//		//assert(entity.HasComponent<GameControllerState>());
+//		//auto& controller = entity.GetComponent<GameControllerState>();
+//		//assert(controller.joystickID != -1);
+//
+//		//auto ls = controller.inputs[GameControllerInputSource::LeftStickAxis];
+//		//std::string_view upOrDownSeries = (ls.value.axis.y < 0)
+//		//	? kLookUpSpriteSeriesName
+//		//	: kLookDownSpriteSeriesName;
+//
+//		HandleKnightAnimationStateEnter(entity, upOrDownSeries,
+//			TrackedValueType::ByTime, kFrameDuration);
+//	}
+//
+//	static void OnUpdate(Entity& entity, float delta)
+//	{
+//		if (!entity.HasComponents<EntityStateComponent, GameControllerState, SpriteAnimations>())
+//		{
+//			LOG_ERROR("Entity did not have required components for look-up state update");
+//			return;
+//		}
+//
+//		auto [stateComponent, controller, animations] =
+//			entity.GetComponents<EntityStateComponent, GameControllerState, SpriteAnimations>();
+//
+//		assert(stateComponent.stateID.value == EntityState<KnightLookUpState>::GetStateID());
+//
+//		using enum GameControllerInputSource;
+//
+//		auto pressedA = controller.inputs[A].state == InputState::Pressed;
+//		if (pressedA)
+//		{
+//			stateComponent.stateID.requested = EntityState<KnightJumpState>::GetStateID();
+//			return;
+//		}
+//
+//		auto ls = controller.inputs[LeftStickAxis];
+//		auto leftStickEngaged = (ls.state == InputState::Held ||
+//								 ls.state == InputState::Pressed) &&
+//								 AxisOutsideDeadzone(ls.value.axis);
+//
+//		if (leftStickEngaged)
+//		{
+//			auto axisValue = controller.inputs[LeftStickAxis].value.axis;
+//
+//			if (std::abs(axisValue.x) > axisValue.y)
+//			{
+//				stateComponent.stateID.requested = EntityState<KnightWalkState>::GetStateID();
+//				return;
+//			}
+//		}
+//		else // released or none
+//		{
+//			stateComponent.stateID.requested = EntityState<KnightLookDownState>::GetStateID();
+//			return;
+//		}
+//
+//		assert(animations.current == std::string{ kLookUpSpriteSeriesName });
+//		auto lookupIt = animations.table.find(kLookUpSpriteSeriesName);
+//		assert(lookupIt != animations.table.end());
+//
+//		auto& lookupSeries = lookupIt->second;
+//
+//		assert(lookupSeries.seriesMetrics.time.has_value());
+//		auto& time = *lookupSeries.seriesMetrics.time;
+//
+//		time.accumulated += delta;
+//		if (time.accumulated >= time.threshold)
+//		{
+//			AdvanceSpriteSeries(lookupSeries);
+//
+//			if (lookupSeries.index > 0)
+//			{
+//				lookupSeries.spriteRange.min = kLoopSectionStartIndex;
+//			}
+//
+//			entity.AddComponent<NeedsUpdate>().components |= SpriteAnimations::componentBit;
+//
+//			time.accumulated = 0.0f;
+//		}
+//	}
+//
+//private:
+//};
 
 } // test

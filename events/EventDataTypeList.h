@@ -16,6 +16,8 @@ namespace events {
 	struct GameControllerDisconnected;
 	struct GameControllerInput;
 
+	struct MouseInput;
+
 	struct TimerFired;
 
 	struct SpriteIndexChange;
@@ -40,6 +42,8 @@ using EventDataTypeList = TypeList<
 	events::GameControllerConnected,
 	events::GameControllerDisconnected,
 	events::GameControllerInput,
+
+	events::MouseInput,
 
 	events::TimerFired,
 

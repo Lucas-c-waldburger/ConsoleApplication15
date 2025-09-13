@@ -37,6 +37,28 @@ auto ConnectToFirstController()
     };
 }
 
+auto NewConnectToFirstController(Entity& entity)
+{
+    return [id = entity.GetID()](const events::GameControllerConnected& ev) 
+    {
+        auto entity = ECS::GetEntityByID(id);
+        assert(entity.IsValid());
+
+        if (!entity.HasComponent<GameControllerState>())
+        {
+            LOG_WARNING("Entity did not have GameControllerState component");
+            return;
+        }
+
+        auto& controllerState = entity.GetComponent<GameControllerState>();
+        if (controllerState.joystickID == GameController::kInvalidJoystickID)
+        {
+            controllerState.joystickID = ev.joystickID;
+            LOG_INFO("Entity attached to new controller connection!");
+        }
+    };
+}
+
 auto DisconnectController()
 {
     return [](Entity& entity, const events::GameControllerDisconnected& ev) -> ReturnSignal 
@@ -59,6 +81,34 @@ auto DisconnectController()
         LOG_DEBUG("Controller Disconnected. Listening for a new connection on this entity...");
 
         return ReturnSignal::KeepObserving;
+    };
+}
+
+auto NewDisconnectController(Entity& entity)
+{
+    return [id = entity.GetID()](const events::GameControllerDisconnected& ev) 
+    {
+        auto entity = ECS::GetEntityByID(id);
+        assert(entity.IsValid());
+
+        if (!entity.HasComponent<GameControllerState>())
+        {
+            LOG_WARNING("Entity did not have GameControllerState component");
+            return;
+        }
+
+        auto& controllerState = entity.GetComponent<GameControllerState>();
+        if (controllerState.joystickID != ev.joystickID)
+        {
+            LOG_DEBUG("Entity's connected controller different from the one that was disconnected");
+            return;
+        }
+
+        controllerState.joystickID = GameController::kInvalidJoystickID;
+
+        LOG_DEBUG("Controller Disconnected. Listening for a new connection on this entity...");
+
+        return;
     };
 }
 
@@ -90,6 +140,39 @@ auto ApplyAxisInputToForce(float impulseScale)
         rigidBody.forceRequests.impulses.push_back(Force{ .value = { impulse, 0.0f } });
 
         return ReturnSignal::KeepObserving;
+    };
+}
+
+
+auto NewApplyAxisInputToForce(Entity& entity, float impulseScale)
+{
+    return [id = entity.GetID(), impulseScale](const events::GameControllerInput& ev)
+    {
+        auto entity = ECS::GetEntityByID(id);
+        assert(entity.IsValid());
+
+        int axisValueX = ev.input.value.axis.x;
+        if (axisValueX == 0)
+        {
+            return;
+        }
+
+        if (!entity.HasComponent<GameControllerState>() ||
+            entity.GetComponent<GameControllerState>().joystickID != ev.joystickID)
+        {
+            return;
+        }
+
+        if (!entity.HasComponent<RigidBody>())
+        {
+            return;
+        }
+
+        auto& rigidBody = entity.GetComponent<RigidBody>();
+
+        float impulse = static_cast<float>(axisValueX) * impulseScale;
+
+        rigidBody.forceRequests.impulses.push_back(Force{ .value = { impulse, 0.0f } });
     };
 }
 

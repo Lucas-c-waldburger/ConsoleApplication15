@@ -1,15 +1,16 @@
 #pragma once
 #include <bitset>
 #include "GameControllerInputMap.h"
+#include "../../events/EventBus2.h"
 
 class GameControllerInputUpdater
 {
 public:
-	GameControllerInputUpdater() = default;
+	GameControllerInputUpdater() : inputs_(MakeGameControllerInputMap()), tracker_() {}
 	~GameControllerInputUpdater() = default;
 
 	void Update(const SDL_Event& ev);
-	void FinalizeAndPushEvents(SDL_JoystickID ownerId);
+	void FinalizeAndPushEvents(SDL_JoystickID ownerId, EventBus2& bus);
 
 	GameControllerInputMap& GetInputMap() { return inputs_; }
 	const GameControllerInputMap& GetInputMap() const { return inputs_; }

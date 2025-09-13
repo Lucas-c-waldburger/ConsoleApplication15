@@ -8,6 +8,7 @@
 #include "../events/EventBus.h"
 #include "../events/data/EntityActions.h"
 #include "../physics/B2Body.h";
+#include "../events/EventBus2.h"
 
 namespace {
 
@@ -87,7 +88,7 @@ std::vector<events::EntityDestroyed> GetAllEntitiesToDestroy(EntityManager& enti
 
 
 void EntityDestructor::EntityDestroyed(EntityManager& entityManager, ComponentManager& componentManager,
-									   Entity_t entityId)
+									   /*EventBus2& bus, */Entity_t entityId)
 {
 	auto entitiesToDestroy = GetAllEntitiesToDestroy(entityManager, componentManager, entityId);
 
@@ -97,14 +98,16 @@ void EntityDestructor::EntityDestroyed(EntityManager& entityManager, ComponentMa
 
 		entityManager.DestroyEntity(destructionEvent.entity);
 
-		componentManager.EntityDestroyed(destructionEvent.entity);
-
 		assert(componentManager.HasComponent<EntityFlags>(destructionEvent.entity));
 		const auto& flags = componentManager.GetComponent<EntityFlags>(destructionEvent.entity);
+		//if (flags.eventProductionFlags.Test<events::EntityDestroyed>())
+		//{
+			//	bus.PushEvent(std::move(destructionEvent));
+		//}
 
-		if (flags.eventProductionFlags.Test<events::EntityDestroyed>())
-		{
-			EventBus::PushEvent(std::move(destructionEvent));
-		}
+
+		componentManager.EntityDestroyed(destructionEvent.entity);
 	}
+
+	//bus.DispatchEvents();
 }

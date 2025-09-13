@@ -2,26 +2,37 @@
 #include "../events/EventDataTypeList.h"
 #include "../events/EventBus.h"
 
-void GameLoopSystem::UpdateLoopStepStart()
+void GameLoopSystem::UpdateLoopStepStart(EventBus2& bus)
 {
 	counter_.Update();
 
-	EventBus::PushEvent(events::GameLoopStepStart{});
-	EventBus::DispatchEvents<events::GameLoopStepStart>();
+	bus.PushEvent(events::GameLoopStepStart{});
+	bus.DispatchEvents();
+
+	//EventBus::PushEvent(events::GameLoopStepStart{});
+	//EventBus::DispatchEvents<events::GameLoopStepStart>();
 }
 
-void GameLoopSystem::UpdateLoopStepRender()
+void GameLoopSystem::UpdateLoopStepRender(EventBus2& bus)
 {
-	EventBus::PushEvent(events::GameLoopStepRender{});
-	EventBus::DispatchEvents<events::GameLoopStepRender>();
+	bus.PushEvent(events::GameLoopStepRender{});
+	bus.DispatchEvents();
+
+	//EventBus::PushEvent(events::GameLoopStepRender{});
+	//EventBus::DispatchEvents<events::GameLoopStepRender>();
 }
 
-void GameLoopSystem::UpdateLoopStepEnd()
+void GameLoopSystem::UpdateLoopStepEnd(EventBus2& bus)
 {
-	EventBus::PushEvent(events::GameLoopStepEnd{});
-	EventBus::DispatchEvents<events::GameLoopStepEnd>();
+	bus.PushEvent(events::GameLoopStepEnd{});
+	bus.DispatchEvents();
 
-	EventBus::ClearEvents();
+	bus.DiscardEvents();
+
+	//EventBus::PushEvent(events::GameLoopStepEnd{});
+	//EventBus::DispatchEvents<events::GameLoopStepEnd>();
+
+	//EventBus::ClearEvents();
 }
 
 float GameLoopSystem::GetDeltaTime() const
