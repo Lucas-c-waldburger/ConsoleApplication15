@@ -12,6 +12,7 @@
 #include "../systems/EventCallbackSystem.h"
 #include "../components/builder/RigidBodyComponentBuilder.h"
 #include "../components/builder/ColliderComponentBuilder.h"
+#include "../events/EventBus2.h"
 //#include "../callbacks/StateTransitionCallbackRegistry.h"
 //#include "callbacks/AnimationCallbacks.h"
 //#include "callbacks/GameControllerCallbacks.h"
@@ -240,5 +241,209 @@ inline SDL_FPoint UpdateMouseTextEnt(Entity& entity, SDL_FPoint lastMousePos)
 //    Register(NAME_AND_CALL(SpriteAdvanceOnDistanceTraveled, 30))
 //    };
 //};
+
+//enum class RequestAction
+//{
+//    Accumulate,
+//    Set
+//};
+//
+//template <typename T>
+//struct RequestActionQueue
+//{
+//    const T currentValue;
+//    std::vector<std::pair<RequestAction, T>> requestQueue;
+//};
+
+struct PhysicsData
+{
+    SDL_FPoint position = { 0.0f, 0.0f };
+    float rotation = 0.0f;
+    struct { float linear = 0.0f, angular = 0.0f; } velocity;
+    float mass = 0.0f;
+    float gravityScale = 0.0f;
+};
+
+//struct ParticleParameters
+//{
+//    float lifetime = 0.0f;
+//    Extent<SDL_FPoint> scale = {{ 1.0f }, { 1.0f }};
+//
+//};
+//
+//struct ParticleBehaviors
+//{
+//    template <typename T>
+//    using Behavior = fu2::function_view<void(Entity&)>
+//};
+
+struct ParticleProfile
+{
+    float lifetime             = 0.0f;
+    SDL_FPoint drift           = { 0.0f, 0.0f };
+    SDL_FPoint emitterOffset   = { 0.0f, 0.0f };
+    Extent<SDL_Color> colorMod = {{ 0, 0, 0, 255 }, { 0, 0, 0, 255 }};
+    Extent<SDL_FPoint> scale   = {{ 1.0f, 1.0f }, { 1.0f, 1.0f }};
+    Extent<float> rotation     = { 0.0f, 0.0f };
+};
+
+using ParticleGenerator = fu2::unique_function<ParticleProfile()>;
+
+
+
+
+class ParticleEmitter
+{
+private:
+    auto GetSpawnerLambda()
+    {
+        return [this](const events::TimerFired& ev) {
+            if (ev.producer != emitter_.GetID())
+            {
+                return;
+            }
+
+            if (particles_.size() < maxParticles_)
+            {
+                AddParticle();
+            }
+        };
+    }
+
+    static ParticleGenerator GetDefaultParticleGenerator()
+    {
+        return []() {
+            return ParticleProfile{
+                .lifetime = 0.5f + (rand() % 100) / 100.0f,
+                .drift = {.x = (rand() % 21 - 10) * 0.5f,
+                          .y = (rand() % 21 - 10) * 0.5f },
+                .scale = {.start = 0.5f, .end = 2.0f }
+            };
+        };
+    };
+
+public:
+    ParticleEmitter(EventBus2& bus, Renderable renderable, SDL_FPoint emitterPos,
+        ParticleGenerator&& generator = GetDefaultParticleGenerator(), 
+        int particlesPerSec = 15, 
+        size_t maxCount = 10);
+    ~ParticleEmitter();
+
+    void AddParticle()
+    {
+        if (liveCount_ >= maxParticles_)
+        {
+            return;
+        }
+
+        if (!particleGenerator_)
+        {
+            LOG_ERROR("No particle generator set!");
+            return;
+        }
+
+        auto& [particle, bx] = particles_[liveCount_++];
+        if (!particle.IsValid())
+        {
+            particle = ECS::CreateEntity();
+
+            // stop them from firing when destroyed
+            particle.SetEventProduction<events::TimerFired>(false);
+            particle.SetEventProduction<events::EntityDestroyed>(false);
+        }
+
+        particle.SetComponentVisibility(true);    
+
+        bx = particleGenerator_();
+
+        const SDL_FPoint emitterPos = emitter_.GetComponent<Transform>().position;
+
+        auto& tf = particle.AddComponent<Transform>();
+        tf.position = emitterPos + bx.emitterOffset;
+        tf.scale = bx.scale.start;      
+
+        auto& timer = particle.AddComponent<Timer>();
+        timer.duration = bx.lifetime;
+        timer.flags = Timer::Flag::Active;
+
+        particle.AddComponent<Renderable>() = renderable_;
+    }
+
+    void Update()
+    {
+        for (size_t i = 0; i < liveCount_; i++)
+        {
+            auto& [entity, bx] = particles_[i];
+
+            auto kill = [this, &entity, &i]() {
+                // wont be processed by any system, will be considered IsValid()
+                entity.SetComponentVisibility(false);
+
+                if (--liveCount_ <= i)
+                {
+                    return;
+                }
+
+                std::swap(particles_[i], particles_[liveCount_]);
+                --i;
+            };
+
+            if (!entity.IsValid())
+            {
+                kill();              
+                continue;
+            }
+
+            auto [tf, timer, renderable] = 
+                entity.GetComponents<Transform, Timer, Renderable>();
+
+            if ((timer.flags & Timer::Flag::Active) == 0)
+            {
+                kill();
+                continue;
+            }
+
+            assert(timer.duration > 0.0f);
+            
+            float t = timer.elapsed / timer.duration;
+            uint8_t alpha = static_cast<uint8_t>(255 * (1.0f - t));
+
+            renderable.profile.mods.alpha = alpha;
+
+            float scale = 2.0f * (1.0f - t);
+
+            tf.scale = { scale, scale };
+            tf.position += bx.drift;
+        }
+    }
+
+    Entity& GetEmitterEntity() { return emitter_; }
+
+    size_t GetMaxParticles() const { return maxParticles_; }
+    void SetMaxParticles(size_t newMax) { maxParticles_ = newMax; }
+
+    float GetSpawnRate() const { return spawnRate_; }
+    void SetSpawnRate(float newRate) { spawnRate_ = newRate; }
+
+    template <typename Fn> requires std::convertible_to<Fn, ParticleGenerator>
+    void SetParticleGenerator(Fn&& fn) { }
+
+private:
+    struct MovementBehavior 
+    {
+        SDL_FPoint drift = { 0.0f, 0.0f };
+    };
+
+    Renderable renderable_;
+    size_t maxParticles_ = 0;
+    float spawnRate_ = 0.0f;
+
+    Entity emitter_;
+    std::vector<std::pair<Entity, ParticleProfile>> particles_;
+    ParticleGenerator particleGenerator_ = nullptr;
+    size_t liveCount_ = 0;
+};
+
+
 
 } // test

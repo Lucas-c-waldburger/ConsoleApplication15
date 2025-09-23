@@ -154,6 +154,7 @@
     <ClCompile Include="audio\Sound.cpp" />
     <ClCompile Include="callbacks\StateTransitionCallback.cpp" />
     <ClCompile Include="core\Counter.cpp" />
+    <ClCompile Include="deps\catch\catch_amalgamated.cpp" />
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp" />
     <ClCompile Include="state\EntityState.cpp" />
     <ClCompile Include="state\EntityStateBuilder.cpp" />
@@ -245,6 +246,7 @@
     <ClInclude Include="core\Signal.h" />
     <ClInclude Include="core\SizedEnum.h" />
     <ClInclude Include="core\UniqueVoidPtr.h" />
+    <ClInclude Include="deps\catch\catch_amalgamated.hpp" />
     <ClInclude Include="events\ControllerInputSignal.h" />
     <ClInclude Include="events\data\GameLoopStepEvents.h" />
     <ClInclude Include="events\data\MouseEvents.h" />
@@ -654,6 +656,7 @@
     <Image Include="resources\sprites\knight_new\walk\Walk_004.png" />
     <Image Include="resources\sprites\knight_new\walk\Walk_005.png" />
     <Image Include="resources\sprites\knight_new\walk\Walk_006.png" />
+    <Image Include="resources\sprites\particles\0.png" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\scripts\b2body_test.lua" />
@@ -663,6 +666,7 @@
     <None Include="resources\scripts\sprite_render_test.lua" />
     <None Include="resources\scripts\test_physics.lua" />
     <None Include="resources\scripts\text_render_test.lua" />
+    <None Include="resources\sprites\particles\2d_lights_and_shadows_neutral_point_light.webp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc" />

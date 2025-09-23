@@ -16,17 +16,17 @@ public:
 	void SetAll(bool tf) { (tf) ? bitset_.set() : bitset_.reset(); }
 
 	template <SomeEventData...Ts> requires (sizeof...(Ts) > 0)
-	void Set(bool tf) const { (bitset_.set(Ts::eventType, tf) && ...); }
+	void Set(bool tf) { (bitset_.set(static_cast<size_t>(Ts::eventType), tf) && ...); }
 
-	void Set(uint32_t eventType, bool tf) { bitset_.set(eventType, tf); }
-
-	template <SomeEventData...Ts> requires (sizeof...(Ts) > 0)
-	bool Test() const { return (bitset_.test(Ts::eventType) && ...); }
-
-	bool Test(uint32_t eventType) const { return bitset_.test(eventType); }
+	void Set(uint32_t eventType, bool tf) { bitset_.set(static_cast<size_t>(eventType), tf); }
 
 	template <SomeEventData...Ts> requires (sizeof...(Ts) > 0)
-	bool TestAny() const { return (bitset_.test(Ts::eventType) || ...); }
+	bool Test() const { return (bitset_.test(static_cast<size_t>(Ts::eventType)) && ...); }
+
+	bool Test(uint32_t eventType) const { return bitset_.test(static_cast<size_t>(eventType)); }
+
+	template <SomeEventData...Ts> requires (sizeof...(Ts) > 0)
+	bool TestAny() const { return (bitset_.test(static_cast<size_t>(Ts::eventType)) || ...); }
 
 private:
 	std::bitset<EventDataTypeList::size> bitset_;

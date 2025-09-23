@@ -13,6 +13,21 @@
 
 namespace fs = std::filesystem;
 
+//inline Result<SpriteSeriesResourcePacket> 
+//LoadSprites(const std::string& directoryPath, 
+//			std::initializer_list<std::string> filenames)
+//{
+//	auto dirPath = fs::path{ directoryPath };
+//	if (!fs::exists(dirPath))
+//	{
+//		return MAKE_ERROR_FMT("Directory path '{}' does not exist", directoryPath);
+//	}
+//
+//	SpriteSeriesMetadata metadata{ .seriesName = dirPath.stem().string() };
+//
+//
+//}
+
 
 inline Result<Void> LoadSpriteDirectory(const std::string& directoryPath,
 								 SpriteSeriesResourcePackets& allPackets)

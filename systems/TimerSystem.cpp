@@ -2,6 +2,7 @@
 #include "../ecs/Ecs.h"
 #include "../events/EventBus.h"
 #include "../events/data/TimeEvents.h"
+#include "../core/CommonEntityMethods.h"
 
 namespace {
 
@@ -46,11 +47,13 @@ void TimerSystem::Update(float delta, EventBus2& bus)
 			continue;
 		}
 		
-		bus.PushEvent(events::TimerFired{
-			.producer = entity.GetID(),
-			.duration = timer.duration
-		});
-		//PushTimerFiredEvent(entity, timer);
+		if (EntityShouldProduceEvent<events::TimerFired>(entity))
+		{
+			bus.PushEvent(events::TimerFired{
+				.producer = entity.GetID(),
+				.duration = timer.duration
+			});
+		}
 
 		timer.elapsed = 0.0f;
 
@@ -68,5 +71,4 @@ void TimerSystem::Update(float delta, EventBus2& bus)
 	}
 
 	bus.DispatchEvents();
-	//EventBus::DispatchEvents<events::TimerFired>();
 }

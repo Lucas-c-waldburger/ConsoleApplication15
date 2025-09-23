@@ -35,7 +35,17 @@ constexpr bool operator==(const SDL_Color& lhs, const SDL_Color& rhs)
 
 struct TextureMods
 {
-    SDL_Color color = { 0, 0, 0, 255 };
+    struct RGB 
+    { 
+        uint8_t r = 255, g = 255, b = 255; 
+        friend constexpr bool operator==(const RGB& lhs, const RGB& rhs)
+        {
+            return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b;
+        }
+    };
+
+    RGB color = {};
+    uint8_t alpha = 255;
     SDL_BlendMode blend = SDL_BLENDMODE_BLEND;
 
     friend constexpr bool operator==(const TextureMods& lhs, const TextureMods& rhs)

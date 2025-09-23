@@ -213,6 +213,9 @@
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="deps\catch\catch_amalgamated.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1136,6 +1139,9 @@
     <ClInclude Include="events\data\MouseEvents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="deps\catch\catch_amalgamated.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -1516,6 +1522,9 @@
     <Image Include="resources\sprites\knight_new\walk\Walk_006.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="resources\sprites\particles\0.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\scripts\b2body_test.lua" />
@@ -1525,6 +1534,7 @@
     <None Include="resources\scripts\test_physics.lua" />
     <None Include="resources\scripts\text_render_test.lua" />
     <None Include="resources\scripts\sprite_render_test.lua" />
+    <None Include="resources\sprites\particles\2d_lights_and_shadows_neutral_point_light.webp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

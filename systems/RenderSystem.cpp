@@ -9,16 +9,68 @@
 namespace
 {
 
-void Draw(SDL_Renderer* renderer, SDL_Texture* texture, const AtlasPlot& atlasPlot, SDL_Rect& destRect,
-		  const Transform& transform, SDL_Point* rotationCenter, const RenderProfile& profile)
-{
-	SDL_RenderCopyEx(renderer, texture, &atlasPlot.rect, &destRect, 
-					 static_cast<double>(transform.rotation + atlasPlot.rotation), rotationCenter, profile.flip);
-}
+//void Draw(SDL_Renderer* renderer, SDL_Texture* texture, const AtlasPlot& atlasPlot, SDL_Rect& destRect,
+//		  const Transform& transform, SDL_Point* rotationCenter, const RenderProfile& profile)
+//{
+//	SDL_RenderCopyEx(renderer, texture, &atlasPlot.rect, &destRect, 
+//					 static_cast<double>(transform.rotation + atlasPlot.rotation), rotationCenter, profile.flip);
+//}
 
 constexpr bool HasRenderData(const Renderable& renderable)
 {
 	return !std::holds_alternative<std::monostate>(renderable.renderData);
+}
+
+void Draw(SDL_Renderer* renderer, RenderSystem::TextureResourceValue& textureValue, 
+		  const AtlasPlot& atlasPlot, SDL_Rect& destRect, const Transform& transform, 
+		  SDL_Point* rotationCenter, const RenderProfile& profile)
+{
+	auto& [texture, textureMods] = textureValue;
+
+	if (profile.mods.color != textureMods.color)
+	{
+		const auto [r, g, b] = profile.mods.color;
+
+		SDL_SetTextureColorMod(texture, r, g, b);
+
+		textureMods.color = profile.mods.color;
+	}
+	if (profile.mods.alpha != textureMods.alpha)
+	{
+		SDL_SetTextureAlphaMod(texture, profile.mods.alpha);
+
+		textureMods.alpha = profile.mods.alpha;
+	}
+	if (profile.mods.blend != textureMods.blend)
+	{
+		SDL_SetTextureBlendMode(texture, profile.mods.blend);
+
+		textureMods.blend = profile.mods.blend;
+	}
+
+	SDL_RenderCopyEx(renderer, texture, &atlasPlot.rect, &destRect,
+		static_cast<double>(transform.rotation + atlasPlot.rotation), 
+		rotationCenter, profile.flip);
+}
+
+void ResetTextureMods(RenderSystem::TextureResourceValue& textureValue)
+{
+	static TextureMods defaultMods{};
+
+	auto& [texture, currentMods] = textureValue;
+
+	if (currentMods.color != defaultMods.color)
+	{
+		SDL_SetTextureColorMod(texture, 255, 255, 255);
+	}
+	if (currentMods.alpha != defaultMods.alpha)
+	{
+		SDL_SetTextureAlphaMod(texture, 255);
+	}
+	if (currentMods.blend != defaultMods.blend)
+	{
+		SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_NONE);
+	}
 }
 
 //void RenderTexture(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_Rect& srcRect, 
@@ -595,7 +647,7 @@ void RenderSystem::Update(SDL_Renderer* renderer, const Camera& camera,
 
 	SortByDrawOrder(entities);
 
-	UpdateRenderContext(renderer, textureRepo, camera);
+	PrepareRenderContext(renderer, textureRepo, camera);
 	SDL_Color originalDrawColor = context_.currentDrawColor;
 
 	for (auto& entity : entities)
@@ -633,25 +685,40 @@ void RenderSystem::Update(SDL_Renderer* renderer, const Camera& camera,
 	}
 }
 
-void RenderSystem::UpdateRenderContext(SDL_Renderer* renderer, const TextureRepository& textureRepo, 
+void RenderSystem::PrepareRenderContext(SDL_Renderer* renderer, const TextureRepository& textureRepo, 
 										  const Camera& camera)
 {
 	context_.renderer = renderer;
 	context_.textureRepo = &textureRepo;
 	context_.camera = &camera;
+	context_.debugDrawPoints.clear();
 	context_.currentDrawColor = GetRenderDrawColor(renderer);
+	context_.textureResourceMap.clear();
 }
 
 void RenderSystem::RenderSprite(const SpriteRenderable& spriteRenderable, const Transform& transform,
 								   const RenderProfile& renderProfile)
 {
-	SDL_Texture* atlasTexture = context_.textureRepo->GetAtlasTexture(spriteRenderable.sourceAtlas);
-	if (!atlasTexture)
-	{
-		LOG_WARNING("Sprite series atlas handle expired");
+	TextureResourceKey key = { spriteRenderable.sourceAtlas, {} };
+	bool existed = context_.textureResourceMap.contains(key);
 
-		return;
+	auto& textureValue = context_.textureResourceMap[key];
+	auto& texture = textureValue.first;
+
+	if (!existed)
+	{
+		texture = context_.textureRepo->GetAtlasTexture(spriteRenderable.sourceAtlas);
+		if (!texture)
+		{
+			LOG_WARNING("Sprite series atlas handle expired");
+
+			return;
+		}
+
+		ResetTextureMods(textureValue);
 	}
+
+	assert(texture);
 
 	SDL_Rect renderRect = MakeScreenRect(*context_.camera, transform, 
 										 spriteRenderable.sourcePlot.rect.w,
@@ -662,9 +729,8 @@ void RenderSystem::RenderSprite(const SpriteRenderable& spriteRenderable, const 
 	{
 		return;
 	}
-	//LOG_DEBUG_FMT("Transform Rotation: {}\nAtlas Plot Rotation: {}\n\n",
-	//	transform.rotation, spriteRenderable.sourcePlot.rotation);
-	Draw(context_.renderer, atlasTexture, spriteRenderable.sourcePlot, 
+
+	Draw(context_.renderer, textureValue, spriteRenderable.sourcePlot, 
 		 renderRect, transform, nullptr, renderProfile);
 
 	if (renderProfile.debugDraw.boundingBox.on)
@@ -682,13 +748,26 @@ void RenderSystem::RenderText(TextRenderable& textRenderable, const Transform& t
 		return; 
 	}
 
-	const GlyphAtlas* glyphAtlas = context_.textureRepo->GetAtlas(textRenderable.sourceAtlas);
-	if (!glyphAtlas)
-	{
-		LOG_WARNING("glyph atlas handle expired");
+	TextureResourceKey key = { {}, textRenderable.sourceAtlas };
+	bool existed = context_.textureResourceMap.contains(key);
 
-		return;
+	auto& textureValue = context_.textureResourceMap[key];
+	auto& texture = textureValue.first;
+
+	if (!existed)
+	{
+		texture = context_.textureRepo->GetAtlasTexture(textRenderable.sourceAtlas);
+		if (!texture)
+		{
+			LOG_WARNING("Glyph atlas handle expired");
+
+			return;
+		}
+
+		ResetTextureMods(textureValue);
 	}
+
+	assert(texture);
 
 	// make world rect (renderRect) and screen rect, return early if not visible on screen
 	SDL_Rect renderRect = MakeTransformedRect(transform, textRenderable.dimensions.w,
@@ -711,12 +790,16 @@ void RenderSystem::RenderText(TextRenderable& textRenderable, const Transform& t
 	}
 
 	// Update glyph cache as needed
-	if (textRenderable.flags & TextRenderable::DirtyText)
-	{
-		RepopulateGlyphCacheGlyphs(textRenderable, glyphAtlas);
-	}
 	if (textRenderable.flags & (TextRenderable::DirtyText | TextRenderable::DirtyTransform))
 	{
+		auto* glyphAtlas = context_.textureRepo->GetAtlas(textRenderable.sourceAtlas);
+		assert(glyphAtlas);
+
+		if (textRenderable.flags & TextRenderable::DirtyText)
+		{
+			RepopulateGlyphCacheGlyphs(textRenderable, glyphAtlas);
+		}
+
 		ReprojectGlyphCacheGeometry(textRenderable, transform, glyphAtlas, renderRect);
 
 		////TODO: change rotation detection to account for if transform.rotation wasn't 0.0f last time
@@ -726,11 +809,7 @@ void RenderSystem::RenderText(TextRenderable& textRenderable, const Transform& t
 		{
 			AdjustGlyphCacheForRotation(textRenderable.glyphCache, renderRect, transform.rotation);
 		}
-	}	
-	//if (textRenderable.dirtyFlags & DirtyFlag::NewRotation)
-	//{
-	//	AdjustGlyphCacheForRotation(textRenderable.glyphCache, renderRect, transform.rotation);
-	//}
+	}
 
 	textRenderable.flags &= ~(TextRenderable::DirtyText | TextRenderable::DirtyTransform);
 
@@ -749,7 +828,7 @@ void RenderSystem::RenderText(TextRenderable& textRenderable, const Transform& t
 			rotationCenter.y + screenAdjust.y
 		};
 
-		Draw(context_.renderer, glyphAtlas->GetAtlasTexture(), glyph.plot, destRectScreenAdjusted,
+		Draw(context_.renderer, textureValue, glyph.plot, destRectScreenAdjusted,
 			 transform, &rotationCenterScreenAdjusted, renderProfile);
 	}
 

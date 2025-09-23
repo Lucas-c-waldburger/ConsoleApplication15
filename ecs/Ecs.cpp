@@ -6,7 +6,11 @@
 // ENTITY DEFS //
 void Entity::Destroy()
 {
-    assert(IsValid());
+    //assert(IsValid());
+	if (!IsValid())
+	{
+		return;
+	}
 
     ecs_->DestroyEntity(id_);
 

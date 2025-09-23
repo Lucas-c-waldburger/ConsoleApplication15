@@ -69,8 +69,23 @@ struct ThresholdTracker
     DataRecord<U> recorded;
 };
 
+template <typename T>
+struct Extent
+{
+    T start;
+    T end;
+};
 
-
+namespace std {
+template <class T1, class T2>
+struct hash<std::pair<T1, T2>> {
+    std::size_t operator()(const std::pair<T1, T2>& p) const noexcept {
+        std::size_t h1 = std::hash<T1>{}(p.first);
+        std::size_t h2 = std::hash<T2>{}(p.second);
+        return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+    }
+};
+}
 
 //struct HashName
 //{

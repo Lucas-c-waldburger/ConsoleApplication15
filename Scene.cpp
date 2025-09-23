@@ -1842,3 +1842,33 @@ Result<Void> MouseScene::Run(std::shared_ptr<SceneFixture> scene)
 
     return Void{};
 }
+
+Result<Void> ParticleScene::Run(std::shared_ptr<SceneFixture> scene)
+{
+    SpriteSeriesResourcePackets spritePackets{};
+    TRY(LoadSpriteDirectory(R"(resources/sprites/particles)", spritePackets));
+
+    TRY(scene->LoadTextureAtlas<SpriteSeriesAtlas>(std::move(spritePackets)),
+        spriteAtlasHandle);
+
+    const auto* spriteAtlas = scene->GetTextureRepository().GetAtlas(spriteAtlasHandle);
+    assert(spriteAtlas);
+
+    auto spriteEnt = ECS::CreateEntity();
+
+    auto& transform = spriteEnt.AddComponent(Transform{
+        .position = kScreenCenterPosition,
+        .rotation = 0.0f,
+        .scale = { 1.0f, 1.0f }
+        });
+
+    auto particleEnt = ECS::CreateEntity();
+
+    //auto& rigidBody = particleEnt.AddComponent(ComponentBuilder<RigidBody>{}
+    //.WithBodyParameters({
+    //   .bodyType = B2Body::Type::Dynamic,
+    //   .position = kScreenCenterPosition,
+    //   .gravityScale = -0.8f
+    //})
+    //.Build(scene->GetWorld()));
+}

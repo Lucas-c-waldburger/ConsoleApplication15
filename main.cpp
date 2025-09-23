@@ -17,6 +17,7 @@
 //#include "physics/Box.h"
 #include "Scene.h"
 
+#define RUN_TEST_TARGET 0
 
 static constexpr const char* kFontPath =
 R"(C:\Windows\WinSxS\amd64_microsoft-windows-font-truetype-arial_31bf3856ad364e35_10.0.19041.1_none_28747db34cb89a67\arial.ttf)";

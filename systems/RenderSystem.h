@@ -5,6 +5,7 @@
 #include "../deps/function2/function2.hpp"
 #include "../ecs/EntityT.h"
 #include "../physics/B2Shape.h"
+#include "../components/RenderableComponent.h"
 #include "System.h"
 #include <span>
 #include <numeric>
@@ -21,6 +22,10 @@ struct RenderProfile;
 class RenderSystem : public System
 {
 public:
+	using TextureResourceKey = std::pair<Handle<SpriteSeriesAtlas>, Handle<GlyphAtlas>>;
+	using TextureResourceValue = std::pair<SDL_Texture*, TextureMods>;
+	using TextureResourceMap = std::unordered_map<TextureResourceKey, TextureResourceValue>;
+
 	struct TextRenderParams
 	{
 		std::string_view text;
@@ -39,13 +44,14 @@ public:
 		const Camera* camera = nullptr;
 		std::vector<SDL_FPoint> debugDrawPoints;
 		SDL_Color currentDrawColor = { 0, 0, 0, 255 };
+		TextureResourceMap textureResourceMap;
 	};
 
 	void Update(SDL_Renderer* renderer, const Camera& camera, const TextureRepository& textureRepo);
 
 private:
-	void UpdateRenderContext(SDL_Renderer* renderer, const TextureRepository& textureRepo,
-						     const Camera& camera);
+	void PrepareRenderContext(SDL_Renderer* renderer, const TextureRepository& textureRepo,
+						      const Camera& camera);
 
 	void RenderSprite(const SpriteRenderable& spriteRenderable, const Transform& transform,
 					  const RenderProfile& renderProfile);
