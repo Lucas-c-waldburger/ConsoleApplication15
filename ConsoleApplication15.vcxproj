@@ -151,10 +151,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="audio\Sound.cpp" />
+    <ClCompile Include="audio\AudioBank.cpp" />
+    <ClCompile Include="audio\AudioManager.cpp" />
     <ClCompile Include="callbacks\StateTransitionCallback.cpp" />
     <ClCompile Include="core\Counter.cpp" />
-    <ClCompile Include="deps\catch\catch_amalgamated.cpp" />
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp" />
     <ClCompile Include="state\EntityState.cpp" />
     <ClCompile Include="state\EntityStateBuilder.cpp" />
@@ -172,6 +172,7 @@
     <ClCompile Include="inputs\controller\GameControllerInputUpdater.cpp" />
     <ClCompile Include="inputs\controller\GameControllerInputMap.cpp" />
     <ClCompile Include="sprite\SpriteAnimationSeriesMap.cpp" />
+    <ClCompile Include="systems\AudioSystem.cpp" />
     <ClCompile Include="systems\EntityStateSystem.cpp" />
     <ClCompile Include="systems\EventCallbackSystem.cpp" />
     <ClCompile Include="events\EventDispatchListener.cpp" />
@@ -189,7 +190,7 @@
     <ClCompile Include="camera\Camera.cpp" />
     <ClCompile Include="core\Error.cpp" />
     <ClCompile Include="core\Logger.cpp" />
-    <ClCompile Include="render\RenderContext.cpp" />
+    <ClCompile Include="render\TextureMods.cpp" />
     <ClCompile Include="systems\CameraSystem.cpp" />
     <ClCompile Include="atlas\GlyphAtlas.cpp" />
     <ClCompile Include="inputs\controller\GameController.cpp" />
@@ -209,6 +210,7 @@
     <ClCompile Include="atlas\SpriteSeriesAtlas.cpp" />
     <ClCompile Include="systems\CollisionSystem.cpp" />
     <ClCompile Include="systems\GameLoopSystem.cpp" />
+    <ClCompile Include="systems\ParticleSystem.cpp" />
     <ClCompile Include="systems\RenderSystem.cpp" />
     <ClCompile Include="systems\PhysicsSystem.cpp" />
     <ClCompile Include="core\AABB.cpp" />
@@ -225,7 +227,14 @@
     <ClInclude Include="atlas\PackingTools.h" />
     <ClInclude Include="atlas\ResourcePacket.h" />
     <ClInclude Include="atlas\TextureRepository.h" />
-    <ClInclude Include="audio\Sound.h" />
+    <ClInclude Include="audio\AudioBank.h" />
+    <ClInclude Include="audio\AudioHandle.h" />
+    <ClInclude Include="audio\AudioCommon.h" />
+    <ClInclude Include="audio\AudioManager.h" />
+    <ClInclude Include="audio\AudioSettings.h" />
+    <ClInclude Include="audio\AudioStage.h" />
+    <ClInclude Include="audio\MusicChannel.h" />
+    <ClInclude Include="audio\SoundChannel.h" />
     <ClInclude Include="callbacks\EventCallback.h" />
     <ClInclude Include="callbacks\EventCallbackHandle.h" />
     <ClInclude Include="callbacks\EventCallbackMasterTable.h" />
@@ -234,19 +243,21 @@
     <ClInclude Include="callbacks\StateTransitionCallback.h" />
     <ClInclude Include="callbacks\StateTransitionCallbackRegistry.h" />
     <ClInclude Include="camera\Projection.h" />
+    <ClInclude Include="components\AudioComponent.h" />
     <ClInclude Include="components\builder\CameraTargetComponentBuilder.h" />
     <ClInclude Include="components\builder\ColliderComponentBuilder.h" />
     <ClInclude Include="components\builder\ComponentBuilder.h" />
     <ClInclude Include="components\EntityFlagsComponent.h" />
     <ClInclude Include="components\driver\ControllerInputCallbackDriver.h" />
+    <ClInclude Include="components\ParticleBehaviorComponent.h" />
     <ClInclude Include="components\util\CallbackUtils.h" />
     <ClInclude Include="components\util\SpriteAnimationUtils.h" />
     <ClInclude Include="core\CatTypeID.h" />
     <ClInclude Include="core\Dictionary.h" />
+    <ClInclude Include="core\EvaluationProperty.h" />
     <ClInclude Include="core\Signal.h" />
     <ClInclude Include="core\SizedEnum.h" />
     <ClInclude Include="core\UniqueVoidPtr.h" />
-    <ClInclude Include="deps\catch\catch_amalgamated.hpp" />
     <ClInclude Include="events\ControllerInputSignal.h" />
     <ClInclude Include="events\data\GameLoopStepEvents.h" />
     <ClInclude Include="events\data\MouseEvents.h" />
@@ -258,6 +269,8 @@
     <ClInclude Include="inputs\mouse\MouseInputMap.h" />
     <ClInclude Include="inputs\mouse\MouseInputSource.h" />
     <ClInclude Include="inputs\mouse\MouseInputUpdater.h" />
+    <ClInclude Include="render\RGBA.h" />
+    <ClInclude Include="scripting\LuaUserTypeDependencies.h" />
     <ClInclude Include="state\EntityState.h" />
     <ClInclude Include="state\EntityStateBuilder.h" />
     <ClInclude Include="components\builder\RigidBodyComponentBuilder.h" />
@@ -315,6 +328,7 @@
     <ClInclude Include="scripting\user_types\TransformLuaUserTypes.h" />
     <ClInclude Include="sprite\SpriteAnimationSeries.h" />
     <ClInclude Include="sprite\SpriteAnimationSeriesMap.h" />
+    <ClInclude Include="systems\AudioSystem.h" />
     <ClInclude Include="systems\EntityStateSystem.h" />
     <ClInclude Include="systems\EventCallbackSystem.h" />
     <ClInclude Include="events\Event.h" />
@@ -486,7 +500,7 @@
     <ClInclude Include="ecs\Ecs.h" />
     <ClInclude Include="ecs\EntityManager.h" />
     <ClInclude Include="ecs\EntityRelationsHelper.h" />
-    <ClInclude Include="render\RenderContext.h" />
+    <ClInclude Include="render\TextureMods.h" />
     <ClInclude Include="systems\CameraSystem.h" />
     <ClInclude Include="atlas\GlyphAtlas.h" />
     <ClInclude Include="core\HandleFactory.h" />
@@ -508,6 +522,7 @@
     <ClInclude Include="atlas\SpriteSeriesAtlas.h" />
     <ClInclude Include="systems\CollisionSystem.h" />
     <ClInclude Include="systems\GameLoopSystem.h" />
+    <ClInclude Include="systems\ParticleSystem.h" />
     <ClInclude Include="systems\RenderSystem.h" />
     <ClInclude Include="systems\PhysicsSystem.h" />
     <ClInclude Include="core\TypeUtils.h" />
@@ -656,7 +671,9 @@
     <Image Include="resources\sprites\knight_new\walk\Walk_004.png" />
     <Image Include="resources\sprites\knight_new\walk\Walk_005.png" />
     <Image Include="resources\sprites\knight_new\walk\Walk_006.png" />
-    <Image Include="resources\sprites\particles\0.png" />
+    <Image Include="resources\sprites\particles\circle_0.png" />
+    <Image Include="resources\sprites\particles\symbol\symbol_0.png" />
+    <Image Include="resources\sprites\particles\symbol\symbol_1.png" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\scripts\b2body_test.lua" />

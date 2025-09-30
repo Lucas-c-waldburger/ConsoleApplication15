@@ -20,6 +20,22 @@ struct SpriteSurface
 
 } // unnamed
 
+AtlasPlot SpriteSeriesAtlas::GetSpritePlot(std::string_view seriesName, size_t index) const
+{
+	if (!IsLoaded())
+	{
+		return {};
+	}
+
+	auto it = plotsBySeries_.find(seriesName); 
+	if (it == plotsBySeries_.end() || index > it->second.size())
+	{
+		return {};
+	}
+
+	return it->second[index];
+}
+
 std::vector<AtlasPlot> SpriteSeriesAtlas::GetSpritePlots(std::string_view seriesName) const
 {
 	if (!IsLoaded())

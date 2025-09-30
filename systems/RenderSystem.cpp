@@ -29,15 +29,17 @@ void Draw(SDL_Renderer* renderer, RenderSystem::TextureResourceValue& textureVal
 
 	if (profile.mods.color != textureMods.color)
 	{
-		const auto [r, g, b] = profile.mods.color;
-
-		SDL_SetTextureColorMod(texture, r, g, b);
+		SDL_SetTextureColorMod(texture,
+			ClampToLimits<uint8_t>(profile.mods.color.r),
+			ClampToLimits<uint8_t>(profile.mods.color.g),
+			ClampToLimits<uint8_t>(profile.mods.color.b));
 
 		textureMods.color = profile.mods.color;
 	}
 	if (profile.mods.alpha != textureMods.alpha)
 	{
-		SDL_SetTextureAlphaMod(texture, profile.mods.alpha);
+		SDL_SetTextureAlphaMod(texture, 
+			ClampToLimits<uint8_t>(profile.mods.alpha));
 
 		textureMods.alpha = profile.mods.alpha;
 	}
@@ -55,7 +57,7 @@ void Draw(SDL_Renderer* renderer, RenderSystem::TextureResourceValue& textureVal
 
 void ResetTextureMods(RenderSystem::TextureResourceValue& textureValue)
 {
-	static TextureMods defaultMods{};
+	static TextureMods defaultMods{}; // for ease of comparison only
 
 	auto& [texture, currentMods] = textureValue;
 

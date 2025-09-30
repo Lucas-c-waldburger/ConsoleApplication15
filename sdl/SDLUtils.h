@@ -86,8 +86,14 @@ namespace SDLite
     static constexpr SDL_Color kColorBrown  = { 151, 75,  0,   255 };
 }
 
-// SDL POINT/RECT OVERLOADS
+// SDL COLOR OVERLOADS
+inline constexpr bool operator==(const SDL_Color& lhs, const SDL_Color& rhs)
+{
+    return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b && lhs.a == rhs.a;
+}
+//
 
+// SDL POINT/RECT OVERLOADS
 // POINT //
 // equality
 template <SDLPointType P>

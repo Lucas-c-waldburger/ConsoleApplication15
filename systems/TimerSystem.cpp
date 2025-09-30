@@ -4,30 +4,6 @@
 #include "../events/data/TimeEvents.h"
 #include "../core/CommonEntityMethods.h"
 
-namespace {
-
-//void PushTimerFiredEvent(Entity& entity, const Timer& timer)
-//{
-//	events::TimerFired firedEvent{
-//		.producer = entity.GetID(),
-//		.duration = timer.duration
-//	};
-//
-//	//auto relations = entity.GetRelations();
-//	//if (relations.IsChild())
-//	//{
-//	//	auto parent = relations.GetParent();
-//	//	if (parent.IsValid())
-//	//	{
-//	//		firedEvent.producer = parent.GetID();
-//	//	}
-//	//}
-//
-//	EventBus::PushEvent(std::move(firedEvent));
-//}
-
-} // unnamed
-
 void TimerSystem::Update(float delta, EventBus2& bus)
 {
 	auto entities = ECS::GetAllEntitiesWith<Timer>();

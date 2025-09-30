@@ -2,6 +2,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+#include <SDL_mixer.h>
 #include <string_view>
 #include <memory>
 #include <stdexcept>
@@ -483,11 +484,25 @@ namespace SDLite
 
 	static Status Start(WindowArgs winArgs={})
 	{
-		auto fail = []() { return Status{ SDL_GetError(), Status::Response::Exit }; };
-
-		if (SDL_Init(SDL_INIT_EVERYTHING) < 0) { fail(); }
-		if (IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG) == 0) { fail(); }
-		if (TTF_Init() != 0) { fail(); }
+		if (SDL_Init(SDL_INIT_EVERYTHING) < 0) 
+		{ 
+			return Status{ SDL_GetError(), Status::Response::Exit };
+		}
+		if (IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG) == 0) 
+		{ 
+			return Status{ SDL_GetError(), Status::Response::Exit };
+		}
+		if (TTF_Init() != 0) 
+		{ 
+			return Status{ TTF_GetError(), Status::Response::Exit };
+		}
+	
+		int mixFlags = MIX_INIT_OGG | MIX_INIT_MP3 | MIX_INIT_FLAC;
+		int mixInit = Mix_Init(mixFlags);
+		if ((mixInit & mixFlags) != mixFlags) 
+		{
+			return Status{ Mix_GetError(), Status::Response::Exit };
+		}
 
 		App::app_ = new App{ {}, {} };
 
@@ -512,6 +527,7 @@ namespace SDLite
 	{
 		if (App::app_) 
 		{ 
+			Mix_Quit();
 			TTF_Quit();
 			IMG_Quit();
 			SDL_Quit(); 

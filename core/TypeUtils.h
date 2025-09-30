@@ -196,3 +196,17 @@ concept Hashable = requires(T t) {
 template <typename T>
 concept UseableInUnorderedSet = requires { typename std::unordered_set<T>; };
 
+// HAS ARITHMETIC OPERATOR CONCEPTS
+template <typename T, typename U>
+concept HasPlusOperatorFor = requires(const T& t, const U& u) {
+	{ t + u } -> std::same_as<T>;
+};
+template <typename T, typename U>
+concept HasMinusOperatorFor = requires(const T& t, const U& u) {
+	{ t - u } -> std::same_as<T>;
+};
+template <typename T, typename U>
+concept HasMultOperatorFor = requires(const T& t, const U& u) {
+	{ t * u } -> std::same_as<T>;
+};
+//

@@ -1,5 +1,6 @@
 #pragma once
 #include "../LuaTypesRegistry.h"
+#include "../LuaUserTypeDependencies.h"
 #include "../../components/RenderableComponent.h"
 
 // RENDER PROFILE
@@ -30,10 +31,18 @@ template <> inline void RegisterLuaUserType<SDL_BlendMode>(sol::state& lua)
 
 template <> inline void RegisterLuaUserType<TextureMods>(sol::state& lua)
 {
+	if (!lua["RGB"].valid())
+	{
+		lua.new_usertype<RGB>("RGB",
+			"r", &RGB::r,
+			"g", &RGB::g,
+			"b", &RGB::b);
+	}
 	if (!lua["TextureMods"].valid())
 	{
 		lua.new_usertype<TextureMods>("TextureMods",
 			"color", &TextureMods::color,
+			"alpha", &TextureMods::alpha,
 			"blend", &TextureMods::blend);
 	}
 }
@@ -42,7 +51,9 @@ template <> inline void RegisterLuaUserType<DebugDraw>(sol::state& lua)
 {
 	if (!lua["DebugDraw"].valid())
 	{
-		lua.new_usertype<DebugDraw>("DebugDraw", "on", &DebugDraw::on, "color", &DebugDraw::color);
+		lua.new_usertype<DebugDraw>("DebugDraw", 
+			"on", &DebugDraw::on, 
+			"color", &DebugDraw::color);
 	}
 }
 

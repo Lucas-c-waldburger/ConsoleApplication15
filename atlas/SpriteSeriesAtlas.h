@@ -52,6 +52,7 @@ public:
 		return *this;
 	}
 
+	AtlasPlot GetSpritePlot(std::string_view seriesName, size_t index) const;
 	std::vector<AtlasPlot> GetSpritePlots(std::string_view seriesName) const;
 	std::vector<std::string_view> GetSeriesNames() const;
 

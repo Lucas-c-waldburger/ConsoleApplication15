@@ -45,6 +45,7 @@ public:
 	B2World& GetWorld() { return world_; }
 	ScriptManager& GetScripts() { return scripts_; }
 
+
 	// helpers
 	template <SupportedAtlasType T, typename LoadData>
 	Result<Handle<T>> LoadTextureAtlas(LoadData&& loadData)
@@ -59,6 +60,7 @@ public:
 	{
 		return textureRepo_.LoadNewAtlas<GlyphAtlas>(SDLite::Renderer(), std::move(packet));
 	}
+	float GetDeltaTime() const { return systems_.GetSystem<GameLoopSystem>()->GetDeltaTime(); }
 
 	// bundled processes
 	Result<Void> RenderScene(SDL_Color bgColor = SDLite::kColorWhite);

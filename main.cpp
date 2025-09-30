@@ -316,7 +316,8 @@ int main(int argc, char* argv[])
     //ASSERT_RESULT(ChainScene::Run(sceneFixture.GetValue()));
     //ASSERT_RESULT(TextScene::Run(sceneFixture.GetValue()));
     //ASSERT_RESULT(SpriteScene::Run(sceneFixture.GetValue()));
-    ASSERT_RESULT(MouseScene::Run(sceneFixture.GetValue()));
+    //ASSERT_RESULT(MouseScene::Run(sceneFixture.GetValue()));
+    ASSERT_RESULT(ParticleScene::Run(sceneFixture.GetValue()));
 
     return 0;
 }

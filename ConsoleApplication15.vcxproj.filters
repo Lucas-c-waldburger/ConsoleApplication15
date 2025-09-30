@@ -120,7 +120,7 @@
     <ClCompile Include="systems\CameraSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="render\RenderContext.cpp">
+    <ClCompile Include="render\TextureMods.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="physics\B2Joint.cpp">
@@ -139,9 +139,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="physics\B2CompoundObject.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="audio\Sound.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="events\EventDispatchListener.cpp">
@@ -213,7 +210,16 @@
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="deps\catch\catch_amalgamated.cpp">
+    <ClCompile Include="systems\ParticleSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\AudioSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="audio\AudioBank.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="audio\AudioManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -800,7 +806,7 @@
     <ClInclude Include="core\Algorithms.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="render\RenderContext.h">
+    <ClInclude Include="render\TextureMods.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="physics\B2Joint.h">
@@ -837,9 +843,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\CommonFunctions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="audio\Sound.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="events\EventDispatchListener.h">
@@ -1139,7 +1142,49 @@
     <ClInclude Include="events\data\MouseEvents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="deps\catch\catch_amalgamated.hpp">
+    <ClInclude Include="scripting\LuaUserTypeDependencies.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\EvaluationProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\ParticleBehaviorComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\ParticleSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="render\RGBA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\AudioSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\AudioComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\AudioCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\AudioHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\AudioSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\AudioBank.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\SoundChannel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\MusicChannel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\AudioStage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\AudioManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1522,7 +1567,13 @@
     <Image Include="resources\sprites\knight_new\walk\Walk_006.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\particles\0.png">
+    <Image Include="resources\sprites\particles\circle_0.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\particles\symbol\symbol_0.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\particles\symbol\symbol_1.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

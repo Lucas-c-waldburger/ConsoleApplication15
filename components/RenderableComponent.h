@@ -1,58 +1,15 @@
 #pragma once
 #include "BaseComponent.h"
 #include "../core/Handle.h"
-#include "../physics/B2Shape.h"
 #include "../atlas/SpriteSeriesAtlas.h"
 #include "../atlas/GlyphAtlas.h"
-#include "../core/TransparentStringHash.h"
-#include "../core/Literals.h"
 #include "../sdl/SDLite.h"
+#include "../sdl/SDLUtils.h"
+#include "../render/TextureMods.h"
 #include <variant>
-#include <SDL.h>
 
 
 // TODO: make draw order layers (overlay, etc.)
-
-struct TextureModsOld
-{
-    uint8_t alpha = 255;
-    struct RGB {
-        uint8_t r = 255;
-        uint8_t g = 255;
-        uint8_t b = 255;
-
-        friend constexpr bool operator==(const RGB& lhs, const RGB& rhs) = default;
-    } color;
-    SDL_BlendMode blend = SDL_BLENDMODE_BLEND;
-
-    friend constexpr bool operator==(const TextureModsOld& lhs, const TextureModsOld& rhs) = default; 
-};
-
-constexpr bool operator==(const SDL_Color& lhs, const SDL_Color& rhs)
-{
-    return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b && lhs.a == rhs.a;
-}
-
-struct TextureMods
-{
-    struct RGB 
-    { 
-        uint8_t r = 255, g = 255, b = 255; 
-        friend constexpr bool operator==(const RGB& lhs, const RGB& rhs)
-        {
-            return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b;
-        }
-    };
-
-    RGB color = {};
-    uint8_t alpha = 255;
-    SDL_BlendMode blend = SDL_BLENDMODE_BLEND;
-
-    friend constexpr bool operator==(const TextureMods& lhs, const TextureMods& rhs)
-    {
-        return lhs.color == rhs.color && lhs.blend == rhs.blend;
-    }
-};
 
 struct DebugDraw
 {

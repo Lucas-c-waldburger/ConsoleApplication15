@@ -22,6 +22,7 @@ struct NeedsUpdate;
 struct EntityStateComponent;
 struct EntityFlags;
 struct SignalTokenStorage;
+struct ParticleBehavior;
 
 using ComponentTypeList = TypeList<
 	ActiveState,
@@ -44,5 +45,6 @@ using ComponentTypeList = TypeList<
 	NeedsUpdate,
 	EntityStateComponent,
 	EntityFlags,
-	SignalTokenStorage
+	SignalTokenStorage,
+	ParticleBehavior
 >;

@@ -2,6 +2,8 @@
 #include <format>
 #include "../ecs/Ecs.h"
 #include "../core/Conversions.h"
+#include "../components/RenderableComponent.h"
+#include "../components/ParticleBehaviorComponent.h"
 #include "../scripting/ScriptManager.h"
 #include "../sdl/SDLUtils.h"
 #include "../sdl/SDLite.h"
@@ -13,6 +15,7 @@
 #include "../components/builder/RigidBodyComponentBuilder.h"
 #include "../components/builder/ColliderComponentBuilder.h"
 #include "../events/EventBus2.h"
+#include "../core/EvaluationProperty.h"
 //#include "../callbacks/StateTransitionCallbackRegistry.h"
 //#include "callbacks/AnimationCallbacks.h"
 //#include "callbacks/GameControllerCallbacks.h"
@@ -277,170 +280,116 @@ struct PhysicsData
 //    using Behavior = fu2::function_view<void(Entity&)>
 //};
 
-struct ParticleProfile
-{
-    float lifetime             = 0.0f;
-    SDL_FPoint drift           = { 0.0f, 0.0f };
-    SDL_FPoint emitterOffset   = { 0.0f, 0.0f };
-    Extent<SDL_Color> colorMod = {{ 0, 0, 0, 255 }, { 0, 0, 0, 255 }};
-    Extent<SDL_FPoint> scale   = {{ 1.0f, 1.0f }, { 1.0f, 1.0f }};
-    Extent<float> rotation     = { 0.0f, 0.0f };
-};
-
-using ParticleGenerator = fu2::unique_function<ParticleProfile()>;
+//template <typename T>
+//struct ParticleBehaviorValue
+//{
+//    Extent<T> value;
+//};
 
 
 
+//template <typename T>
+//inline constexpr EvaluationProperty<T> MakeFixedRateProperty(const T& rate)
+//{
+//    return EvaluationProperty{ EvaluationSpec::FixedRate, rate, {}};
+//}
+//template <typename T>
+//inline constexpr EvaluationProperty<T> MakeInterpolatedProperty(const T& start, const T& end)
+//{
+//    return EvaluationProperty{ EvaluationSpec::Interpolated, start, end };
+//}
+
+//struct ParticleProfile
+//{
+//    float lifetime           = 0.0f;
+//    SDL_FPoint drift         = { 0.0f, 0.0f };
+//    SDL_FPoint emitterOffset = { 0.0f, 0.0f };
+//    Extent<TextureMods> mods = {};
+//    Extent<SDL_FPoint> scale = {{ 1.0f, 1.0f }, { 1.0f, 1.0f }};
+//    Extent<float> rotation   = { 0.0f, 0.0f };
+//};
+
+
+
+using ParticleBehaviorGenerator = fu2::unique_function<ParticleBehavior()>;
 
 class ParticleEmitter
 {
-private:
-    auto GetSpawnerLambda()
-    {
-        return [this](const events::TimerFired& ev) {
-            if (ev.producer != emitter_.GetID())
-            {
-                return;
-            }
-
-            if (particles_.size() < maxParticles_)
-            {
-                AddParticle();
-            }
-        };
-    }
-
-    static ParticleGenerator GetDefaultParticleGenerator()
-    {
-        return []() {
-            return ParticleProfile{
-                .lifetime = 0.5f + (rand() % 100) / 100.0f,
-                .drift = {.x = (rand() % 21 - 10) * 0.5f,
-                          .y = (rand() % 21 - 10) * 0.5f },
-                .scale = {.start = 0.5f, .end = 2.0f }
-            };
-        };
-    };
-
 public:
-    ParticleEmitter(EventBus2& bus, Renderable renderable, SDL_FPoint emitterPos,
-        ParticleGenerator&& generator = GetDefaultParticleGenerator(), 
-        int particlesPerSec = 15, 
-        size_t maxCount = 10);
+    template <typename R> requires std::constructible_from<Renderable::RenderData, R>
+    ParticleEmitter(R renderData, SDL_FPoint emitterPos,
+        ParticleBehaviorGenerator&& bxGenerator, uint32_t particlesPerSec = 15,
+        size_t maxCount = 10) : emitter_(ECS::CreateEntity()), 
+        bxGenerator_(std::move(bxGenerator)), maxParticles_(maxCount), particles_(maxCount)
+    {
+        assert(emitter_.IsValid());
+
+        // just use to hold render data that particles will use
+        emitter_.SetComponentVisibility<Renderable>(false);
+        auto& emitterRenderData = emitter_.AddComponent<Renderable>().renderData;
+        emitterRenderData = std::move(renderData);
+        assert(!std::holds_alternative<std::monostate>(emitterRenderData));
+
+        emitter_.AddComponent<Transform>().position = emitterPos;
+
+        auto& spawnTimer = emitter_.AddComponent<Timer>();
+        spawnTimer.duration = (particlesPerSec > 0) ?
+            1.0f / static_cast<float>(particlesPerSec) : 1.0f;
+        spawnTimer.flags = 0;
+    }
     ~ParticleEmitter();
 
-    void AddParticle()
-    {
-        if (liveCount_ >= maxParticles_)
-        {
-            return;
-        }
-
-        if (!particleGenerator_)
-        {
-            LOG_ERROR("No particle generator set!");
-            return;
-        }
-
-        auto& [particle, bx] = particles_[liveCount_++];
-        if (!particle.IsValid())
-        {
-            particle = ECS::CreateEntity();
-
-            // stop them from firing when destroyed
-            particle.SetEventProduction<events::TimerFired>(false);
-            particle.SetEventProduction<events::EntityDestroyed>(false);
-        }
-
-        particle.SetComponentVisibility(true);    
-
-        bx = particleGenerator_();
-
-        const SDL_FPoint emitterPos = emitter_.GetComponent<Transform>().position;
-
-        auto& tf = particle.AddComponent<Transform>();
-        tf.position = emitterPos + bx.emitterOffset;
-        tf.scale = bx.scale.start;      
-
-        auto& timer = particle.AddComponent<Timer>();
-        timer.duration = bx.lifetime;
-        timer.flags = Timer::Flag::Active;
-
-        particle.AddComponent<Renderable>() = renderable_;
-    }
-
-    void Update()
-    {
-        for (size_t i = 0; i < liveCount_; i++)
-        {
-            auto& [entity, bx] = particles_[i];
-
-            auto kill = [this, &entity, &i]() {
-                // wont be processed by any system, will be considered IsValid()
-                entity.SetComponentVisibility(false);
-
-                if (--liveCount_ <= i)
-                {
-                    return;
-                }
-
-                std::swap(particles_[i], particles_[liveCount_]);
-                --i;
-            };
-
-            if (!entity.IsValid())
-            {
-                kill();              
-                continue;
-            }
-
-            auto [tf, timer, renderable] = 
-                entity.GetComponents<Transform, Timer, Renderable>();
-
-            if ((timer.flags & Timer::Flag::Active) == 0)
-            {
-                kill();
-                continue;
-            }
-
-            assert(timer.duration > 0.0f);
-            
-            float t = timer.elapsed / timer.duration;
-            uint8_t alpha = static_cast<uint8_t>(255 * (1.0f - t));
-
-            renderable.profile.mods.alpha = alpha;
-
-            float scale = 2.0f * (1.0f - t);
-
-            tf.scale = { scale, scale };
-            tf.position += bx.drift;
-        }
-    }
+    void AddParticle();
+    void Update(float delta);
 
     Entity& GetEmitterEntity() { return emitter_; }
 
     size_t GetMaxParticles() const { return maxParticles_; }
-    void SetMaxParticles(size_t newMax) { maxParticles_ = newMax; }
+    void SetMaxParticles(size_t newMax) 
+    { 
+        if (newMax < maxParticles_)
+        {
+            size_t i = (newMax > 0) ? newMax - 1 : 0;
+            for (; i < maxParticles_; i++)
+            {
+                particles_[i].Destroy();
+            }
 
-    float GetSpawnRate() const { return spawnRate_; }
-    void SetSpawnRate(float newRate) { spawnRate_ = newRate; }
+            liveCount_ = std::min(liveCount_, newMax);
+        }
 
-    template <typename Fn> requires std::convertible_to<Fn, ParticleGenerator>
-    void SetParticleGenerator(Fn&& fn) { }
+        particles_.resize(newMax);
+        maxParticles_ = newMax; 
+    }
+
+    float GetSpawnRate() const { return emitter_.GetComponent<Timer>().duration; }
+    void SetSpawnRate(float newRate) 
+    { 
+        if (newRate <= 0.0f)
+        {
+            LOG_ERROR_FMT("Requested spawn rate '{}' out of range. "
+                "defaulting to 1.0f", newRate);
+            newRate = 1.0f;
+        }
+
+        emitter_.GetComponent<Timer>().duration = newRate;
+    }
+
+    void SetRenderData(Renderable::RenderData renderData) 
+    { 
+        emitter_.GetComponent<Renderable>().renderData = std::move(renderData);
+    }
+
+    template <typename Fn> requires std::convertible_to<Fn, ParticleBehaviorGenerator>
+    void SetBehaviorGenerator(Fn&& fn) { bxGenerator_ = std::forward<Fn>(fn); }
 
 private:
-    struct MovementBehavior 
-    {
-        SDL_FPoint drift = { 0.0f, 0.0f };
-    };
-
-    Renderable renderable_;
-    size_t maxParticles_ = 0;
-    float spawnRate_ = 0.0f;
+    static bool UpdateParticleEntity(Entity& particle, float delta);
 
     Entity emitter_;
-    std::vector<std::pair<Entity, ParticleProfile>> particles_;
-    ParticleGenerator particleGenerator_ = nullptr;
+    std::vector<Entity> particles_;
+    ParticleBehaviorGenerator bxGenerator_;
+    size_t maxParticles_ = 0;
     size_t liveCount_ = 0;
 };
 

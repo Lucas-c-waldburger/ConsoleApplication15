@@ -28,6 +28,10 @@ namespace fs = std::filesystem;
 //
 //}
 
+//inline Result<SpriteSeriesResourcePacket> LoadSingleSprite(const std::string& directoryPath)
+//{
+//
+//}
 
 inline Result<Void> LoadSpriteDirectory(const std::string& directoryPath,
 								 SpriteSeriesResourcePackets& allPackets)

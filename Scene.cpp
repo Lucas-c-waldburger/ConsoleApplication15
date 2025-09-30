@@ -1845,8 +1845,10 @@ Result<Void> MouseScene::Run(std::shared_ptr<SceneFixture> scene)
 
 Result<Void> ParticleScene::Run(std::shared_ptr<SceneFixture> scene)
 {
+    using namespace test;
+
     SpriteSeriesResourcePackets spritePackets{};
-    TRY(LoadSpriteDirectory(R"(resources/sprites/particles)", spritePackets));
+    TRY(LoadSpriteDirectory(R"(resources/sprites/particles/symbol)", spritePackets));
 
     TRY(scene->LoadTextureAtlas<SpriteSeriesAtlas>(std::move(spritePackets)),
         spriteAtlasHandle);
@@ -1854,21 +1856,64 @@ Result<Void> ParticleScene::Run(std::shared_ptr<SceneFixture> scene)
     const auto* spriteAtlas = scene->GetTextureRepository().GetAtlas(spriteAtlasHandle);
     assert(spriteAtlas);
 
-    auto spriteEnt = ECS::CreateEntity();
+    auto particlePlot = spriteAtlas->GetSpritePlot("symbol", 0);
+    assert(particlePlot.rect.w > 0);
 
-    auto& transform = spriteEnt.AddComponent(Transform{
-        .position = kScreenCenterPosition,
-        .rotation = 0.0f,
-        .scale = { 1.0f, 1.0f }
-        });
+    SpriteRenderable sprite{ .sourceAtlas = spriteAtlasHandle, .sourcePlot = particlePlot };
+    sprite.sourcePlot.rotation = 180.0f;
 
-    auto particleEnt = ECS::CreateEntity();
+    auto defaultBxGenerator = [] {
+        const SDL_FPoint drift = {
+            .x = (rand() % 21 - 10) * 0.3f,
+            .y = (rand() % 21 - 10) * 0.3f
+        };
+        const SDL_FPoint startScale = { 0.1f, 0.1f };
+        const SDL_FPoint endScale = { 0.5f, 0.5f };
 
-    //auto& rigidBody = particleEnt.AddComponent(ComponentBuilder<RigidBody>{}
-    //.WithBodyParameters({
-    //   .bodyType = B2Body::Type::Dynamic,
-    //   .position = kScreenCenterPosition,
-    //   .gravityScale = -0.8f
-    //})
-    //.Build(scene->GetWorld()));
+        RGB startColor = { 255, 200, 0 };
+        RGB endColor = { 50, 0, 0 };
+
+        return ParticleBehavior{
+            .lifetime = 0.5f + (rand() % 100) / 100.0f,
+            .position = { EvaluationSpec::Constant, drift },
+            .color = { EvaluationSpec::Interpolated, startColor, endColor },
+            .alpha = { EvaluationSpec::Interpolated, 255, 0 },
+            .scale = { EvaluationSpec::Interpolated, startScale, endScale }
+        };
+    };
+
+    auto emitter = std::make_unique<ParticleEmitter>(
+        sprite, kScreenCenterPosition, std::move(defaultBxGenerator)
+    );
+
+    //Renderable renderable{ .renderData = std::move(sprite) };
+    //renderable.profile.debugDraw.boundingBox.on = false;
+
+    //auto emitter = std::make_unique<test::ParticleEmitter>(
+    //    std::move(renderable), kScreenCenterPosition, 25
+    //);
+
+    while (true)
+    {
+        scene->LoopStart();
+
+        TRY(scene->UpdateSDLInputs(), cont);
+        if (!cont)
+        {
+            break;
+        }
+
+        TRY(scene->UpdateEntityStates());
+
+        TRY(scene->UpdatePhysics());
+        TRY(scene->UpdateCamera());
+
+        emitter->Update(scene->GetDeltaTime());
+
+        TRY(scene->RenderScene());
+
+        scene->LoopEnd();
+    }
+
+    return Void{};
 }
