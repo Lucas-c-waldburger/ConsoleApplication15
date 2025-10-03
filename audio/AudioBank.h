@@ -4,7 +4,7 @@
 #include <cassert>
 #include "../core/Result.h"
 #include "AudioHandle.h"
-
+#include "AudioInstance.h"
 
 struct AudioDescriptor
 {
@@ -20,15 +20,15 @@ public:
 
     bool HasAudio(const Handle<Audio>& handle) const;
 
-    Result<Mix_Chunk*> GetSound(const Handle<Audio>& handle);
-    Result<Mix_Music*> GetMusic(const Handle<Audio>& handle);
+    Result<SoundInstanceResource> GetSoundInstanceResouce(const Handle<Audio>& handle);
+    Result<MusicInstanceResource> GetMusicInstanceResource(const Handle<Audio>& handle);
 
     AudioDescriptor* GetAudioDescriptor(const Handle<Audio>& handle);
 
 private:
-    template <typename T>
-        requires (std::same_as<T, Mix_Chunk> || std::same_as<T, Mix_Music>)
-    Result<T*> GetAudioInternal(const Handle<Audio>& handle);
+    template <typename T> requires (std::same_as<T, Mix_Chunk> || 
+                                    std::same_as<T, Mix_Music>)
+    Result<AudioInstanceResource<T>> GetAudioInstanceDataInternal(const Handle<Audio>& handle);
 
     using DescriptorMap = std::unordered_map<Handle<Audio>,
         std::pair<AudioDescriptor, size_t>>;
@@ -39,9 +39,10 @@ private:
 };
 
 
-template <typename T>
-    requires (std::same_as<T, Mix_Chunk> || std::same_as<T, Mix_Music>)
-inline Result<T*> AudioBank::GetAudioInternal(const Handle<Audio>& handle)
+template <typename T> requires (std::same_as<T, Mix_Chunk> || 
+                                std::same_as<T, Mix_Music>)
+inline Result<AudioInstanceResource<T>> 
+AudioBank::GetAudioInstanceDataInternal(const Handle<Audio>& handle)
 {
     if (!handle.IsValid())
     {
@@ -56,8 +57,8 @@ inline Result<T*> AudioBank::GetAudioInternal(const Handle<Audio>& handle)
 
     const size_t idx = it->second.second;
 
-    auto findPtr = [&]
-    (auto& ptrContainer, AudioType expectedType) -> Result<T*>
+    auto makeInstanceData = [&]
+    (auto& ptrContainer, AudioType expectedType) -> Result<AudioInstanceResource<T>>
         {
             if (handle.GetAudioType() != expectedType)
             {
@@ -68,15 +69,18 @@ inline Result<T*> AudioBank::GetAudioInternal(const Handle<Audio>& handle)
                 return MAKE_ERROR("Mapped index for audio ptr out of range");
             }
 
-            return ptrContainer[idx].get();
+            return AudioInstanceResource<T>{
+                .audioPtr = ptrContainer[idx].get(),
+                .id = AudioInstanceID::Create()
+            };
         };
 
     if constexpr (std::same_as<T, Mix_Chunk>)
     {
-        return findPtr(sounds_, AudioType::Sound);
+        return makeInstanceData(sounds_, AudioType::Sound);
     }
     else // music
     {
-        return findPtr(music_, AudioType::Music);
+        return makeInstanceData(music_, AudioType::Music);
     }
 }

@@ -222,6 +222,9 @@
     <ClCompile Include="audio\AudioManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ecs\EntityAccess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1160,7 +1163,7 @@
     <ClInclude Include="systems\AudioSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\AudioComponent.h">
+    <ClInclude Include="components\AudioComponents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="audio\AudioCommon.h">
@@ -1185,6 +1188,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="audio\AudioManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\AudioInstance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ecs\EntityAccess.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

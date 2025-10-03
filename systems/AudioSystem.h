@@ -1,6 +1,6 @@
 #pragma once
 #include "System.h"
-#include "../audio/Sound.h"
+#include "../audio/AudioManager.h"
 
 class Entity;
 
@@ -8,17 +8,18 @@ class AudioSystem : public System
 {
 public:
 	void Update();
-	void EntityDestroyed(Entity& entity); 
 
-	void SetAudioBank(AudioBank&& bank)
-	{
-		audioManager_.ClearChannels();
-		audioManager_.ClearStage();
+	void EntityDestroyed(Entity& entity);
 
-		audioBank_ = std::move(bank);
-	}
+	void SetAudioBank(AudioBank&& bank);
 
 private:
+	void HandleAudioUpdateRequests();
+	void HandleNewAudioRequests();
+	void UpdateActiveAudioComponents();
+
+	Result<Void> CheckActiveAudioAndUpdateRequestConsistency(const Entity& entity);
+
 	AudioBank audioBank_;
 	AudioManager audioManager_;
 };

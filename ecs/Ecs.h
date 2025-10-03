@@ -2,6 +2,7 @@
 #include "EntityManager.h"
 #include "ComponentManager.h"
 #include "EntityRelationsHelper.h"
+#include "EntityAccess.h"
 #include "../components/ComponentConcepts.h"
 #include "../core/Logger.h"
 #include <cassert>
@@ -14,37 +15,39 @@ class EntityRelations;
 class Entity
 {
 private:
-    // components that can't be mutated through Entity API
+    // components that can't be mutated through Entity API (must use EntityPassKey)
     template <SomeComponent T>
     static constexpr bool public_mutable_component_v = (
         !(RelationalComponentType<T>   ||
           std::same_as<T, EntityFlags> ||
-          std::same_as<T, ActiveState>)
+          std::same_as<T, ActiveState> ||
+          std::same_as<T, ActiveAudio>)
     );
-
-    // components that can't be added/removed through Entity API
-    template <SomeComponent T>
-    static constexpr bool public_attachable_component_v = (
-        !(RelationalComponentType<T>   ||
-          std::same_as<T, EntityFlags> ||
-          std::same_as<T, ActiveState>)
-    );
-
 public: 
     Entity() : id_(kInvalidEntity), ecs_(nullptr) {}
     Entity(Entity_t id, ECS& ecs) : id_(id), ecs_(&ecs) {}
 
-    template <SomeComponent T> requires Entity::public_attachable_component_v<T> 
+    template <SomeComponent T> requires Entity::public_mutable_component_v<T>
     T& AddComponent(T&& cmp);
-    template <SomeComponent T> requires Entity::public_attachable_component_v<T>
+    template <SomeComponent T> requires Entity::public_mutable_component_v<T>
     T& AddComponent();
-    template <SomeComponent T> requires Entity::public_attachable_component_v<T>
+    template <SomeComponent T> 
+    T& AddComponent(T&& cmp, EntityPassKey);
+    template <SomeComponent T>
+    T& AddComponent(EntityPassKey);
+
+    template <SomeComponent T> requires Entity::public_mutable_component_v<T>
     void RemoveComponent();
+    template <SomeComponent T>
+    void RemoveComponent(EntityPassKey);
 
     template <SomeComponent T> requires Entity::public_mutable_component_v<T>
     T& GetComponent();
+    template <SomeComponent T>
+    T& GetComponent(EntityPassKey);
     template <SomeComponent T> 
     const T& GetComponent() const;
+
     template <SomeComponent T> requires Entity::public_mutable_component_v<T>
     Result<std::reference_wrapper<T>> TryGetComponent();
     template <SomeComponent T>
@@ -52,6 +55,8 @@ public:
 
     template <SomeComponent...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
     std::tuple<Ts&...> GetComponents();
+    template <SomeComponent...Ts>
+    std::tuple<Ts&...> GetComponents(EntityPassKey);
 
     template <SomeComponent T> 
     bool HasComponent() const;
@@ -385,7 +390,7 @@ private:
 };
 
 // ENTITY DEFS //
-template <SomeComponent T> requires Entity::public_attachable_component_v<T>
+template <SomeComponent T> requires Entity::public_mutable_component_v<T>
 inline T& Entity::AddComponent(T&& cmp)
 {
     assert(ecs_);
@@ -394,7 +399,7 @@ inline T& Entity::AddComponent(T&& cmp)
     return ecs_->AddComponent<T>(id_, std::forward<T>(cmp));
 }
 
-template <SomeComponent T> requires Entity::public_attachable_component_v<T>
+template <SomeComponent T> requires Entity::public_mutable_component_v<T>
 inline T& Entity::AddComponent()
 {
     assert(ecs_);
@@ -403,8 +408,35 @@ inline T& Entity::AddComponent()
     return ecs_->AddComponent<T>(id_);
 }
 
-template <SomeComponent T> requires Entity::public_attachable_component_v<T>
+template<SomeComponent T>
+inline T& Entity::AddComponent(T&& cmp, EntityPassKey)
+{
+    assert(ecs_);
+    assert(id_ != kInvalidEntity);
+
+    return ecs_->AddComponent<T>(id_, std::forward<T>(cmp));
+}
+
+template<SomeComponent T>
+inline T& Entity::AddComponent(EntityPassKey)
+{
+    assert(ecs_);
+    assert(id_ != kInvalidEntity);
+
+    return ecs_->AddComponent<T>(id_);
+}
+
+template <SomeComponent T> requires Entity::public_mutable_component_v<T>
 inline void Entity::RemoveComponent()
+{
+    assert(ecs_);
+    assert(id_ != kInvalidEntity);
+
+    return ecs_->RemoveComponent<T>(id_);
+}
+
+template<SomeComponent T>
+inline void Entity::RemoveComponent(EntityPassKey)
 {
     assert(ecs_);
     assert(id_ != kInvalidEntity);
@@ -414,6 +446,15 @@ inline void Entity::RemoveComponent()
 
 template <SomeComponent T> requires Entity::public_mutable_component_v<T>
 inline T& Entity::GetComponent()
+{
+    assert(ecs_);
+    assert(id_ != kInvalidEntity);
+
+    return ecs_->GetComponent<T>(id_);
+}
+
+template<SomeComponent T>
+inline T& Entity::GetComponent(EntityPassKey)
 {
     assert(ecs_);
     assert(id_ != kInvalidEntity);
@@ -460,6 +501,15 @@ inline Result<std::reference_wrapper<const T>> Entity::TryGetComponent() const
 
 template <SomeComponent...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
 inline std::tuple<Ts&...> Entity::GetComponents()
+{
+    assert(ecs_);
+    assert(id_ != kInvalidEntity);
+
+    return ecs_->GetComponents<Ts...>(id_);
+}
+
+template<SomeComponent ...Ts>
+inline std::tuple<Ts&...> Entity::GetComponents(EntityPassKey)
 {
     assert(ecs_);
     assert(id_ != kInvalidEntity);

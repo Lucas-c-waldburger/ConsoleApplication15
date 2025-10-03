@@ -1,16 +1,23 @@
 #pragma once
 #include <SDL_mixer.h>
 #include <algorithm>
+#include "AudioInstance.h"
 
 class MusicChannel
 {
 public:
+    static constexpr size_t kChannelIndex = MIX_CHANNELS;
+
     MusicChannel() : activeMusic_(nullptr) {}
 
-    void SetMusic(Mix_Music* music) { activeMusic_ = music; }
-    bool HasMusic() const { return activeMusic_ != nullptr; }
+    void SetMusicInstance(const MusicInstanceResource& music) { activeMusic_ = music; }
+    const MusicInstanceResource& GetMusicInstance() const { return activeMusic_; }
+    bool HasMusicInstance() const 
+    { 
+        return activeMusic_.audioPtr != nullptr && activeMusic_.id.IsValid(); 
+    }
 
-    int GetVolume() const { return Mix_GetMusicVolume(activeMusic_); }
+    int GetVolume() const { return Mix_GetMusicVolume(activeMusic_.audioPtr); }
     void SetVolume(int volume) 
     {
         Mix_VolumeMusic(std::clamp(volume, 0, MIX_MAX_VOLUME));
@@ -33,11 +40,11 @@ public:
     {
         if (fadeInMs > 0)
         {
-            Mix_FadeInMusic(activeMusic_, loops, fadeInMs);
+            Mix_FadeInMusic(activeMusic_.audioPtr, loops, fadeInMs);
         }
         else
         {
-            Mix_PlayMusic(activeMusic_, loops);
+            Mix_PlayMusic(activeMusic_.audioPtr, loops);
         }
     }
     void Stop(int fadeOutMs = 0)
@@ -52,17 +59,18 @@ public:
             Mix_HaltMusic();
         }
     }
-
     void FadeIn(int fadeInMs, int loops)
     {
-        Mix_FadeInMusic(activeMusic_, loops, fadeInMs);
+        Mix_FadeInMusic(activeMusic_.audioPtr, loops, fadeInMs);
     }
     void FadeOut(int fadeOutMs)
     {
         Mix_FadeOutMusic(fadeOutMs);
     }
 
+    size_t GetChannelIndex() const { return kChannelIndex; }
+
 private:
-    Mix_Music* activeMusic_;
+    MusicInstanceResource activeMusic_;
     mutable bool isStopping_ = false;
 };

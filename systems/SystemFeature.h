@@ -3,61 +3,62 @@
 #include "../core/Result.h"
 #include "SystemRegistry.h"
 #include "../core/TypeUtils.h"
+#include "AudioSystem.h"
 
 class Entity;
 
-template <SomeSystem Derived>
-class IEntityDestroyedSystem
-{
-public:
-	void EntityDestroyed(Entity& entity)
-	{
-		return static_cast<Derived*>(this)->EntityDestroyedImpl(entity);
-	}
-};
-
-template <typename T>
-concept SomeEntityDestroyedSystem = 
-	SomeSystem<T> && std::derived_from<T, IEntityDestroyedSystem<T>>;
-
-
-
-template <SomeSystem Derived>
-class IEntityDriverProviderSystem
-{
-public:
-	template <typename Driver>
-	Result<Driver> GetEntityDriver(Entity& entity)
-	{
-		return static_cast<Derived*>(this)->GetEntityDriverImpl(entity);
-	}
-};
-
-template <typename T>
-concept SomeEntityDriverProviderSystem =
-	SomeSystem<T> && std::derived_from<T, IEntityDriverProviderSystem<T>>;
-
-
-template <typename T>
-concept SomeEntityDriverProviderSystem =
-SomeSystem<T> && std::derived_from<T, IEntityDriverProviderSystem<T>>;
-
-
-template <SomeSystem Derived>
-class ICleanupSystem
-{
-public:
-	Result<Void> Cleanup()
-	{
-		return static_cast<Derived*>(this)->CleanupImpl();
-	}
-};
-
-template <typename T>
-concept SomeCleanupSystem =
-	SomeSystem<T> && std::derived_from<T, ICleanupSystem<T>>;
-
-
+//template <SomeSystem Derived>
+//class IEntityDestroyedSystem
+//{
+//public:
+//	void EntityDestroyed(Entity& entity)
+//	{
+//		return static_cast<Derived*>(this)->EntityDestroyedImpl(entity);
+//	}
+//};
+//
+//template <typename T>
+//concept SomeEntityDestroyedSystem = 
+//	SomeSystem<T> && std::derived_from<T, IEntityDestroyedSystem<T>>;
+//
+//
+//
+//template <SomeSystem Derived>
+//class IEntityDriverProviderSystem
+//{
+//public:
+//	template <typename Driver>
+//	Result<Driver> GetEntityDriver(Entity& entity)
+//	{
+//		return static_cast<Derived*>(this)->GetEntityDriverImpl(entity);
+//	}
+//};
+//
+//template <typename T>
+//concept SomeEntityDriverProviderSystem =
+//	SomeSystem<T> && std::derived_from<T, IEntityDriverProviderSystem<T>>;
+//
+//
+//template <typename T>
+//concept SomeEntityDriverProviderSystem =
+//SomeSystem<T> && std::derived_from<T, IEntityDriverProviderSystem<T>>;
+//
+//
+//template <SomeSystem Derived>
+//class ICleanupSystem
+//{
+//public:
+//	Result<Void> Cleanup()
+//	{
+//		return static_cast<Derived*>(this)->CleanupImpl();
+//	}
+//};
+//
+//template <typename T>
+//concept SomeCleanupSystem =
+//	SomeSystem<T> && std::derived_from<T, ICleanupSystem<T>>;
+//
+//
 
 
 

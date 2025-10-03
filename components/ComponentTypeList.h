@@ -23,8 +23,11 @@ struct EntityStateComponent;
 struct EntityFlags;
 struct SignalTokenStorage;
 struct ParticleBehavior;
+struct NewAudioRequest;
+struct AudioUpdateRequest;
+struct ActiveAudio;
 
-using ComponentTypeList = TypeList<
+using ComponentTypeList = TypeList <
 	ActiveState,
 	MouseState,
 	Transform,
@@ -46,5 +49,8 @@ using ComponentTypeList = TypeList<
 	EntityStateComponent,
 	EntityFlags,
 	SignalTokenStorage,
-	ParticleBehavior
+	ParticleBehavior,
+	NewAudioRequest,
+	AudioUpdateRequest,
+	ActiveAudio
 >;

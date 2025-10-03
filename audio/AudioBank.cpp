@@ -58,14 +58,14 @@ bool AudioBank::HasAudio(const Handle<Audio>& handle) const
     return false;
 }
 
-Result<Mix_Chunk*> AudioBank::GetSound(const Handle<Audio>& handle)
+Result<SoundInstanceResource> AudioBank::GetSoundInstanceResouce(const Handle<Audio>& handle)
 {
-    return GetAudioInternal<Mix_Chunk>(handle);
+    return GetAudioInstanceDataInternal<Mix_Chunk>(handle);
 }
 
-Result<Mix_Music*> AudioBank::GetMusic(const Handle<Audio>& handle)
+Result<MusicInstanceResource> AudioBank::GetMusicInstanceResource(const Handle<Audio>& handle)
 {
-    return GetAudioInternal<Mix_Music>(handle);
+    return GetAudioInstanceDataInternal<Mix_Music>(handle);
 }
 
 AudioDescriptor* AudioBank::GetAudioDescriptor(const Handle<Audio>& handle)

@@ -52,6 +52,11 @@ struct HandedPair
 {
     T left;
     T right;
+    friend constexpr bool operator==(const HandedPair<T>& lhs, 
+                                     const HandedPair<T>& rhs)
+    {
+        return lhs.left == rhs.left && lhs.right == rhs.right;
+    }
 };
 
 template <typename T> //requires std::is_default_constructible_v<T>

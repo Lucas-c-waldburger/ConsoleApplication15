@@ -21,5 +21,6 @@
 #include "EntityStateComponent.h"
 #include "EntityFlagsComponent.h"
 #include "ParticleBehaviorComponent.h"
+#include "AudioComponents.h"
 
 

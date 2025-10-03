@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL_mixer.h>
+#include "AudioCommon.h"
 
 struct AudioSettings
 {
@@ -13,24 +14,24 @@ struct AudioSettings
         }
     };
 
-    struct Spatialized
-    {
-        bool enabled = false;
-        float maxDistance = 0.0f;
-        friend constexpr bool operator==(const Spatialized& lhs, const Spatialized& rhs)
-        {
-            return lhs.enabled == rhs.enabled && lhs.maxDistance == rhs.maxDistance;
-        }
-    };
+    //struct Spatialized
+    //{
+    //    bool enabled = false;
+    //    uint8_t maxDistance = 255;
+    //    friend constexpr bool operator==(const Spatialized& lhs, const Spatialized& rhs)
+    //    {
+    //        return lhs.enabled == rhs.enabled && lhs.maxDistance == rhs.maxDistance;
+    //    }
+    //};
 
-    int volume = MIX_MAX_VOLUME / 2;
+    int baseVolume = MIX_MAX_VOLUME / 2;
     int loopCount = 0;
-    FadeMs fadeMs = {};
-    Spatialized spatialized = {};
+    FadeMs fadeMs;
+    //Spatialized spatialized;
 
     friend constexpr bool operator==(const AudioSettings& lhs, const AudioSettings& rhs)
     {
-        return lhs.volume == rhs.volume && lhs.loopCount == rhs.loopCount &&
-            lhs.fadeMs == rhs.fadeMs && lhs.spatialized == rhs.spatialized;
+        return lhs.baseVolume == rhs.baseVolume && lhs.loopCount == rhs.loopCount &&
+            lhs.fadeMs == rhs.fadeMs; //&& lhs.spatialized == rhs.spatialized;
     }
 };

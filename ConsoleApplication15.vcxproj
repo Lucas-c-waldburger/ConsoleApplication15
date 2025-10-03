@@ -155,6 +155,7 @@
     <ClCompile Include="audio\AudioManager.cpp" />
     <ClCompile Include="callbacks\StateTransitionCallback.cpp" />
     <ClCompile Include="core\Counter.cpp" />
+    <ClCompile Include="ecs\EntityAccess.cpp" />
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp" />
     <ClCompile Include="state\EntityState.cpp" />
     <ClCompile Include="state\EntityStateBuilder.cpp" />
@@ -230,6 +231,7 @@
     <ClInclude Include="audio\AudioBank.h" />
     <ClInclude Include="audio\AudioHandle.h" />
     <ClInclude Include="audio\AudioCommon.h" />
+    <ClInclude Include="audio\AudioInstance.h" />
     <ClInclude Include="audio\AudioManager.h" />
     <ClInclude Include="audio\AudioSettings.h" />
     <ClInclude Include="audio\AudioStage.h" />
@@ -243,7 +245,7 @@
     <ClInclude Include="callbacks\StateTransitionCallback.h" />
     <ClInclude Include="callbacks\StateTransitionCallbackRegistry.h" />
     <ClInclude Include="camera\Projection.h" />
-    <ClInclude Include="components\AudioComponent.h" />
+    <ClInclude Include="components\AudioComponents.h" />
     <ClInclude Include="components\builder\CameraTargetComponentBuilder.h" />
     <ClInclude Include="components\builder\ColliderComponentBuilder.h" />
     <ClInclude Include="components\builder\ComponentBuilder.h" />
@@ -258,6 +260,7 @@
     <ClInclude Include="core\Signal.h" />
     <ClInclude Include="core\SizedEnum.h" />
     <ClInclude Include="core\UniqueVoidPtr.h" />
+    <ClInclude Include="ecs\EntityAccess.h" />
     <ClInclude Include="events\ControllerInputSignal.h" />
     <ClInclude Include="events\data\GameLoopStepEvents.h" />
     <ClInclude Include="events\data\MouseEvents.h" />

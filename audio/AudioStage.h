@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include "AudioSettings.h"
+#include "AudioCommon.h"
 
 enum AudioForcing : uint8_t
 {
@@ -12,9 +13,8 @@ enum AudioForcing : uint8_t
 template <typename T>
 struct AudioStageSlot
 {
-    T* audioPtr = nullptr;
+    AudioInstanceResource<T> instance;
     AudioSettings settings;
-    size_t requestedChannel = std::numeric_limits<size_t>::max();
     uint8_t force = 0;
 };
 
