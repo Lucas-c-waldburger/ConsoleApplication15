@@ -4,11 +4,7 @@
 class Counter
 {
 public:
-	float GetDelta() const
-	{
-		return static_cast<float>(delta_);
-	}
-
+	float GetDelta() const;
 	void Update();
 
 private:

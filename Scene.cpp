@@ -41,6 +41,7 @@
 #include "test/setups/KnightSetups.h"
 #include "test/setups/SetupsUtil.h"
 #include "file/Asset.h"
+#include "file/FilePathUtility.h"
 
 namespace {
     static constexpr const char* kFontPath =
@@ -1318,7 +1319,7 @@ Result<Void> SimplePhysicsScene::Run()
 
         world.Step(timeStep, subStepCount);
 
-        cameraSys.Update(GetDeltaTime());
+        cameraSys.Update(counter.GetDelta());
 
         SDLite::Renderer().Clear(SDLite::kColorBlack);
 
@@ -1431,7 +1432,7 @@ Result<Void> GrapplePhysicsScene::Run()
 
         world.Step(timeStep, subStepCount);
 
-        cameraSys.Update(GetDeltaTime());
+        cameraSys.Update(counter.GetDelta());
 
         SDLite::Renderer().Clear(SDLite::kColorBlack);
 
@@ -1910,6 +1911,100 @@ Result<Void> ParticleScene::Run(std::shared_ptr<SceneFixture> scene)
 
         emitter->Update(scene->GetDeltaTime());
 
+        TRY(scene->RenderScene());
+
+        scene->LoopEnd();
+    }
+
+    return Void{};
+}
+
+Result<Void> AudioScene::Run(std::shared_ptr<SceneFixture> scene)
+{
+    using namespace test;
+
+    AudioBank bank;
+
+    TRY(ResourcePath::Music("greenpath.ogg"), musicPath);
+
+    AudioDescriptor musicDescriptor{
+        .audioType = AudioType::Music,
+        .name = "greenpath",
+        .filepath = std::move(musicPath)
+    };
+
+    TRY(bank.LoadAudio(std::move(musicDescriptor)), musicHandle);
+
+    scene->GetSystem<AudioSystem>()->SetAudioBank(std::move(bank));
+
+    auto entity = ECS::CreateEntity();
+    
+    auto& newMusicReq = entity.AddComponent<NewAudioRequest>();
+    newMusicReq.audioHandle = musicHandle;
+
+    auto& timer = entity.AddComponent<Timer>();
+    timer.duration = 4.0;
+    timer.flags = (Timer::Active | Timer::Repeating);
+  
+    auto& signalTks = entity.AddComponent<SignalTokenStorage>().signalTokens;
+
+    signalTks.emplace_back(scene->GetEventBus().ConnectToEvent(
+        [entity](const events::TimerFired& ev) mutable 
+        {
+            if (ev.producer == entity.GetID() && entity.HasComponent<ActiveAudio>())
+            {
+                auto& updateRequest = entity.AddComponent<AudioUpdateRequest>();
+                auto& activeAudio = entity.GetComponent<ActiveAudio>();
+
+                updateRequest.instanceId = activeAudio.instanceId;
+
+                if (activeAudio.status == AudioStatus::Playing)
+                {
+                    updateRequest.command = AudioPlayCommand::Pause;
+                    LOG_DEBUG("Issued pause command");
+                    return;
+                }
+                if (activeAudio.status == AudioStatus::Paused)
+                {
+                    updateRequest.command = AudioPlayCommand::Resume;
+                    LOG_DEBUG("Issued resume command");
+                    return;
+                }
+                else
+                {
+                    LOG_DEBUG("different audio status");
+                    entity.RemoveComponent<Timer>();
+                }
+
+                //updateRequest.instanceId = entity.GetComponent<ActiveAudio>().instanceId;
+                //updateRequest.command = AudioPlayCommand::Pause;
+                //LOG_DEBUG("Started pause timer");
+
+                //updateRequest.command = AudioPlayCommand::Stop;
+                //updateRequest.settings.fadeMs = AudioFadeMs{ .out = 3000 };
+
+                //LOG_DEBUG("Started fade-out timer");
+            }
+        }
+    ));
+
+    while (true)
+    {
+        scene->LoopStart();
+
+        TRY(scene->UpdateSDLInputs(), cont);
+        if (!cont)
+        {
+            break;
+        }
+
+        TRY(scene->UpdateEntityStates());
+
+        TRY(scene->UpdatePhysics());
+
+        TRY(scene->UpdateAudio());
+        TRY(scene->UpdateCamera());
+       
         TRY(scene->RenderScene());
 
         scene->LoopEnd();

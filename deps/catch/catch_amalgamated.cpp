@@ -1,6 +1,3 @@
-
-#if RUN_TEST_TARGET
-
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
 //   (See accompanying file LICENSE.txt or copy at
@@ -17,6 +14,7 @@
 
 #include "catch_amalgamated.hpp"
 
+#if RUN_CATCH_TESTS
 
 #ifndef CATCH_WINDOWS_H_PROXY_HPP_INCLUDED
 #define CATCH_WINDOWS_H_PROXY_HPP_INCLUDED
@@ -12008,4 +12006,4 @@ namespace Catch {
 #pragma warning(pop)
 #endif
 
-#endif RUN_TEST_TARGET
+#endif 

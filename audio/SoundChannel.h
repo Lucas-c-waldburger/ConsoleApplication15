@@ -11,8 +11,8 @@ public:
         activeSound_(), channelIndex_(channelIndex) {}
 
     void SetSoundInstance(const SoundInstanceResource& sound) { activeSound_ = sound; }
-    const SoundInstanceResource& GetSoundInstance() const { return activeSound_; }
-    bool HasSoundInstance() const 
+    const SoundInstanceResource& GetActiveAudioInstance() const { return activeSound_; }
+    bool HasAudioInstance() const 
     { 
         return activeSound_.audioPtr != nullptr && activeSound_.id.IsValid();
     }
@@ -23,15 +23,23 @@ public:
         Mix_VolumeChunk(activeSound_.audioPtr, std::clamp(volume, 0, MIX_MAX_VOLUME));
     }
 
-    bool IsPlaying() const { return Mix_Playing(channelIndex_) != 0; }
+    bool IsPlaying() const 
+    { 
+        return Mix_Playing(channelIndex_) != 0 &&
+               Mix_Paused(channelIndex_) == 0; 
+    }
     bool IsPaused() const { return Mix_Paused(channelIndex_) != 0; }
     bool IsStopping() const
     {
-        if (Mix_Playing(channelIndex_) == 0)
-        {
-            isStopping_ = false;
-        }
-        return isStopping_;
+        return IsFadingOut();
+    }
+    bool IsFadingIn() const
+    {
+        return (Mix_FadingChannel(channelIndex_) == MIX_FADING_IN);
+    }
+    bool IsFadingOut() const
+    {
+        return (Mix_FadingChannel(channelIndex_) == MIX_FADING_OUT);
     }
 
     void Pause() { Mix_Pause(channelIndex_); }
@@ -52,7 +60,6 @@ public:
         if (fadeOutMs > 0)
         {
             Mix_FadeOutChannel(channelIndex_, fadeOutMs);
-            isStopping_ = true;
         }
         else
         {
@@ -86,5 +93,4 @@ public:
 private:
     size_t channelIndex_;
     SoundInstanceResource activeSound_;
-    mutable bool isStopping_ = false;
 };

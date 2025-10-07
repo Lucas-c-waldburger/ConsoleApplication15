@@ -52,20 +52,6 @@ static void SetRenderDrawColor(SDL_Renderer* renderer, SDL_Color clr)
 	SDL_SetRenderDrawColor(renderer, clr.r, clr.g, clr.b, clr.a);
 }
 
-static double GetDeltaTime()
-{
-    static uint64_t last = SDL_GetPerformanceCounter();
-
-    uint64_t now = SDL_GetPerformanceCounter();
-
-    double delta = static_cast<double>(now - last) / 
-                   static_cast<double>(SDL_GetPerformanceFrequency());
-
-    last = now;
-
-    return delta;
-};
-
 template <typename T>
 concept SDLPointType = std::same_as<T, SDL_Point> || std::same_as<T, SDL_FPoint>;
 

@@ -4,7 +4,107 @@
 
 SceneFixture::~SceneFixture()
 {
-	TearDown();
+	TearDown(); 
+}
+
+Result<Void> SceneFixture::RunGameLoopMs(int ms)
+{
+	assert(ms > 0);
+	float sec = static_cast<float>(ms) / 1000.0f;
+	float elapsed = 0.0f;
+
+	while (elapsed < sec)
+	{
+		LoopStart();
+		
+		//float delta = GetDeltaTime();
+		elapsed += GetDeltaTime();
+		//LOG_DEBUG_FMT("Elapsed: {} sec", elapsed);
+
+		TRY(UpdateSDLInputs(), cont);
+		if (!cont)
+		{
+			break;
+		}
+
+		TRY(UpdateEntityStates());
+
+		TRY(UpdatePhysics());
+
+		if (elapsed >= sec)
+		{
+			int x = 0;
+		}
+
+		TRY(UpdateAudio());
+
+		TRY(UpdateCamera());
+
+		TRY(RenderScene());
+
+		LoopEnd();
+	}
+
+	return Void{};
+}
+
+Result<Void> SceneFixture::StepGameLoop(int count)
+{
+	while (true)
+	{
+		LoopStart();
+		if (count-- <= 0)
+		{
+			break;
+		}
+
+		TRY(UpdateSDLInputs(), cont);
+		if (!cont)
+		{
+			break;
+		}
+
+		TRY(UpdateEntityStates());
+
+		TRY(UpdatePhysics());
+
+		TRY(UpdateAudio());
+
+		TRY(UpdateCamera());
+
+		TRY(RenderScene());
+
+		LoopEnd();
+	}
+
+	return Void{};
+}
+
+Result<Void> SceneFixture::RunGameLoop()
+{
+	while (true)
+	{
+		LoopStart();
+
+		TRY(UpdateSDLInputs(), cont);
+		if (!cont)
+		{
+			break;
+		}
+
+		TRY(UpdateEntityStates());
+
+		TRY(UpdatePhysics());
+
+		TRY(UpdateAudio());
+		TRY(UpdateCamera());
+
+		TRY(RenderScene());
+
+		LoopEnd();
+	}
+
+	return Void{};
 }
 
 void SceneFixture::LoopStart()
@@ -57,6 +157,15 @@ Result<Void> SceneFixture::UpdateCamera()
 	float delta = systems_.GetSystem<GameLoopSystem>()->GetDeltaTime();
 
 	systems_.GetSystem<CameraSystem>()->Update(delta);
+
+	return Void{};
+}
+
+Result<Void> SceneFixture::UpdateAudio()
+{
+	assert(systems_.IsSystemInitialized<AudioSystem>());
+
+	systems_.GetSystem<AudioSystem>()->Update();
 
 	return Void{};
 }
@@ -133,6 +242,7 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 	fixture->systems_.InitializeSystem<TimerSystem>();
 	fixture->systems_.InitializeSystem<EntityStateSystem>();
 	fixture->systems_.InitializeSystem<GameLoopSystem>();
+	fixture->systems_.InitializeSystem<AudioSystem>();
 
 	//auto& callbackSystem = fixture->systems_.InitializeSystem<EventCallbackSystem>();
 	//callbackSystem->ConnectToEventBus();

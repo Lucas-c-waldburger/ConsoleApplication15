@@ -37,6 +37,17 @@ public:
         return Super::operator[](std::string{ sv });
     }
 
+    const Value& operator[](std::string_view sv) const
+    {
+        auto it = Super::find(sv);
+        if (it == Super::end())
+        {
+            throw std::out_of_range("Key not found");
+        }
+
+        return it->second;
+    }
+
     Value& at(std::string_view sv)
     {
         auto it = Super::find(sv);

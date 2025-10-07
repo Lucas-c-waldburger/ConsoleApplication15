@@ -10,7 +10,7 @@ Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
         auto newPtr = ptrMakerFunc(desc.filepath);
         if (!newPtr)
         {
-            return MAKE_ERROR("Failed to create audio pointer");
+            return MAKE_ERROR(Mix_GetError());
         }
 
         ptrContainer.emplace_back(std::move(newPtr));

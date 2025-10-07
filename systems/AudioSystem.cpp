@@ -20,16 +20,16 @@ inline void AudioSystem::HandleAudioUpdateRequests()
 
 		auto& updateRequest = entity.GetComponent<AudioUpdateRequest>();
 
-		if (updateRequest.command != AudioPlayCommand::None)
-		{
-			AudioStatus status = audioManager_.ExecuteAudioCommand(
-				updateRequest.instanceId, updateRequest.command
-			);
+		audioManager_.UpdateAudioSettings(updateRequest.instanceId,
+										  std::move(updateRequest.settings));
 
-			if (status == AudioStatus::Stopped)
-			{
-				entity.RemoveComponent<ActiveAudio>(GetEntityPassKey());
-			}
+		AudioStatus status = audioManager_.ExecuteAudioCommand(
+			updateRequest.instanceId, updateRequest.command
+		);
+
+		if (status == AudioStatus::Stopped)
+		{
+			entity.RemoveComponent<ActiveAudio>(GetEntityPassKey());
 		}
 
 		entity.RemoveComponent<AudioUpdateRequest>();
@@ -180,8 +180,7 @@ void AudioSystem::UpdateActiveAudioComponents()
 		auto& activeAudio = entity.GetComponent<ActiveAudio>(GetEntityPassKey());
 		if (!audioManager_.AudioInstanceValid(activeAudio.instanceId))
 		{
-			LOG_DEBUG_FMT("Audio instance not found in audio manager");
-
+			// audio was stopped
 			entity.RemoveComponent<ActiveAudio>(GetEntityPassKey());
 			continue;
 		}
@@ -192,6 +191,7 @@ void AudioSystem::UpdateActiveAudioComponents()
 		
 		if (instanceStatus == AudioStatus::Stopped)
 		{
+			// TODO: Decide if audio manager should auto-remove stopped instances or not
 			entity.RemoveComponent<ActiveAudio>(GetEntityPassKey());
 			continue;
 		}

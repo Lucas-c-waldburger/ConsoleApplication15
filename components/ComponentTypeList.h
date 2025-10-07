@@ -22,7 +22,6 @@ struct NeedsUpdate;
 struct EntityStateComponent;
 struct EntityFlags;
 struct SignalTokenStorage;
-struct ParticleBehavior;
 struct NewAudioRequest;
 struct AudioUpdateRequest;
 struct ActiveAudio;
@@ -49,7 +48,6 @@ using ComponentTypeList = TypeList <
 	EntityStateComponent,
 	EntityFlags,
 	SignalTokenStorage,
-	ParticleBehavior,
 	NewAudioRequest,
 	AudioUpdateRequest,
 	ActiveAudio

@@ -74,7 +74,37 @@ private:
         return value_;
     }
 
+    const T& GetValueInternal() const
+    {
+        if ((status_ & checked) == 0)
+        {
+            LOG_WARNING("Result has been retrieved without checking Success().");
+        }
+        if ((status_ & hasValue) == 0)
+        {
+            LOG_CRITICAL("The result contained an error! - Exiting program...");
+            std::exit(EXIT_FAILURE);
+        }
+
+        return value_;
+    }
+
     Error& GetErrorInternal()
+    {
+        if ((status_ & checked) == 0)
+        {
+            LOG_WARNING("Error has been retrieved without checking Success().");
+        }
+        if (status_ & hasValue)
+        {
+            LOG_CRITICAL("The result contained a value! - Exiting program...");
+            std::exit(EXIT_FAILURE);
+        }
+
+        return error_;
+    }
+
+    const Error& GetErrorInternal() const
     {
         if ((status_ & checked) == 0)
         {

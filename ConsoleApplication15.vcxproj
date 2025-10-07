@@ -155,7 +155,9 @@
     <ClCompile Include="audio\AudioManager.cpp" />
     <ClCompile Include="callbacks\StateTransitionCallback.cpp" />
     <ClCompile Include="core\Counter.cpp" />
+    <ClCompile Include="deps\catch\catch_amalgamated.cpp" />
     <ClCompile Include="ecs\EntityAccess.cpp" />
+    <ClCompile Include="file\FilePathUtility.cpp" />
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp" />
     <ClCompile Include="state\EntityState.cpp" />
     <ClCompile Include="state\EntityStateBuilder.cpp" />
@@ -211,13 +213,14 @@
     <ClCompile Include="atlas\SpriteSeriesAtlas.cpp" />
     <ClCompile Include="systems\CollisionSystem.cpp" />
     <ClCompile Include="systems\GameLoopSystem.cpp" />
-    <ClCompile Include="systems\ParticleSystem.cpp" />
     <ClCompile Include="systems\RenderSystem.cpp" />
     <ClCompile Include="systems\PhysicsSystem.cpp" />
     <ClCompile Include="core\AABB.cpp" />
     <ClCompile Include="systems\SDLInputSystem.cpp" />
     <ClCompile Include="systems\SpriteAnimationSystem.cpp" />
     <ClCompile Include="systems\TimerSystem.cpp" />
+    <ClCompile Include="test\catch\AudioTests.cpp" />
+    <ClCompile Include="test\catch\CatchMain.cpp" />
     <ClCompile Include="test\ComponentTests.cpp" />
     <ClCompile Include="test\Fixtures.cpp" />
     <ClCompile Include="test\Premades.cpp" />
@@ -251,7 +254,6 @@
     <ClInclude Include="components\builder\ComponentBuilder.h" />
     <ClInclude Include="components\EntityFlagsComponent.h" />
     <ClInclude Include="components\driver\ControllerInputCallbackDriver.h" />
-    <ClInclude Include="components\ParticleBehaviorComponent.h" />
     <ClInclude Include="components\util\CallbackUtils.h" />
     <ClInclude Include="components\util\SpriteAnimationUtils.h" />
     <ClInclude Include="core\CatTypeID.h" />
@@ -260,6 +262,7 @@
     <ClInclude Include="core\Signal.h" />
     <ClInclude Include="core\SizedEnum.h" />
     <ClInclude Include="core\UniqueVoidPtr.h" />
+    <ClInclude Include="deps\catch\catch_amalgamated.hpp" />
     <ClInclude Include="ecs\EntityAccess.h" />
     <ClInclude Include="events\ControllerInputSignal.h" />
     <ClInclude Include="events\data\GameLoopStepEvents.h" />
@@ -269,6 +272,7 @@
     <ClInclude Include="events\EventStorage.h" />
     <ClInclude Include="file\Asset.h" />
     <ClInclude Include="core\SizedEnumMap.h" />
+    <ClInclude Include="file\FilePathUtility.h" />
     <ClInclude Include="inputs\mouse\MouseInputMap.h" />
     <ClInclude Include="inputs\mouse\MouseInputSource.h" />
     <ClInclude Include="inputs\mouse\MouseInputUpdater.h" />
@@ -525,7 +529,6 @@
     <ClInclude Include="atlas\SpriteSeriesAtlas.h" />
     <ClInclude Include="systems\CollisionSystem.h" />
     <ClInclude Include="systems\GameLoopSystem.h" />
-    <ClInclude Include="systems\ParticleSystem.h" />
     <ClInclude Include="systems\RenderSystem.h" />
     <ClInclude Include="systems\PhysicsSystem.h" />
     <ClInclude Include="core\TypeUtils.h" />
@@ -539,8 +542,10 @@
     <ClInclude Include="systems\TimerSystem.h" />
     <ClInclude Include="test\callbacks\AnimationCallbacks.h" />
     <ClInclude Include="test\callbacks\GameControllerCallbacks.h" />
+    <ClInclude Include="test\catch\Config.h" />
     <ClInclude Include="test\ComponentTests.h" />
     <ClInclude Include="test\Fixtures.h" />
+    <ClInclude Include="test\OnControllerInput.h" />
     <ClInclude Include="test\Premades.h" />
     <ClInclude Include="test\Resources.h" />
     <ClInclude Include="test\setups\SetupsUtil.h" />
@@ -682,6 +687,8 @@
     <Text Include="resources\scripts\b2body_test.lua" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="resources\audio\music\greenpath.ogg" />
+    <None Include="resources\audio\sounds\bell_hit.flac" />
     <None Include="resources\scripts\game_controller_test.lua" />
     <None Include="resources\scripts\sprite_render_test.lua" />
     <None Include="resources\scripts\test_physics.lua" />
@@ -690,6 +697,27 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="resources\audio\music\futuristic_beat.mp3" />
+    <Media Include="resources\audio\music\greenpath.mp3" />
+    <Media Include="resources\audio\sounds\boss_stun.wav" />
+    <Media Include="resources\audio\sounds\chest_open.wav" />
+    <Media Include="resources\audio\sounds\crowd_gasp.wav" />
+    <Media Include="resources\audio\sounds\enemy_damage.wav" />
+    <Media Include="resources\audio\sounds\explosion_1.wav" />
+    <Media Include="resources\audio\sounds\focus_health_heal.wav" />
+    <Media Include="resources\audio\sounds\gate_slam.wav" />
+    <Media Include="resources\audio\sounds\hero_dash.wav" />
+    <Media Include="resources\audio\sounds\hero_jump.wav" />
+    <Media Include="resources\audio\sounds\hero_parry.wav" />
+    <Media Include="resources\audio\sounds\hero_run_footsteps_stone.wav" />
+    <Media Include="resources\audio\sounds\secret_area_discovered.wav" />
+    <Media Include="resources\audio\sounds\sword_1.wav" />
+    <Media Include="resources\audio\sounds\sword_2.wav" />
+    <Media Include="resources\audio\sounds\sword_3.wav" />
+    <Media Include="resources\audio\sounds\sword_4.wav" />
+    <Media Include="resources\audio\sounds\sword_5.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

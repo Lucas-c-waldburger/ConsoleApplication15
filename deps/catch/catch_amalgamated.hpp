@@ -1,5 +1,7 @@
 
-#if RUN_TEST_TARGET
+#include "../../test/catch/Config.h"
+
+#if RUN_CATCH_TESTS
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.

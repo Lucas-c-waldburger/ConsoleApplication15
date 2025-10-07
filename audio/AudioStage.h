@@ -14,16 +14,22 @@ template <typename T>
 struct AudioStageSlot
 {
     AudioInstanceResource<T> instance;
-    AudioSettings settings;
+    AudioChannelSettings settings;
     uint8_t force = 0;
 };
 
 using SoundStageSlot = AudioStageSlot<Mix_Chunk>;
 using MusicStageSlot = AudioStageSlot<Mix_Music>;
 
+template <typename T>
+using AudioStageSlotPair = std::pair<AudioStageSlot<T>, AudioStageSlot<T>>;
+
+using SoundStageSlotPair = AudioStageSlotPair<Mix_Chunk>;
+using MusicStageSlotPair = AudioStageSlotPair<Mix_Music>;
+
 struct AudioStage
 {
-    std::array<std::pair<SoundStageSlot, SoundStageSlot>, MIX_CHANNELS> stagedSounds;
-    std::pair<MusicStageSlot, MusicStageSlot> stagedMusic;
+    std::array<SoundStageSlotPair, MIX_CHANNELS> stagedSounds;
+    MusicStageSlotPair stagedMusic;
     size_t fairSoundForceIdx = 0;
 };

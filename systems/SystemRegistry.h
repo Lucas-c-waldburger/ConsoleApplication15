@@ -9,6 +9,7 @@
 #include "SpriteAnimationSystem.h"
 #include "EntityStateSystem.h"
 #include "GameLoopSystem.h"
+#include "AudioSystem.h"
 
 // TODO: Either make into type list or dont require strong typing like this for system managing
 
@@ -21,7 +22,8 @@
 	TimerSystem, \
 	SpriteAnimationSystem, \
 	EntityStateSystem, \
-	GameLoopSystem
+	GameLoopSystem, \
+	AudioSystem
 
 
 using SystemTypeList = TypeList<
@@ -33,6 +35,7 @@ using SystemTypeList = TypeList<
 	TimerSystem, 
 	SpriteAnimationSystem, 
 	EntityStateSystem,
-	GameLoopSystem
+	GameLoopSystem,
+	AudioSystem
 >;
 

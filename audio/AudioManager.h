@@ -4,23 +4,35 @@
 #include "AudioBank.h"
 #include "AudioStage.h"
 
+
+template <typename T>
+concept SomeAudioChannel = std::same_as<T, SoundChannel> ||
+                           std::same_as<T, MusicChannel>;
+
+template <SomeAudioChannel T>
+using AudioChannelSettingsPair = std::pair<T, AudioChannelSettings>;
+
+using SoundChannelSettingsPair = AudioChannelSettingsPair<SoundChannel>;
+using MusicChannelSettingsPair = AudioChannelSettingsPair<MusicChannel>;
+
 struct AudioChannels
 {
     AudioChannels();
 
-    std::array<std::pair<SoundChannel, AudioSettings>, MIX_CHANNELS> soundChannels;
-    std::pair<MusicChannel, AudioSettings> musicChannel;
+    std::array<SoundChannelSettingsPair, MIX_CHANNELS> soundChannels;
+    MusicChannelSettingsPair musicChannel;
 };
 
 class AudioManager
 {
 public:
-    static constexpr size_t kMusicChannelIndex = MIX_CHANNELS + 1;
+    static constexpr size_t kMusicChannelIndex = MIX_CHANNELS;
     static constexpr size_t kInvalidChannelIndex = std::numeric_limits<size_t>::max();
+    static constexpr AudioChannelSettings kInvalidAudioChannelSettings = { .volume = -1 };
 
     using InstanceChannelAndStatus = std::pair<size_t, AudioStatus>;
 
-    template <typename T>
+    template <SomeMixType T>
     InstanceChannelAndStatus StageAudio(AudioStageSlot<T> stageSlot);
 
     void ClearChannels();
@@ -30,10 +42,11 @@ public:
     InstanceChannelAndStatus
     GetAudioInstanceChannelAndStatus(const AudioInstanceID& instanceId) const;
 
-    AudioSettings GetInstanceAudioSettings(const AudioInstanceID& instanceId) const;
+    const AudioChannelSettings& 
+    GetInstanceAudioSettings(const AudioInstanceID& instanceId) const;
 
     void UpdateAudioSettings(const AudioInstanceID& instanceId, 
-                             AudioSettings&& newSettings);
+                             AudioUpdateSettings&& newSettings);
 
     // returns the instance's status following the execution
     AudioStatus ExecuteAudioCommand(const AudioInstanceID& instanceId,
@@ -43,8 +56,6 @@ public:
                                      const AudioSpatialData& spatialData);
 
     bool AudioInstanceValid(const AudioInstanceID& instanceId) const;
-
-    //void StopOrUnstageAudioInstance(const AudioInstanceID& instanceId);
 
 private:
     using AudioInstanceLog = std::unordered_map<AudioInstanceID, 
@@ -65,7 +76,7 @@ private:
 };
 
 
-template <typename T>
+template <SomeMixType T>
 inline AudioManager::InstanceChannelAndStatus 
 AudioManager::StageAudio(AudioStageSlot<T> stageSlot)
 {

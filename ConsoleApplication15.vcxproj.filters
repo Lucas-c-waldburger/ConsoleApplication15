@@ -210,9 +210,6 @@
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="systems\ParticleSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="systems\AudioSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -223,6 +220,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ecs\EntityAccess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="file\FilePathUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\AudioTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\catch\catch_amalgamated.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\CatchMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1151,12 +1160,6 @@
     <ClInclude Include="core\EvaluationProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\ParticleBehaviorComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="systems\ParticleSystem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="render\RGBA.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1194,6 +1197,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ecs\EntityAccess.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="file\FilePathUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\OnControllerInput.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\catch\catch_amalgamated.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\catch\Config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1595,10 +1610,67 @@
     <None Include="resources\scripts\text_render_test.lua" />
     <None Include="resources\scripts\sprite_render_test.lua" />
     <None Include="resources\sprites\particles\2d_lights_and_shadows_neutral_point_light.webp" />
+    <None Include="resources\audio\music\greenpath.ogg" />
+    <None Include="resources\audio\sounds\bell_hit.flac" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="resources\audio\music\futuristic_beat.mp3" />
+    <Media Include="resources\audio\music\greenpath.mp3" />
+    <Media Include="resources\audio\sounds\boss_stun.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\chest_open.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\crowd_gasp.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\enemy_damage.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\explosion_1.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\focus_health_heal.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\gate_slam.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\hero_dash.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\hero_jump.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\hero_parry.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\hero_run_footsteps_stone.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\secret_area_discovered.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\sword_1.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\sword_2.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\sword_3.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\sword_4.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="resources\audio\sounds\sword_5.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
   </ItemGroup>
 </Project>

@@ -30,6 +30,12 @@ enum class AudioStatus
     Staged
 };
 
+
+template <typename T>
+concept SomeMixType = std::same_as<T, Mix_Chunk> ||
+                      std::same_as<T, Mix_Music>;
+
+
 struct AudioSpatialData
 {
     std::optional<int16_t> angle;
@@ -45,7 +51,7 @@ struct AudioSpatialData
 };
 
 using SoundPtr = std::unique_ptr<Mix_Chunk,
-    decltype([](Mix_Chunk* chunk) { if (chunk) { Mix_FreeChunk(chunk); } }) > ;
+    decltype([](Mix_Chunk* chunk) { if (chunk) { Mix_FreeChunk(chunk); } })>;
 
 inline SoundPtr MakeSoundPtr(const std::string& filepath)
 {
@@ -53,7 +59,7 @@ inline SoundPtr MakeSoundPtr(const std::string& filepath)
 }
 
 using MusicPtr = std::unique_ptr < Mix_Music,
-    decltype([](Mix_Music* music) { if (music) { Mix_FreeMusic(music); } }) > ;
+    decltype([](Mix_Music* music) { if (music) { Mix_FreeMusic(music); } })>;
 
 inline MusicPtr MakeMusicPtr(const std::string& filepath)
 {

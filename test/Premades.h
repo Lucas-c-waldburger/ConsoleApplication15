@@ -3,7 +3,6 @@
 #include "../ecs/Ecs.h"
 #include "../core/Conversions.h"
 #include "../components/RenderableComponent.h"
-#include "../components/ParticleBehaviorComponent.h"
 #include "../scripting/ScriptManager.h"
 #include "../sdl/SDLUtils.h"
 #include "../sdl/SDLite.h"
@@ -267,49 +266,17 @@ struct PhysicsData
     float gravityScale = 0.0f;
 };
 
-//struct ParticleParameters
-//{
-//    float lifetime = 0.0f;
-//    Extent<SDL_FPoint> scale = {{ 1.0f }, { 1.0f }};
-//
-//};
-//
-//struct ParticleBehaviors
-//{
-//    template <typename T>
-//    using Behavior = fu2::function_view<void(Entity&)>
-//};
+struct ParticleBehavior : BaseComponent<ParticleBehavior>
+{
+    float lifetime = 0.0f;
+    SDL_FPoint offset = { 0.0f, 0.0f };
 
-//template <typename T>
-//struct ParticleBehaviorValue
-//{
-//    Extent<T> value;
-//};
-
-
-
-//template <typename T>
-//inline constexpr EvaluationProperty<T> MakeFixedRateProperty(const T& rate)
-//{
-//    return EvaluationProperty{ EvaluationSpec::FixedRate, rate, {}};
-//}
-//template <typename T>
-//inline constexpr EvaluationProperty<T> MakeInterpolatedProperty(const T& start, const T& end)
-//{
-//    return EvaluationProperty{ EvaluationSpec::Interpolated, start, end };
-//}
-
-//struct ParticleProfile
-//{
-//    float lifetime           = 0.0f;
-//    SDL_FPoint drift         = { 0.0f, 0.0f };
-//    SDL_FPoint emitterOffset = { 0.0f, 0.0f };
-//    Extent<TextureMods> mods = {};
-//    Extent<SDL_FPoint> scale = {{ 1.0f, 1.0f }, { 1.0f, 1.0f }};
-//    Extent<float> rotation   = { 0.0f, 0.0f };
-//};
-
-
+    EvaluationProperty<SDL_FPoint> position;
+    EvaluationProperty<RGB> color;
+    EvaluationProperty<int> alpha;
+    EvaluationProperty<SDL_FPoint> scale;
+    EvaluationProperty<float> rotation;
+};
 
 using ParticleBehaviorGenerator = fu2::unique_function<ParticleBehavior()>;
 
@@ -352,7 +319,7 @@ public:
             size_t i = (newMax > 0) ? newMax - 1 : 0;
             for (; i < maxParticles_; i++)
             {
-                particles_[i].Destroy();
+                particles_[i].first.Destroy();
             }
 
             liveCount_ = std::min(liveCount_, newMax);
@@ -384,10 +351,10 @@ public:
     void SetBehaviorGenerator(Fn&& fn) { bxGenerator_ = std::forward<Fn>(fn); }
 
 private:
-    static bool UpdateParticleEntity(Entity& particle, float delta);
+    static bool UpdateParticle(std::pair<Entity, ParticleBehavior>& particleBx, float delta);
 
     Entity emitter_;
-    std::vector<Entity> particles_;
+    std::vector<std::pair<Entity, ParticleBehavior>> particles_;
     ParticleBehaviorGenerator bxGenerator_;
     size_t maxParticles_ = 0;
     size_t liveCount_ = 0;

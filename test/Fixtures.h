@@ -15,6 +15,8 @@
 class SceneFixture
 {
 public:
+	using SharedPtr = std::shared_ptr<SceneFixture>;
+
 	static constexpr std::string_view kScriptResourcesPathFmt = 
 		R"(C:\Users\Lucas\source\repos\ConsoleApplication15\resources\scripts\{})";
 
@@ -28,12 +30,20 @@ public:
 	SceneFixture() = default;
 	~SceneFixture();
 
+	// main loop
+	Result<Void> RunGameLoop();
+	Result<Void> StepGameLoop(int count);
+	Result<Void> RunGameLoopMs(int ms);
+	template <typename Fn> requires std::is_invocable_r_v<bool, Fn>
+	Result<Void> RunGameLoopCondition(Fn&& fn);
+
 	// updates
 	void LoopStart();
 	Result<Void> UpdateEntityStates();
 	Result<bool> UpdateSDLInputs();
 	Result<Void> UpdatePhysics();
 	Result<Void> UpdateCamera();	
+	Result<Void> UpdateAudio();
 	Result<Void> UpdateRender();
 	void LoopEnd();
 
@@ -86,6 +96,34 @@ private:
 	TestScript testScript_;
 	EventBus2 eventBus_;
 };
+
+template<typename Fn> requires std::is_invocable_r_v<bool, Fn>
+inline Result<Void> SceneFixture::RunGameLoopCondition(Fn&& fn)
+{
+	while (fn())
+	{
+		LoopStart();
+
+		TRY(UpdateSDLInputs(), cont);
+		if (!cont)
+		{
+			break;
+		}
+
+		TRY(UpdateEntityStates());
+
+		TRY(UpdatePhysics());
+
+		TRY(UpdateAudio());
+		TRY(UpdateCamera());
+
+		TRY(RenderScene());
+
+		LoopEnd();
+	}
+
+	return Void{};
+}
 
 template<typename...Ts>
 inline void SceneFixture::SetTestScriptFile(std::string_view scriptFileName, std::function<void(Lua&)>&& setupFn)

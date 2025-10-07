@@ -49,3 +49,9 @@ class ParticleScene
 public:
 	static Result<Void> Run(std::shared_ptr<SceneFixture> scene);
 };
+
+class AudioScene
+{
+public:
+	static Result<Void> Run(std::shared_ptr<SceneFixture> scene);
+};

@@ -503,6 +503,9 @@ namespace SDLite
 		{
 			return Status{ Mix_GetError(), Status::Response::Exit };
 		}
+		if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+			return Status{ Mix_GetError(), Status::Response::Exit };
+		}
 
 		App::app_ = new App{ {}, {} };
 
@@ -527,6 +530,7 @@ namespace SDLite
 	{
 		if (App::app_) 
 		{ 
+			Mix_CloseAudio();
 			Mix_Quit();
 			TTF_Quit();
 			IMG_Quit();

@@ -3,7 +3,7 @@
 test::ParticleEmitter::~ParticleEmitter()
 {
     emitter_.Destroy();
-    for (auto& particle : particles_)
+    for (auto& [particle, _] : particles_)
     {
         particle.Destroy();
     }
@@ -22,7 +22,7 @@ void test::ParticleEmitter::AddParticle()
         return;
     }
 
-    auto& particle = particles_[liveCount_++];
+    auto& [particle, bx] = particles_[liveCount_++];
 
     if (!particle.IsValid())
     {
@@ -35,7 +35,6 @@ void test::ParticleEmitter::AddParticle()
 
     particle.SetComponentVisibility(true);
 
-    auto& bx = particle.AddComponent<ParticleBehavior>();
     bx = bxGenerator_();
     assert(bx.lifetime > 0.0f);
 
@@ -83,39 +82,25 @@ void test::ParticleEmitter::Update(float delta)
 
     for (size_t i = 0; i < liveCount_; i++)
     {
-        auto& particle = particles_[i];
-        const auto& bx = particle.GetComponent<ParticleBehavior>();
-
-        //auto kill = [this, &particle, &i]() {
-        //    // wont be processed by any system, will be considered IsValid()
-        //    particle.SetComponentVisibility(false);
-
-        //    if (--liveCount_ <= i)
-        //    {
-        //        return;
-        //    }
-
-        //    std::swap(particles_[i], particles_[liveCount_]);
-        //    --i;
-        //    };
-
-        bool particleValid = UpdateParticleEntity(particle, delta);
+        bool particleValid = UpdateParticle(particles_[i], delta);
         if (!particleValid)
         {
-            kill(particle, i);
+            kill(particles_[i].first, i);
         }
     }
 }
 
-bool test::ParticleEmitter::UpdateParticleEntity(Entity& particle, float delta)
+bool test::ParticleEmitter::UpdateParticle(std::pair<Entity, ParticleBehavior>& particleBx,
+                                           float delta)
 {
+    auto& [particle, bx] = particleBx;
+
     if (!particle.IsValid())
     {
         return false;
     }
 
-    auto [tf, timer, rend, bx] =
-        particle.GetComponents<Transform, Timer, Renderable, ParticleBehavior>();
+    auto [tf, timer, rend] = particle.GetComponents<Transform, Timer, Renderable>();
 
     if ((timer.flags & Timer::Flag::Active) == 0)
     {

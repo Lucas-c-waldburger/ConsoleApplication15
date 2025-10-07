@@ -59,21 +59,21 @@ AudioBank::GetAudioInstanceDataInternal(const Handle<Audio>& handle)
 
     auto makeInstanceData = [&]
     (auto& ptrContainer, AudioType expectedType) -> Result<AudioInstanceResource<T>>
+    {
+        if (handle.GetAudioType() != expectedType)
         {
-            if (handle.GetAudioType() != expectedType)
-            {
-                return MAKE_ERROR("Audio handle did not have expected audio type");
-            }
-            if (idx >= ptrContainer.size())
-            {
-                return MAKE_ERROR("Mapped index for audio ptr out of range");
-            }
+            return MAKE_ERROR("Audio handle did not have expected audio type");
+        }
+        if (idx >= ptrContainer.size())
+        {
+            return MAKE_ERROR("Mapped index for audio ptr out of range");
+        }
 
-            return AudioInstanceResource<T>{
-                .audioPtr = ptrContainer[idx].get(),
-                .id = AudioInstanceID::Create()
-            };
+        return AudioInstanceResource<T>{
+            .audioPtr = ptrContainer[idx].get(),
+            .id = AudioInstanceID::Create()
         };
+    };
 
     if constexpr (std::same_as<T, Mix_Chunk>)
     {

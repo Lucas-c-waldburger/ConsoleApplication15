@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <string_view>
+#include <SDL.h>
 #include <vector>
 #include "../core/Result.h"
 #include "../core/SizedEnum.h"
@@ -13,25 +14,49 @@
 
 namespace fs = std::filesystem;
 
-//inline Result<SpriteSeriesResourcePacket> 
-//LoadSprites(const std::string& directoryPath, 
-//			std::initializer_list<std::string> filenames)
+//class AudioDescriptorStagingArea
 //{
-//	auto dirPath = fs::path{ directoryPath };
-//	if (!fs::exists(dirPath))
+//public:
+//	using Iter = std::vector<AudioDescriptor>::iterator;
+//	using MoveIter = std::move_iterator<Iter>;
+//
+//	template <typename It>
+//	struct Range 
+//	{ 
+//		Range(It beg, It end) : beginIt_(beg), endIt_(end) {}
+//
+//		auto begin() { return beginIt_; }
+//		auto end() { return endIt_; }
+//
+//	private:
+//		It beginIt_, endIt_; 
+//	};
+//
+//	Range<MoveIter> TakeMusicDescriptors()
 //	{
-//		return MAKE_ERROR_FMT("Directory path '{}' does not exist", directoryPath);
+//		assert(musicIndexStart_ > 0 && 
+//			   musicIndexStart_ <= descriptors_.size());
+//
+//		return Range<MoveIter>{ 
+//			std::make_move_iterator(descriptors_.begin() + musicIndexStart_),
+//			std::make_move_iterator(descriptors_.end()) 
+//		};
 //	}
 //
-//	SpriteSeriesMetadata metadata{ .seriesName = dirPath.stem().string() };
+//	Range<MoveIter> TakeSoundDescriptors()
+//	{
+//		return Range<MoveIter>{
+//			std::make_move_iterator(descriptors_.begin()),
+//			std::make_move_iterator(descriptors_.begin() + musicIndexStart_)
+//		};
+//	}
 //
-//
-//}
+//private:
+//	std::vector<AudioDescriptor> descriptors_;
+//	static constexpr size_t soundIndexStart_ = 0;
+//	size_t musicIndexStart_ = 0;
+//};
 
-//inline Result<SpriteSeriesResourcePacket> LoadSingleSprite(const std::string& directoryPath)
-//{
-//
-//}
 
 inline Result<Void> LoadSpriteDirectory(const std::string& directoryPath,
 								 SpriteSeriesResourcePackets& allPackets)
@@ -114,6 +139,21 @@ inline Result<Void> LoadSpriteDirectory(const std::string& directoryPath,
 
 	return Void{};
 }
+
+//enum class AssetType
+//{
+//	Invalid = -1,
+//	Image,
+//	Audio,
+//	Font
+//};
+//
+//class AssetFileStore
+//{
+//public:
+//
+//private:
+//};
 
 //enum class FileExtension : uint8_t {
 //	PNG = 1 << 0,
