@@ -11,29 +11,34 @@ class ComponentArray
 {
 public:
     using ValueType = T;
+    using ComponentIndex_t = size_t;
 
-    static constexpr uint16_t invalidIndex = std::numeric_limits<uint16_t>::max();
+    static constexpr ComponentIndex_t kInvalidComponentIndex = 
+        std::numeric_limits<ComponentIndex_t>::max();
 
     ComponentArray()
     {
-        isEntityHoldsComponentIndex_.fill(invalidIndex);
+        indexWithEntityIdxToGetComponentIdx_.fill(kInvalidComponentIndex);
     }
 
     T& AddComponent(Entity_t entity, T&& component)
     {
-        assert(entity < kMaxEntities);
+        const auto entityIndex = GetEntityIndex(entity);
 
-        uint16_t cmpIndex = isEntityHoldsComponentIndex_[entity];
+        assert(entityIndex < kMaxEntityIndex);
 
-        if (cmpIndex != invalidIndex)
+        ComponentIndex_t cmpIndex = indexWithEntityIdxToGetComponentIdx_[entityIndex];
+
+        if (cmpIndex != kInvalidComponentIndex)
         {
+            // entity already has this component, just return it
             return components_[cmpIndex];
         }
 
-        cmpIndex = static_cast<uint16_t>(components_.size());
+        cmpIndex = components_.size();
 
-        isComponentIndexHoldsEntity_.emplace_back(entity);
-        isEntityHoldsComponentIndex_[entity] = cmpIndex;
+        indexWithComponentIdxToGetEntity_.emplace_back(entity);
+        indexWithEntityIdxToGetComponentIdx_[entityIndex] = cmpIndex;
 
         return components_.emplace_back(std::forward<T>(component));
     }
@@ -45,59 +50,69 @@ public:
 
     void RemoveComponent(Entity_t entity)
     {
-        assert(entity < kMaxEntities);
+        const auto entityIndex = GetEntityIndex(entity);
 
-        const uint16_t cmpIndex = isEntityHoldsComponentIndex_[entity];
+        assert(entityIndex < kMaxEntityIndex);
 
-        if (cmpIndex == invalidIndex)
+        const ComponentIndex_t cmpIndex = 
+            indexWithEntityIdxToGetComponentIdx_[entityIndex];
+
+        if (cmpIndex == kInvalidComponentIndex)
         {
             return;
         }
 
-        const uint16_t lastIdx = static_cast<uint16_t>(components_.size() - 1);
+        const ComponentIndex_t lastIdx = components_.size() - 1;
 
         if (cmpIndex != lastIdx)
         {
-            const Entity_t lastEntity = isComponentIndexHoldsEntity_[lastIdx];
+            const Entity_t lastEntity = indexWithComponentIdxToGetEntity_[lastIdx];
 
             std::swap(components_[cmpIndex], components_[lastIdx]);
-            std::swap(isComponentIndexHoldsEntity_[cmpIndex], isComponentIndexHoldsEntity_[lastIdx]);
+            std::swap(indexWithComponentIdxToGetEntity_[cmpIndex], 
+                      indexWithComponentIdxToGetEntity_[lastIdx]);
 
-            isEntityHoldsComponentIndex_[lastEntity] = cmpIndex;
+            indexWithEntityIdxToGetComponentIdx_[GetEntityIndex(lastEntity)] = cmpIndex;
         }
 
         components_.pop_back();
-        isComponentIndexHoldsEntity_.pop_back();
+        indexWithComponentIdxToGetEntity_.pop_back();
 
-        isEntityHoldsComponentIndex_[entity] = invalidIndex;
+        indexWithEntityIdxToGetComponentIdx_[entityIndex] = kInvalidComponentIndex;
     }
 
     T& GetComponent(Entity_t entity)
     {
-        assert(entity < kMaxEntities);
+        const auto entityIndex = GetEntityIndex(entity);
 
-        const uint16_t cmpIndex = isEntityHoldsComponentIndex_[entity];
+        assert(entityIndex < kMaxEntityIndex);
 
-        assert(cmpIndex != invalidIndex);
+        const ComponentIndex_t cmpIndex = 
+            indexWithEntityIdxToGetComponentIdx_[entityIndex];
+
+        assert(cmpIndex != kInvalidComponentIndex);
 
         return components_[cmpIndex];
     }
 
     const T& GetComponent(Entity_t entity) const
     {
-        assert(entity < kMaxEntities);
+        const auto entityIndex = GetEntityIndex(entity);
 
-        const uint16_t cmpIndex = isEntityHoldsComponentIndex_[entity];
+        assert(entityIndex < kMaxEntityIndex);
 
-        assert(cmpIndex != invalidIndex);
+        const ComponentIndex_t cmpIndex = 
+            indexWithEntityIdxToGetComponentIdx_[entityIndex];
+
+        assert(cmpIndex != kInvalidComponentIndex);
 
         return components_[cmpIndex];
     }
 
 private:
     std::vector<T> components_;
-    std::vector<Entity_t> isComponentIndexHoldsEntity_;
-    std::array<uint16_t, kMaxEntities> isEntityHoldsComponentIndex_;
+    std::vector<Entity_t> indexWithComponentIdxToGetEntity_;
+    std::array<size_t, kMaxEntityIndex> indexWithEntityIdxToGetComponentIdx_;
 };
 
 namespace detail {
@@ -120,9 +135,11 @@ public:
     template <typename T>
     T& AddComponent(Entity_t entity, T&& component)
     {
-        assert(entity < kMaxEntities);
+        const auto entityIndex = GetEntityIndex(entity);
 
-        isEntityHoldsSignature_[entity] |= T::componentBit;
+        assert(entityIndex < kMaxEntities);
+
+        indexWithEntityIdxToGetComponentSignature_[entityIndex] |= T::componentBit;
 
         auto& entry = GetEntry<T>();
 
@@ -132,9 +149,11 @@ public:
     template <typename T>
     T& AddComponent(Entity_t entity)
     {
-        assert(entity < kMaxEntities);
+        const auto entityIndex = GetEntityIndex(entity);
 
-        isEntityHoldsSignature_[entity] |= T::componentBit;
+        assert(entityIndex < kMaxEntities);
+
+        indexWithEntityIdxToGetComponentSignature_[entityIndex] |= T::componentBit;
 
         auto& entry = GetEntry<T>();
 
@@ -144,7 +163,11 @@ public:
     template <typename T>
     void RemoveComponent(Entity_t entity)
     {
-        isEntityHoldsSignature_[entity] &= ~(T::componentBit);
+        const auto entityIndex = GetEntityIndex(entity);
+
+        assert(entityIndex < kMaxEntities);
+
+        indexWithEntityIdxToGetComponentSignature_[entityIndex] &= ~(T::componentBit);
 
         auto& entry = GetEntry<T>();
 
@@ -154,8 +177,10 @@ public:
     template <typename T>
     T& GetComponent(Entity_t entity)
     {
-        assert(entity < kMaxEntities);
-        assert(isEntityHoldsSignature_[entity] & T::componentBit);
+        const auto entityIndex = GetEntityIndex(entity);
+
+        assert(entityIndex < kMaxEntities);
+        assert(indexWithEntityIdxToGetComponentSignature_[entityIndex] & T::componentBit);
 
         auto& entry = GetEntry<T>();
 
@@ -165,8 +190,10 @@ public:
     template <typename T>
     const T& GetComponent(Entity_t entity) const
     {
-        assert(entity < kMaxEntities);
-        assert(isEntityHoldsSignature_[entity] & T::componentBit);
+        const auto entityIndex = GetEntityIndex(entity);
+
+        assert(entityIndex < kMaxEntities);
+        assert(indexWithEntityIdxToGetComponentSignature_[entityIndex] & T::componentBit);
 
         const auto& entry = GetEntry<T>();
 
@@ -176,34 +203,43 @@ public:
     template <typename T>
     bool HasComponent(Entity_t entity) const
     {
-        assert(entity < kMaxEntities);
+        const auto entityIndex = GetEntityIndex(entity);
 
-        return isEntityHoldsSignature_[entity] & T::componentBit;
+        assert(entityIndex < kMaxEntities);
+
+        return indexWithEntityIdxToGetComponentSignature_[entityIndex] & T::componentBit;
     }
 
     void EntityCreated(Entity_t entity)
     {
-        assert(entity < kMaxEntities);
+        const auto entityIndex = GetEntityIndex(entity);
 
-        isEntityHoldsSignature_[entity] = ActiveState::componentBit;
+        assert(entityIndex < kMaxEntities);
+
+        indexWithEntityIdxToGetComponentSignature_[entityIndex] = 
+            ActiveState::componentBit;
     }
 
     void EntityDestroyed(Entity_t entity)
     {
-        assert(entity < kMaxEntities);
+        const auto entityIndex = GetEntityIndex(entity);
+
+        assert(entityIndex < kMaxEntities);
 
         ForEachInTuple(componentArrays_, [entity](auto& componentArray) {
             componentArray.RemoveComponent(entity);
         });
 
-        isEntityHoldsSignature_[entity] = 0;
+        indexWithEntityIdxToGetComponentSignature_[entityIndex] = 0;
     }
 
     ComponentSignature GetSignature(Entity_t entity) const
     {
-        assert(entity < kMaxEntities);
+        const auto entityIndex = GetEntityIndex(entity);
 
-        return isEntityHoldsSignature_[entity];
+        assert(entityIndex < kMaxEntities);
+
+        return indexWithEntityIdxToGetComponentSignature_[entityIndex];
     }
 
 protected:
@@ -219,5 +255,5 @@ protected:
     }
 
     ComponentArrayTuple componentArrays_;
-    std::array<ComponentSignature, kMaxEntities> isEntityHoldsSignature_{};
+    std::array<ComponentSignature, kMaxEntityIndex> indexWithEntityIdxToGetComponentSignature_{};
 };

@@ -266,7 +266,7 @@ struct PhysicsData
     float gravityScale = 0.0f;
 };
 
-struct ParticleBehavior : BaseComponent<ParticleBehavior>
+struct ParticleBehavior
 {
     float lifetime = 0.0f;
     SDL_FPoint offset = { 0.0f, 0.0f };

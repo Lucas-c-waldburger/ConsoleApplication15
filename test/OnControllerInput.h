@@ -72,5 +72,4 @@ T MapControllerJoystickToScalar(SDL_FPoint axisValue, Range<T> scalarRange, bool
 
 
 
-
 } // test

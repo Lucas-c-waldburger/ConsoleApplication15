@@ -1,8 +1,8 @@
-#define CATCH_CONFIG_RUNNER
+//#define CATCH_CONFIG_RUNNER
 #include <cassert>
-#include "../../deps/catch/catch_amalgamated.hpp"
-#include "../Fixtures.h"
-#include "../../file/FilePathUtility.h"
+#include "../CatchMain.cpp"
+#include "../../Fixtures.h"
+#include "../../../file/FilePathUtility.h"
 
 namespace {
 

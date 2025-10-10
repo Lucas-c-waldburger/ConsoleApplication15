@@ -3,10 +3,27 @@
 #include "EntityRelationsHelper.h"
 #include "../core/Algorithms.h"
 
+namespace {
+
+template <SomeComponent T>
+void ClearComponentImpl(Entity& e)
+{
+	if constexpr (Entity::public_mutable_component_v<T>) { e.RemoveComponent<T>(); }
+}
+
+struct ClearComponentsImpl
+{
+	template <typename...Ts>
+	static void Apply(Entity& e) { ((ClearComponentImpl<Ts>(e)), ...); }
+};
+
+} // unnamed
+
+
+
 // ENTITY DEFS //
 void Entity::Destroy()
 {
-    //assert(IsValid());
 	if (!IsValid())
 	{
 		return;
@@ -20,6 +37,11 @@ void Entity::Destroy()
 bool Entity::IsValid() const
 {
     return ecs_ && ecs_->IsEntityValid(id_);
+}
+
+void Entity::ClearComponents()
+{
+	ComponentTypeList::template Apply<ClearComponentsImpl>(*this);
 }
 
 EntityRelations Entity::GetRelations()
@@ -306,5 +328,5 @@ bool ECS::IsEntityActive(Entity_t entity) const
 
 bool ECS::IsEntityValid(Entity_t entity) const
 {
-	return (entity < kMaxEntities && IsEntityActive(entity));
+	return IsEntityActive(entity);
 }

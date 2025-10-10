@@ -14,7 +14,7 @@ class EntityRelations;
 // ENTITY //
 class Entity
 {
-private:
+public:
     // components that can't be mutated through Entity API (must use EntityPassKey)
     template <SomeComponent T>
     static constexpr bool public_mutable_component_v = (
@@ -23,7 +23,7 @@ private:
           std::same_as<T, ActiveState> ||
           std::same_as<T, ActiveAudio>)
     );
-public: 
+
     Entity() : id_(kInvalidEntity), ecs_(nullptr) {}
     Entity(Entity_t id, ECS& ecs) : id_(id), ecs_(&ecs) {}
 
@@ -40,6 +40,8 @@ public:
     void RemoveComponent();
     template <SomeComponent T>
     void RemoveComponent(EntityPassKey);
+
+    void ClearComponents();
 
     template <SomeComponent T> requires Entity::public_mutable_component_v<T>
     T& GetComponent();
@@ -117,6 +119,10 @@ public:
     std::vector<Entity> GetChildren();
     Entity FindChild(Entity_t childId);
     Entity FindChild(std::string_view childName);
+
+    template <typename Fn> requires (HasFuncTraits<Fn>&&
+        std::same_as<type_at_index_t<0, typename func_traits<Fn>::arg_types>, Entity&>)
+    void ForEachChild(Fn&& fn);
 };
 
 // ECS //

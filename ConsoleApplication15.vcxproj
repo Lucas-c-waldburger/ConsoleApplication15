@@ -157,6 +157,7 @@
     <ClCompile Include="core\Counter.cpp" />
     <ClCompile Include="deps\catch\catch_amalgamated.cpp" />
     <ClCompile Include="ecs\EntityAccess.cpp" />
+    <ClCompile Include="ecs\EntityManager.cpp" />
     <ClCompile Include="file\FilePathUtility.cpp" />
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp" />
     <ClCompile Include="state\EntityState.cpp" />
@@ -219,8 +220,10 @@
     <ClCompile Include="systems\SDLInputSystem.cpp" />
     <ClCompile Include="systems\SpriteAnimationSystem.cpp" />
     <ClCompile Include="systems\TimerSystem.cpp" />
-    <ClCompile Include="test\catch\AudioTests.cpp" />
+    <ClCompile Include="test\AudioPlayground.cpp" />
+    <ClCompile Include="test\catch\audio\AudioTests.cpp" />
     <ClCompile Include="test\catch\CatchMain.cpp" />
+    <ClCompile Include="test\catch\ecs\EntityManagerTests.cpp" />
     <ClCompile Include="test\ComponentTests.cpp" />
     <ClCompile Include="test\Fixtures.cpp" />
     <ClCompile Include="test\Premades.cpp" />
@@ -317,7 +320,6 @@
     <ClInclude Include="deps\RectangleBinPack\ShelfBinPack.h" />
     <ClInclude Include="deps\RectangleBinPack\ShelfNextFitBinPack.h" />
     <ClInclude Include="deps\RectangleBinPack\SkylineBinPack.h" />
-    <ClInclude Include="ecs\ComponentArray.h" />
     <ClInclude Include="ecs\EntityDestructor.h" />
     <ClInclude Include="events\data\EntityActions.h" />
     <ClInclude Include="events\data\EventDataIncludes.h" />
@@ -540,6 +542,7 @@
     <ClInclude Include="systems\SystemManager.h" />
     <ClInclude Include="systems\SystemRegistry.h" />
     <ClInclude Include="systems\TimerSystem.h" />
+    <ClInclude Include="test\AudioPlayground.h" />
     <ClInclude Include="test\callbacks\AnimationCallbacks.h" />
     <ClInclude Include="test\callbacks\GameControllerCallbacks.h" />
     <ClInclude Include="test\catch\Config.h" />
