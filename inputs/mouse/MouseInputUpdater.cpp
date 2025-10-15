@@ -152,11 +152,11 @@ void MouseInputUpdater::FinalizeAndPushEvents(float delta, EventBus2& bus)
 
 			if (input.source == Source::Cursor)
 			{
-				mouseInputEvent.cursorValue = cursorValue_;
+				mouseInputEvent.input.value.cursor = cursorValue_;
 			}
 			else if (input.source == Source::Wheel)
 			{
-				mouseInputEvent.wheelValue = wheelValue_;
+				mouseInputEvent.input.value.wheel = wheelValue_;
 			}
 
 			bus.PushEvent(std::move(mouseInputEvent));

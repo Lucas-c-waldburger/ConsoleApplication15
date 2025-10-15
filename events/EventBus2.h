@@ -5,29 +5,36 @@ class EventBus2
 {
 public:
 	// Connect to event types
-	template <typename Fn>
-	SignalToken ConnectToEvent(Fn&& fn) { return eventSignalList_.Connect(std::forward<Fn>(fn)); }
-
-	template <SomeEventData T, typename Fn>
-	SignalToken ConnectToEvent(Fn&& fn) { return eventSignalList_.Connect<T>(std::forward<Fn>(fn)); }
-
-	// Connect specifically to events::GameControllerInput for a certain input source type
-	template <typename Fn>
-	SignalToken ConnectToInput(GameControllerInputSource src, Fn&& fn)
+	template <ValidEventSignalFn Fn>
+	SignalToken ConnectToEvent(Fn&& fn) 
 	{ 
-		return controllerInputSignalList_.Connect(src, std::forward<Fn>(fn));
+		return signalLists_.eventSignals.Connect(std::forward<Fn>(fn)); 
 	}
 
-	template <GameControllerInputSource src, typename Fn>
-	SignalToken ConnectToInput(Fn&& fn)
+	template <SomeEventData T, ValidEventSignalFnOfType<T> Fn>
+	SignalToken ConnectToEvent(Fn&& fn) 
+	{ 
+		return signalLists_.eventSignals.Connect<T>(std::forward<Fn>(fn));
+	}
+
+	// connect to input events for a particular input source
+	template <SomeInputSourceEnum Source, ValidInputSignalFn<Source> Fn>
+	SignalToken ConnectToInput(Source src, Fn&& fn)
 	{
-		return controllerInputSignalList_.Connect<src>(std::forward<Fn>(fn));
+		return signalLists_.GetInputSignalList<Source>().Connect(src, std::forward<Fn>(fn));
+	}
+
+	template <SomeInputEvent T, SomeInputSourceEnum Source, 
+		      ValidInputSignalFnOfType<Source, T> Fn>
+	SignalToken ConnectToInput(Source src, Fn&& fn)
+	{
+		return signalLists_.GetInputSignalList<Source>().Connect(src, std::forward<Fn>(fn));
 	}
 
 	template <SomeEventData T>
 	void PushEvent(T&& ev) { eventStorage_.Emplace(std::forward<T>(ev)); }
 	 
-	void DispatchEvents() { eventStorage_.Dispatch(eventSignalList_, controllerInputSignalList_); }
+	void DispatchEvents() { eventStorage_.Dispatch(signalLists_); }
 
 	void DiscardEvents() { eventStorage_.Discard(); }
 
@@ -38,7 +45,7 @@ public:
 	size_t NumEvents() const { return eventStorage_.NumEvents<T>(); }
 
 private:
-	EventSignalList eventSignalList_;
-	ControllerInputSignalList controllerInputSignalList_;
+	//EventSignalList eventSignalList_;
+	SignalListCollection signalLists_;
 	EventStorage eventStorage_;
 };

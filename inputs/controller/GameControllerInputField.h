@@ -1,7 +1,7 @@
 #pragma once
 #include <numeric>
 #include "GameControllerInputSource.h"
-#include "../InputState.h"
+#include "../InputField.h"
 
 struct GameControllerInputFieldValue
 {
@@ -9,10 +9,13 @@ struct GameControllerInputFieldValue
 	SDL_Point axis = { 0, 0 };
 };
 
-struct GameControllerInputField
-{
-	GameControllerInputSource source = GameControllerInputSource::Invalid;
-	InputState state = InputState::None;
-	uint32_t stateDuration = 0;
-	GameControllerInputFieldValue value;
-};
+using GameControllerInputField = InputField<GameControllerInputSource, 
+										    GameControllerInputFieldValue>;
+
+//struct GameControllerInputField
+//{
+//	GameControllerInputSource source = GameControllerInputSource::Invalid;
+//	InputState state = InputState::None;
+//	uint32_t stateDuration = 0;
+//	GameControllerInputFieldValue value;
+//};

@@ -3,71 +3,98 @@
 #include "Fixtures.h"
 
 
+namespace ui {
+
+class Button
+{
+public:
+	enum Color { Red = 0, Blue, Yellow, Green };
+	static constexpr std::array kButtonColors = {
+		"button_red",
+		"button_blue",
+		"button_yellow",
+		"button_green"
+	};
+
+	struct ButtonSprites
+	{
+		SpriteRenderable up;
+		SpriteRenderable down;
+		SpriteRenderable hover;
+	};
+
+	struct ButtonCallbacks
+	{
+		fu2::unique_function<void()> onClick;
+		fu2::unique_function<void()> onHover;
+	};
+
+	struct ButtonState
+	{
+		enum : uint8_t
+		{
+			Hovering = 1 << 0,
+			ClickedInside = 1 << 1
+		};
+		uint8_t value = 0;
+	};
+
+	struct Params
+	{
+		Dimensions<int> dimensions;
+		SDL_FPoint position = { 0.0f, 0.0f };
+		ButtonSprites sprites;
+		std::optional<TextRenderable> text;
+		ButtonCallbacks callbacks;
+	};
+
+	Button(EventBus2& bus, Params&& params);
+
+	void SetPosition(SDL_FPoint pos);
+	void SetDimensions(Dimensions<int> dim);
+
+	//template <typename Fn> requires std::convertible_to<Fn, fu2::function<void()>>
+	//void SetOnClick(Fn&& fn) { callbacks_.onClick = std::forward<Fn>(fn); }
+	//template <typename Fn> requires std::convertible_to<Fn, fu2::function<void()>>
+	//void SetOnHover(Fn&& fn) { callbacks_.onHover = std::forward<Fn>(fn); }
+
+private:
+	auto MakeOnClickCallback();
+	//auto MakeOnHoverCallback();
+
+	Entity self_;
+	ButtonSprites sprites_;
+	SDL_Rect boundingBox_ = { 0, 0, 0, 0 };
+	ButtonState state_;
+	ButtonCallbacks callbacks_;
+};
+
+class Workspace
+{
+public:
+	 
+	Result<Button> PlaceButton(SDL_FPoint position, Dimensions<int> dimensions,
+							   Button::Color color);
+
+private:
+	TextureRepository* textureRepo_ = nullptr;
+	EventBus2* eventBus_ = nullptr;
+};
+
+
+
+
+
+
+}
+
+
+
+
+
+
 namespace test {
 
-//class AudioPlaylist
-//{
-//public:
-//	AudioPlaylist(int cellW, int cellH)
-//
-//private:
-//};
-
-//class AudioPlaylist
-//{
-//public:
-//	AudioPlaylist(int w, int h) : self_(ECS::CreateEntity()), playlistDimensions_(w, h) 
-//	{
-//		
-//	}
-//
-//	void SetAudioHandleMap(UnorderedDictionary<Handle<Audio>>&& map)
-//	{
-//		audioHandleMap_ = std::move(map);
-//		for (size_t i = audioHandleMap_.size(); i < playlistEntities_.size(); i++)
-//		{
-//			playlistEntities_[i].Destroy();
-//		}
-//		
-//		playlistEntities_.resize(audioHandleMap_.size());
-//
-//		auto relations = self_.GetRelations();
-//		size_t entIdx = 0;
-//		int runningHeight = 0;
-//		for (const auto& [nm, _] : audioHandleMap_)
-//		{
-//			auto& entity = playlistEntities_[entIdx];
-//			if (!entity.IsValid())
-//			{
-//				entity = relations.AddChild();
-//			}
-//
-//
-//
-//			auto& renderable = entity.AddComponent<Renderable>();
-//			renderable.renderData = TextRenderable{
-//				.text = nm,
-//				.dimensions = { playlistDimensions_.w, 20 }
-//			};
-//		}
-//	}
-//
-//private:
-//	Entity self_;
-//	std::vector<Entity> playlistEntities_;
-//	UnorderedDictionary<Handle<Audio>> audioHandleMap_;
-//	Dimensions<int> playlistDimensions_;
-//};
-//
-//class AudioPlayground
-//{
-//public:
-//	AudioPlayground(EventBus2& bus);
-//
-//private:
-//	Entity self_;
-//	UnorderedDictionary<AudioDescriptor> audioDescriptors_;
-//};
 
 bool ProceedProcessInput(const Entity& entity, const events::GameControllerInput& ev)
 {

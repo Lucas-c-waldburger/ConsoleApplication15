@@ -59,6 +59,8 @@ public:
     std::tuple<Ts&...> GetComponents();
     template <SomeComponent...Ts>
     std::tuple<Ts&...> GetComponents(EntityPassKey);
+    template <SomeComponent...Ts>
+    std::tuple<const Ts&...> GetComponents() const;
 
     template <SomeComponent T> 
     bool HasComponent() const;
@@ -119,10 +121,6 @@ public:
     std::vector<Entity> GetChildren();
     Entity FindChild(Entity_t childId);
     Entity FindChild(std::string_view childName);
-
-    template <typename Fn> requires (HasFuncTraits<Fn>&&
-        std::same_as<type_at_index_t<0, typename func_traits<Fn>::arg_types>, Entity&>)
-    void ForEachChild(Fn&& fn);
 };
 
 // ECS //
@@ -240,6 +238,12 @@ private:
 
     template <SomeComponent...Ts>
     std::tuple<Ts&...> GetComponents(Entity_t entity)
+    {
+        return std::tie(componentManager_.GetComponent<Ts>(entity)...);
+    }
+
+    template <SomeComponent...Ts>
+    std::tuple<const Ts&...> GetComponents(Entity_t entity) const
     {
         return std::tie(componentManager_.GetComponent<Ts>(entity)...);
     }
@@ -516,6 +520,15 @@ inline std::tuple<Ts&...> Entity::GetComponents()
 
 template<SomeComponent ...Ts>
 inline std::tuple<Ts&...> Entity::GetComponents(EntityPassKey)
+{
+    assert(ecs_);
+    assert(id_ != kInvalidEntity);
+
+    return ecs_->GetComponents<Ts...>(id_);
+}
+
+template<SomeComponent ...Ts>
+inline std::tuple<const Ts&...> Entity::GetComponents() const
 {
     assert(ecs_);
     assert(id_ != kInvalidEntity);

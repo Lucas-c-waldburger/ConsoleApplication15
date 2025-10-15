@@ -23,7 +23,7 @@ public:
 
     T& AddComponent(Entity_t entity, T&& component)
     {
-        const auto entityIndex = GetEntityIndex(entity);
+        const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntityIndex);
 
@@ -50,7 +50,7 @@ public:
 
     void RemoveComponent(Entity_t entity)
     {
-        const auto entityIndex = GetEntityIndex(entity);
+        const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntityIndex);
 
@@ -72,7 +72,7 @@ public:
             std::swap(indexWithComponentIdxToGetEntity_[cmpIndex], 
                       indexWithComponentIdxToGetEntity_[lastIdx]);
 
-            indexWithEntityIdxToGetComponentIdx_[GetEntityIndex(lastEntity)] = cmpIndex;
+            indexWithEntityIdxToGetComponentIdx_[GetEntity_tIndex(lastEntity)] = cmpIndex;
         }
 
         components_.pop_back();
@@ -83,7 +83,7 @@ public:
 
     T& GetComponent(Entity_t entity)
     {
-        const auto entityIndex = GetEntityIndex(entity);
+        const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntityIndex);
 
@@ -97,7 +97,7 @@ public:
 
     const T& GetComponent(Entity_t entity) const
     {
-        const auto entityIndex = GetEntityIndex(entity);
+        const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntityIndex);
 
@@ -135,7 +135,7 @@ public:
     template <typename T>
     T& AddComponent(Entity_t entity, T&& component)
     {
-        const auto entityIndex = GetEntityIndex(entity);
+        const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntities);
 
@@ -149,7 +149,7 @@ public:
     template <typename T>
     T& AddComponent(Entity_t entity)
     {
-        const auto entityIndex = GetEntityIndex(entity);
+        const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntities);
 
@@ -163,7 +163,7 @@ public:
     template <typename T>
     void RemoveComponent(Entity_t entity)
     {
-        const auto entityIndex = GetEntityIndex(entity);
+        const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntities);
 
@@ -177,7 +177,7 @@ public:
     template <typename T>
     T& GetComponent(Entity_t entity)
     {
-        const auto entityIndex = GetEntityIndex(entity);
+        const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntities);
         assert(indexWithEntityIdxToGetComponentSignature_[entityIndex] & T::componentBit);
@@ -190,7 +190,7 @@ public:
     template <typename T>
     const T& GetComponent(Entity_t entity) const
     {
-        const auto entityIndex = GetEntityIndex(entity);
+        const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntities);
         assert(indexWithEntityIdxToGetComponentSignature_[entityIndex] & T::componentBit);
@@ -203,7 +203,7 @@ public:
     template <typename T>
     bool HasComponent(Entity_t entity) const
     {
-        const auto entityIndex = GetEntityIndex(entity);
+        const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntities);
 
@@ -212,7 +212,7 @@ public:
 
     void EntityCreated(Entity_t entity)
     {
-        const auto entityIndex = GetEntityIndex(entity);
+        const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntities);
 
@@ -222,7 +222,7 @@ public:
 
     void EntityDestroyed(Entity_t entity)
     {
-        const auto entityIndex = GetEntityIndex(entity);
+        const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntities);
 
@@ -235,7 +235,7 @@ public:
 
     ComponentSignature GetSignature(Entity_t entity) const
     {
-        const auto entityIndex = GetEntityIndex(entity);
+        const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntities);
 

@@ -5,7 +5,7 @@ EntityManager::EntityManager()
 {
     for (Entity_t entity = 0; entity < kMaxEntities; entity++)
     {
-        const EntityIndex_t entityIndex = GetEntityIndex(entity);
+        const EntityIndex_t entityIndex = GetEntity_tIndex(entity);
         const FlatIdx flatIndex = entityIndex;
 
         indexWithFlatIdxToGetEntity_t_[flatIndex] = entity;
@@ -20,11 +20,11 @@ Entity_t EntityManager::CreateEntity()
     const Entity_t entityOfLastGen =
         indexWithFlatIdxToGetEntity_t_[nextFreeFlatIndex_];
 
-    const EntityIndex_t entityIndex = GetEntityIndex(entityOfLastGen);
+    const EntityIndex_t entityIndex = GetEntity_tIndex(entityOfLastGen);
 
     indexWithEntityIdxToGetFlatIdx_[entityIndex] = nextFreeFlatIndex_;
 
-    const Entity_t entityOfNextGen = IncrementEntityGeneration(entityOfLastGen);
+    const Entity_t entityOfNextGen = IncrementEntity_tGeneration(entityOfLastGen);
 
     indexWithFlatIdxToGetEntity_t_[nextFreeFlatIndex_] = entityOfNextGen;
 
@@ -37,7 +37,7 @@ void EntityManager::DestroyEntity(Entity_t entityToRemove)
 {
     assert(nextFreeFlatIndex_ > 0);
 
-    const EntityIndex_t entityToRemoveEntityIndex = GetEntityIndex(entityToRemove);
+    const EntityIndex_t entityToRemoveEntityIndex = GetEntity_tIndex(entityToRemove);
     assert(entityToRemoveEntityIndex <= kMaxEntityIndex);
 
     const FlatIdx entityToRemoveFlatIndex =
@@ -53,7 +53,7 @@ void EntityManager::DestroyEntity(Entity_t entityToRemove)
         const FlatIdx lastActiveFlatIndex = nextFreeFlatIndex_ - 1;
         const Entity_t lastActiveEntity =
             indexWithFlatIdxToGetEntity_t_[lastActiveFlatIndex];
-        const EntityIndex_t lastActiveEntityIndex = GetEntityIndex(lastActiveEntity);
+        const EntityIndex_t lastActiveEntityIndex = GetEntity_tIndex(lastActiveEntity);
 
         indexWithEntityIdxToGetFlatIdx_[entityToRemoveEntityIndex] =
             lastActiveFlatIndex;
@@ -77,10 +77,12 @@ std::span<const Entity_t> EntityManager::GetActiveEntities() const
 
 bool EntityManager::IsEntityActive(Entity_t entity) const
 {
-    const auto [entityIndex, flatIndex] = DecomposeEntity(entity);
+    const EntityIndex_t entityIndex = GetEntity_tIndex(entity);
 
     assert(entityIndex <= kMaxEntityIndex);
 
-    return indexWithEntityIdxToGetFlatIdx_[entityIndex] < nextFreeFlatIndex_ &&
-        indexWithFlatIdxToGetEntity_t_[flatIndex] == entity;
+    const FlatIdx flatIndex = indexWithEntityIdxToGetFlatIdx_[entityIndex];
+
+    return flatIndex < nextFreeFlatIndex_ &&
+           indexWithFlatIdxToGetEntity_t_[flatIndex] == entity;
 }

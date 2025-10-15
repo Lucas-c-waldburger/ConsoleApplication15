@@ -3,6 +3,7 @@
 #include "../deps/function2/function2.hpp"
 #include "TypeUtils.h"
 #include "../scripting/TypedLuaFunction.h"
+// TRY TO REMOVE LUA INCLUDE AND FWD DECLARE
 
 // lambda / functor
 template <typename T>

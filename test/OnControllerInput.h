@@ -5,6 +5,8 @@
 
 namespace test {
 
+    //struct CompoundInputAction {};
+
 //class ControllerInputDriver
 //{
 //public:

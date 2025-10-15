@@ -1,6 +1,7 @@
 #pragma once
 #include "../IEventData.h"
 #include "../EventConcepts.h"
+#include "InputEventConcepts.h"
 #include "../../inputs/controller/GameControllerInputField.h"
 
 namespace events {
@@ -20,6 +21,7 @@ struct GameControllerInput : IEventData<GameControllerInput>
 	SDL_JoystickID joystickID = -1;
 	GameControllerInputField input;
 };
+static_assert(SomeInputEvent<GameControllerInput>);
 
 // GROUP
 using GameControllerEventGroup = EventGroup<

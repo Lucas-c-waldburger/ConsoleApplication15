@@ -85,21 +85,38 @@ template <typename...Ts>
 static constexpr bool pack_types_unique_v = detail::pack_types_unique<Ts...>::value;
 /**/
 
-/* INDEX OF TYPE IN TYPE LIST */
+/* INDEX OF TYPE IN TUPLE-LIKE */
 namespace detail {
-template <typename T, typename TList>
+
+template <typename T, typename TupLike>
 struct index_of;
 
-template <typename T, typename...Ts>
-struct index_of<T, TypeList<T, Ts...>> : std::integral_constant<size_t, 0> {};
+template <typename T, template <typename...> class TupLike>
+struct index_of<T, TupLike<>> {
+	static_assert(sizeof(T) == 0, "Type not found");
+};
 
-template <typename T, typename U, typename...Ts>
-struct index_of<T, TypeList<U, Ts...>>
-	: std::integral_constant<size_t, 1 + index_of<T, TypeList<Ts...>>::value> {};
+template <typename T, template <typename...> class TupLike, typename...Ts>
+struct index_of<T, TupLike<T, Ts...>> : std::integral_constant<size_t, 0> {};
+
+template <typename T, template <typename...> class TupLike, typename U, typename...Ts>
+struct index_of<T, TupLike<U, Ts...>>
+	: std::integral_constant<size_t, 1 + index_of<T, TupLike<Ts...>>::value> {
+};
+
+//template <typename T, typename TList>
+//struct index_of;
+//
+//template <typename T, typename...Ts>
+//struct index_of<T, TypeList<T, Ts...>> : std::integral_constant<size_t, 0> {};
+//
+//template <typename T, typename U, typename...Ts>
+//struct index_of<T, TypeList<U, Ts...>>
+//	: std::integral_constant<size_t, 1 + index_of<T, TypeList<Ts...>>::value> {};
 } // detail
 
-template <typename T, typename TList>
-inline constexpr size_t index_of_v = detail::index_of<T, TList>::value;
+template <typename T, typename TupLike>
+inline constexpr size_t index_of_v = detail::index_of<T, TupLike>::value;
 /**/
 
 /* CONCAT TYPE LISTS */
@@ -130,8 +147,22 @@ template <typename...TLists>
 using concat_type_lists_t = detail::concat_type_lists_impl<TLists...>::type;
 /**/
 
-/* TYPE AT TYPE LIST INDEX */
+/* TYPE AT TUPLE-LIKE INDEX */
 namespace detail {
+//template <size_t Idx, typename Tup>
+//struct type_at_index;
+//
+//template <template <typename...> class TupLike, typename T, typename... Ts>
+//struct type_at_index<0, TupLike<T, Ts...>> {
+//	using type = T;
+//};
+//
+//template <size_t Idx, template <typename...> class TupLike, typename T, typename... Ts>
+//struct type_at_index<Idx, TupLike<T, Ts...>> {
+//	using type = typename type_at<Idx - 1, TupLike<Ts...>>::type;
+//};
+
+
 template <size_t Idx, size_t Counter, typename TList>
 struct type_at_index;
 
@@ -153,7 +184,6 @@ struct type_at_index<Idx, Counter, TypeList<T, Ts...>> {
 
 template <size_t Idx, typename TList>
 using type_at_index_t = typename detail::type_at_index<Idx, 0, TList>::type;
-/**/
 
 /* RAW TYPE */
 template <typename T>

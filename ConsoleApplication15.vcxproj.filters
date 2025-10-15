@@ -225,13 +225,31 @@
     <ClCompile Include="file\FilePathUtility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\catch\AudioTests.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="deps\catch\catch_amalgamated.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\catch\CatchMain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ecs\EntityManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\AudioPlayground.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\audio\AudioTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\ecs\ComponentManagerTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\ecs\EntityManagerTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\ecs\Entity_tTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\events\EventBusTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1052,9 +1070,6 @@
     <ClInclude Include="callbacks\StateTransitionCallback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ecs\ComponentArray.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="components\driver\EntityStateDriver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1209,6 +1224,30 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\catch\Config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\data\InputEventConcepts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\InputField.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\InputSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\InputSignalList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\mouse\MouseInputField.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\AudioPlayground.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\SignalListCollection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\EventSignalConcepts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

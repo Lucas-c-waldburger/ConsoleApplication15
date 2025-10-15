@@ -4,6 +4,7 @@
 #include "Event.h"
 #include "EventDataTypeList.h"
 #include "data/EventDataIncludes.h"
+#include "../inputs/SignalListCollection.h"
 
 template <typename TList>
 class EventStorageImpl;
@@ -24,11 +25,11 @@ public:
 		heldEventIndices_[heldEventHead_++] = T::eventType;
 	}
 
-	void Dispatch(EventSignalList& eventSignals, ControllerInputSignalList& inputSignals)
+	void Dispatch(SignalListCollection& signalListCollection)
 	{
 		for (size_t i = 0; i < heldEventHead_; i++)
 		{
-			dispatchTable_[heldEventIndices_[i]](storage_, eventSignals, inputSignals, true);
+			dispatchTable_[heldEventIndices_[i]](storage_, signalListCollection, true);
 		}
 
 		heldEventHead_ = 0;
@@ -53,7 +54,7 @@ public:
 	}
 
 	template <SomeEventData T>
-	const auto& Peek()
+	const auto& Peek() const
 	{
 		return std::get<std::vector<T>>(storage_);
 	}
@@ -70,11 +71,11 @@ private:
 	}
 
 	using StorageTuple = std::tuple<std::vector<Ts>...>;
-	using FnType = void(*)(StorageTuple&, EventSignalList&, ControllerInputSignalList&, bool);
+	using FnType = void(*)(StorageTuple&, SignalListCollection&, bool);
 
 	static inline constexpr std::array<FnType, N> dispatchTable_ = {
-		(+[](StorageTuple& store, EventSignalList& eventSignals, 
-			 ControllerInputSignalList& inputSignals, bool dispatch)
+		(+[](StorageTuple& store, SignalListCollection& signalListCollection,
+			 bool dispatch)
 		{
 			auto& storageVec = std::get<std::vector<Ts>>(store);
 
@@ -82,12 +83,7 @@ private:
 			{
 				for (auto& event : storageVec)
 				{
-					eventSignals.Emit(event);
-
-					if constexpr (std::same_as<Ts, events::GameControllerInput>)
-					{
-						inputSignals.Emit(event);
-					}
+					signalListCollection.Emit(event);
 				}
 			}
 

@@ -19,30 +19,38 @@ inline constexpr EntityGeneration_t kInvalidEntityGen = 0; // First valid gen is
 static_assert(kMaxEntities < 0xFFFFFFFFu, "kMaxEntities must fit in 32 bits");
 
 // HELPERS //
-inline constexpr EntityGeneration_t GetEntityGeneration(Entity_t entity)
+inline constexpr EntityGeneration_t GetEntity_tGeneration(Entity_t entity)
 {
     return static_cast<EntityGeneration_t>(entity >> 32);
 }
 
-inline constexpr EntityIndex_t GetEntityIndex(Entity_t entity)
+inline constexpr EntityIndex_t GetEntity_tIndex(Entity_t entity)
 {
     return static_cast<EntityIndex_t>(entity & 0xFFFFFFFFull);
 }
 
 inline constexpr std::pair<EntityGeneration_t, EntityIndex_t>
-DecomposeEntity(Entity_t entity)
+DecomposeEntity_t(Entity_t entity)
 {
-    return { GetEntityGeneration(entity), GetEntityIndex(entity) };
+    return { GetEntity_tGeneration(entity), GetEntity_tIndex(entity) };
 }
 
-inline constexpr Entity_t IncrementEntityGeneration(Entity_t entity)
+inline constexpr bool IsEntity_tValid(Entity_t entity)
 {
-    return (static_cast<Entity_t>(GetEntityGeneration(entity) + 1) << 32)
-        | GetEntityIndex(entity);
-}
+    const auto [generation, index] = DecomposeEntity_t(entity);
 
-inline constexpr bool IsEntityValid(Entity_t entity)
-{
-    const auto [generation, index] = DecomposeEntity(entity);
     return index <= kMaxEntityIndex && generation <= kMaxEntityGenerations;
 }
+
+inline constexpr Entity_t IncrementEntity_tGeneration(Entity_t entity)
+{
+    const EntityGeneration_t generation = GetEntity_tGeneration(entity);
+
+    if (generation >= kMaxEntityGenerations)
+    {
+        return kInvalidEntity;
+    }
+
+    return (static_cast<Entity_t>(generation + 1) << 32) | GetEntity_tIndex(entity);
+}
+
