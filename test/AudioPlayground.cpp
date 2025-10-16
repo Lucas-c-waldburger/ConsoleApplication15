@@ -24,7 +24,7 @@ SDL_Rect GetButtonBoundingBox(const Entity& btn)
 SDL_FPoint GetButtonScaleForDimensions(const SpriteRenderable& renderable, 
 									   Dimensions<int> reqDims)
 {
-	const auto [_, _, w, h] = renderable.sourcePlot.rect;
+	const auto [_1, _2, w, h] = renderable.sourcePlot.rect;
 
 	const float scaleX = static_cast<float>(reqDims.w) / static_cast<float>(w);
 	const float scaleY = static_cast<float>(reqDims.h) / static_cast<float>(h);
@@ -62,6 +62,39 @@ bool MouseIsColliding(const SDL_Rect& bbox, const events::MouseInput& ev)
 	return PointInsideRect(bbox, ev.input.value.cursor.position.absolute);
 }
 
+}
+
+auto ui::Button::MakeOnClickCallback()
+{
+	return [this](const events::MouseInput& ev) {
+		if (ev.input.state == InputState::Pressed)
+		{
+			if (MouseIsColliding(boundingBox_, ev))
+			{
+				state_.value |= ButtonState::ClickedInside;
+				self_.GetComponent<Renderable>().renderData = sprites_.down;
+			}
+			//else
+			//{
+			//	state_.value &= ~State::ClickedInside;
+			//	self_.GetComponent<Renderable>().renderData = sprites_.up;
+			//}
+		}
+		else if (ev.input.state == InputState::Released)
+		{
+			if ((state_.value & ButtonState::ClickedInside) &&
+				MouseIsColliding(boundingBox_, ev))
+			{
+				if (callbacks_.onClick)
+				{
+					callbacks_.onClick();
+				}
+			}
+
+			state_.value &= ~ButtonState::ClickedInside;
+			self_.GetComponent<Renderable>().renderData = sprites_.up;
+		}
+	};
 }
 
 ui::Button::Button(EventBus2& bus, Params&& params) : self_(ECS::CreateEntity()), 
@@ -121,38 +154,7 @@ void ui::Button::SetDimensions(Dimensions<int> dim)
 
 }
 
-auto ui::Button::MakeOnClickCallback()
-{
-	return [this](const events::MouseInput& ev) {
-		if (ev.input.state == InputState::Pressed)
-		{
-			if (MouseIsColliding(boundingBox_, ev))
-			{
-				state_.value |= ButtonState::ClickedInside;
-				self_.GetComponent<Renderable>().renderData = sprites_.down;
-			}
-			//else
-			//{
-			//	state_.value &= ~State::ClickedInside;
-			//	self_.GetComponent<Renderable>().renderData = sprites_.up;
-			//}
-		}
-		else if (ev.input.state == InputState::Released)
-		{
-			if ((state_.value & ButtonState::ClickedInside) && 
-				 MouseIsColliding(boundingBox_, ev))
-			{
-				if (callbacks_.onClick)
-				{
-					callbacks_.onClick();
-				}
-			}
 
-			state_.value &= ~ButtonState::ClickedInside;
-			self_.GetComponent<Renderable>().renderData = sprites_.up;
-		}
-	}; 
-}
 
 
 

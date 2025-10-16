@@ -252,6 +252,9 @@
     <ClCompile Include="test\catch\events\EventBusTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\catch\scripting\LuaFunctionTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1248,6 +1251,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="events\EventSignalConcepts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\LuaFunction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\LuaState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -22,6 +22,17 @@ inline void HashCombine(size_t& seed, size_t value)
     seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
+
+template <typename...Ts>
+inline constexpr size_t TypeIdHash() 
+{
+    size_t hash = 0;
+    ((HashCombine(hash, typeid(Ts).hash_code())), ...);
+
+    return hash;
+}
+
+
 template <std::floating_point T>
 constexpr bool EqualsWithTolerance(T a, T b, T absEpsilon = static_cast<T>(1e-5),
                                              T relEpsilon = static_cast<T>(1e-4))
