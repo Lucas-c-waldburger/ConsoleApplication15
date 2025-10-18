@@ -1,6 +1,6 @@
 #pragma once
 #include "../LuaTypesRegistry.h"
-#include "../LuaUserTypeDependencies.h"
+#include "../LuaUserType.h"
 #include "../../components/RenderableComponent.h"
 
 // RENDER PROFILE

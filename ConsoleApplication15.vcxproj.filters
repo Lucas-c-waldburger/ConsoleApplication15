@@ -255,6 +255,9 @@
     <ClCompile Include="test\catch\scripting\LuaFunctionTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\catch\renderer\RendererTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1172,7 +1175,7 @@
     <ClInclude Include="events\data\MouseEvents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scripting\LuaUserTypeDependencies.h">
+    <ClInclude Include="scripting\LuaUserType.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\EvaluationProperty.h">
@@ -1256,7 +1259,16 @@
     <ClInclude Include="scripting\LuaFunction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scripting\LuaState.h">
+    <ClInclude Include="scripting\user_types\EntityUserType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\user_types\AudioUserType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\LuaScript.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\user_types\SDLUsertypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

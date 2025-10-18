@@ -315,7 +315,7 @@ void ECS::DestroyEntity(Entity_t entity)
 
 bool ECS::IsEntityActive(Entity_t entity) const
 {
-	assert(entity < kMaxEntities);
+	assert(GetEntity_tIndex(entity) < kMaxEntityIndex);
 
 	bool activeAccordingToComponentManager =
 		componentManager_.GetSignature(entity) & ActiveState::componentBit;

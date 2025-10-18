@@ -26,6 +26,18 @@ template <typename...Ts> struct TypeList
 	}
 };
 
+/* IS TYPE LIST */
+namespace detail {
+template <typename T>
+struct is_type_list : std::false_type {};
+
+template <typename...Ts>
+struct is_type_list<TypeList<Ts...>> : std::true_type {};
+}
+
+template <typename T>
+inline constexpr bool is_type_list_v = detail::is_type_list<T>::value;
+
 /* TYPE PRESENT IN TYPE LIST/PARAMETER PACK/TUPLE */
 namespace detail {
 template <typename T, typename TList>
@@ -168,7 +180,7 @@ struct type_at_index;
 
 template <size_t Idx, size_t Counter>
 struct type_at_index<Idx, Counter, TypeList<>> {
-	static_assert(Idx < Counter, "Index out of bounds in TypeList.");
+	//static_assert(Idx < Counter, "Index out of bounds in TypeList.");
 	using type = void;
 };
 

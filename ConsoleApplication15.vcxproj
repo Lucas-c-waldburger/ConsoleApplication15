@@ -227,6 +227,7 @@
     <ClCompile Include="test\catch\ecs\EntityManagerTests.cpp" />
     <ClCompile Include="test\catch\ecs\Entity_tTests.cpp" />
     <ClCompile Include="test\catch\events\EventBusTests.cpp" />
+    <ClCompile Include="test\catch\renderer\RendererTests.cpp" />
     <ClCompile Include="test\catch\scripting\LuaFunctionTests.cpp" />
     <ClCompile Include="test\ComponentTests.cpp" />
     <ClCompile Include="test\Fixtures.cpp" />
@@ -292,8 +293,11 @@
     <ClInclude Include="inputs\mouse\MouseInputUpdater.h" />
     <ClInclude Include="render\RGBA.h" />
     <ClInclude Include="scripting\LuaFunction.h" />
-    <ClInclude Include="scripting\LuaState.h" />
-    <ClInclude Include="scripting\LuaUserTypeDependencies.h" />
+    <ClInclude Include="scripting\LuaScript.h" />
+    <ClInclude Include="scripting\LuaUserType.h" />
+    <ClInclude Include="scripting\user_types\AudioUserType.h" />
+    <ClInclude Include="scripting\user_types\EntityUserType.h" />
+    <ClInclude Include="scripting\user_types\SDLUsertypes.h" />
     <ClInclude Include="state\EntityState.h" />
     <ClInclude Include="state\EntityStateBuilder.h" />
     <ClInclude Include="components\builder\RigidBodyComponentBuilder.h" />

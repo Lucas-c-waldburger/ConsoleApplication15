@@ -107,3 +107,8 @@ void Logger::LogHeader(std::ostream& os, LogLevel::Level lvl)
     LogTime(os); 
     os << "] [" << lvl << "] : ";
 }
+
+std::ostream& Logger::GetOStream()
+{
+    return std::cout;
+}

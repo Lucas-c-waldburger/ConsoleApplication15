@@ -10,6 +10,12 @@
 #include "../physics/B2Body.h"
 #include "../physics/B2Joint.h"
 
+template <typename T>
+struct LuaUserTypeDependencies { using type = TypeList<>; };
+
+template <typename T>
+concept ValidLuaUserTypeDependencies = is_type_list_v<typename T::type>;
+
 template <typename>
 void RegisterLuaUserType(sol::state& lua);
 

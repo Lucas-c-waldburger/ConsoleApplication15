@@ -78,19 +78,23 @@ struct convert_lua_to_fu2_fn<Ret(Args...)>
 				return default_ret<Ret>();
 			}
 
-			sol::object obj = result;
-			if (obj.is<Ret>())
+			if constexpr (std::same_as<Ret, void>)
 			{
-				if constexpr (!std::same_as<Ret, void>)
-				{
-					return obj.as<Ret>();
-				}
+				return;
 			}
 			else
 			{
-				LOG_ERROR("Sol function did not return expected type");
+				sol::object obj = result;
+				if (obj.is<raw_type_t<Ret>>())
+				{
+					return obj.as<Ret>();
+				}
+				else
+				{
+					LOG_ERROR("Sol function did not return expected type");
 
-				return default_ret<Ret>();
+					return default_ret<Ret>();
+				}
 			}
 		};
 	}
@@ -107,7 +111,7 @@ inline fu2::unique_function<Sig> ConvertLuaToFu2Function(sol::function solFn)
 class LuaFunctionTable
 {
 public:
-	explicit LuaFunctionTable(const sol::state& state) : luaState_(state) {}
+	explicit LuaFunctionTable(sol::state& state) : luaState_(state) {}
 
 	template <ValidLuaFnSig Sig>
 	fu2::unique_function<Sig> GetFunction(std::string_view nm)
@@ -130,20 +134,20 @@ public:
 	}
 
 	template <ValidLuaFnSig Sig>
-	bool RegisterFunction(std::string_view nm)
+	fu2::unique_function<Sig> RegisterFunction(std::string_view nm)
 	{
 		if (fnSigHashes_.contains(nm))
 		{
-			return false;
+			return {};
 		}
 		if (!(luaState_[nm].valid() && luaState_[nm].get_type() == sol::type::function))
 		{
-			return false;
+			return {};
 		}
 
 		fnSigHashes_[nm] = ExtractLuaFunctionSigHash<Sig>();
 
-		return true;
+		return ConvertLuaToFu2Function<Sig>(luaState_[nm]);
 	}
 
 	template <ValidLuaFnSig Sig>

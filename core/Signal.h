@@ -132,8 +132,6 @@ public:
 			{
 				assert(slot.id >= 0);
 
-				//if constexpr (std::is_reference_v<)
-
 				slot.callback(std::decay_t<Ts>(ts)...);
 			}
 		}
@@ -148,6 +146,8 @@ public:
 
 		return SignalToken{ nextId, fu2::function_view<void(SignalToken&)>{disconnectFn_} };
 	}
+
+	size_t GetRefCount() const { return slots_.size(); }
 
 private:
 	auto GetDisconnectLambda()

@@ -79,6 +79,8 @@ private:
 
     Logger() = default;
 
+    static std::ostream& GetOStream();
+
     template <typename...Ts>
     void LogImpl(LogLevel::Level lvl, Ts&&...data)
     {
@@ -89,8 +91,8 @@ private:
 
         if (flags_ & Flag::WriteToConsole)
         {
-            LogHeader(std::cout, lvl);
-            ((std::cout << std::forward<Ts>(data)), ...) << '\n';
+            LogHeader(GetOStream(), lvl);
+            ((GetOStream() << std::forward<Ts>(data)), ...) << '\n';
         }
         if (fileStream_.is_open())
         {
