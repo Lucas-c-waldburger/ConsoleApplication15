@@ -51,6 +51,14 @@ struct GlyphCacheData
     SDL_Point rotationCenter = { 0, 0 }; // <- recompute if text, transforms, or rotation changed
 };
 
+struct GlyphCache : BaseComponent<GlyphCache>
+{
+    std::vector<GlyphCacheData> cache;
+    TextRenderable appliedFormatting;
+    Transform appliedTransform;
+    SDL_FPoint appliedOffset = { 0.0f, 0.0f }; // DONT PUT THIS HERE SEPARATELY
+};
+
 struct TextRenderable
 {
     using GlyphCache = std::vector<GlyphCacheData>;

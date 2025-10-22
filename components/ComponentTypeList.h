@@ -25,8 +25,9 @@ struct SignalTokenStorage;
 struct NewAudioRequest;
 struct AudioUpdateRequest;
 struct ActiveAudio;
+struct GlyphCache;
 
-using ComponentTypeList = TypeList <
+using ComponentTypeList = TypeList<
 	ActiveState,
 	MouseState,
 	Transform,
@@ -50,5 +51,6 @@ using ComponentTypeList = TypeList <
 	SignalTokenStorage,
 	NewAudioRequest,
 	AudioUpdateRequest,
-	ActiveAudio
+	ActiveAudio,
+	GlyphCache
 >;

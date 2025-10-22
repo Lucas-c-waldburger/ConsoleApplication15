@@ -9,6 +9,41 @@
 namespace
 {
 
+//struct RenderableComponent
+//{
+//	TextureTag textureTag;
+//	TextureMods mods;
+//	int drawOrder = 0;
+//};
+
+constexpr bool CompRGB(const RGB& lhs, const RGB& rhs)
+{
+	return lhs.r < rhs.r ? true :
+		   lhs.g < rhs.g ? true :
+		   lhs.b < rhs.b;
+}
+
+//constexpr bool CompRenderables(const RenderableComponent& lhs, const RenderableComponent& rhs)
+//{
+//	return lhs.drawOrder < rhs.drawOrder ? true :
+//		   lhs.textureTag.atlasId < rhs.textureTag.atlasId ? true :
+//		   CompRGB(lhs.mods.color, rhs.mods.color) ? true :
+//		   lhs.mods.alpha < rhs.mods.alpha ? true :
+//		   lhs.mods.blend < rhs.mods.blend;
+//}
+
+//void SortRenderableEntities(std::vector<Entity>& entities)
+//{
+//	std::sort(entities.begin(), entities.end(), [](const Entity& lhs, const Entity& rhs) {
+//		//auto& lhsRenderable = lhs.GetComponent<Renderable>();
+//		//auto& rhsRenderable = rhs.GetComponent<Renderable>();
+//		auto lhsRenderable = RenderableComponent{};
+//		auto rhsRenderable = RenderableComponent{};
+//
+//		return CompRenderables(lhsRenderable, rhsRenderable);
+//	});
+//}
+
 //void Draw(SDL_Renderer* renderer, SDL_Texture* texture, const AtlasPlot& atlasPlot, SDL_Rect& destRect,
 //		  const Transform& transform, SDL_Point* rotationCenter, const RenderProfile& profile)
 //{

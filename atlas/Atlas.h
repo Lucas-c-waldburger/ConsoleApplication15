@@ -8,10 +8,23 @@
 using UniqueTexturePtr = std::unique_ptr<SDL_Texture, 
 	decltype([](SDL_Texture* t) { SDL_DestroyTexture(t); })>;
 
+inline UniqueTexturePtr MakeUniqueTexturePtr(SDL_Renderer* renderer, SDL_PixelFormatEnum fmt,
+											 SDL_TextureAccess access, int w, int h)
+{
+	return UniqueTexturePtr{ SDL_CreateTexture(renderer, fmt, access, w, h) };
+}
+
 inline UniqueTexturePtr MakeUniqueTexturePtrFromSurface(SDL_Renderer* renderer, SDL_Surface* surface)
 {
 	return UniqueTexturePtr{ SDL_CreateTextureFromSurface(renderer, surface) };
 }
+
+enum class TextureType
+{
+	Unknown = -1,
+	Glyph,
+	Sprite
+};
 
 struct AtlasPlot
 {

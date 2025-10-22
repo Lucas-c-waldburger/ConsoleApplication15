@@ -151,6 +151,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="atlas\NewGlyphAtlas.cpp" />
+    <ClCompile Include="atlas\SpriteAtlas.cpp" />
     <ClCompile Include="audio\AudioBank.cpp" />
     <ClCompile Include="audio\AudioManager.cpp" />
     <ClCompile Include="callbacks\StateTransitionCallback.cpp" />
@@ -214,6 +216,7 @@
     <ClCompile Include="atlas\SpriteSeriesAtlas.cpp" />
     <ClCompile Include="systems\CollisionSystem.cpp" />
     <ClCompile Include="systems\GameLoopSystem.cpp" />
+    <ClCompile Include="systems\GlyphProcessingSystem.cpp" />
     <ClCompile Include="systems\RenderSystem.cpp" />
     <ClCompile Include="systems\PhysicsSystem.cpp" />
     <ClCompile Include="core\AABB.cpp" />
@@ -236,8 +239,13 @@
   <ItemGroup>
     <ClInclude Include="atlas\Atlas.h" />
     <ClInclude Include="atlas\AtlasMap.h" />
+    <ClInclude Include="atlas\NewAtlas.h" />
+    <ClInclude Include="atlas\NewAtlasHandle.h" />
+    <ClInclude Include="atlas\NewGlyphAtlas.h" />
     <ClInclude Include="atlas\PackingTools.h" />
     <ClInclude Include="atlas\ResourcePacket.h" />
+    <ClInclude Include="atlas\SpriteAtlas.h" />
+    <ClInclude Include="atlas\TextureHandle.h" />
     <ClInclude Include="atlas\TextureRepository.h" />
     <ClInclude Include="audio\AudioBank.h" />
     <ClInclude Include="audio\AudioHandle.h" />
@@ -548,6 +556,7 @@
     <ClInclude Include="atlas\SpriteSeriesAtlas.h" />
     <ClInclude Include="systems\CollisionSystem.h" />
     <ClInclude Include="systems\GameLoopSystem.h" />
+    <ClInclude Include="systems\GlyphProcessingSystem.h" />
     <ClInclude Include="systems\RenderSystem.h" />
     <ClInclude Include="systems\PhysicsSystem.h" />
     <ClInclude Include="core\TypeUtils.h" />

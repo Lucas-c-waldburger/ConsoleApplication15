@@ -42,4 +42,4 @@ TEST_CASE("Sprites rendered correctly", "[renderer]")
 
 	SpriteSeriesResourcePacket sprites{};
 	//sprites.instances.push_back(SpriteInstanceData{.})
-}
+} 

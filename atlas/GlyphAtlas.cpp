@@ -1,6 +1,7 @@
 #include "GlyphAtlas.h"
 #include "PackingTools.h"
 #include <SDL_ttf.h>
+#include "NewGlyphAtlas.h"
 
 namespace {
 
@@ -79,7 +80,7 @@ Result<Void> GlyphAtlas::LoadImpl(SDL_Renderer* renderer, FontResourcePacket&& p
     std::vector<GlyphSurface> glyphSurfaces{static_cast<size_t>(numGlyphs)};
     SDL_Surface* atlasSurface = nullptr;
 
-    auto freeResources = [this, &glyphSurfaces, &atlasSurface]() {
+    auto freeResources = [&, this]() {
         for (auto& glyphSurface : glyphSurfaces)
         {
             if (glyphSurface.surface)
@@ -90,6 +91,10 @@ Result<Void> GlyphAtlas::LoadImpl(SDL_Renderer* renderer, FontResourcePacket&& p
         if (atlasSurface)
         {
             SDL_FreeSurface(atlasSurface);
+        }
+        if (font)
+        {
+            TTF_CloseFont(font);
         }
 
         glyphMap_.clear();

@@ -258,6 +258,15 @@
     <ClCompile Include="test\catch\renderer\RendererTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="atlas\SpriteAtlas.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="atlas\NewGlyphAtlas.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\GlyphProcessingSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1269,6 +1278,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scripting\user_types\SDLUsertypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\SpriteAtlas.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\TextureHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\NewAtlas.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\NewAtlasHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\NewGlyphAtlas.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\GlyphProcessingSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
