@@ -17,11 +17,13 @@ static constexpr size_t GetPlotIndexForChar(char c)
 
 } // unnamed namespace 
 
-Result<Void> NewGlyphAtlas::LoadImpl(SDL_Renderer* renderer, FontDescriptor&& descriptor)
+Result<Void> NewGlyphAtlas::LoadImpl(SDL_Renderer* renderer, 
+                                     FontDescriptor&& descriptor)
 {
     fontDescriptor_ = std::move(fontDescriptor_);
 
-    TTF_Font* font = TTF_OpenFont(fontDescriptor_.filepath.c_str(), fontDescriptor_.fontSize);
+    TTF_Font* font = TTF_OpenFont(fontDescriptor_.filepath.c_str(), 
+                                  fontDescriptor_.fontSize);
     if (!font)
     {
         return MAKE_ERROR_FMT("Failed to load font: {}", TTF_GetError());
@@ -49,7 +51,8 @@ Result<Void> NewGlyphAtlas::LoadImpl(SDL_Renderer* renderer, FontDescriptor&& de
 
         glyph.character = c;
 
-        if (TTF_GlyphMetrics32(font, c, nullptr, nullptr, nullptr, nullptr, &glyph.advance) != 0)
+        if (TTF_GlyphMetrics32(font, c, nullptr, nullptr, nullptr, 
+                               nullptr, &glyph.advance) != 0)
         {
             return MAKE_ERROR_FMT("Failed to get glyph metrics for char '{}': {}", 
                 c, TTF_GetError());
@@ -58,7 +61,7 @@ Result<Void> NewGlyphAtlas::LoadImpl(SDL_Renderer* renderer, FontDescriptor&& de
         surface = TTF_RenderGlyph_Blended(font, c, white);
         if (!surface)
         {
-            return MAKE_ERROR_FMT("Failed to make surface for char '{}': {}'", 
+            return MAKE_ERROR_FMT("Failed to make surface for char '{}': {}", 
                 c, TTF_GetError());
         }
 
@@ -82,15 +85,17 @@ Result<Void> NewGlyphAtlas::LoadImpl(SDL_Renderer* renderer, FontDescriptor&& de
 
         if (atlasSideLen > (1 << 30))
         {
-            return MAKE_ERROR("Not all rects could be packed in the maximum atlas size");
+            return MAKE_ERROR("Not all rects could be packed "
+                "in the maximum atlas size");
         }
 
         binPack_.Init(atlasSideLen, atlasSideLen, false);
 
         for (auto& [glyph, surface] : glyphSurfaces)
         {
-            rbp::Rect packed = binPack_.Insert(surface->w, surface->h,
-                                               rbp::MaxRectsBinPack::RectBestAreaFit);
+            rbp::Rect packed = binPack_.Insert(
+                surface->w, surface->h, rbp::MaxRectsBinPack::RectBestAreaFit
+            );
             if (!WasRectPacked(packed))
             {
                 atlasSideLen *= 2;
@@ -105,11 +110,14 @@ Result<Void> NewGlyphAtlas::LoadImpl(SDL_Renderer* renderer, FontDescriptor&& de
     }
 
     // make atlas texture, blit the glyph surfaces on it
-    atlasSurface = SDL_CreateRGBSurfaceWithFormat(0, atlasSideLen, atlasSideLen, 32, 
-                                                  SDL_PIXELFORMAT_RGBA32);
-    SDL_FillRect(atlasSurface, nullptr, SDL_MapRGBA(atlasSurface->format, 0, 0, 0, 0));
+    atlasSurface = SDL_CreateRGBSurfaceWithFormat(
+        0, atlasSideLen, atlasSideLen, 32, SDL_PIXELFORMAT_RGBA32
+    );
 
-    for (auto& [glyph, surface] : glyphSurfaces)
+    SDL_FillRect(atlasSurface, nullptr, 
+        SDL_MapRGBA(atlasSurface->format, 0, 0, 0, 0));
+
+    for (auto&& [glyph, surface] : glyphSurfaces)
     {
         if (SDL_BlitSurface(surface, nullptr, atlasSurface, &glyph.plot.rect) < 0) 
         {
@@ -118,7 +126,7 @@ Result<Void> NewGlyphAtlas::LoadImpl(SDL_Renderer* renderer, FontDescriptor&& de
 
         SDL_FreeSurface(surface);
 
-        glyphs_.emplace_back(std::move(glyph));
+        glyphs_.emplace_back(glyph);
     }
 
     atlasTexture_ = MakeUniqueTexturePtrFromSurface(renderer, atlasSurface);
@@ -127,22 +135,22 @@ Result<Void> NewGlyphAtlas::LoadImpl(SDL_Renderer* renderer, FontDescriptor&& de
         return MAKE_ERROR_FMT("Failed to create atlas texture: {}", SDL_GetError());
     }
 
-    SDL_FreeSurface(atlasSurface);
-
     SDL_SetTextureBlendMode(atlasTexture_.get(), SDL_BLENDMODE_BLEND);
+
+    SDL_FreeSurface(atlasSurface);
+    TTF_CloseFont(font);
 
     freeResources.Release();
 
     return Void{};
 }
 
-Result<NewGlyphAtlas> NewGlyphAtlas::Create(SDL_Renderer* renderer, FontDescriptor&& descriptor)
+Result<NewGlyphAtlas> NewGlyphAtlas::Create(SDL_Renderer* renderer, 
+                                            FontDescriptor&& descriptor)
 {
-    NewGlyphAtlas glyphAtlas{};
+    NewGlyphAtlas glyphAtlas{ Handle<NewTextureAtlas>::Create() };
 
     TRY(glyphAtlas.LoadImpl(renderer, std::move(descriptor)));
-
-    glyphAtlas.SetHandle(Handle<NewTextureAtlas>::Create(TextureType::Glyph));
 
     return glyphAtlas;
 }
@@ -151,6 +159,25 @@ const FontDescriptor& NewGlyphAtlas::GetFontDescriptor() const
 {
     return fontDescriptor_;
 }
+
+//Result<Void> NewGlyphAtlas::ValidateGlyph(const Glyph& glyph) const
+//{
+//    if (glyph.character < kStartChar || glyph.character > kEndChar)
+//    {
+//        return MAKE_ERROR_FMT("Glyph character '{}', invalid", glyph.character);
+//    }
+//    if (sprite.spriteIndex >= sprites_.size())
+//    {
+//        return MAKE_ERROR_FMT("Sprite index '{}' out of range", sprite.spriteIndex);
+//    }
+//    if (sprite.plot.rect.w > 0 && sprite.plot.rect.h > 0)
+//    {
+//        return MAKE_ERROR_FMT("Sprite atlas plot dimensions invalid: ({}, {})",
+//            sprite.plot.rect.w, sprite.plot.rect.h);
+//    }
+//
+//    return Void{};
+//}
 
 Glyph NewGlyphAtlas::GetGlyph(char c) const
 {

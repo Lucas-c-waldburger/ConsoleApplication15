@@ -51,13 +51,65 @@ struct GlyphCacheData
     SDL_Point rotationCenter = { 0, 0 }; // <- recompute if text, transforms, or rotation changed
 };
 
+struct TextFormatting
+{
+    Dimensions<int> bounds = { 0, 0 };
+    TextAlign align = TextAlign::Left;
+    float letterSpacing = 1.0f;
+    bool scaleToBounds = true;
+
+    bool operator==(const TextFormatting& rhs) const = default;
+};
+
 struct GlyphCache : BaseComponent<GlyphCache>
 {
+    struct CacheContext
+    {
+        Transform transform;
+        TextFormatting format;
+        SDL_FPoint offset = { 0.0f, 0.0f };
+    };
+
     std::vector<GlyphCacheData> cache;
-    TextRenderable appliedFormatting;
-    Transform appliedTransform;
-    SDL_FPoint appliedOffset = { 0.0f, 0.0f }; // DONT PUT THIS HERE SEPARATELY
+    CacheContext context;
 };
+
+
+
+struct NewTextRenderable
+{
+    std::string text;
+    TextFormatting format;
+};
+
+struct NewSpriteRenderable
+{
+    int plotIndex = -1;
+};
+
+using NewRenderableVariant = std::variant<NewTextRenderable, NewSpriteRenderable>;
+
+class NewTextureAtlas;
+
+struct NewRenderable : BaseComponent<NewRenderable>
+{
+    Handle<NewTextureAtlas> sourceAtlas;
+    NewRenderableVariant renderData;
+    RenderProfile profile;
+};
+
+//
+//struct Texture;
+//struct NewSpriteRenderable
+//{
+//    Handle<Texture> sprite;
+//};
+
+//struct NewRenderable
+//{
+//    Handle<NewTextureAtlas> sourceAtlas;
+//    RenderProfile profile;
+//};
 
 struct TextRenderable
 {
@@ -68,6 +120,7 @@ struct TextRenderable
     Dimensions<int> dimensions = { 0, 0 };
     TextAlign align = TextAlign::Left;
     GlyphCache glyphCache;
+    TextFormatting format;
 
     enum Flag : uint8_t
     {

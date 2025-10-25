@@ -4,7 +4,7 @@
 
 namespace {
 
-bool TextChanged(std::string_view text, const std::vector<GlyphCacheData>& cacheData)
+bool operator==(std::string_view text, const std::vector<GlyphCacheData>& cacheData)
 {
 	if (text.size() != cacheData.size())
 	{
@@ -17,15 +17,22 @@ bool TextChanged(std::string_view text, const std::vector<GlyphCacheData>& cache
 		{
 			return true;
 		}
-	}
+	} 
 
 	return true;
 }
 
-bool FormattingChanged(const TextRenderable& newFormat, const TextRenderable& oldFormat)
+constexpr bool operator==(const TextRenderable& newFormat, const TextFormatting& oldFormat)
 {
-	return newFormat.dimensions != oldFormat.dimensions ||
-		   newFormat.align != oldFormat.align;
+	if (newFormat.dimensions != oldFormat.bounds ||
+		newFormat.align != oldFormat.align)
+	{
+		return true;
+	}
+
+	bool scaleToBounds = (newFormat.flags & TextRenderable::FixedSize) == 0;
+
+	return scaleToBounds != oldFormat.scaleToBounds;
 }
 
 constexpr SDL_FPoint GetRectCenter(SDL_Rect rect)
@@ -45,6 +52,14 @@ SDL_Rect MakeTransformedRect(const Transform& transform, Dimensions<int> dims,
 		static_cast<int>((transform.position.y + offset.y) - (scaledH / 2.0f)),
 		static_cast<int>(scaledW),
 		static_cast<int>(scaledH)
+	};
+}
+
+constexpr SDL_Rect MakeProjectedBoundingRect(Dimensions<int> dims, SDL_FPoint scale)
+{
+	return SDL_Rect{ 0, 0,
+		static_cast<int>(dims.w * scale.x),
+		static_cast<int>(dims.h * scale.y)
 	};
 }
 
@@ -302,8 +317,8 @@ void AdjustGlyphCacheForRotation(std::vector<GlyphCacheData>& cache,
 void AdjustGlyphCachePosition(GlyphCache& cacheComponent, SDL_FPoint newPos, 
 							  SDL_FPoint newOffset)
 {
-	SDL_FPoint adjust = (newPos - cacheComponent.appliedTransform.position) +
-					    (newOffset - cacheComponent.appliedOffset);
+	SDL_FPoint adjust = (newPos - cacheComponent.context.transform.position) +
+					    (newOffset - cacheComponent.context.offset);
 
 	for (auto& cacheData : cacheComponent.cache)
 	{
@@ -311,6 +326,35 @@ void AdjustGlyphCachePosition(GlyphCache& cacheComponent, SDL_FPoint newPos,
 		cacheData.destRect.y += adjust.y;
 	}
 }
+
+enum ChangeLog : uint8_t 
+{
+	NoChange = 0,
+	TextChanged = 1 << 0,
+	FormatChanged = 1 << 1,
+	RotationChanged = 1 << 2,
+	PositioningChanged = 1 << 3,
+	ScaleChanged = 1 << 4,
+	NeedsReprojection = TextChanged | FormatChanged | ScaleChanged
+};
+
+static uint8_t MakeChangeLog(const Renderable& renderable,
+							 const Transform& transform,
+							 const GlyphCache& glyphCache)
+{
+	const auto& textRenderable = std::get<TextRenderable>(renderable.renderData);
+	const auto& [glyphs, ctx] = glyphCache;
+
+	return static_cast<uint8_t>(
+		(textRenderable.text != glyphs) ? TextChanged : 0_u8 |
+		(textRenderable != ctx.format) ? FormatChanged : 0_u8 |
+		(transform.rotation != ctx.transform.rotation) ? RotationChanged : 0_u8 |
+		(transform.position != ctx.transform.position ||
+		 renderable.profile.offset != ctx.offset) ? PositioningChanged : 0_u8 |
+		(transform.scale != ctx.transform.scale) ? ScaleChanged : 0_u8
+	);
+}
+;
 
 void GlyphFormattingSystem::Update(const GlyphAtlas& glyphAtlas)
 {
@@ -324,50 +368,61 @@ void GlyphFormattingSystem::Update(const GlyphAtlas& glyphAtlas)
 		{
 			continue;
 		}
+
 		auto& textRenderable = std::get<TextRenderable>(renderable.renderData);
+		auto& glyphCache = entity.AddComponent<GlyphCache>();
+		auto& [glyphs, ctx] = glyphCache;
 
-		auto& cacheComponent = entity.AddComponent<GlyphCache>();
-		auto& [
-			cache,
-			appliedFormatting,
-			appliedTransform,
-			appliedOffset] = cacheComponent;
+		const uint8_t changeLog = MakeChangeLog(renderable, transform, glyphCache);
 
-		bool process = TextChanged(textRenderable.text, cache);
-		if (process)
+		if (changeLog == NoChange)
 		{
-			RepopulateGlyphCacheGlyphs(textRenderable.text, cache, glyphAtlas);
+			continue;
 		}
 
-		process = process || transform.scale != appliedTransform.scale ||
-				  FormattingChanged(textRenderable, appliedFormatting);
-		if (process)
+		if (changeLog & TextChanged)
 		{
-			SDL_Rect projectedRenderRect = MakeTransformedRect(
-				transform, textRenderable.dimensions, renderable.profile.offset
+			RepopulateGlyphCacheGlyphs(textRenderable.text, glyphCache.cache, 
+									   glyphAtlas);
+		}
+
+		if (changeLog & NeedsReprojection || changeLog & RotationChanged)
+		{
+			SDL_Rect projectedRect = MakeProjectedBoundingRect(
+				textRenderable.dimensions, transform.scale
 			);
 
-			ReprojectGlyphCacheGeometry(cache, textRenderable, transform, 
-										projectedRenderRect, glyphAtlas);
-
-			if (transform.rotation != appliedTransform.rotation)
+			if (changeLog & NeedsReprojection)
 			{
-				AdjustGlyphCacheForRotation(cache, projectedRenderRect, 
-											transform.rotation);
+				ReprojectGlyphCacheGeometry(
+					glyphs, textRenderable, transform,
+					projectedRect, glyphAtlas
+				);
+			}	 
+			if (changeLog & RotationChanged)
+			{
+				AdjustGlyphCacheForRotation(
+					glyphs, projectedRect, transform.rotation
+				);
 			}
 		}
 
-		process = transform.position != appliedTransform.position ||
-				  renderable.profile.offset != appliedOffset;
-		if (process)
+		if (changeLog & PositioningChanged)
 		{
-			AdjustGlyphCachePosition(cacheComponent, transform.position, 
-									 renderable.profile.offset);
+			AdjustGlyphCachePosition(
+				glyphCache, transform.position, renderable.profile.offset
+			);
 		}
 
+		ctx.transform = transform;
 
-		appliedTransform = transform;
-		appliedOffset = renderable.profile.offset;
+		ctx.format.bounds = textRenderable.dimensions;
+		ctx.format.align = textRenderable.align;
+		ctx.format.letterSpacing = 1.0f; 
+		ctx.format.scaleToBounds =
+			(textRenderable.flags & TextRenderable::FixedSize) == 0;
+
+		ctx.offset = renderable.profile.offset;
 	}
 
 

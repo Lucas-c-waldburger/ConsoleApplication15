@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="atlas\NewAtlas.cpp" />
     <ClCompile Include="atlas\NewGlyphAtlas.cpp" />
     <ClCompile Include="atlas\SpriteAtlas.cpp" />
     <ClCompile Include="audio\AudioBank.cpp" />
@@ -224,6 +225,7 @@
     <ClCompile Include="systems\SpriteAnimationSystem.cpp" />
     <ClCompile Include="systems\TimerSystem.cpp" />
     <ClCompile Include="test\AudioPlayground.cpp" />
+    <ClCompile Include="test\catch\atlas\SpriteAtlasTests.cpp" />
     <ClCompile Include="test\catch\audio\AudioTests.cpp" />
     <ClCompile Include="test\catch\CatchMain.cpp" />
     <ClCompile Include="test\catch\ecs\ComponentManagerTests.cpp" />
@@ -557,6 +559,7 @@
     <ClInclude Include="systems\CollisionSystem.h" />
     <ClInclude Include="systems\GameLoopSystem.h" />
     <ClInclude Include="systems\GlyphProcessingSystem.h" />
+    <ClInclude Include="systems\NewRenderSystem.h" />
     <ClInclude Include="systems\RenderSystem.h" />
     <ClInclude Include="systems\PhysicsSystem.h" />
     <ClInclude Include="core\TypeUtils.h" />

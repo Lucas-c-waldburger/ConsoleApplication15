@@ -3,11 +3,7 @@
 #include "Atlas.h"
 #include <variant>
 
-struct Texture
-{
-	Handle<NewTextureAtlas> handle;
-	AtlasPlot plot;
-};
+static constexpr size_t kSizeMax = std::numeric_limits<size_t>::max();
 
 class NewTextureAtlas
 {
@@ -40,9 +36,9 @@ public:
 
 	bool IsLoaded() const { return handle_.IsValid() && atlasTexture_; }
 
-
 protected:
-	void SetHandle(const Handle<NewTextureAtlas>& handle) { handle_ = handle; }
+	explicit NewTextureAtlas(Handle<NewTextureAtlas>&& handle) : 
+		handle_(std::move(handle)) {}
 
 	UniqueTexturePtr atlasTexture_;
 	rbp::MaxRectsBinPack binPack_;

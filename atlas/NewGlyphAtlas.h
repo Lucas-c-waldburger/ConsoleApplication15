@@ -60,7 +60,13 @@ public:
 
 	const FontDescriptor& GetFontDescriptor() const;
 
+	Result<Void> ValidateGlyph(const Glyph& glyph) const;
+
 private:
+	explicit NewGlyphAtlas(Handle<NewTextureAtlas>&& handle) :
+		NewTextureAtlas(std::move(handle)) {
+	}
+
 	struct GlyphSurface
 	{
 		Glyph data;

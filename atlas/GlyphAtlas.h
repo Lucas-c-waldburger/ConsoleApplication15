@@ -23,6 +23,7 @@ struct Glyph
     char character = kInvalidChar;
     AtlasPlot plot;
     int advance = 0;
+    bool operator==(const Glyph&) const = default;
 };
 
 class GlyphAtlas : public TextureAtlas<GlyphAtlas>

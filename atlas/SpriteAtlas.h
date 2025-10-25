@@ -4,20 +4,43 @@
 #include "TextureHandle.h"
 #include "../core/Dictionary.h"
 
+
 struct SpriteDescriptor
 {
 	std::string spriteName;
 	std::string filepath;
 };
 
+struct SpriteDescriptorPackage
+{
+	std::vector<SpriteDescriptor> descriptors;
+	std::string seriesName;
+};
+
 struct Sprite
 {
-	Handle<NewTextureAtlas> sourceAtlas
+	Handle<NewTextureAtlas> sourceAtlas;
+	AtlasPlot plot;
+	size_t spriteIndex = kSizeMax;
+
+	bool operator==(const Sprite&) const = default;
+};
+
+struct SpriteInfo
+{
+	std::string spriteName;
+	std::string filepath;
+	std::string seriesName;
+	size_t seriesIndex = kSizeMax;
+
+	bool operator==(const SpriteInfo&) const = default;
 };
 
 class SpriteAtlas : public NewTextureAtlas
 {
 public:
+	static const SpriteInfo kInvalidSpriteInfo;
+
 	static constexpr size_t kDefaultAtlasSize = 1024;
 	static constexpr size_t kMaxAtlasSize = 4096;
 	
@@ -28,8 +51,9 @@ public:
 	SpriteAtlas& operator=(const SpriteAtlas&) = delete;
 
 	SpriteAtlas(SpriteAtlas&& other) noexcept : NewTextureAtlas(std::move(other)),
-		spriteDescriptors_(std::move(other.spriteDescriptors_)),
-		plots_(std::move(other.plots_)) 
+		sprites_(std::move(other.sprites_)),
+		spriteInfo_(std::move(other.spriteInfo_)),
+		spriteSeriesRanges_(std::move(other.spriteSeriesRanges_))
 	{}
 
 	SpriteAtlas& operator=(SpriteAtlas&& other) noexcept
@@ -37,31 +61,36 @@ public:
 		if (this != &other)
 		{
 			NewTextureAtlas::operator=(std::move(other));
-			spriteDescriptors_ = std::move(other.spriteDescriptors_);
-			plots_ = std::move(other.plots_);
+			sprites_ = std::move(other.sprites_);
+			spriteInfo_ = std::move(other.spriteInfo_);
+			spriteSeriesRanges_ = std::move(other.spriteSeriesRanges_);
 		}
 		return *this;
 	}
 
-	static Result<SpriteAtlas> Create(SDL_Renderer* renderer, size_t size = kDefaultAtlasSize);
+	static Result<SpriteAtlas> 
+	Create(SDL_Renderer* renderer, size_t size = kDefaultAtlasSize);
 
-	Result<Texture> LoadSprite(SDL_Renderer* renderer, SpriteDescriptor&& descriptor);
-	Result<Texture> LoadSprites(SDL_Renderer* renderer, std::vector<SpriteDescriptor>&& descriptors);
+	Result<Sprite> LoadSprite(SDL_Renderer* renderer, SpriteDescriptor&& descriptor);
+	Result<std::vector<Sprite>> 
+	LoadSprites(SDL_Renderer* renderer, SpriteDescriptorPackage&& package);
 
-	Result<std::vector<Texture>> LoadSpriteSeries(SDL_Renderer* renderer, 
-		std::string_view seriesName, std::vector<SpriteDescriptor>&& descriptors);
+	Sprite GetSprite(std::string_view spriteName) const;
+	std::vector<Sprite> GetSpriteSeries(std::string_view spriteSeriesName) const;
 
-	TextureHandle GetSpriteHandle(std::string_view spriteName) const;
-	std::vector<TextureHandle> GetSpriteSeriesHandles(std::string_view spriteSeriesName) const;
+	const SpriteInfo& GetSpriteInfo(const Sprite& sprite) const;
 
-	AtlasPlot GetAtlasPlot(const TextureHandle& handle) const;
-
-	const SpriteDescriptor* GetSpriteDescriptor(const TextureHandle& handle) const;
+	Result<Void> ValidateSprite(const Sprite& sprite) const;
 
 private:
-	Result<Texture> LoadImpl(SDL_Renderer* renderer, SpriteDescriptor&& descriptor);
+	explicit SpriteAtlas(Handle<NewTextureAtlas>&& handle) : 
+		NewTextureAtlas(std::move(handle)) {}
 
-	std::vector<SpriteDescriptor> spriteDescriptors_;
-	std::vector<AtlasPlot> plots_;
-	UnorderedDictionary<Range<size_t>> spriteSeriesReferences_;
+	Result<Sprite> LoadSpriteImpl(SDL_Renderer* renderer, SpriteDescriptor&& descriptor);
+	Result<std::vector<Sprite>>
+	LoadSpritesImpl(SDL_Renderer* renderer, SpriteDescriptorPackage&& package);
+
+	std::vector<Sprite> sprites_;
+	std::vector<SpriteInfo> spriteInfo_;
+	UnorderedDictionary<Range<size_t>> spriteSeriesRanges_;
 };
