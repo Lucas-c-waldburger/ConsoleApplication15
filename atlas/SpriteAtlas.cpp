@@ -123,7 +123,7 @@ const SpriteInfo& SpriteAtlas::GetSpriteInfo(const Sprite& sprite) const
 
 Result<Void> SpriteAtlas::ValidateSprite(const Sprite& sprite) const
 {
-    if (sprite.sourceAtlas != GetAtlasHandle())
+    if (sprite.sourceAtlas != GetHandle())
     {
         return MAKE_ERROR("Sprite does not belong to this atlas");
     }
@@ -131,7 +131,7 @@ Result<Void> SpriteAtlas::ValidateSprite(const Sprite& sprite) const
     {
         return MAKE_ERROR_FMT("Sprite index '{}' out of range", sprite.spriteIndex);
     }
-    if (sprite.plot.rect.w > 0 && sprite.plot.rect.h > 0)
+    if (sprite.plot.rect.w <= 0 && sprite.plot.rect.h <= 0)
     {
         return MAKE_ERROR_FMT("Sprite atlas plot dimensions invalid: ({}, {})",
             sprite.plot.rect.w, sprite.plot.rect.h);
@@ -185,7 +185,7 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
     {
         return MAKE_ERROR("Atlas texture was null");
     }
-    assert(GetAtlasHandle().IsValid());
+    assert(GetHandle().IsValid());
 
     SDL_Surface* spriteSurface = nullptr;
     SDL_Texture* spriteTexture = nullptr;
@@ -238,7 +238,7 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
     });
 
     auto& sprite = sprites_.emplace_back(Sprite{
-        .sourceAtlas = GetAtlasHandle(),
+        .sourceAtlas = GetHandle(),
         .plot = plot,
         .spriteIndex = sprites_.size()
     });

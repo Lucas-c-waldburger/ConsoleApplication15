@@ -7,29 +7,7 @@
 
 namespace {
 
-//decltype(auto) InitSDL()
-//{
-//	Logger::StartSession();
-//	auto status = SDLite::Start();
-//	REQUIRE(status.Good());
-//
-//	return ScopedInvoker(&SDLite::Exit);
-//}
-
-//template <typename Fn>
-//concept VecTransformFn = 
-
-
-//template <typename T, typename U, typename...TArgs, typename...UArgs>
-//std::vector<U, UArgs...> VecTransform(std::vector<T, TArgs...>&& vec, )
-
-constexpr auto spriteIndexSort = [](const std::string& lhs, const std::string& rhs) {
-	REQUIRE(!lhs.empty());
-	REQUIRE(!rhs.empty());
-	REQUIRE(std::isdigit(lhs.back()));
-	REQUIRE(std::isdigit(rhs.back()));
-	return lhs.back() < rhs.back();
-};
+namespace fs = std::filesystem;
 
 SpriteDescriptorPackage MakePackage(const std::vector<std::string>& pathStrs, 
 									std::string_view seriesName)
@@ -77,14 +55,13 @@ TEST_CASE("Sprite Atlas Tests", "[atlas]")
 	Logger::StartSession();
 	auto status = SDLite::Start();
 	REQUIRE(status.Good());
-	REQUIRE(SDLite::Renderer() != nullptr);
 
 	auto createResult = SpriteAtlas::Create(SDLite::Renderer());
 	REQUIRE_RESULT(createResult);
 	auto& spriteAtlas = createResult.GetValue();
 
 	CHECK(spriteAtlas.IsLoaded());
-	CHECK(spriteAtlas.GetAtlasHandle().IsValid());
+	CHECK(spriteAtlas.GetHandle().IsValid());
 	REQUIRE(spriteAtlas.GetSourceTexture() != nullptr);
 
 	{
@@ -95,7 +72,7 @@ TEST_CASE("Sprite Atlas Tests", "[atlas]")
 	REQUIRE_RESULT(loadResult);
 
 	auto& sprite = loadResult.GetValue();
-	CHECK(sprite.sourceAtlas == spriteAtlas.GetAtlasHandle());
+	CHECK(sprite.sourceAtlas == spriteAtlas.GetHandle());
 	CHECK(sprite.plot.rect.w >= 128); 
 	CHECK(sprite.plot.rect.h >= 128);
 	CHECK(sprite.spriteIndex == 0);
@@ -120,15 +97,15 @@ TEST_CASE("Sprite Atlas Tests", "[atlas]")
 	// load series on same atlas
 	{
 	auto seriesPathsResult = 
-		ResourcePaths::SpriteDirectory("knight/fall_anim", spriteIndexSort);
+		ResourcePaths::SpriteDirectory("knight/fall_anim", std::less<std::string>{});
 	REQUIRE_RESULT(seriesPathsResult);
 
 	auto& seriesPaths = seriesPathsResult.GetValue();
 	CHECK(seriesPaths.size() == 4);
 
-	auto package = MakePackage(std::move(seriesPaths), "fall_anim_series");
+	auto package = MakePackage(std::move(seriesPaths), "knight_fall_series");
 	CHECK(package.descriptors.size() == 4);
-	CHECK(package.seriesName == "fall_anim_series");
+	CHECK(package.seriesName == "knight_fall_series");
 
 	auto loadResult = spriteAtlas.LoadSprites(SDLite::Renderer(),
 											  std::move(package));
@@ -139,7 +116,7 @@ TEST_CASE("Sprite Atlas Tests", "[atlas]")
 	
 	for (size_t i = 0; i < sprites.size(); i++)
 	{
-		CHECK(sprites[i].sourceAtlas == spriteAtlas.GetAtlasHandle());
+		CHECK(sprites[i].sourceAtlas == spriteAtlas.GetHandle());
 		CHECK(sprites[i].plot.rect.w >= 128);
 		CHECK(sprites[i].plot.rect.h >= 128);
 		CHECK(sprites[i].spriteIndex == i + 1); // <- since we already loaded 1 prev
@@ -155,14 +132,18 @@ TEST_CASE("Sprite Atlas Tests", "[atlas]")
 	// get info	
 	for (size_t i = 0; i < sprites.size(); i++)
 	{
-		const auto& info = spriteAtlas.GetSpriteInfo(sprites[0]);
+		const auto& info = spriteAtlas.GetSpriteInfo(sprites[i]);
 		CHECK(info != SpriteAtlas::kInvalidSpriteInfo);
 		CHECK(info.spriteName == std::format("knight_fall_{}", i));
 		CHECK(info.filepath == seriesPaths[i]);
 		CHECK(info.seriesName == "knight_fall_series");
 		CHECK(info.seriesIndex == i);
 	}
-	
+
+	// retrieve them
+	auto retrievedSpriteSeries = spriteAtlas.GetSpriteSeries("knight_fall_series");
+	CHECK_FALSE(retrievedSpriteSeries.empty());
+	CHECK(sprites == retrievedSpriteSeries);
 	}
 
 	SDLite::Exit();

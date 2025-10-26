@@ -273,6 +273,9 @@
     <ClCompile Include="test\catch\atlas\SpriteAtlasTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\catch\atlas\GlyphAtlasTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1768,5 +1771,9 @@
     <Media Include="resources\audio\sounds\sword_5.wav">
       <Filter>Resource Files</Filter>
     </Media>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="resources\fonts\GoNotoKurrent-Bold.ttf" />
+    <Font Include="resources\fonts\GoNotoKurrent-Regular.ttf" />
   </ItemGroup>
 </Project>

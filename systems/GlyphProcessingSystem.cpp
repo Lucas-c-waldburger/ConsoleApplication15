@@ -74,8 +74,18 @@ int CalculateGlyphRowWidth(const std::vector<GlyphCacheData>& cache,
 		});
 }
 
+struct FormatArgs
+{
+	Dimensions<int> bounds = { 0, 0 };
+	SDL_FPoint scale = { 0.0f, 0.0f };
+	SDL_Point start = { 0, 0 };
+	int numNewlines = 0;
+	int fontHeight = 0;
+	int totalHeight = 0;
+};
+
 float GetScaleToFitFactor(std::string_view text, 
-						  const TextRenderable::GlyphCache& glyphCache,
+						  std::vector<GlyphCacheData>& cache,
 						  const FormatArgs& format)
 {
 	int currentPos = 0;
@@ -85,7 +95,7 @@ float GetScaleToFitFactor(std::string_view text,
 		size_t newlinePos = text.find_first_of('\n', currentPos);
 		newlinePos = std::min(newlinePos, text.size());
 
-		int rowWidth = CalculateGlyphRowWidth(glyphCache, currentPos,
+		int rowWidth = CalculateGlyphRowWidth(cache, currentPos,
 											  newlinePos, format.scale.x);
 
 		longestRowWidth = std::max(longestRowWidth, rowWidth);
@@ -95,6 +105,36 @@ float GetScaleToFitFactor(std::string_view text,
 
 	return std::min(format.bounds.w / static_cast<float>(longestRowWidth),
 					format.bounds.h / static_cast<float>(format.totalHeight));
+}
+
+FormatArgs MakeFormatArgs(std::string_view text, std::vector<GlyphCacheData>& cache,
+	Dimensions<int> bounds, bool fixedSize,
+	const Transform& transform, const GlyphAtlas& glyphAtlas)
+{
+	int numNewlines = std::count(text.begin(), text.end(), '\n');
+
+	int fontHeight = glyphAtlas.GetFontData().fontHeight;
+
+	int totalHeight = static_cast<int>(fontHeight * transform.scale.y) *
+		static_cast<int>(numNewlines + 1);
+
+	int startY = static_cast<int>(transform.position.y - (totalHeight / 2.0f));
+
+	FormatArgs format{
+		.bounds = bounds,
+		.scale = transform.scale,
+		.start = { 0, startY }, // CHECK THIS
+		.numNewlines = numNewlines,
+		.fontHeight = fontHeight,
+		.totalHeight = totalHeight
+	};
+
+	if (!fixedSize)
+	{
+		format.scale *= GetScaleToFitFactor(text, cache, format);
+	}
+
+	return format;
 }
 
 void FillGlyphRectsLeftAlign(std::vector<GlyphCacheData>& cache,
@@ -188,45 +228,7 @@ void FillGlyphRectsCenterAlign(std::string_view text, std::vector<GlyphCacheData
 
 }
 
-struct FormatArgs
-{
-	Dimensions<int> bounds = { 0, 0 };
-	SDL_FPoint scale = { 0.0f, 0.0f };
-	SDL_Point start = { 0, 0 };
-	int numNewlines = 0;
-	int fontHeight = 0;
-	int totalHeight = 0;
-};
 
-FormatArgs MakeFormatArgs(std::string_view text, std::vector<GlyphCacheData>& cache, 
-						  Dimensions<int> bounds, bool fixedSize, 
-						  const Transform& transform, const GlyphAtlas& glyphAtlas)
-{
-	int numNewlines = std::count(text.begin(), text.end(), '\n');
-
-	int fontHeight = glyphAtlas.GetFontData().fontHeight;
-
-	int totalHeight = static_cast<int>(fontHeight * transform.scale.y) *
-					  static_cast<int>(numNewlines + 1);
-
-	int startY = static_cast<int>(transform.position.y - (totalHeight / 2.0f));
-
-	FormatArgs format{
-		.bounds = bounds,
-		.scale = transform.scale,
-		.start = { 0, startY }, // CHECK THIS
-		.numNewlines = numNewlines,
-		.fontHeight = fontHeight,
-		.totalHeight = totalHeight
-	};
-
-	if (!fixedSize)
-	{
-		format.scale *= GetScaleToFitFactor(text, cache, format);
-	}
-
-	return format;
-}
 
 void RepopulateGlyphCacheGlyphs(std::string_view text, std::vector<GlyphCacheData>& cache,
 								const GlyphAtlas& glyphAtlas)

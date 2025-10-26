@@ -20,7 +20,7 @@ static constexpr size_t GetPlotIndexForChar(char c)
 Result<Void> NewGlyphAtlas::LoadImpl(SDL_Renderer* renderer, 
                                      FontDescriptor&& descriptor)
 {
-    fontDescriptor_ = std::move(fontDescriptor_);
+    fontDescriptor_ = std::move(descriptor);
 
     TTF_Font* font = TTF_OpenFont(fontDescriptor_.filepath.c_str(), 
                                   fontDescriptor_.fontSize);
@@ -184,4 +184,17 @@ Glyph NewGlyphAtlas::GetGlyph(char c) const
     const size_t idx = GetPlotIndexForChar(c);
 
     return (idx < glyphs_.size()) ? glyphs_[idx] : Glyph{};
+}
+
+std::vector<Glyph> NewGlyphAtlas::GetGlyphsForString(std::string_view text) const
+{
+    std::vector<Glyph> glyphs;
+    glyphs.reserve(text.size());
+
+    for (char c : text)
+    {
+        glyphs.emplace_back(GetGlyph(c));
+    }
+
+    return glyphs;
 }

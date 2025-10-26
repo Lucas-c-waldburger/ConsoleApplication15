@@ -32,7 +32,7 @@ public:
 
 	SDL_Texture* const GetSourceTexture() const { return atlasTexture_.get(); }
 
-	const Handle<NewTextureAtlas>& GetAtlasHandle() const { return handle_; }
+	const Handle<NewTextureAtlas>& GetHandle() const { return handle_; }
 
 	bool IsLoaded() const { return handle_.IsValid() && atlasTexture_; }
 

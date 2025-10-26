@@ -95,7 +95,7 @@ private:
 		return {
 			.typeIndex = GetAtlasTypeIndex<T>(),
 			.vecIndex = atlasVec.size()
-		});
+		};
 	}
 
 	template <SomeTextureAtlas T>
@@ -133,7 +133,7 @@ private:
 			return nullptr;
 		}
 
-		return vec[vecIdx].GetSourceTexture();
+		return vec[vecIdxToGet].GetSourceTexture();
 	}
 
 	bool ValidHandle(const Handle<NewTextureAtlas>& handle) const

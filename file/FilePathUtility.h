@@ -29,6 +29,13 @@ constexpr std::string_view kFontsDirName = "fonts";
 constexpr std::string_view kScriptsDirName = "scripts";
 
 template <typename...Args>
+inline fs::path JoinPathsImpl(Args&&...args)
+{
+	return FilePathUtility::GetRootPath() / kResourcesDirName /
+		(fs::path(std::forward<Args>(args)) / ...);
+}
+
+template <typename...Args>
 inline Result<std::string> JoinPaths(Args&&...args)
 {
 	fs::path fp = JoinPathsImpl(std::forward<Args>(args)...);
@@ -44,13 +51,6 @@ inline Result<std::string> JoinPaths(Args&&...args)
 	}
 
 	return fpStr;
-}
-
-template <typename...Args>
-inline fs::path JoinPathsImpl(Args&&...args)
-{
-	return FilePathUtility::GetRootPath() / kResourcesDirName /
-		(fs::path(std::forward<Args>(args)) / ...);
 }
 
 class ResourcePath
@@ -85,9 +85,17 @@ private:
 	ResourcePath() = default;
 };
 
+template <typename T, typename Sorter>
+concept SomeSorter = std::is_invocable_r_v<bool, Sorter, const T&, const T&>;
+
 template <typename Sorter>
-concept PathStringSorter =
-std::is_invocable_r_v<bool, Sorter, const std::string&, const std::string&>;
+concept SomeStringSorter = SomeSorter<std::string, Sorter>;
+
+template <typename Sorter>
+concept SomeFsPathSorter = SomeSorter<fs::path, Sorter>;
+
+template <typename Sorter>
+concept SomeResourcePathSorter = (SomeStringSorter<Sorter> || SomeFsPathSorter<Sorter>);
 
 class ResourcePaths
 {
@@ -96,72 +104,66 @@ public:
 
 	static Ret MusicDirectory(std::string_view dir)
 	{
-		return GetDirPaths(kAudioDirName, kMusicDirName, dir);
+		return GetDirPaths<std::string>(kAudioDirName, kMusicDirName, dir);
 	}
 
-	template <PathStringSorter Sorter>
+	template <SomeResourcePathSorter Sorter>
 	static Ret MusicDirectory(std::string_view dir, Sorter&& sorter)
 	{
-		TRY(GetDirPaths(kAudioDirName, kMusicDirName, dir), paths);
-		std::sort(paths.begin(), paths.end(), std::forward<Sorter>(sorter));
-		return paths;
+		return SortAndReturnPaths(std::forward<Sorter>(sorter), 
+								  kAudioDirName, kMusicDirName, dir);
 	}
 
 	static Ret SoundDirectory(std::string_view dir)
 	{
-		return GetDirPaths(kAudioDirName, kSoundsDirName, dir);
+		return GetDirPaths<std::string>(kAudioDirName, kSoundsDirName, dir);
 	}
 
-	template <PathStringSorter Sorter>
+	template <SomeStringSorter Sorter>
 	static Ret SoundDirectory(std::string_view dir, Sorter&& sorter)
 	{
-		TRY(GetDirPaths(kAudioDirName, kSoundsDirName, dir), paths);
-		std::sort(paths.begin(), paths.end(), std::forward<Sorter>(sorter));
-		return paths;
+		return SortAndReturnPaths(std::forward<Sorter>(sorter),
+								  kAudioDirName, kSoundsDirName, dir);
 	}
 
 	static Ret SpriteDirectory(std::string_view dir)
 	{
-		return GetDirPaths(kSpritesDirName, dir);
+		return GetDirPaths<std::string>(kSpritesDirName, dir);
 	}
 
-	template <PathStringSorter Sorter>
+	template <SomeStringSorter Sorter>
 	static Ret SpriteDirectory(std::string_view dir, Sorter&& sorter)
 	{
-		TRY(GetDirPaths(kSpritesDirName, dir), paths);
-		std::sort(paths.begin(), paths.end(), std::forward<Sorter>(sorter));
-		return paths;
+		return SortAndReturnPaths(std::forward<Sorter>(sorter), kSpritesDirName, dir);
 	}
 
 	static Ret FontDirectory(std::string_view dir)
 	{
-		return GetDirPaths(kFontsDirName, dir);
+		return GetDirPaths<std::string>(kFontsDirName, dir);
 	}
 
-	template <PathStringSorter Sorter>
+	template <SomeStringSorter Sorter>
 	static Ret FontDirectory(std::string_view dir, Sorter&& sorter)
 	{
-		TRY(GetDirPaths(kFontsDirName, dir), paths);
-		std::sort(paths.begin(), paths.end(), std::forward<Sorter>(sorter));
-		return paths;
+		return SortAndReturnPaths(std::forward<Sorter>(sorter), kFontsDirName, dir);
 	}
 
 	static Ret ScriptDirectory(std::string_view dir)
 	{
-		return GetDirPaths(kScriptsDirName, dir);
+		return GetDirPaths<std::string>(kScriptsDirName, dir);
 	}
 
-	template <PathStringSorter Sorter>
+	template <SomeStringSorter Sorter>
 	static Ret ScriptDirectory(std::string_view dir, Sorter&& sorter)
 	{
-		TRY(GetDirPaths(kScriptsDirName, dir), paths);
-		std::sort(paths.begin(), paths.end(), std::forward<Sorter>(sorter));
-		return paths;
+		return SortAndReturnPaths(std::forward<Sorter>(sorter), kScriptsDirName, dir);
+
 	}
 
 private:
-	template <typename...Args>
-	static Result<std::vector<std::string>> GetDirPaths(Args&&...args)
+	template <typename T, typename...Args> requires (std::same_as<T, std::string> ||
+													 std::same_as<T, fs::path>)
+	static Result<std::vector<T>> GetDirPaths(Args&&...args)
 	{
 		fs::path dir = JoinPathsImpl(std::forward<Args>(args)...);
 
@@ -174,16 +176,60 @@ private:
 			return MAKE_ERROR_FMT("Path is not a directory: '{}'", dir.string());
 		}
 
-		std::vector<std::string> pathStrs;
+		std::vector<T> paths;
 		for (const auto& entry : fs::directory_iterator(dir))
 		{
 			if (fs::is_regular_file(entry))
 			{
-				pathStrs.emplace_back((dir / entry.path().filename()).string());
+				if constexpr (std::same_as<T, std::string>)
+				{
+					paths.emplace_back((dir / entry.path().filename()).string());
+				}
+				else
+				{
+					paths.emplace_back((dir / entry.path()));
+				}
 			}
 		}
 
-		return pathStrs;
+		return paths;
+	}
+
+	template <typename T, typename Sorter, typename...Args> 
+		requires (SomeSorter<T, Sorter> && std::same_as<T, std::string> || 
+										   std::same_as<T, fs::path>)
+	static Result<std::vector<std::string>> 
+	SortAndReturnPathsImpl(Sorter&& sorter, Args&&...args)
+	{
+		TRY(GetDirPaths<T>(std::forward<Args>(args)...), paths);
+
+		std::sort(paths.begin(), paths.end(), std::forward<Sorter>(sorter));
+		
+		if constexpr (std::same_as<T, fs::path>)
+		{
+			std::vector<std::string> pathStrs{ paths.size() };
+			
+			std::transform(paths.begin(), paths.end(), pathStrs.begin(), &fs::path::string);
+
+			return pathStrs;
+		}
+		else
+		{
+			return paths;
+		}
+	}
+
+	template <SomeStringSorter Sorter, typename...Args>
+	static Result<std::vector<std::string>> SortAndReturnPaths(Sorter&& sorter, Args&&...args)
+	{
+		return SortAndReturnPathsImpl<std::string>(std::forward<Sorter>(sorter), 
+												   std::forward<Args>(args)...);
+	}
+	template <SomeFsPathSorter Sorter, typename...Args>
+	static Result<std::vector<std::string>> SortAndReturnPaths(Sorter&& sorter, Args&&...args)
+	{
+		return SortAndReturnPathsImpl<fs::path>(std::forward<Sorter>(sorter),
+												std::forward<Args>(args)...);
 	}
 
 	ResourcePaths() = default;

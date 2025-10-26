@@ -6,6 +6,7 @@
 #include "../sdl/SDLite.h"
 #include "../sdl/SDLUtils.h"
 #include "../render/TextureMods.h"
+#include "TransformComponent.h"
 #include <variant>
 
 
