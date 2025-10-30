@@ -53,6 +53,7 @@ inline Result<std::string> JoinPaths(Args&&...args)
 	return fpStr;
 }
 
+
 class ResourcePath
 {
 public:

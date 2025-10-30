@@ -432,6 +432,7 @@ namespace SDLite
 	public:
 		friend Status Start(WindowArgs);
 		friend void Exit();
+		friend bool Running();
 
 		friend AppWindow& Window();
 		friend AppRenderer& Renderer();
@@ -536,6 +537,11 @@ namespace SDLite
 			IMG_Quit();
 			SDL_Quit(); 
 		}
+	}
+
+	static bool Running()
+	{
+		return App::app_ != nullptr;
 	}
 };
 

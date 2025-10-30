@@ -1,39 +1,11 @@
-#include "GlyphProcessingSystem.h"
+#include "GlyphFormattingSystem.h"
 #include "../ecs/Ecs.h"
-#include "../atlas/GlyphAtlas.h"
+#include "../atlas/NewGlyphAtlas.h"
+#include "util/GlyphFormattingUtils.h"
+
+using namespace util;
 
 namespace {
-
-bool operator==(std::string_view text, const std::vector<GlyphCacheData>& cacheData)
-{
-	if (text.size() != cacheData.size())
-	{
-		return true;
-	}
-
-	for (size_t i = 0; i < text.size(); i++)
-	{
-		if (text[i] != cacheData[i].glyph.character)
-		{
-			return true;
-		}
-	} 
-
-	return true;
-}
-
-constexpr bool operator==(const TextRenderable& newFormat, const TextFormatting& oldFormat)
-{
-	if (newFormat.dimensions != oldFormat.bounds ||
-		newFormat.align != oldFormat.align)
-	{
-		return true;
-	}
-
-	bool scaleToBounds = (newFormat.flags & TextRenderable::FixedSize) == 0;
-
-	return scaleToBounds != oldFormat.scaleToBounds;
-}
 
 constexpr SDL_FPoint GetRectCenter(SDL_Rect rect)
 {
@@ -61,80 +33,6 @@ constexpr SDL_Rect MakeProjectedBoundingRect(Dimensions<int> dims, SDL_FPoint sc
 		static_cast<int>(dims.w * scale.x),
 		static_cast<int>(dims.h * scale.y)
 	};
-}
-
-int CalculateGlyphRowWidth(const std::vector<GlyphCacheData>& cache, 
-						   int currentPos, int newlinePos, float scaleX)
-{
-	return std::accumulate(
-		cache.begin() + currentPos,
-		cache.begin() + newlinePos,
-		0, [scale = scaleX](int sum, const auto& data) {
-			return sum + static_cast<int>(data.glyph.advance * scale);
-		});
-}
-
-struct FormatArgs
-{
-	Dimensions<int> bounds = { 0, 0 };
-	SDL_FPoint scale = { 0.0f, 0.0f };
-	SDL_Point start = { 0, 0 };
-	int numNewlines = 0;
-	int fontHeight = 0;
-	int totalHeight = 0;
-};
-
-float GetScaleToFitFactor(std::string_view text, 
-						  std::vector<GlyphCacheData>& cache,
-						  const FormatArgs& format)
-{
-	int currentPos = 0;
-	int longestRowWidth = 0;
-	for (int i = 0; i <= format.numNewlines; i++)
-	{
-		size_t newlinePos = text.find_first_of('\n', currentPos);
-		newlinePos = std::min(newlinePos, text.size());
-
-		int rowWidth = CalculateGlyphRowWidth(cache, currentPos,
-											  newlinePos, format.scale.x);
-
-		longestRowWidth = std::max(longestRowWidth, rowWidth);
-
-		currentPos = newlinePos + 1;
-	}
-
-	return std::min(format.bounds.w / static_cast<float>(longestRowWidth),
-					format.bounds.h / static_cast<float>(format.totalHeight));
-}
-
-FormatArgs MakeFormatArgs(std::string_view text, std::vector<GlyphCacheData>& cache,
-	Dimensions<int> bounds, bool fixedSize,
-	const Transform& transform, const GlyphAtlas& glyphAtlas)
-{
-	int numNewlines = std::count(text.begin(), text.end(), '\n');
-
-	int fontHeight = glyphAtlas.GetFontData().fontHeight;
-
-	int totalHeight = static_cast<int>(fontHeight * transform.scale.y) *
-		static_cast<int>(numNewlines + 1);
-
-	int startY = static_cast<int>(transform.position.y - (totalHeight / 2.0f));
-
-	FormatArgs format{
-		.bounds = bounds,
-		.scale = transform.scale,
-		.start = { 0, startY }, // CHECK THIS
-		.numNewlines = numNewlines,
-		.fontHeight = fontHeight,
-		.totalHeight = totalHeight
-	};
-
-	if (!fixedSize)
-	{
-		format.scale *= GetScaleToFitFactor(text, cache, format);
-	}
-
-	return format;
 }
 
 void FillGlyphRectsLeftAlign(std::vector<GlyphCacheData>& cache,
@@ -167,7 +65,7 @@ void FillGlyphRectsRightAlign(std::vector<GlyphCacheData>& cache,
 {
 	auto [xPos, yPos] = format.start;
 
-	yPos += format.fontHeight * format.scale.y * format.numNewlines;
+	yPos += static_cast<int>(format.fontHeight * format.scale.y) * format.numNewlines;
 
 	for (int i = static_cast<int>(cache.size()) - 1; i >= 0; i--)
 	{
@@ -195,11 +93,12 @@ void FillGlyphRectsCenterAlign(std::string_view text, std::vector<GlyphCacheData
 							   const FormatArgs& format)
 {
 	assert(text.size() == cache.size());
+	assert(format.numNewlines >= 0);
 
 	int yPos = format.start.y;
 	int currentTextPos = 0;
 
-	for (size_t i = 0; i <= format.numNewlines; i++)
+	for (size_t i = 0; i <= static_cast<size_t>(format.numNewlines); i++)
 	{
 		size_t newlinePos = text.find_first_of('\n', currentTextPos);
 		newlinePos = std::min(newlinePos, text.size());
@@ -226,12 +125,17 @@ void FillGlyphRectsCenterAlign(std::string_view text, std::vector<GlyphCacheData
 	}
 }
 
+bool DisableCaching(const NewRenderable& renderable)
+{
+	return !(std::holds_alternative<NewTextRenderable>(renderable.renderData) &&
+			!std::get<NewTextRenderable>(renderable.renderData).text.empty());
 }
 
+} // unnamed
 
 
-void RepopulateGlyphCacheGlyphs(std::string_view text, std::vector<GlyphCacheData>& cache,
-								const GlyphAtlas& glyphAtlas)
+void GlyphFormattingSystem::RepopulateGlyphCacheGlyphs(std::string_view text, 
+	std::vector<GlyphCacheData>& cache, const NewGlyphAtlas& glyphAtlas)
 {
 	cache.resize(text.size());	
 
@@ -250,17 +154,14 @@ void RepopulateGlyphCacheGlyphs(std::string_view text, std::vector<GlyphCacheDat
 	}
 }
 
-void ReprojectGlyphCacheGeometry(std::vector<GlyphCacheData>& cache,
-								 const TextRenderable& textRenderable,
-								 const Transform& transform, 
-								 SDL_Rect projectedRect,
-								 const GlyphAtlas& glyphAtlas)
+void GlyphFormattingSystem::ReprojectGlyphCacheGeometry(
+	std::vector<GlyphCacheData>& cache, const NewTextRenderable& textRenderable,
+	const Transform& transform, SDL_Rect projectedRect, const NewGlyphAtlas& glyphAtlas)
 {
-	bool fixedSize = (textRenderable.flags & TextRenderable::FixedSize) != 0;
-	auto format = MakeFormatArgs(textRenderable.text, cache, textRenderable.dimensions, 
-								 fixedSize, transform, glyphAtlas);
+	auto format = MakeFormatArgs(textRenderable.text, cache, textRenderable.formatting.bounds, 
+								 textRenderable.formatting.scaleToBounds, transform, glyphAtlas);
 
-	switch (textRenderable.align)
+	switch (textRenderable.formatting.align)
 	{
 	case TextAlign::Left:
 		format.start.x = projectedRect.x;
@@ -277,8 +178,9 @@ void ReprojectGlyphCacheGeometry(std::vector<GlyphCacheData>& cache,
 	}
 }
 
-void AdjustGlyphCacheForRotation(std::vector<GlyphCacheData>& cache,
-							     SDL_Rect projectedRenderRect, float angleDegrees)
+void GlyphFormattingSystem::AdjustGlyphCacheRotation(std::vector<GlyphCacheData>& cache,
+													 SDL_Rect projectedRenderRect, 
+													 float angleDegrees)
 {
 	SDL_FPoint bboxCenter = GetRectCenter(projectedRenderRect);
 
@@ -316,62 +218,37 @@ void AdjustGlyphCacheForRotation(std::vector<GlyphCacheData>& cache,
 	}
 }
 
-void AdjustGlyphCachePosition(GlyphCache& cacheComponent, SDL_FPoint newPos, 
-							  SDL_FPoint newOffset)
+void GlyphFormattingSystem::AdjustGlyphCachePosition(GlyphCache& cacheComponent, 
+													 SDL_FPoint newPos, 
+													 SDL_FPoint newOffset)
 {
 	SDL_FPoint adjust = (newPos - cacheComponent.context.transform.position) +
 					    (newOffset - cacheComponent.context.offset);
 
 	for (auto& cacheData : cacheComponent.cache)
 	{
-		cacheData.destRect.x += adjust.x;
-		cacheData.destRect.y += adjust.y;
+		cacheData.destRect.x += static_cast<int>(adjust.x);
+		cacheData.destRect.y += static_cast<int>(adjust.y);
 	}
 }
 
-enum ChangeLog : uint8_t 
-{
-	NoChange = 0,
-	TextChanged = 1 << 0,
-	FormatChanged = 1 << 1,
-	RotationChanged = 1 << 2,
-	PositioningChanged = 1 << 3,
-	ScaleChanged = 1 << 4,
-	NeedsReprojection = TextChanged | FormatChanged | ScaleChanged
-};
 
-static uint8_t MakeChangeLog(const Renderable& renderable,
-							 const Transform& transform,
-							 const GlyphCache& glyphCache)
+void GlyphFormattingSystem::Update(const NewGlyphAtlas& glyphAtlas)
 {
-	const auto& textRenderable = std::get<TextRenderable>(renderable.renderData);
-	const auto& [glyphs, ctx] = glyphCache;
-
-	return static_cast<uint8_t>(
-		(textRenderable.text != glyphs) ? TextChanged : 0_u8 |
-		(textRenderable != ctx.format) ? FormatChanged : 0_u8 |
-		(transform.rotation != ctx.transform.rotation) ? RotationChanged : 0_u8 |
-		(transform.position != ctx.transform.position ||
-		 renderable.profile.offset != ctx.offset) ? PositioningChanged : 0_u8 |
-		(transform.scale != ctx.transform.scale) ? ScaleChanged : 0_u8
-	);
-}
-;
-
-void GlyphFormattingSystem::Update(const GlyphAtlas& glyphAtlas)
-{
-	auto entities = ECS::GetAllEntitiesWith<Renderable, Transform>();
+	auto entities = ECS::GetAllEntitiesWith<NewRenderable, Transform>();
 
 	for (auto& entity : entities)
 	{
-		auto [renderable, transform] = entity.GetComponents<Renderable, Transform>();
+		auto [renderable, transform] = entity.GetComponents<NewRenderable, Transform>();
 
-		if (!std::holds_alternative<TextRenderable>(renderable.renderData))
+		if (DisableCaching(renderable))
 		{
+			entity.RemoveComponent<GlyphCache>();
+
 			continue;
 		}
 
-		auto& textRenderable = std::get<TextRenderable>(renderable.renderData);
+		auto& textRenderable = std::get<NewTextRenderable>(renderable.renderData);
 		auto& glyphCache = entity.AddComponent<GlyphCache>();
 		auto& [glyphs, ctx] = glyphCache;
 
@@ -391,39 +268,28 @@ void GlyphFormattingSystem::Update(const GlyphAtlas& glyphAtlas)
 		if (changeLog & NeedsReprojection || changeLog & RotationChanged)
 		{
 			SDL_Rect projectedRect = MakeProjectedBoundingRect(
-				textRenderable.dimensions, transform.scale
+				textRenderable.formatting.bounds, transform.scale
 			);
 
 			if (changeLog & NeedsReprojection)
 			{
-				ReprojectGlyphCacheGeometry(
-					glyphs, textRenderable, transform,
-					projectedRect, glyphAtlas
-				);
+				ReprojectGlyphCacheGeometry(glyphs, textRenderable, transform,
+											projectedRect, glyphAtlas);
 			}	 
 			if (changeLog & RotationChanged)
 			{
-				AdjustGlyphCacheForRotation(
-					glyphs, projectedRect, transform.rotation
-				);
+				AdjustGlyphCacheRotation(glyphs, projectedRect, transform.rotation);
 			}
 		}
 
-		if (changeLog & PositioningChanged)
+		if (changeLog & PositionChanged)
 		{
-			AdjustGlyphCachePosition(
-				glyphCache, transform.position, renderable.profile.offset
-			);
+			AdjustGlyphCachePosition(glyphCache, transform.position, 
+									 renderable.profile.offset);
 		}
 
 		ctx.transform = transform;
-
-		ctx.format.bounds = textRenderable.dimensions;
-		ctx.format.align = textRenderable.align;
-		ctx.format.letterSpacing = 1.0f; 
-		ctx.format.scaleToBounds =
-			(textRenderable.flags & TextRenderable::FixedSize) == 0;
-
+		ctx.format = textRenderable.formatting;
 		ctx.offset = renderable.profile.offset;
 	}
 

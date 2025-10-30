@@ -1,6 +1,5 @@
-//#define CATCH_CONFIG_RUNNER
 #include <cassert>
-#include "../CatchMain.cpp"
+#include "../CatchUtils.h"
 #include "../../Fixtures.h"
 #include "../../../file/FilePathUtility.h"
 

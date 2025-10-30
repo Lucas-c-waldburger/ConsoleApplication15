@@ -104,6 +104,8 @@ Result<SpriteAtlas> SpriteAtlas::Create(SDL_Renderer* renderer, size_t size)
         return MAKE_ERROR(SDL_GetError());
     }
 
+    SDL_SetTextureBlendMode(atlas.atlasTexture_.get(), SDL_BLENDMODE_BLEND);
+
     atlas.binPack_.Init(size, size, false);
 
     return atlas;
@@ -193,7 +195,6 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
     ScopedInvoker freeResources{ [&] { 
         SDL_FreeSurface(spriteSurface);
         if (spriteTexture) { SDL_DestroyTexture(spriteTexture); }
-        SDL_SetRenderTarget(renderer, nullptr);
     }};
     
     spriteSurface = IMG_Load(descriptor.filepath.c_str());

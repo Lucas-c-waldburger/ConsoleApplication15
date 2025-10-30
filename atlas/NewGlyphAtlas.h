@@ -1,6 +1,7 @@
 #pragma once
 #include "NewAtlas.h"
 #include "GlyphAtlas.h"
+#include <ranges>
 
 
 struct FontDescriptor
@@ -11,18 +12,14 @@ struct FontDescriptor
     int fontHeight = 0;
 };
 
-struct GlyphText
+struct GlyphTextWriter
 {
-	std::vector<Glyph> text;
-	GlyphText& operator=(std::string_view sv)
-	{
-		text.resize(sv.size());
-		for (size_t i = 0; i < text.size(); i++)
-		{
-			text[i].character = sv[i];
-		}
-	}
+	Handle<NewTextureAtlas> sourceAtlas;
+	std::string text;
+
+	bool operator==(const GlyphTextWriter&) const = default;
 };
+
 
 class NewGlyphAtlas : public NewTextureAtlas
 {
@@ -58,9 +55,9 @@ public:
 	Glyph GetGlyph(char c) const;
 	std::vector<Glyph> GetGlyphsForString(std::string_view text) const;
 
-	const FontDescriptor& GetFontDescriptor() const;
+	GlyphTextWriter GetTextWriter() const { return { .sourceAtlas = GetHandle() }; }
 
-	Result<Void> ValidateGlyph(const Glyph& glyph) const;
+	const FontDescriptor& GetFontDescriptor() const;
 
 private:
 	explicit NewGlyphAtlas(Handle<NewTextureAtlas>&& handle) :

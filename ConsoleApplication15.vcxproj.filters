@@ -228,7 +228,7 @@
     <ClCompile Include="deps\catch\catch_amalgamated.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\catch\CatchMain.cpp">
+    <ClCompile Include="test\catch\CatchUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ecs\EntityManager.cpp">
@@ -238,9 +238,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\catch\audio\AudioTests.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="test\catch\ecs\ComponentManagerTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\catch\ecs\EntityManagerTests.cpp">
@@ -255,7 +252,7 @@
     <ClCompile Include="test\catch\scripting\LuaFunctionTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\catch\renderer\RendererTests.cpp">
+    <ClCompile Include="test\catch\render\RendererTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="atlas\SpriteAtlas.cpp">
@@ -264,7 +261,7 @@
     <ClCompile Include="atlas\NewGlyphAtlas.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="systems\GlyphProcessingSystem.cpp">
+    <ClCompile Include="systems\GlyphFormattingSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="atlas\NewAtlas.cpp">
@@ -274,6 +271,30 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\catch\atlas\GlyphAtlasTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\atlas\TextureRepositoryTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\test_utils\AtlasTestUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\test_utils\ImageUtilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\render\GlyphFormattingTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\util\GlyphFormattingUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\test_utils\RenderingTestUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\NewRenderSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="systems\util\RenderUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1304,10 +1325,31 @@
     <ClInclude Include="atlas\NewGlyphAtlas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="systems\GlyphProcessingSystem.h">
+    <ClInclude Include="systems\GlyphFormattingSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="systems\NewRenderSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\catch\test_utils\AtlasTestUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\catch\CatchUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\catch\test_utils\ImageUtilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\util\GlyphFormattingUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\catch\test_utils\RenderingTestUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\util\DebugDrawUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\util\RenderUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

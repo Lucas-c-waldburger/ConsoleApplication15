@@ -33,6 +33,10 @@ public:
 
     Handle() = default;
     bool operator==(const Handle& rhs) const { return id_ == rhs.id_ && gen_ == rhs.gen_; }
+    bool operator<(const Handle& rhs) const
+    {
+        return (gen_ != rhs.gen_) ? gen_ < rhs.gen_ : id_ < rhs.id_;
+    }
 
 private:
     size_t GetHashImpl() const noexcept

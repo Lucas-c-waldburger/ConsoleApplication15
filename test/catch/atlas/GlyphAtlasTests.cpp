@@ -1,4 +1,4 @@
-#include "../CatchMain.cpp"
+#include "../CatchUtils.h"
 #include "../../../atlas/NewGlyphAtlas.h"
 #include "../../../file/FilePathUtility.h"
 #include "../../../sdl/SDLite.h"
@@ -6,7 +6,6 @@
 namespace {
 
 constexpr std::string_view kFontReg = "GoNotoKurrent-Regular.ttf";
-constexpr std::string_view kFontBold = "GoNotoKurrent-Bold.ttf";
 
 } // unnamed
 

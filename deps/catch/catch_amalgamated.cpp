@@ -14,8 +14,6 @@
 
 #include "catch_amalgamated.hpp"
 
-#if RUN_CATCH_TESTS
-
 #ifndef CATCH_WINDOWS_H_PROXY_HPP_INCLUDED
 #define CATCH_WINDOWS_H_PROXY_HPP_INCLUDED
 
@@ -12005,5 +12003,3 @@ namespace Catch {
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
-
-#endif 

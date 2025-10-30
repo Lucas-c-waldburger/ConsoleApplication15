@@ -1,4 +1,4 @@
-#include "../CatchMain.cpp"
+#include "../CatchUtils.h"
 #include "../../../scripting/LuaScript.h"
 #include "../../../scripting/user_types/EntityUserType.h"
 #include "../../../scripting/user_types/TransformLuaUserTypes.h"

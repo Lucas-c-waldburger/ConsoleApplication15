@@ -1,4 +1,4 @@
-#include "../CatchMain.cpp"
+#include "../CatchUtils.h"
 #include "../../../ecs/EntityT.h"
 
 

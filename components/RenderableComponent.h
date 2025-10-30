@@ -2,7 +2,9 @@
 #include "BaseComponent.h"
 #include "../core/Handle.h"
 #include "../atlas/SpriteSeriesAtlas.h"
+#include "../atlas/SpriteAtlas.h"
 #include "../atlas/GlyphAtlas.h"
+#include "../atlas/NewGlyphAtlas.h"
 #include "../sdl/SDLite.h"
 #include "../sdl/SDLUtils.h"
 #include "../render/TextureMods.h"
@@ -79,38 +81,26 @@ struct GlyphCache : BaseComponent<GlyphCache>
 
 struct NewTextRenderable
 {
-    std::string text;
-    TextFormatting format;
+    GlyphTextWriter writer;
+    TextFormatting formatting;
 };
 
 struct NewSpriteRenderable
 {
-    int plotIndex = -1;
+    Sprite sprite;
 };
+
+template <typename T>
+concept SomeRenderableComponent = std::same_as<T, NewTextRenderable> ||
+                                  std::same_as<T, NewSpriteRenderable>;
 
 using NewRenderableVariant = std::variant<NewTextRenderable, NewSpriteRenderable>;
 
-class NewTextureAtlas;
-
 struct NewRenderable : BaseComponent<NewRenderable>
 {
-    Handle<NewTextureAtlas> sourceAtlas;
     NewRenderableVariant renderData;
     RenderProfile profile;
 };
-
-//
-//struct Texture;
-//struct NewSpriteRenderable
-//{
-//    Handle<Texture> sprite;
-//};
-
-//struct NewRenderable
-//{
-//    Handle<NewTextureAtlas> sourceAtlas;
-//    RenderProfile profile;
-//};
 
 struct TextRenderable
 {

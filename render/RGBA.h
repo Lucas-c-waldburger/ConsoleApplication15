@@ -48,6 +48,10 @@ struct RGB
 	{
 		return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b;
 	}
+	friend constexpr bool operator<(const RGB& lhs, const RGB& rhs)
+	{
+		return std::tie(lhs.r, lhs.b, lhs.g) < std::tie(rhs.r, rhs.b, rhs.g);
+	}
 	friend constexpr RGB operator+(const RGB& lhs, const RGB& rhs)
 	{
 		return { lhs.r + rhs.r, lhs.g + rhs.g, lhs.b + rhs.b };

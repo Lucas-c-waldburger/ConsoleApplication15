@@ -1,4 +1,4 @@
-#include "../CatchMain.cpp"
+#include "../CatchUtils.h"
 #include "../../../events/EventBus2.h"
 
 namespace ev = events;

@@ -125,7 +125,7 @@ private:
 	}
 
 	template <SomeTextureAtlas T>
-	const SDL_Texture* GetTextureImpl(size_t vecIdxToGet) const
+	SDL_Texture* GetTextureImpl(size_t vecIdxToGet) const
 	{
 		auto& vec = GetAtlasVector<T>();
 		if (vec.empty() || vecIdxToGet >= vec.size())
@@ -177,7 +177,7 @@ public:
 
 		auto& vec = GetAtlasVector<T>();
 
-		return (vecIdx < vec.size()) ? vec[vecIdx] : nullptr;
+		return (vecIdx < vec.size()) ? &vec[vecIdx] : nullptr;
 	}
 
 	template <SomeTextureAtlas T>
@@ -197,7 +197,7 @@ public:
 
 		auto& vec = GetAtlasVector<T>();
 
-		return (vecIdx < vec.size()) ? vec[vecIdx] : nullptr;
+		return (vecIdx < vec.size()) ? &vec[vecIdx] : nullptr;
 	}
 
 	template <SomeTextureAtlas T>
@@ -214,7 +214,7 @@ public:
 
 		auto& vec = GetAtlasVector<T>();
 
-		bool[_, inserted] = indexMap_.emplace(atlas.GetHandle(), MakeIndexData(vec));
+		auto [_, inserted] = indexMap_.emplace(atlas.GetHandle(), MakeIndexData(vec));
 		assert(inserted);
 
 		vec.emplace_back(std::move(atlas));
@@ -245,7 +245,13 @@ public:
 		}
 	}
 
-	const SDL_Texture* GetSourceTexture(const Handle<NewTextureAtlas>& handle) const
+	SDL_Texture* GetSourceTexture(const Sprite& sprite) const
+	{
+
+	}
+
+	// ADD VALIDATION FOR SPRITE PLOT INDEX
+	SDL_Texture* GetSourceTexture(const Handle<NewTextureAtlas>& handle) const
 	{
 		auto it = indexMap_.find(handle);
 		if (it == indexMap_.end())

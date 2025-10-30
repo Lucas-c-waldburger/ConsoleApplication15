@@ -1,44 +1,8 @@
-#include "../CatchMain.cpp"
-#include "../../../core/ScopedInvoker.h"
+#include "../CatchUtils.h"
 #include "../../../atlas/SpriteAtlas.h"
 #include "../../../file/FilePathUtility.h"
 #include "../../../sdl/SDLite.h"
-
-
-namespace {
-
-namespace fs = std::filesystem;
-
-SpriteDescriptorPackage MakePackage(const std::vector<std::string>& pathStrs, 
-									std::string_view seriesName)
-{
-	SpriteDescriptorPackage package{};
-	package.seriesName = seriesName;
-	package.descriptors.resize(pathStrs.size());
-
-	constexpr auto stripName = [](std::string_view pathSv) {
-		auto path = fs::path(pathSv);
-		REQUIRE(fs::exists(path));
-		return path.stem().string();
-	};
-
-	std::transform(pathStrs.begin(), pathStrs.end(), package.descriptors.begin(), 
-		[](auto&& pathStr) {
-			return SpriteDescriptor{ 
-				.spriteName = stripName(pathStr),
-				.filepath = pathStr
-			};
-		});
-
-	return package;
-}
-
-constexpr std::array<std::string_view, 4> kFallAnimSpriteNames = {
-	"knight_fall_0", "knight_fall_1", "knight_fall_2", "knight_fall_3"
-};
-
-} // unnamed
-
+#include "../test_utils/AtlasTestUtils.h"
 
 TEST_CASE("Sprite Atlas Tests", "[atlas]")
 {
@@ -103,7 +67,7 @@ TEST_CASE("Sprite Atlas Tests", "[atlas]")
 	auto& seriesPaths = seriesPathsResult.GetValue();
 	CHECK(seriesPaths.size() == 4);
 
-	auto package = MakePackage(std::move(seriesPaths), "knight_fall_series");
+	auto package = test::MakeSpriteTestPackage(std::move(seriesPaths), "knight_fall_series");
 	CHECK(package.descriptors.size() == 4);
 	CHECK(package.seriesName == "knight_fall_series");
 

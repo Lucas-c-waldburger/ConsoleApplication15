@@ -74,9 +74,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp23</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
@@ -94,9 +94,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp23</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
@@ -114,9 +114,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp23</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
@@ -134,9 +134,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp23</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
@@ -217,24 +217,31 @@
     <ClCompile Include="atlas\SpriteSeriesAtlas.cpp" />
     <ClCompile Include="systems\CollisionSystem.cpp" />
     <ClCompile Include="systems\GameLoopSystem.cpp" />
-    <ClCompile Include="systems\GlyphProcessingSystem.cpp" />
+    <ClCompile Include="systems\GlyphFormattingSystem.cpp" />
+    <ClCompile Include="systems\NewRenderSystem.cpp" />
+    <ClCompile Include="systems\util\RenderUtils.cpp" />
     <ClCompile Include="systems\RenderSystem.cpp" />
     <ClCompile Include="systems\PhysicsSystem.cpp" />
     <ClCompile Include="core\AABB.cpp" />
     <ClCompile Include="systems\SDLInputSystem.cpp" />
     <ClCompile Include="systems\SpriteAnimationSystem.cpp" />
     <ClCompile Include="systems\TimerSystem.cpp" />
+    <ClCompile Include="systems\util\GlyphFormattingUtils.cpp" />
     <ClCompile Include="test\AudioPlayground.cpp" />
+    <ClCompile Include="test\catch\render\GlyphFormattingTests.cpp" />
+    <ClCompile Include="test\catch\test_utils\AtlasTestUtils.cpp" />
     <ClCompile Include="test\catch\atlas\GlyphAtlasTests.cpp" />
     <ClCompile Include="test\catch\atlas\SpriteAtlasTests.cpp" />
+    <ClCompile Include="test\catch\atlas\TextureRepositoryTests.cpp" />
     <ClCompile Include="test\catch\audio\AudioTests.cpp" />
-    <ClCompile Include="test\catch\CatchMain.cpp" />
-    <ClCompile Include="test\catch\ecs\ComponentManagerTests.cpp" />
+    <ClCompile Include="test\catch\CatchUtils.cpp" />
     <ClCompile Include="test\catch\ecs\EntityManagerTests.cpp" />
     <ClCompile Include="test\catch\ecs\Entity_tTests.cpp" />
     <ClCompile Include="test\catch\events\EventBusTests.cpp" />
-    <ClCompile Include="test\catch\renderer\RendererTests.cpp" />
+    <ClCompile Include="test\catch\render\RendererTests.cpp" />
     <ClCompile Include="test\catch\scripting\LuaFunctionTests.cpp" />
+    <ClCompile Include="test\catch\test_utils\ImageUtilities.cpp" />
+    <ClCompile Include="test\catch\test_utils\RenderingTestUtils.cpp" />
     <ClCompile Include="test\ComponentTests.cpp" />
     <ClCompile Include="test\Fixtures.cpp" />
     <ClCompile Include="test\Premades.cpp" />
@@ -559,7 +566,7 @@
     <ClInclude Include="atlas\SpriteSeriesAtlas.h" />
     <ClInclude Include="systems\CollisionSystem.h" />
     <ClInclude Include="systems\GameLoopSystem.h" />
-    <ClInclude Include="systems\GlyphProcessingSystem.h" />
+    <ClInclude Include="systems\GlyphFormattingSystem.h" />
     <ClInclude Include="systems\NewRenderSystem.h" />
     <ClInclude Include="systems\RenderSystem.h" />
     <ClInclude Include="systems\PhysicsSystem.h" />
@@ -572,10 +579,17 @@
     <ClInclude Include="systems\SystemManager.h" />
     <ClInclude Include="systems\SystemRegistry.h" />
     <ClInclude Include="systems\TimerSystem.h" />
+    <ClInclude Include="systems\util\DebugDrawUtils.h" />
+    <ClInclude Include="systems\util\GlyphFormattingUtils.h" />
+    <ClInclude Include="systems\util\RenderUtils.h" />
     <ClInclude Include="test\AudioPlayground.h" />
     <ClInclude Include="test\callbacks\AnimationCallbacks.h" />
     <ClInclude Include="test\callbacks\GameControllerCallbacks.h" />
+    <ClInclude Include="test\catch\CatchUtils.h" />
+    <ClInclude Include="test\catch\test_utils\AtlasTestUtils.h" />
     <ClInclude Include="test\catch\Config.h" />
+    <ClInclude Include="test\catch\test_utils\ImageUtilities.h" />
+    <ClInclude Include="test\catch\test_utils\RenderingTestUtils.h" />
     <ClInclude Include="test\ComponentTests.h" />
     <ClInclude Include="test\Fixtures.h" />
     <ClInclude Include="test\OnControllerInput.h" />

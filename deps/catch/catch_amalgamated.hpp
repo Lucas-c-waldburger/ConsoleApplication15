@@ -1,7 +1,4 @@
 
-#include "../../test/catch/Config.h"
-
-#if RUN_CATCH_TESTS
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
@@ -14308,5 +14305,3 @@ namespace Catch {
 
 #endif // CATCH_ALL_HPP_INCLUDED
 #endif // CATCH_AMALGAMATED_HPP_INCLUDED
-
-#endif // RUN_TEST_TARGET

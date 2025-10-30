@@ -3,11 +3,8 @@
 #include "file/FilePathUtility.h"
 #include "test/catch/Config.h"
 
-#if RUN_CATCH_TESTS
-#include "test/catch/CatchMain.cpp"
-#else
-#include "Scene.h"
-#endif
+//#define CATCH_CONFIG_RUNNER
+#include "deps/catch/catch_amalgamated.hpp"
 
 int main(int argc, char* argv[]) 
 {
