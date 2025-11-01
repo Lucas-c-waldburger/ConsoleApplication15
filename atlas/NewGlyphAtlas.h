@@ -59,6 +59,8 @@ public:
 
 	const FontDescriptor& GetFontDescriptor() const;
 
+	bool IsTextWriterValid(const GlyphTextWriter& writer) const;
+
 private:
 	explicit NewGlyphAtlas(Handle<NewTextureAtlas>&& handle) :
 		NewTextureAtlas(std::move(handle)) {

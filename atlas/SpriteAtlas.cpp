@@ -142,6 +142,13 @@ Result<Void> SpriteAtlas::ValidateSprite(const Sprite& sprite) const
     return Void{};
 }
 
+bool SpriteAtlas::IsSpriteValid(const Sprite& sprite) const
+{
+    return sprite.sourceAtlas == GetHandle() &&
+           sprite.spriteIndex < sprites_.size() &&
+           sprite.plot.rect.w > 0 && sprite.plot.rect.h > 0;
+}
+
 Sprite SpriteAtlas::GetSprite(std::string_view spriteName) const
 {
     for (size_t i = 0; i < spriteInfo_.size(); i++)

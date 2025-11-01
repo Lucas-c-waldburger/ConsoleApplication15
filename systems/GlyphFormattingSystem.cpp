@@ -1,30 +1,22 @@
 #include "GlyphFormattingSystem.h"
 #include "../ecs/Ecs.h"
-#include "../atlas/NewGlyphAtlas.h"
+#include "../atlas/NewTextureRepository.h"
 #include "util/GlyphFormattingUtils.h"
 
 using namespace util;
 
 namespace {
 
+void ClearInternals(NewRenderable& renderable)
+{
+	renderable.internals_.sourceAtlas = {};
+	renderable.internals_.renderCallCount = 0;
+}
+
 constexpr SDL_FPoint GetRectCenter(SDL_Rect rect)
 {
 	return { static_cast<float>(rect.x) + (static_cast<float>(rect.w) / 2.0f),
 			 static_cast<float>(rect.y) + (static_cast<float>(rect.h) / 2.0f) };
-}
-
-SDL_Rect MakeTransformedRect(const Transform& transform, Dimensions<int> dims,
-							 SDL_FPoint offset)
-{
-	float scaledW = dims.w * transform.scale.x;
-	float scaledH = dims.h * transform.scale.y;
-
-	return SDL_Rect{
-		static_cast<int>((transform.position.x + offset.x) - (scaledW / 2.0f)),
-		static_cast<int>((transform.position.y + offset.y) - (scaledH / 2.0f)),
-		static_cast<int>(scaledW),
-		static_cast<int>(scaledH)
-	};
 }
 
 constexpr SDL_Rect MakeProjectedBoundingRect(Dimensions<int> dims, SDL_FPoint scale)
@@ -128,13 +120,13 @@ void FillGlyphRectsCenterAlign(std::string_view text, std::vector<GlyphCacheData
 bool DisableCaching(const NewRenderable& renderable)
 {
 	return !(std::holds_alternative<NewTextRenderable>(renderable.renderData) &&
-			!std::get<NewTextRenderable>(renderable.renderData).text.empty());
+			!std::get<NewTextRenderable>(renderable.renderData).writer.text.empty());
 }
 
 } // unnamed
 
 
-void GlyphFormattingSystem::RepopulateGlyphCacheGlyphs(std::string_view text, 
+void GlyphCacheHandler::RepopulateGlyphCacheGlyphs(std::string_view text,
 	std::vector<GlyphCacheData>& cache, const NewGlyphAtlas& glyphAtlas)
 {
 	cache.resize(text.size());	
@@ -154,11 +146,11 @@ void GlyphFormattingSystem::RepopulateGlyphCacheGlyphs(std::string_view text,
 	}
 }
 
-void GlyphFormattingSystem::ReprojectGlyphCacheGeometry(
+void GlyphCacheHandler::ReprojectGlyphCacheGeometry(
 	std::vector<GlyphCacheData>& cache, const NewTextRenderable& textRenderable,
 	const Transform& transform, SDL_Rect projectedRect, const NewGlyphAtlas& glyphAtlas)
 {
-	auto format = MakeFormatArgs(textRenderable.text, cache, textRenderable.formatting.bounds, 
+	auto format = MakeFormatArgs(textRenderable.writer.text, cache, textRenderable.formatting.bounds, 
 								 textRenderable.formatting.scaleToBounds, transform, glyphAtlas);
 
 	switch (textRenderable.formatting.align)
@@ -173,12 +165,12 @@ void GlyphFormattingSystem::ReprojectGlyphCacheGeometry(
 		break;
 	case TextAlign::Center: default:
 		format.start.x = projectedRect.x + (projectedRect.w / 2);
-		FillGlyphRectsCenterAlign(textRenderable.text, cache, format);
+		FillGlyphRectsCenterAlign(textRenderable.writer.text, cache, format);
 		break;
 	}
 }
 
-void GlyphFormattingSystem::AdjustGlyphCacheRotation(std::vector<GlyphCacheData>& cache,
+void GlyphCacheHandler::AdjustGlyphCacheRotation(std::vector<GlyphCacheData>& cache,
 													 SDL_Rect projectedRenderRect, 
 													 float angleDegrees)
 {
@@ -218,7 +210,7 @@ void GlyphFormattingSystem::AdjustGlyphCacheRotation(std::vector<GlyphCacheData>
 	}
 }
 
-void GlyphFormattingSystem::AdjustGlyphCachePosition(GlyphCache& cacheComponent, 
+void GlyphCacheHandler::AdjustGlyphCachePosition(TextRenderableGlyphCache& cacheComponent, 
 													 SDL_FPoint newPos, 
 													 SDL_FPoint newOffset)
 {
@@ -233,7 +225,195 @@ void GlyphFormattingSystem::AdjustGlyphCachePosition(GlyphCache& cacheComponent,
 }
 
 
-void GlyphFormattingSystem::Update(const NewGlyphAtlas& glyphAtlas)
+//void GlyphCacheHandler::Update(const NewTextureRepository& textureRepo)
+//{
+//	auto entities = ECS::GetAllEntitiesWith<NewRenderable, Transform>();
+//
+//	for (auto& entity : entities)
+//	{
+//		auto [renderable, transform] = entity.GetComponents<NewRenderable, Transform>();
+//
+//		if (DisableCaching(renderable))
+//		{
+//			entity.RemoveComponent<TextRenderableGlyphCache>();
+//
+//			continue;
+//		}
+//
+//		auto& textRenderable = std::get<NewTextRenderable>(renderable.renderData);
+//		auto& glyphCache = entity.AddComponent<TextRenderableGlyphCache>();
+//		auto& [glyphs, ctx] = glyphCache;
+//
+//		const uint8_t changeLog = MakeChangeLog(renderable, textRenderable, 
+//												transform, glyphCache);
+//		if (changeLog == NoChange)
+//		{
+//			continue;
+//		}
+//
+//		if (changeLog & AtlasChanged)
+//		{
+//			renderable.internals_.sourceAtlas = textRenderable.writer.sourceAtlas;
+//		}
+//
+//		const auto& atlasHandle = renderable.internals_.sourceAtlas;
+//		const auto* glyphAtlas = textureRepo.GetAtlas<NewGlyphAtlas>(atlasHandle);
+//		if (!glyphAtlas)
+//		{
+//			entity.RemoveComponent<TextRenderableGlyphCache>();
+//
+//			continue;
+//		}
+//
+//		if (changeLog & (TextChanged | AtlasChanged))
+//		{
+//			RepopulateGlyphCacheGlyphs(textRenderable.writer.text, glyphCache.cache, 
+//									   *glyphAtlas);
+//		}
+//
+//		if (changeLog & NeedsReprojection || changeLog & RotationChanged)
+//		{
+//			SDL_Rect projectedRect = MakeProjectedBoundingRect(
+//				textRenderable.formatting.bounds, transform.scale
+//			);
+//
+//			if (changeLog & NeedsReprojection)
+//			{
+//				ReprojectGlyphCacheGeometry(glyphs, textRenderable, transform,
+//											projectedRect, *glyphAtlas);
+//			}	 
+//			if (changeLog & RotationChanged)
+//			{
+//				AdjustGlyphCacheRotation(glyphs, projectedRect, transform.rotation);
+//			}
+//		}
+//
+//		if (changeLog & PositionChanged)
+//		{
+//			AdjustGlyphCachePosition(glyphCache, transform.position, 
+//									 renderable.profile.offset);
+//		}
+//
+//		ctx.transform = transform;
+//		ctx.format = textRenderable.formatting;
+//		ctx.offset = renderable.profile.offset;
+//	}
+//}
+
+void GlyphCacheHandler::UpdateGlyphCache(const NewGlyphAtlas& glyphAtlas,
+										 NewRenderable& renderable,
+										 NewTextRenderable& textRenderable,
+										 TextRenderableGlyphCache& glyphCache,
+										 const Transform& transform)
+{
+	auto& [glyphs, ctx] = glyphCache;
+
+	const uint8_t changeLog = MakeChangeLog(renderable, textRenderable,
+											transform, glyphCache);
+	if (changeLog == NoChange)
+	{
+		return;
+	}
+
+	if (changeLog & AtlasChanged)
+	{
+		renderable.internals_.sourceAtlas = textRenderable.writer.sourceAtlas;
+	}
+
+	if (changeLog & (TextChanged | AtlasChanged))
+	{
+		RepopulateGlyphCacheGlyphs(textRenderable.writer.text, glyphCache.cache,
+								   glyphAtlas);
+	}
+
+	if (changeLog & NeedsReprojection || changeLog & RotationChanged)
+	{
+		SDL_Rect projectedRect = MakeProjectedBoundingRect(
+			textRenderable.formatting.bounds, transform.scale
+		);
+
+		if (changeLog & NeedsReprojection)
+		{
+			ReprojectGlyphCacheGeometry(glyphs, textRenderable, transform,
+										projectedRect, glyphAtlas);
+		}
+		if (changeLog & RotationChanged)
+		{
+			AdjustGlyphCacheRotation(glyphs, projectedRect, transform.rotation);
+		}
+	}
+
+	if (changeLog & PositionChanged)
+	{
+		AdjustGlyphCachePosition(glyphCache, transform.position,
+								 renderable.profile.offset);
+	}
+
+	ctx.transform = transform;
+	ctx.format = textRenderable.formatting;
+	ctx.offset = renderable.profile.offset;
+}
+
+//bool GlyphCachingSystem::UpdateEntityGlyphCache(Entity& entity, const NewGlyphAtlas& glyphAtlas)
+//{
+//	auto [renderable, transform] = entity.GetComponents<NewRenderable, Transform>();
+//
+//	if (DisableCaching(renderable))
+//	{
+//		entity.RemoveComponent<TextRenderableGlyphCache>();
+//
+//		return false;
+//	}
+//
+//	auto& textRenderable = std::get<NewTextRenderable>(renderable.renderData);
+//	auto& glyphCache = entity.AddComponent<TextRenderableGlyphCache>();
+//	auto& [glyphs, ctx] = glyphCache;
+//
+//	const uint8_t changeLog = MakeChangeLog(renderable, textRenderable, 
+//											transform, glyphCache);
+//
+//	if (changeLog == NoChange)
+//	{
+//		return true;
+//	}
+//
+//	if (changeLog & TextChanged)
+//	{
+//		RepopulateGlyphCacheGlyphs(textRenderable.writer.text, glyphCache.cache,
+//			glyphAtlas);
+//	}
+//
+//	if (changeLog & NeedsReprojection || changeLog & RotationChanged)
+//	{
+//		SDL_Rect projectedRect = MakeProjectedBoundingRect(
+//			textRenderable.formatting.bounds, transform.scale
+//		);
+//
+//		if (changeLog & NeedsReprojection)
+//		{
+//			ReprojectGlyphCacheGeometry(glyphs, textRenderable, transform,
+//				projectedRect, glyphAtlas);
+//		}
+//		if (changeLog & RotationChanged)
+//		{
+//			AdjustGlyphCacheRotation(glyphs, projectedRect, transform.rotation);
+//		}
+//	}
+//
+//	if (changeLog & PositionChanged)
+//	{
+//		AdjustGlyphCachePosition(glyphCache, transform.position,
+//			renderable.profile.offset);
+//	}
+//
+//	ctx.transform = transform;
+//	ctx.format = textRenderable.formatting;
+//	ctx.offset = renderable.profile.offset;
+//
+//	return true;
+//}
+
+void RenderablePreProcessor::Update(const NewTextureRepository& textureRepo)
 {
 	auto entities = ECS::GetAllEntitiesWith<NewRenderable, Transform>();
 
@@ -241,62 +421,75 @@ void GlyphFormattingSystem::Update(const NewGlyphAtlas& glyphAtlas)
 	{
 		auto [renderable, transform] = entity.GetComponents<NewRenderable, Transform>();
 
-		if (DisableCaching(renderable))
+		if (std::holds_alternative<NewSpriteRenderable>(renderable.renderData))
 		{
-			entity.RemoveComponent<GlyphCache>();
+			const auto& sprite = std::get<NewSpriteRenderable>(renderable.renderData).sprite;
 
-			continue;
-		}
-
-		auto& textRenderable = std::get<NewTextRenderable>(renderable.renderData);
-		auto& glyphCache = entity.AddComponent<GlyphCache>();
-		auto& [glyphs, ctx] = glyphCache;
-
-		const uint8_t changeLog = MakeChangeLog(renderable, transform, glyphCache);
-
-		if (changeLog == NoChange)
-		{
-			continue;
-		}
-
-		if (changeLog & TextChanged)
-		{
-			RepopulateGlyphCacheGlyphs(textRenderable.text, glyphCache.cache, 
-									   glyphAtlas);
-		}
-
-		if (changeLog & NeedsReprojection || changeLog & RotationChanged)
-		{
-			SDL_Rect projectedRect = MakeProjectedBoundingRect(
-				textRenderable.formatting.bounds, transform.scale
-			);
-
-			if (changeLog & NeedsReprojection)
+			if (sprite.sourceAtlas != renderable.internals_.sourceAtlas)
 			{
-				ReprojectGlyphCacheGeometry(glyphs, textRenderable, transform,
-											projectedRect, glyphAtlas);
-			}	 
-			if (changeLog & RotationChanged)
-			{
-				AdjustGlyphCacheRotation(glyphs, projectedRect, transform.rotation);
+				renderable.internals_.sourceAtlas = sprite.sourceAtlas;
 			}
-		}
 
-		if (changeLog & PositionChanged)
+			const auto* spriteAtlas = textureRepo.GetAtlas<SpriteAtlas>(sprite.sourceAtlas);
+			if (!spriteAtlas)
+			{
+				ClearInternals(renderable);
+
+				continue;
+			}
+
+			if (!spriteAtlas->IsSpriteValid(sprite))
+			{
+				ClearInternals(renderable);
+
+				continue;
+			}
+
+			renderable.internals_.renderCallCount = 1;
+		}
+		else if (std::holds_alternative<NewTextRenderable>(renderable.renderData))
 		{
-			AdjustGlyphCachePosition(glyphCache, transform.position, 
-									 renderable.profile.offset);
+			auto& textRenderable = std::get<NewTextRenderable>(renderable.renderData);
+			if (textRenderable.writer.text.empty())
+			{
+				entity.RemoveComponent<TextRenderableGlyphCache>();
+				ClearInternals(renderable);
+
+				continue;
+			}
+
+			const auto& atlasHandle = textRenderable.writer.sourceAtlas;
+			const auto* glyphAtlas = textureRepo.GetAtlas<NewGlyphAtlas>(atlasHandle);
+			if (!glyphAtlas)
+			{
+				entity.RemoveComponent<TextRenderableGlyphCache>();
+				ClearInternals(renderable);
+
+				continue;
+			}
+
+			auto& glyphCache = entity.AddComponent<TextRenderableGlyphCache>();
+
+			GlyphCacheHandler::UpdateGlyphCache(*glyphAtlas, renderable, textRenderable, 
+												glyphCache, transform);
+
+			renderable.internals_.renderCallCount = glyphCache.cache.size();
 		}
-
-		ctx.transform = transform;
-		ctx.format = textRenderable.formatting;
-		ctx.offset = renderable.profile.offset;
 	}
-
-
-
-
-
-
-
 }
+
+//void RenderablePreProcessingSystem::UpdateSprite(NewRenderable& renderable, const Sprite& sprite,
+//										  const NewTextureRepository& textureRepo)
+//{
+//	if (sprite.sourceAtlas != renderable.internals_.sourceAtlas)
+//	{
+//		renderable.internals_.sourceAtlas = sprite.sourceAtlas;
+//	}
+//}
+
+//void RenderablePreProcessingSystem::UpdateGlyphs(NewRenderable& renderable, 
+//												 NewTextRenderable& textRenderable, 
+//												  const NewTextureRepository& textureRepo)
+//{
+//}
+

@@ -18,10 +18,11 @@ public:
     // components that can't be mutated through Entity API (must use EntityPassKey)
     template <SomeComponent T>
     static constexpr bool public_mutable_component_v = (
-        !(RelationalComponentType<T>   ||
-          std::same_as<T, EntityFlags> ||
-          std::same_as<T, ActiveState> ||
-          std::same_as<T, ActiveAudio>)
+        !(RelationalComponentType<T>    ||
+          std::same_as<T, EntityFlags>  ||
+          std::same_as<T, ActiveState>  ||
+          std::same_as<T, ActiveAudio>) ||
+          std::same_as<T, TextRenderableGlyphCache>
     );
 
     Entity() : id_(kInvalidEntity), ecs_(nullptr) {}

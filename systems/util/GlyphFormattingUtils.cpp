@@ -35,18 +35,25 @@ bool operator==(std::string_view text, const std::vector<GlyphCacheData>& cacheD
 
 
 uint8_t MakeChangeLog(const NewRenderable& renderable,
+				      const NewTextRenderable& textRenderable,
 					  const Transform& transform,
-					  const GlyphCache& glyphCache)
+					  const TextRenderableGlyphCache& glyphCache)
 {
-	const auto& textRenderable = std::get<NewTextRenderable>(renderable.renderData);
 	const auto& [glyphs, ctx] = glyphCache;
 
-	return BitIf(textRenderable.text != glyphs, TextChanged) |
-		   BitIf(textRenderable.formatting != ctx.format, FormatChanged) |
-		   BitIf(transform.rotation != ctx.transform.rotation, RotationChanged) |
+	return BitIf(textRenderable.writer.sourceAtlas != renderable.internals_.sourceAtlas, 
+				 AtlasChanged) |
+		   BitIf(textRenderable.writer.text != glyphs, 
+			     TextChanged) |
+		   BitIf(textRenderable.formatting != ctx.format, 
+			     FormatChanged) |
+		   BitIf(transform.rotation != ctx.transform.rotation, 
+			     RotationChanged) |
 		   BitIf(transform.position != ctx.transform.position ||
-		   	renderable.profile.offset != ctx.offset, PositionChanged) |
-		   BitIf(transform.scale != ctx.transform.scale, ScaleChanged);
+		   	     renderable.profile.offset != ctx.offset, 
+			     PositionChanged) |
+		   BitIf(transform.scale != ctx.transform.scale, 
+			     ScaleChanged);
 }
 
 int CalculateGlyphRowWidth(const std::vector<GlyphCacheData>& cache,
@@ -111,6 +118,34 @@ float GetScaleToFitFactor(std::string_view text,
 
 	return std::min(format.bounds.w / static_cast<float>(longestRowWidth),
 					format.bounds.h / static_cast<float>(format.totalHeight));
+}
+
+SDL_Rect ComputeGlyphDataBoundingBox(const std::vector<GlyphCacheData>& cache)
+{
+	if (cache.empty())
+	{
+		return { 0, 0, 0, 0 };
+	}
+
+	int minX = std::numeric_limits<int>::max();
+	int minY = std::numeric_limits<int>::max();
+	int maxX = std::numeric_limits<int>::lowest();
+	int maxY = std::numeric_limits<int>::lowest();
+
+	for (const auto& data : cache)
+	{
+		minX = std::min(minX, data.destRect.x);
+		minY = std::min(minY, data.destRect.y);
+		maxX = std::max(maxX, data.destRect.x + data.destRect.w);
+		maxY = std::max(maxY, data.destRect.y + data.destRect.h);
+	}
+
+	return SDL_Rect{
+		minX,
+		minY,
+		maxX - minX,
+		maxY - minY
+	};
 }
 
 } // util

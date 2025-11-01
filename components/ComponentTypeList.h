@@ -25,7 +25,7 @@ struct SignalTokenStorage;
 struct NewAudioRequest;
 struct AudioUpdateRequest;
 struct ActiveAudio;
-struct GlyphCache;
+struct TextRenderableGlyphCache;
 struct NewRenderable;
 
 using ComponentTypeList = TypeList<
@@ -53,7 +53,7 @@ using ComponentTypeList = TypeList<
 	NewAudioRequest,
 	AudioUpdateRequest,
 	ActiveAudio,
-	GlyphCache,
+	TextRenderableGlyphCache,
 	NewRenderable
 >;
 

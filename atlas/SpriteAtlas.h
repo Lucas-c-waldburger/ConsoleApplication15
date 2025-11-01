@@ -81,6 +81,7 @@ public:
 	const SpriteInfo& GetSpriteInfo(const Sprite& sprite) const;
 
 	Result<Void> ValidateSprite(const Sprite& sprite) const;
+	bool IsSpriteValid(const Sprite& sprite) const;
 
 private:
 	explicit SpriteAtlas(Handle<NewTextureAtlas>&& handle) : 

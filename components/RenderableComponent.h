@@ -32,6 +32,8 @@ struct RenderProfile
     SDL_RendererFlip flip = SDL_FLIP_NONE;
     SDL_FPoint offset = { 0.0f, 0.0f };
     DebugDrawSet debugDraw;
+    bool isOverlay = false;
+    float parallaxFactor = 0.0f;
 };
 
 enum class TextAlign
@@ -64,7 +66,7 @@ struct TextFormatting
     bool operator==(const TextFormatting& rhs) const = default;
 };
 
-struct GlyphCache : BaseComponent<GlyphCache>
+struct TextRenderableGlyphCache : BaseComponent<TextRenderableGlyphCache>
 {
     struct CacheContext
     {
@@ -77,7 +79,14 @@ struct GlyphCache : BaseComponent<GlyphCache>
     CacheContext context;
 };
 
-
+//template <typename Derived, typename AtlasT, typename TextureAccessT>
+//struct RenderableTraits
+//{
+//    using AtlasType = AtlasT;
+//    using TextureAccessType = TextureAccessT;
+//    
+//    friend const TextureAccessT& GetTextureAccessor(const Derived&);
+//};
 
 struct NewTextRenderable
 {
@@ -90,6 +99,9 @@ struct NewSpriteRenderable
     Sprite sprite;
 };
 
+
+
+
 template <typename T>
 concept SomeRenderableComponent = std::same_as<T, NewTextRenderable> ||
                                   std::same_as<T, NewSpriteRenderable>;
@@ -100,6 +112,11 @@ struct NewRenderable : BaseComponent<NewRenderable>
 {
     NewRenderableVariant renderData;
     RenderProfile profile;
+    /* -------------------- */
+    struct {
+        Handle<NewTextureAtlas> sourceAtlas;
+        size_t renderCallCount = 0;
+    } internals_;
 };
 
 struct TextRenderable

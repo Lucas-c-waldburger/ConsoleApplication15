@@ -163,6 +163,8 @@
     <ClCompile Include="ecs\EntityManager.cpp" />
     <ClCompile Include="file\FilePathUtility.cpp" />
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp" />
+    <ClCompile Include="render\DebugDrawHandler.cpp" />
+    <ClCompile Include="render\RenderBatchHandler.cpp" />
     <ClCompile Include="state\EntityState.cpp" />
     <ClCompile Include="state\EntityStateBuilder.cpp" />
     <ClCompile Include="components\driver\EntityStateDriver.cpp" />
@@ -219,6 +221,7 @@
     <ClCompile Include="systems\GameLoopSystem.cpp" />
     <ClCompile Include="systems\GlyphFormattingSystem.cpp" />
     <ClCompile Include="systems\NewRenderSystem.cpp" />
+    <ClCompile Include="systems\util\DebugDrawUtils.cpp" />
     <ClCompile Include="systems\util\RenderUtils.cpp" />
     <ClCompile Include="systems\RenderSystem.cpp" />
     <ClCompile Include="systems\PhysicsSystem.cpp" />
@@ -252,6 +255,7 @@
     <ClInclude Include="atlas\NewAtlas.h" />
     <ClInclude Include="atlas\NewAtlasHandle.h" />
     <ClInclude Include="atlas\NewGlyphAtlas.h" />
+    <ClInclude Include="atlas\NewTextureRepository.h" />
     <ClInclude Include="atlas\PackingTools.h" />
     <ClInclude Include="atlas\ResourcePacket.h" />
     <ClInclude Include="atlas\SpriteAtlas.h" />
@@ -309,6 +313,8 @@
     <ClInclude Include="inputs\mouse\MouseInputMap.h" />
     <ClInclude Include="inputs\mouse\MouseInputSource.h" />
     <ClInclude Include="inputs\mouse\MouseInputUpdater.h" />
+    <ClInclude Include="render\DebugDrawHandler.h" />
+    <ClInclude Include="render\RenderBatchHandler.h" />
     <ClInclude Include="render\RGBA.h" />
     <ClInclude Include="scripting\LuaFunction.h" />
     <ClInclude Include="scripting\LuaScript.h" />

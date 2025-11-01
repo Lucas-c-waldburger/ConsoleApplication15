@@ -15,12 +15,14 @@ enum ChangeLog : uint8_t
 	RotationChanged = 1 << 2,
 	PositionChanged = 1 << 3,
 	ScaleChanged = 1 << 4,
-	NeedsReprojection = TextChanged | FormatChanged | ScaleChanged
+	AtlasChanged = 1 << 5,
+	NeedsReprojection = TextChanged | FormatChanged | ScaleChanged | AtlasChanged
 };
 
 uint8_t MakeChangeLog(const NewRenderable& renderable,
+					  const NewTextRenderable& textRenderable,
 					  const Transform& transform,
-					  const GlyphCache& glyphCache);
+					  const TextRenderableGlyphCache& glyphCache);
 
 struct FormatArgs
 {
@@ -42,4 +44,7 @@ int CalculateGlyphRowWidth(const std::vector<GlyphCacheData>& cache,
 float GetScaleToFitFactor(std::string_view text,
 						  std::vector<GlyphCacheData>& cache,
 						  const FormatArgs& format);
+
+SDL_Rect ComputeGlyphDataBoundingBox(const std::vector<GlyphCacheData>& cache);
+
 } // util

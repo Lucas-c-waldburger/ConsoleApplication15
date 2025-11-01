@@ -297,6 +297,15 @@
     <ClCompile Include="systems\util\RenderUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="systems\util\DebugDrawUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="render\DebugDrawHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="render\RenderBatchHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1350,6 +1359,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="systems\util\RenderUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\NewTextureRepository.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="render\DebugDrawHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="render\RenderBatchHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

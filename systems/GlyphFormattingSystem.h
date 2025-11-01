@@ -5,17 +5,26 @@
 #include <vector>
 
 class Entity;
+class NewTextureRepository;
 class NewGlyphAtlas;
 
 struct Transform;
 struct NewTextRenderable;
-struct GlyphCache;
+struct NewSpriteRenderable;
+struct Sprite;
+struct RenderProfile;
+struct TextRenderableGlyphCache;
 struct GlyphCacheData;
+struct RenderCallArgs;
 
-class GlyphFormattingSystem : public System
+class GlyphCacheHandler
 {
 public:
-	void Update(const NewGlyphAtlas& glyphAtlas);
+	//void Update(const NewTextureRepository& textureRepo);
+	static void UpdateGlyphCache(const NewGlyphAtlas& glyphAtlas,
+								 NewRenderable& renderable, NewTextRenderable& textRenderable,
+								 TextRenderableGlyphCache& glyphCache, const Transform& transform);
+	//static bool UpdateEntityGlyphCache(Entity& entity, const NewGlyphAtlas& glyphAtlas);
 
 	static void RepopulateGlyphCacheGlyphs(std::string_view text, 
 										   std::vector<GlyphCacheData>& cache,
@@ -30,6 +39,18 @@ public:
 	static void AdjustGlyphCacheRotation(std::vector<GlyphCacheData>& cache,
 									     SDL_Rect projectedRenderRect, float angleDegrees);
 
-	static void AdjustGlyphCachePosition(GlyphCache& cacheComponent, SDL_FPoint newPos,
+	static void AdjustGlyphCachePosition(TextRenderableGlyphCache& cacheComponent, SDL_FPoint newPos,
 								         SDL_FPoint newOffset);
+};
+
+class RenderablePreProcessor : public System
+{
+public:
+	void Update(const NewTextureRepository& textureRepo);
+
+private:
+	static void UpdateSprite(NewRenderable& renderable, const Sprite& sprite,
+						     const NewTextureRepository& textureRepo);
+	static void UpdateGlyphs(NewRenderable& renderable, NewTextRenderable& textRenderable,
+							 const NewTextureRepository& textureRepo);
 };

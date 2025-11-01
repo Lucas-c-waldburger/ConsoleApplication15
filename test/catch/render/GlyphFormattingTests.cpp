@@ -49,13 +49,13 @@ TEST_CASE("Glyph Formatting Tests", "[rendering]")
 		.rotation = 45.0f
 	});
 
-	GlyphFormattingSystem formattingSystem{};
+	GlyphCacheHandler formattingSystem{};
 
 	formattingSystem.Update(glyphAtlasResult.GetValue());
 
-	REQUIRE(entity.HasComponent<GlyphCache>());
+	REQUIRE(entity.HasComponent<TextRenderableGlyphCache>());
 
-	auto& glyphCache = entity.GetComponent<GlyphCache>();
+	auto& glyphCache = entity.GetComponent<TextRenderableGlyphCache>();
 
 	auto glyphsFromAtlas = glyphAtlasResult.GetValue().GetGlyphsForString(text);
 	

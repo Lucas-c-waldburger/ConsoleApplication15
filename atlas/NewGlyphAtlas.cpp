@@ -1,4 +1,5 @@
 #include "NewGlyphAtlas.h"
+#include <algorithm>
 #include <SDL_ttf.h>
 #include "../core/ScopedInvoker.h"
 #include "PackingTools.h"
@@ -159,6 +160,21 @@ const FontDescriptor& NewGlyphAtlas::GetFontDescriptor() const
 {
     return fontDescriptor_;
 }
+
+bool NewGlyphAtlas::IsTextWriterValid(const GlyphTextWriter& writer) const
+{
+    return writer.sourceAtlas == GetHandle() &&
+           std::all_of(writer.text.begin(), writer.text.end(), [&](auto ch) {
+               GetPlotIndexForChar(ch) < glyphs_.size() || ch == '\n';
+           });
+}
+
+//bool NewGlyphAtlas::IsGlyphValid(const Glyph& glyph) const
+//{
+//    return glyph.character >= kStartChar && glyph.character <= kEndChar &&
+//           glyph.advance > 0 &&
+//           glyph.plot.rect.w > 0 && glyph.plot.rect.h > 0;
+//}
 
 //Result<Void> NewGlyphAtlas::ValidateGlyph(const Glyph& glyph) const
 //{
