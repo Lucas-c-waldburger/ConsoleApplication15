@@ -34,14 +34,13 @@ bool operator==(std::string_view text, const std::vector<GlyphCacheData>& cacheD
 }
 
 
-uint8_t MakeChangeLog(const NewRenderable& renderable,
-				      const NewTextRenderable& textRenderable,
+uint8_t MakeChangeLog(const TextRenderableComponent& textRenderable,
 					  const Transform& transform,
 					  const TextRenderableGlyphCache& glyphCache)
 {
 	const auto& [glyphs, ctx] = glyphCache;
 
-	return BitIf(textRenderable.writer.sourceAtlas != renderable.internals_.sourceAtlas, 
+	return BitIf(textRenderable.writer.sourceAtlas != ctx.sourceAtlas, 
 				 AtlasChanged) |
 		   BitIf(textRenderable.writer.text != glyphs, 
 			     TextChanged) |
@@ -50,7 +49,7 @@ uint8_t MakeChangeLog(const NewRenderable& renderable,
 		   BitIf(transform.rotation != ctx.transform.rotation, 
 			     RotationChanged) |
 		   BitIf(transform.position != ctx.transform.position ||
-		   	     renderable.profile.offset != ctx.offset, 
+		   	     textRenderable.profile.offset != ctx.offset, 
 			     PositionChanged) |
 		   BitIf(transform.scale != ctx.transform.scale, 
 			     ScaleChanged);

@@ -164,6 +164,7 @@
     <ClCompile Include="file\FilePathUtility.cpp" />
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp" />
     <ClCompile Include="render\DebugDrawHandler.cpp" />
+    <ClCompile Include="render\GlyphCacheHandler.cpp" />
     <ClCompile Include="render\RenderBatchHandler.cpp" />
     <ClCompile Include="state\EntityState.cpp" />
     <ClCompile Include="state\EntityStateBuilder.cpp" />
@@ -219,7 +220,7 @@
     <ClCompile Include="atlas\SpriteSeriesAtlas.cpp" />
     <ClCompile Include="systems\CollisionSystem.cpp" />
     <ClCompile Include="systems\GameLoopSystem.cpp" />
-    <ClCompile Include="systems\GlyphFormattingSystem.cpp" />
+    <ClCompile Include="systems\RenderablePreProcessorSystem.cpp" />
     <ClCompile Include="systems\NewRenderSystem.cpp" />
     <ClCompile Include="systems\util\DebugDrawUtils.cpp" />
     <ClCompile Include="systems\util\RenderUtils.cpp" />
@@ -229,7 +230,7 @@
     <ClCompile Include="systems\SDLInputSystem.cpp" />
     <ClCompile Include="systems\SpriteAnimationSystem.cpp" />
     <ClCompile Include="systems\TimerSystem.cpp" />
-    <ClCompile Include="systems\util\GlyphFormattingUtils.cpp" />
+    <ClCompile Include="render\GlyphFormattingUtils.cpp" />
     <ClCompile Include="test\AudioPlayground.cpp" />
     <ClCompile Include="test\catch\render\GlyphFormattingTests.cpp" />
     <ClCompile Include="test\catch\test_utils\AtlasTestUtils.cpp" />
@@ -287,6 +288,7 @@
     <ClInclude Include="components\util\CallbackUtils.h" />
     <ClInclude Include="components\util\SpriteAnimationUtils.h" />
     <ClInclude Include="core\CatTypeID.h" />
+    <ClInclude Include="ecs\ComponentMasks.h" />
     <ClInclude Include="core\Dictionary.h" />
     <ClInclude Include="core\EvaluationProperty.h" />
     <ClInclude Include="core\Signal.h" />
@@ -314,6 +316,7 @@
     <ClInclude Include="inputs\mouse\MouseInputSource.h" />
     <ClInclude Include="inputs\mouse\MouseInputUpdater.h" />
     <ClInclude Include="render\DebugDrawHandler.h" />
+    <ClInclude Include="render\GlyphCacheHandler.h" />
     <ClInclude Include="render\RenderBatchHandler.h" />
     <ClInclude Include="render\RGBA.h" />
     <ClInclude Include="scripting\LuaFunction.h" />
@@ -572,7 +575,7 @@
     <ClInclude Include="atlas\SpriteSeriesAtlas.h" />
     <ClInclude Include="systems\CollisionSystem.h" />
     <ClInclude Include="systems\GameLoopSystem.h" />
-    <ClInclude Include="systems\GlyphFormattingSystem.h" />
+    <ClInclude Include="systems\RenderablePreProcessorSystem.h" />
     <ClInclude Include="systems\NewRenderSystem.h" />
     <ClInclude Include="systems\RenderSystem.h" />
     <ClInclude Include="systems\PhysicsSystem.h" />
@@ -586,7 +589,7 @@
     <ClInclude Include="systems\SystemRegistry.h" />
     <ClInclude Include="systems\TimerSystem.h" />
     <ClInclude Include="systems\util\DebugDrawUtils.h" />
-    <ClInclude Include="systems\util\GlyphFormattingUtils.h" />
+    <ClInclude Include="render\GlyphFormattingUtils.h" />
     <ClInclude Include="systems\util\RenderUtils.h" />
     <ClInclude Include="test\AudioPlayground.h" />
     <ClInclude Include="test\callbacks\AnimationCallbacks.h" />

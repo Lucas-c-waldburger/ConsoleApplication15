@@ -61,6 +61,12 @@ void RenderBatchHandler::Reserve(size_t size)
 	callArgs_.reserve(size);
 }
 
+void RenderBatchHandler::Reset(size_t newSize)
+{
+	Clear();
+	Reserve(newSize);
+}
+
 void RenderBatchHandler::Render(SDL_Renderer* renderer)
 {
 	if (callArgs_.empty() || batches_.empty())

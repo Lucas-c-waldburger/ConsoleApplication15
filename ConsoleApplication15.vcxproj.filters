@@ -261,7 +261,7 @@
     <ClCompile Include="atlas\NewGlyphAtlas.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="systems\GlyphFormattingSystem.cpp">
+    <ClCompile Include="systems\RenderablePreProcessorSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="atlas\NewAtlas.cpp">
@@ -285,7 +285,7 @@
     <ClCompile Include="test\catch\render\GlyphFormattingTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="systems\util\GlyphFormattingUtils.cpp">
+    <ClCompile Include="render\GlyphFormattingUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\catch\test_utils\RenderingTestUtils.cpp">
@@ -304,6 +304,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="render\RenderBatchHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="render\GlyphCacheHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1334,7 +1337,7 @@
     <ClInclude Include="atlas\NewGlyphAtlas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="systems\GlyphFormattingSystem.h">
+    <ClInclude Include="systems\RenderablePreProcessorSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="systems\NewRenderSystem.h">
@@ -1349,7 +1352,7 @@
     <ClInclude Include="test\catch\test_utils\ImageUtilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="systems\util\GlyphFormattingUtils.h">
+    <ClInclude Include="render\GlyphFormattingUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\catch\test_utils\RenderingTestUtils.h">
@@ -1368,6 +1371,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="render\RenderBatchHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ecs\ComponentMasks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="render\GlyphCacheHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

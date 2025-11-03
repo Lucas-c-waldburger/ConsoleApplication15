@@ -17,6 +17,8 @@ public:
 	explicit DebugDrawHandler(size_t reserveSize) { debugDrawPoints_.reserve(reserveSize); }
 
 	void Clear();
+	void Reserve(size_t size);
+	void Reset(size_t newSize);
 	void AddBoundingBox(SDL_Rect renderRect, float rotation, const RenderProfile& profile);
 	void AddColliderShape(const Camera& camera, const Collider& collider,
 						  const RenderProfile& profile);

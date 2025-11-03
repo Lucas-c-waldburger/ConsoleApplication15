@@ -155,80 +155,80 @@ private:
 		}
 	}
 
-	template <typename T>
-	const Handle<NewTextureAtlas>& GetRenderDataAtlasHandle(const T& renderData)
-	{
-		if constexpr (std::same_as<T, NewSpriteRenderable>)
-		{
-			return renderData.sprite.sourceAtlas;
-		}
-		else if constexpr (std::same_as<T, NewTextRenderable>)
-		{
-			return renderData.writer.sourceAtlas;
-		}
-		else { static_assert(false); }
-	}
+	//template <typename T>
+	//const Handle<NewTextureAtlas>& GetRenderDataAtlasHandle(const T& renderData)
+	//{
+	//	if constexpr (std::same_as<T, NewSpriteRenderable>)
+	//	{
+	//		return renderData.sprite.sourceAtlas;
+	//	}
+	//	else if constexpr (std::same_as<T, NewTextRenderable>)
+	//	{
+	//		return renderData.writer.sourceAtlas;
+	//	}
+	//	else { static_assert(false); }
+	//}
 
-	template <typename T, SomeTextureAtlas U>
-	const Handle<NewTextureAtlas>& IsRenderDataValidForAtlas(const T& renderData, const U& atlas)
-	{
-		if constexpr (std::same_as<T, NewSpriteRenderable> && std::same_as<U, SpriteAtlas>)
-		{
-			return atlas.IsSpriteValid(renderData.sprite);
-		}
-		else if constexpr (std::same_as<T, NewTextRenderable> && std::same_as<U, NewGlyphAtlas>)
-		{
-			return atlas.IsTextWriterValid(renderData.writer);
-		}
-		else { static_assert(false); }
-	}
+	//template <typename T, SomeTextureAtlas U>
+	//const Handle<NewTextureAtlas>& IsRenderDataValidForAtlas(const T& renderData, const U& atlas)
+	//{
+	//	if constexpr (std::same_as<T, NewSpriteRenderable> && std::same_as<U, SpriteAtlas>)
+	//	{
+	//		return atlas.IsSpriteValid(renderData.sprite);
+	//	}
+	//	else if constexpr (std::same_as<T, NewTextRenderable> && std::same_as<U, NewGlyphAtlas>)
+	//	{
+	//		return atlas.IsTextWriterValid(renderData.writer);
+	//	}
+	//	else { static_assert(false); }
+	//}
 
-	template <typename T>
-	auto& GetAtlasesForRenderDataType() 
-	{ 
-		return GetAtlasVector<atlas_type_for_render_data_t<T>>();
-	}
-	template <typename T>
-	const auto& GetAtlasesForRenderDataType() const
-	{
-		return GetAtlasVector<atlas_type_for_render_data_t<T>>();
-	}
+	//template <typename T>
+	//auto& GetAtlasesForRenderDataType() 
+	//{ 
+	//	return GetAtlasVector<atlas_type_for_render_data_t<T>>();
+	//}
+	//template <typename T>
+	//const auto& GetAtlasesForRenderDataType() const
+	//{
+	//	return GetAtlasVector<atlas_type_for_render_data_t<T>>();
+	//}
 
 public:
-	template <typename RenderDataT>
-	auto* GetAtlasForRenderData(const RenderDataT& renderData) const
-	{
-		const auto& handle = GetRenderDataAtlasHandle(renderData);
+	//template <typename RenderDataT>
+	//auto* GetAtlasForRenderData(const RenderDataT& renderData) const
+	//{
+	//	const auto& handle = GetRenderDataAtlasHandle(renderData);
 
-		auto it = indexMap_.find(handle);
-		if (it == indexMap_.end())
-		{
-			return nullptr;
-		}
+	//	auto it = indexMap_.find(handle);
+	//	if (it == indexMap_.end())
+	//	{
+	//		return nullptr;
+	//	}
 
-		using AtlasType = atlas_type_for_render_data_t<RenderDataT>;
+	//	using AtlasType = atlas_type_for_render_data_t<RenderDataT>;
 
-		const auto [typeIdx, vecIdx] = it->second;
-		if (typeIdx != GetAtlasTypeIndex<AtlasType>())
-		{
-			return nullptr;
-		}
+	//	const auto [typeIdx, vecIdx] = it->second;
+	//	if (typeIdx != GetAtlasTypeIndex<AtlasType>())
+	//	{
+	//		return nullptr;
+	//	}
 
-		auto& vec = GetAtlasVector<AtlasType>;
-		if (vecIdx > vec.size())
-		{
-			return nullptr;
-		}
+	//	auto& vec = GetAtlasVector<AtlasType>;
+	//	if (vecIdx > vec.size())
+	//	{
+	//		return nullptr;
+	//	}
 
-		auto& atlas = vec[vecIdx];
-		assert(atlas.IsLoaded());
-		assert(it->first == atlas.GetHandle());
+	//	auto& atlas = vec[vecIdx];
+	//	assert(atlas.IsLoaded());
+	//	assert(it->first == atlas.GetHandle());
 
-		return (IsRenderDataValidForAtlas(renderData, atlas)) ? &atlas : nullptr;
-	}
+	//	return (IsRenderDataValidForAtlas(renderData, atlas)) ? &atlas : nullptr;
+	//}
 
 	template <SomeTextureAtlas T>
-	T* GetAtlas(const Handle<NewTextureAtlas>& handle)
+	T* GetAtlas(const Handle<NewTextureAtlas>& handle) const
 	{
 		auto it = indexMap_.find(handle);
 		if (it == indexMap_.end())
@@ -247,7 +247,7 @@ public:
 		return (vecIdx < vec.size()) ? &vec[vecIdx] : nullptr;
 	}
 
-	template <SomeTextureAtlas T>
+	/*template <SomeTextureAtlas T>
 	const T* GetAtlas(const Handle<NewTextureAtlas>& handle) const
 	{
 		auto it = indexMap_.find(handle);
@@ -265,7 +265,7 @@ public:
 		auto& vec = GetAtlasVector<T>();
 
 		return (vecIdx < vec.size()) ? &vec[vecIdx] : nullptr;
-	}
+	}*/
 
 	template <SomeTextureAtlas T>
 	Result<Void> AttachAtlas(T&& atlas)
@@ -335,13 +335,13 @@ public:
 		}
 	}
 
-	template <typename RenderDataT>
-	SDL_Texture* GetSourceTexture(const RenderDataT& renderData) const
-	{
-		auto* srcAtlas = GetAtlasForRenderData(renderData);
+	//template <typename RenderDataT>
+	//SDL_Texture* GetSourceTexture(const RenderDataT& renderData) const
+	//{
+	//	auto* srcAtlas = GetAtlasForRenderData(renderData);
 
-		return (srcAtlas) ? srcAtlas->GetSourceTexture() : nullptr;
-	}
+	//	return (srcAtlas) ? srcAtlas->GetSourceTexture() : nullptr;
+	//}
 
 private:
 	template <SomeTextureAtlas T>
@@ -367,10 +367,25 @@ private:
 	AtlasVectors atlases_;
 };
 
-//class NewTextureAtlasActual : public NewTextureAtlas
+//class NewTextureAtlas2
 //{
 //public:
-//	bool ValidateSprite
+//	template <typename T> // renderable component
+//	auto* GetAtlas(const T& renderable) const
+//	{
+//
+//	}
+//
+//	SDL_Texture* GetSourceTexture(const Handle<NewTextureAtlas>& handle)
+//	{
+//
+//	}
 //
 //private:
+//	using AtlasIndexMap = std::unordered_map<Handle<NewTextureAtlas>, size_t>;
+//	using AtlasVectors = std::tuple<std::vector<SpriteAtlas>,
+//						 std::vector<NewGlyphAtlas>>;
+//
+//	AtlasIndexMap indexMap_;
+//	AtlasVectors atlases_;
 //};

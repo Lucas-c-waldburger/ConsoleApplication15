@@ -1,6 +1,7 @@
 #pragma once
 #include "EntityManager.h"
 #include "ComponentManager.h"
+#include "ComponentMasks.h"
 #include "EntityRelationsHelper.h"
 #include "EntityAccess.h"
 #include "../components/ComponentConcepts.h"
@@ -163,16 +164,24 @@ public:
         return ecs.GetAllEntitiesWithInternalFiltered<Ts...>(std::forward<Filter>(filter));
     }
 
-    // grabs all active entities with all of the desired components
-    template <typename...Ts>
+    //// grabs all active entities with all of the desired components
+    //template <typename...Ts>
+    //static std::vector<Entity> GetAllEntitiesWith()
+    //{
+    //    auto& ecs = ECS::Get();
+
+    //    uint64_t withMask = (Ts::componentBit | ...);
+    //  
+    //    return ecs.GetAllEntitiesWithImpl(withMask, 
+    //        [](uint64_t sig, uint64_t mask) -> bool { return (sig & mask) == mask; });
+    //}
+
+    template <typename...Ts> requires (sizeof...(Ts) > 0)
     static std::vector<Entity> GetAllEntitiesWith()
     {
         auto& ecs = ECS::Get();
 
-        uint64_t withMask = (Ts::componentBit | ...);
-      
-        return ecs.GetAllEntitiesWithImpl(withMask, 
-            [](uint64_t sig, uint64_t mask) -> bool { return (sig & mask) == mask; });
+        return ecs.GetAllEntitiesWithInternal<Ts...>();
     }
 
     // grabs all active entities with at least one of the desired components
@@ -312,6 +321,35 @@ private:
             entitySig &= flags.componentVisibilityFlags;
 
             if (testFn(entitySig, mask))
+            {
+                result.emplace_back(entity, *this);
+            }
+        }
+
+        return result;
+    }
+
+    template <typename...Ts> requires (sizeof...(Ts) > 0)
+    std::vector<Entity> GetAllEntitiesWithInternal()
+    {
+        // calculate and cache include/exclude/any masks
+        static constexpr auto componentMasks = ComponentMasks::template MakeMasks<Ts...>();
+
+        auto activeEntities = entityManager_.GetActiveEntities();
+
+        std::vector<Entity> result;
+        result.reserve(activeEntities.size());
+
+        for (const auto& entity : activeEntities)
+        {
+            assert(componentManager_.HasComponent<EntityFlags>(entity));
+
+            // get full list of components that entity has, remove invisible components
+            uint64_t entitySig = 
+                componentManager_.GetSignature(entity) &
+                componentManager_.GetComponent<EntityFlags>(entity).componentVisibilityFlags;
+          
+            if (componentMasks.ShouldIncludeEntity(entitySig))
             {
                 result.emplace_back(entity, *this);
             }

@@ -28,6 +28,7 @@ public:
 	void PushBack(RenderCallArgs&& args) { callArgs_.push_back(std::move(args)); }
 	void Clear();
 	void Reserve(size_t size);
+	void Reset(size_t newSize);
 	void Render(SDL_Renderer* renderer);
 
 private:

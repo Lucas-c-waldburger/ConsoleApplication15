@@ -86,6 +86,17 @@ void DebugDrawHandler::Clear()
 	shapes_.clear();
 }
 
+void DebugDrawHandler::Reserve(size_t size) 
+{ 
+	debugDrawPoints_.reserve(size); 
+}
+
+void DebugDrawHandler::Reset(size_t newSize) 
+{ 
+	Clear(); 
+	Reserve(newSize); 
+}
+
 void DebugDrawHandler::AddBoundingBox(SDL_Rect renderRect, float rotation,
 									  const RenderProfile& profile)
 {

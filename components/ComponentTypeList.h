@@ -27,6 +27,8 @@ struct AudioUpdateRequest;
 struct ActiveAudio;
 struct TextRenderableGlyphCache;
 struct NewRenderable;
+struct TextRenderableComponent;
+struct SpriteRenderableComponent;
 
 using ComponentTypeList = TypeList<
 	ActiveState,
@@ -54,7 +56,9 @@ using ComponentTypeList = TypeList<
 	AudioUpdateRequest,
 	ActiveAudio,
 	TextRenderableGlyphCache,
-	NewRenderable
+	NewRenderable,
+	TextRenderableComponent,
+	SpriteRenderableComponent
 >;
 
 static_assert(ComponentTypeList::size <= 64, "Component bits cannot exceed 64");

@@ -235,7 +235,12 @@ public:
     B2PolygonShape() = default;
     explicit B2PolygonShape(const Handle<B2Shape>& handle) : B2Shape(handle) {}
 
-    std::vector<SDL_FPoint> GetVertices()
+    size_t GetVertexCount() const
+    {
+        return (IsValid()) ? b2Shape_GetPolygon(shapeHandle_).count : 0;
+    }
+
+    std::vector<SDL_FPoint> GetVertices() const
     {
         if (!IsValid())
         {

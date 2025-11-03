@@ -1,7 +1,7 @@
 #pragma once
-#include "../../components/TransformComponent.h"
-#include "../../components/RenderableComponent.h"
-#include "../../atlas/NewGlyphAtlas.h"
+#include "../components/TransformComponent.h"
+#include "../components/RenderableComponent.h"
+#include "../atlas/NewGlyphAtlas.h"
 
 namespace util {
 
@@ -16,11 +16,11 @@ enum ChangeLog : uint8_t
 	PositionChanged = 1 << 3,
 	ScaleChanged = 1 << 4,
 	AtlasChanged = 1 << 5,
-	NeedsReprojection = TextChanged | FormatChanged | ScaleChanged | AtlasChanged
+	NeedsRepopulate = TextChanged | AtlasChanged,
+	NeedsReprojection = FormatChanged | ScaleChanged | NeedsRepopulate
 };
 
-uint8_t MakeChangeLog(const NewRenderable& renderable,
-					  const NewTextRenderable& textRenderable,
+uint8_t MakeChangeLog(const TextRenderableComponent& textRenderable,
 					  const Transform& transform,
 					  const TextRenderableGlyphCache& glyphCache);
 

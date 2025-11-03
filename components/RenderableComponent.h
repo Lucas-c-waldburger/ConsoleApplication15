@@ -73,6 +73,7 @@ struct TextRenderableGlyphCache : BaseComponent<TextRenderableGlyphCache>
         Transform transform;
         TextFormatting format;
         SDL_FPoint offset = { 0.0f, 0.0f };
+        Handle<NewTextureAtlas> sourceAtlas;
     };
 
     std::vector<GlyphCacheData> cache;
@@ -99,7 +100,18 @@ struct NewSpriteRenderable
     Sprite sprite;
 };
 
+struct TextRenderableComponent : BaseComponent<TextRenderableComponent>
+{
+    GlyphTextWriter writer;
+    TextFormatting formatting;
+    RenderProfile profile;
+};
 
+struct SpriteRenderableComponent : BaseComponent<SpriteRenderableComponent>
+{
+    Sprite sprite;
+    RenderProfile profile;
+};
 
 
 template <typename T>
