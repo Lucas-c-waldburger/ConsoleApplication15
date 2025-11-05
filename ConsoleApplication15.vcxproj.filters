@@ -1768,6 +1768,36 @@
     <Image Include="resources\sprites\particles\symbol\symbol_1.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="test\catch\test_images\airborne_series_sprites.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="test\catch\test_images\GlyphCacheHandler_change_offset_pos.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="test\catch\test_images\GlyphCacheHandler_change_rotation.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="test\catch\test_images\GlyphCacheHandler_change_scale.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="test\catch\test_images\GlyphCacheHandler_change_text.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="test\catch\test_images\GlyphCacheHandler_change_text_align.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="test\catch\test_images\GlyphCacheHandler_change_transform_pos.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="test\catch\test_images\GlyphCacheHandler_no_changes.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="test\catch\test_images\GoNotoCurrent_Regular_font_glyphs.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="test\catch\test_images\GoNotoCurrent_Regular_font_glyphs_color_mod.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\scripts\b2body_test.lua" />

@@ -738,6 +738,16 @@
     <Image Include="resources\sprites\particles\circle_0.png" />
     <Image Include="resources\sprites\particles\symbol\symbol_0.png" />
     <Image Include="resources\sprites\particles\symbol\symbol_1.png" />
+    <Image Include="test\catch\test_images\airborne_series_sprites.png" />
+    <Image Include="test\catch\test_images\GlyphCacheHandler_change_offset_pos.png" />
+    <Image Include="test\catch\test_images\GlyphCacheHandler_change_rotation.png" />
+    <Image Include="test\catch\test_images\GlyphCacheHandler_change_scale.png" />
+    <Image Include="test\catch\test_images\GlyphCacheHandler_change_text.png" />
+    <Image Include="test\catch\test_images\GlyphCacheHandler_change_text_align.png" />
+    <Image Include="test\catch\test_images\GlyphCacheHandler_change_transform_pos.png" />
+    <Image Include="test\catch\test_images\GlyphCacheHandler_no_changes.png" />
+    <Image Include="test\catch\test_images\GoNotoCurrent_Regular_font_glyphs.png" />
+    <Image Include="test\catch\test_images\GoNotoCurrent_Regular_font_glyphs_color_mod.png" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\scripts\b2body_test.lua" />
