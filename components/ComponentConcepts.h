@@ -31,17 +31,17 @@ concept SomeComponent =
 //    using ComponentTypeList = TypeList<Ts...>;
 //
 //// ENTITY RETRIEVAL STUFF
-template <typename T>
-struct Exclude
-{
-    using WrappedType = std::remove_cvref_t<T>;
-};
-template <typename T> struct is_exclude : std::false_type {};
-template <typename T> struct is_exclude<Exclude<T>> : std::true_type {};
-
-template <typename T>
-concept ComponentOrExclusionWrappedType = (SomeComponent<T> ||
-    (is_exclude<T>::value && SomeComponent<typename T::WrappedType>));
+//template <typename T>
+//struct Exclude
+//{
+//    using WrappedType = std::remove_cvref_t<T>;
+//};
+//template <typename T> struct is_exclude : std::false_type {};
+//template <typename T> struct is_exclude<Exclude<T>> : std::true_type {};
+//
+//template <typename T>
+//concept ComponentOrExclusionWrappedType = (SomeComponent<T> ||
+//    (is_exclude<T>::value && SomeComponent<typename T::WrappedType>));
 
 
 //template <SomeComponent...Ts>

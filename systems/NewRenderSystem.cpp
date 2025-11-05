@@ -4,7 +4,6 @@
 #include "../ecs/Ecs.h"
 #include "../camera/Camera.h"
 #include "../atlas/NewTextureRepository.h"
-#include "RenderablePreProcessorSystem.h"
 #include "util/RenderUtils.h"
 
 namespace {
@@ -43,33 +42,11 @@ SDL_Point GetScreenAdjust(const Camera& camera, SDL_Rect rect)
 	return screenXY - rectXY;
 }
 
-//constexpr auto GetRenderableSourceAtlasHandle(const NewRenderable& renderable)
-//{
-//	return std::visit(Overloaded{
-//		[](const NewSpriteRenderable& sp) { return sp.sprite.sourceAtlas; },
-//		[](const NewTextRenderable& txt)  { return txt.writer.sourceAtlas; }
-//		}, renderable.renderData);
-//}
-//
-//void UpdateEntityRenderableInternals(std::vector<Entity>& entities)
-//{
-//	for (auto& entity : entities)
-//	{
-//		auto& renderable = entity.GetComponent<NewRenderable>();
-//		renderable.internals_.sourceAtlas = GetRenderableSourceAtlasHandle(renderable);
-//	}
-//}
-
 template <typename T>
 constexpr T BitIf(bool condition, T flag) noexcept
 {
 	return static_cast<T>(-static_cast<int>(condition) & static_cast<int>(flag));
 }
-
-//bool RenderableValid(const NewRenderable& r)
-//{
-//	return r.internals_.sourceAtlas.IsValid() && r.internals_.renderCallCount > 0;
-//}
 
 const Handle<NewTextureAtlas>& GetAtlasHandle(const Entity& e)
 {
@@ -78,7 +55,8 @@ const Handle<NewTextureAtlas>& GetAtlasHandle(const Entity& e)
 		: e.GetComponent<TextRenderableComponent>().writer.sourceAtlas;
 }
 
-enum : uint8_t {
+enum : uint8_t 
+{
 	LhsValid = 1 << 0,
 	RhsValid = 1 << 1,
 	HandlesEq = 1 << 2,
@@ -141,45 +119,6 @@ void SortRenderableEntities(std::vector<Entity>& entities)
 	});
 }
 
-
-//bool CompRenderables(const NewRenderable& lhs, const NewRenderable& rhs)
-//{
-//	bool lhsValid = RenderableValid(lhs);
-//	bool rhsValid = RenderableValid(rhs);
-//
-//	if (!lhsValid && rhsValid)  return true;   // lhs invalid Å® front
-//	if (lhsValid && !rhsValid)  return false;  // rhs invalid Å® front
-//	if (!lhsValid && !rhsValid) return false; // keep relative order 
-//
-//	// both valid Å® normal sorting
-//	return lhs.profile.drawOrder != rhs.profile.drawOrder
-//		? lhs.profile.drawOrder < rhs.profile.drawOrder
-//		: lhs.internals_.sourceAtlas != rhs.internals_.sourceAtlas
-//		? lhs.internals_.sourceAtlas < rhs.internals_.sourceAtlas
-//		: lhs.profile.mods.color != rhs.profile.mods.color
-//		? lhs.profile.mods.color < rhs.profile.mods.color
-//		: lhs.profile.mods.alpha != rhs.profile.mods.alpha
-//		? lhs.profile.mods.alpha < rhs.profile.mods.alpha
-//		: lhs.profile.mods.blend < rhs.profile.mods.blend;
-//}
-
-
-//void SortRenderableEntities(std::vector<Entity>& entities)
-//{
-//	std::sort(entities.begin(), entities.end(), [](const Entity& lhs, const Entity& rhs) {
-//		return CompRenderables(lhs.GetComponent<NewRenderable>(), 
-//							   rhs.GetComponent<NewRenderable>());
-//	});
-//}
-
-
-
-//constexpr auto SameAtlasHandle(const Entity& lhs, const Entity& rhs)
-//{
-//	return lhs.GetComponent<NewRenderable>().internals_.sourceAtlas ==
-//		   rhs.GetComponent<NewRenderable>().internals_.sourceAtlas;
-//}
-
 bool SameAtlasHandle(const Entity& lhs, const Entity& rhs)
 {
 	return GetAtlasHandle(lhs) == GetAtlasHandle(rhs);
@@ -197,14 +136,6 @@ auto ChunkEntitiesByAtlas(const std::vector<Entity>& entities)
 	return std::ranges::subrange(it, chunkedByAtlas.end());
 }
 
-//size_t ComputeRenderCallCount(const std::vector<Entity>& entities)
-//{
-//	return std::accumulate(entities.begin(), entities.end(), 0,
-//		[](int sum, const Entity& e) {			
-//			return sum + e.GetComponent<NewRenderable>().internals_.renderCallCount;
-//		});
-//}
-
 size_t ComputeRenderCallCount(const std::vector<Entity>& entities)
 {
 	return std::accumulate(entities.begin(), entities.end(), 0,
@@ -220,13 +151,6 @@ size_t ComputeRenderCallCount(const std::vector<Entity>& entities)
 				: 0;
 		});
 }
-
-//auto GetFirstValidIt(const std::vector<Entity>& entities)
-//{
-//	return std::find_if(entities.begin(), entities.end(), [](const Entity& e) {
-//		return RenderableValid(e.GetComponent<NewRenderable>());
-//	});
-//}
 
 void AddSpriteRenderCall(const Entity& entity, const Camera& camera,
 						 RenderBatchHandler& renderBatchHandler,
@@ -321,28 +245,6 @@ void AddGlyphRenderCalls(const Entity& entity, const Camera& camera,
 	}
 }
 
-//void FillRenderBatches(const Entity& entity, const Camera& camera,
-//					   RenderBatchHandler& renderBatchHandler, 
-//					   DebugDrawHandler& debugDrawHandler)			   
-//{
-//	using E = const Entity&;
-//	using C = const Camera&;
-//	using RBH = RenderBatchHandler&;
-//	using DDH = DebugDrawHandler&;
-//	using FillBatchFunc = void(*)(E, C, RBH, DDH);
-//
-//	static constexpr auto dispatchTable = std::to_array<FillBatchFunc>({
-//		[](E e, C c, RBH& rbh, DDH& ddh) { AddSpriteRenderCall(e, c, rbh, ddh); },
-//		[](E e, C c, RBH& rbh, DDH& ddh) { AddGlyphRenderCalls(e, c, rbh, ddh); }
-//	});
-//
-//	const auto& renderData = entity.GetComponent<NewRenderable>().renderData;
-//	const size_t idx = renderData.index();
-//	assert(idx < dispatchTable.size());
-//
-//	dispatchTable[idx](entity, camera, renderBatchHandler, debugDrawHandler);
-//}
-
 void FillRenderBatches(const Entity& entity, const Camera& camera,
 					   RenderBatchHandler& renderBatchHandler,
 					   DebugDrawHandler& debugDrawHandler)
@@ -353,53 +255,6 @@ void FillRenderBatches(const Entity& entity, const Camera& camera,
 }
 
 } // unnamed
-
-//void NewRenderSystem::Update(SDL_Renderer* renderer, const Camera& camera, 
-//	                         const NewTextureRepository& textureRepo)
-//{
-//	auto entities = ECS::GetAllEntitiesWith<Transform, NewRenderable>();
-//	if (entities.empty())
-//	{
-//		return;
-//	}
-//
-//	renderablePreProcessor_.Update(textureRepo);
-//
-//	renderBatchHandler_.Clear();
-//	renderBatchHandler_.Reserve(ComputeRenderCallCount(entities));
-//
-//	debugDrawHandler_.Clear();
-//
-//	SortRenderableEntities(entities);
-//
-//	// skip all invalid atlas handles moved to the front during sort
-//	auto firstValidIt = GetFirstValidIt(entities);
-//	if (firstValidIt == entities.end())
-//	{
-//		return;
-//	}
-//
-//	auto validEntities = std::ranges::subrange(firstValidIt, entities.end());
-//
-//	for (auto group : validEntities | std::views::chunk_by(SameAtlasHandle))
-//	{
-//		const auto& srcAtlasHandle =
-//			group.front().GetComponent<NewRenderable>().internals_.sourceAtlas;
-//
-//		auto* srcTexture = textureRepo.GetSourceTexture(srcAtlasHandle);
-//		assert(srcTexture);
-//		 
-//		renderBatchHandler_.StartRenderBatch(srcTexture);
-//
-//		for (const auto& entity : group)
-//		{
-//			FillRenderBatches(entity, camera, renderBatchHandler_, debugDrawHandler_);
-//		}
-//	}
-//
-//	renderBatchHandler_.Render(renderer);
-//	debugDrawHandler_.Draw(renderer);
-//}
 
 void NewRenderSystem::Update(SDL_Renderer* renderer, const Camera& camera,
 							 const NewTextureRepository& textureRepo)

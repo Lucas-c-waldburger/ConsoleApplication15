@@ -61,7 +61,7 @@ void RotateRectPoints(std::vector<SDL_FPoint>& points, SDL_FPoint center, float 
 	float sinA = std::sin(radians);
 
 	int start = points.size() - 5;
-	for (int i = start; i < points.size() - 1; ++i)
+	for (int i = start; i < static_cast<int>(points.size()) - 1; ++i)
 	{
 		float dx = points[i].x - center.x;
 		float dy = points[i].y - center.y;

@@ -25,6 +25,43 @@ struct DebugDrawSet
     DebugDraw collider = { .on = true, .color = SDLite::kColorBlue };
 };
 
+//enum class Anchor 
+//{
+//    TopLeft,
+//    TopRight,
+//    BottomLeft,
+//    BottomRight,
+//    Center
+//};
+//
+//class Origin
+//{
+//public:
+//    static constexpr SDL_FPoint kTopLeft = { 0.0f, 0.0f };
+//    static constexpr SDL_FPoint kTopRight = { 1.0f, 0.0f };
+//    static constexpr SDL_FPoint kBottomLeft = { 0.0f, 1.0f };
+//    static constexpr SDL_FPoint kBottomRight = { 1.0f, 1.0f };
+//    static constexpr SDL_FPoint kCenter = { 0.5f, 0.5f };
+//
+//    template <SDLRectType R>
+//    static constexpr SDL_FPoint FromAnchor(const R& rect, Anchor anchor)
+//    {
+//        switch (anchor)
+//        {
+//        case Anchor::TopRight:          return { static_cast<float>(rect.w), 0.0f };
+//        case Anchor::BottomLeft:        return { 0.0f, static_cast<float>(rect.h) };
+//        case Anchor::BottomRight:       return { static_cast<float>(rect.w), 
+//                                           static_cast<float>(rect.h) };
+//        case Anchor::Center:            return { static_cast<float>(rect.w) / 2.0f, 
+//                                           static_cast<float>(rect.h) / 2.0f };
+//        case Anchor::TopLeft: default:  return { 0.0f, 0.0f };
+//        }
+//    }
+//
+//private:
+//    Origin() = default;
+//};
+
 struct RenderProfile
 {
     int drawOrder = 0;
@@ -58,7 +95,7 @@ struct GlyphCacheData
 
 struct TextFormatting
 {
-    Dimensions<int> bounds = { 0, 0 };
+    Dimensions<int> bounds = { 1, 1 };
     TextAlign align = TextAlign::Left;
     float letterSpacing = 1.0f;
     bool scaleToBounds = true;
@@ -71,7 +108,7 @@ struct TextRenderableGlyphCache : BaseComponent<TextRenderableGlyphCache>
     struct CacheContext
     {
         Transform transform;
-        TextFormatting format;
+        TextFormatting formatting;
         SDL_FPoint offset = { 0.0f, 0.0f };
         Handle<NewTextureAtlas> sourceAtlas;
     };
@@ -79,15 +116,6 @@ struct TextRenderableGlyphCache : BaseComponent<TextRenderableGlyphCache>
     std::vector<GlyphCacheData> cache;
     CacheContext context;
 };
-
-//template <typename Derived, typename AtlasT, typename TextureAccessT>
-//struct RenderableTraits
-//{
-//    using AtlasType = AtlasT;
-//    using TextureAccessType = TextureAccessT;
-//    
-//    friend const TextureAccessT& GetTextureAccessor(const Derived&);
-//};
 
 struct NewTextRenderable
 {
@@ -100,11 +128,16 @@ struct NewSpriteRenderable
     Sprite sprite;
 };
 
+inline constexpr RenderProfile kDefaultTextRenderProfile{
+    .mods = { .color = {0, 0, 0} },
+    .isOverlay = true,
+};
+
 struct TextRenderableComponent : BaseComponent<TextRenderableComponent>
 {
     GlyphTextWriter writer;
     TextFormatting formatting;
-    RenderProfile profile;
+    RenderProfile profile = kDefaultTextRenderProfile;
 };
 
 struct SpriteRenderableComponent : BaseComponent<SpriteRenderableComponent>

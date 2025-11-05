@@ -228,7 +228,7 @@ public:
 	//}
 
 	template <SomeTextureAtlas T>
-	T* GetAtlas(const Handle<NewTextureAtlas>& handle) const
+	T* GetAtlas(const Handle<NewTextureAtlas>& handle)
 	{
 		auto it = indexMap_.find(handle);
 		if (it == indexMap_.end())
@@ -247,7 +247,7 @@ public:
 		return (vecIdx < vec.size()) ? &vec[vecIdx] : nullptr;
 	}
 
-	/*template <SomeTextureAtlas T>
+	template <SomeTextureAtlas T>
 	const T* GetAtlas(const Handle<NewTextureAtlas>& handle) const
 	{
 		auto it = indexMap_.find(handle);
@@ -265,7 +265,7 @@ public:
 		auto& vec = GetAtlasVector<T>();
 
 		return (vecIdx < vec.size()) ? &vec[vecIdx] : nullptr;
-	}*/
+	}
 
 	template <SomeTextureAtlas T>
 	Result<Void> AttachAtlas(T&& atlas)

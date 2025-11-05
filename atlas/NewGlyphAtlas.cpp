@@ -164,8 +164,8 @@ const FontDescriptor& NewGlyphAtlas::GetFontDescriptor() const
 bool NewGlyphAtlas::IsTextWriterValid(const GlyphTextWriter& writer) const
 {
     return writer.sourceAtlas == GetHandle() &&
-           std::all_of(writer.text.begin(), writer.text.end(), [&](auto ch) {
-               GetPlotIndexForChar(ch) < glyphs_.size() || ch == '\n';
+           std::all_of(writer.text.begin(), writer.text.end(), [this](auto ch) {
+               return (GetPlotIndexForChar(ch) < glyphs_.size() || ch == '\n');
            });
 }
 
@@ -197,6 +197,8 @@ bool NewGlyphAtlas::IsTextWriterValid(const GlyphTextWriter& writer) const
 
 Glyph NewGlyphAtlas::GetGlyph(char c) const
 {
+    if (c == '\n') { return kNewlineGlyph; }
+
     const size_t idx = GetPlotIndexForChar(c);
 
     return (idx < glyphs_.size()) ? glyphs_[idx] : Glyph{};

@@ -1,7 +1,7 @@
 #include "../CatchUtils.h"
 #include "../../../file/FilePathUtility.h"
 #include "../../../sdl/SDLite.h"
-#include "../../../atlas/TextureRepository.h"
+#include "../../../atlas/NewTextureRepository.h"
 #include "../test_utils/AtlasTestUtils.h"
 
 namespace {

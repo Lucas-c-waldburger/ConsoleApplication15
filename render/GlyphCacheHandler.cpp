@@ -29,7 +29,7 @@ void FillGlyphRectsLeftAlign(std::vector<GlyphCacheData>& cache,
 	{
 		assert(glyph.character != kInvalidChar);
 
-		if (glyph.character == '\n')
+		if (glyph == NewGlyphAtlas::kNewlineGlyph)
 		{
 			xPos = format.start.x;
 			yPos += static_cast<int>(format.fontHeight * format.scale.y);
@@ -120,14 +120,6 @@ void GlyphCacheHandler::RepopulateGlyphCacheGlyphs(std::string_view text,
 	for (size_t i = 0; i < text.size(); i++)
 	{
 		cache[i].destRect = { 0, 0, 0, 0 };
-
-		if (text[i] == '\n')
-		{
-			cache[i].glyph.character = '\n';
-
-			continue;
-		}
-
 		cache[i].glyph = glyphAtlas.GetGlyph(text[i]);
 	}
 }
@@ -159,8 +151,8 @@ void GlyphCacheHandler::ReprojectGlyphCacheGeometry(
 }
 
 void GlyphCacheHandler::AdjustGlyphCacheRotation(std::vector<GlyphCacheData>& cache,
-	SDL_Rect projectedRenderRect,
-	float angleDegrees)
+												 SDL_Rect projectedRenderRect,
+												 float angleDegrees)
 {
 	SDL_FPoint bboxCenter = GetRectCenter(projectedRenderRect);
 
@@ -213,13 +205,13 @@ void GlyphCacheHandler::AdjustGlyphCachePosition(TextRenderableGlyphCache& cache
 }
 
 void GlyphCacheHandler::UpdateGlyphCache(const NewGlyphAtlas& glyphAtlas,
-	TextRenderableComponent& textRenderable,
-	TextRenderableGlyphCache& glyphCache,
-	const Transform& transform)
+										 TextRenderableComponent& textRenderable,
+										 TextRenderableGlyphCache& glyphCache,
+										 const Transform& transform)
 {
 	auto& [glyphs, ctx] = glyphCache;
 
-	const uint8_t changeLog = MakeChangeLog(textRenderable, transform, glyphCache);
+	uint8_t changeLog = MakeChangeLog(textRenderable, transform, glyphCache);
 	if (changeLog == NoChange)
 	{
 		return;
@@ -228,7 +220,7 @@ void GlyphCacheHandler::UpdateGlyphCache(const NewGlyphAtlas& glyphAtlas,
 	if (changeLog & (AtlasChanged | TextChanged))
 	{
 		RepopulateGlyphCacheGlyphs(textRenderable.writer.text, glyphCache.cache,
-			glyphAtlas);
+								   glyphAtlas);
 	}
 
 	if (changeLog & NeedsReprojection || changeLog & RotationChanged)
@@ -240,7 +232,7 @@ void GlyphCacheHandler::UpdateGlyphCache(const NewGlyphAtlas& glyphAtlas,
 		if (changeLog & NeedsReprojection)
 		{
 			ReprojectGlyphCacheGeometry(glyphs, textRenderable, transform,
-				projectedRect, glyphAtlas);
+										projectedRect, glyphAtlas);
 		}
 		if (changeLog & RotationChanged)
 		{
@@ -251,11 +243,11 @@ void GlyphCacheHandler::UpdateGlyphCache(const NewGlyphAtlas& glyphAtlas,
 	if (changeLog & PositionChanged)
 	{
 		AdjustGlyphCachePosition(glyphCache, transform.position,
-			textRenderable.profile.offset);
+								 textRenderable.profile.offset);
 	}
 
 	ctx.transform = transform;
-	ctx.format = textRenderable.formatting;
+	ctx.formatting = textRenderable.formatting;
 	ctx.offset = textRenderable.profile.offset;
 	ctx.sourceAtlas = textRenderable.writer.sourceAtlas;
 }

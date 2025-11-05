@@ -1,5 +1,5 @@
 #include "GlyphFormattingUtils.h"
-#include "../../atlas/NewGlyphAtlas.h"
+#include "../atlas/NewGlyphAtlas.h"
 #include <numeric>
 #include <cstdint>
 
@@ -44,14 +44,15 @@ uint8_t MakeChangeLog(const TextRenderableComponent& textRenderable,
 				 AtlasChanged) |
 		   BitIf(textRenderable.writer.text != glyphs, 
 			     TextChanged) |
-		   BitIf(textRenderable.formatting != ctx.format, 
+		   BitIf(textRenderable.formatting != ctx.formatting, 
 			     FormatChanged) |
 		   BitIf(transform.rotation != ctx.transform.rotation, 
 			     RotationChanged) |
 		   BitIf(transform.position != ctx.transform.position ||
 		   	     textRenderable.profile.offset != ctx.offset, 
 			     PositionChanged) |
-		   BitIf(transform.scale != ctx.transform.scale, 
+		   BitIf(transform.scale != ctx.transform.scale ||
+			     textRenderable.formatting.scaleToBounds != ctx.formatting.scaleToBounds, 
 			     ScaleChanged);
 }
 
@@ -82,7 +83,7 @@ FormatArgs MakeFormatArgs(std::string_view text, std::vector<GlyphCacheData>& ca
 	FormatArgs format{
 		.bounds = bounds,
 		.scale = transform.scale,
-		.start = { 0, startY }, // CHECK THIS
+		.start = { 0, 0 }, // CHECK THIS
 		.numNewlines = numNewlines,
 		.fontHeight = fontHeight,
 		.totalHeight = totalHeight

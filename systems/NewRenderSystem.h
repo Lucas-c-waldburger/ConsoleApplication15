@@ -3,7 +3,7 @@
 #include "System.h"
 #include "../render/RenderBatchHandler.h"
 #include "../render/DebugDrawHandler.h"
-#include "GlyphFormattingSystem.h"
+#include "RenderablePreProcessorSystem.h"
 
 class Camera;
 class NewTextureRepository;

@@ -111,7 +111,12 @@ namespace SDLite
 
 	static constexpr int kWindowWidth = 1200;
 	static constexpr int kWindowHeight = 900;
-
+	static constexpr SDL_Point kWindowCenter = { 
+		kWindowWidth / 2, kWindowHeight / 2 
+	};
+	static constexpr SDL_FPoint kFWindowCenter = { 
+		static_cast<float>(kWindowWidth / 2.0f), static_cast<float>(kWindowHeight / 2.0f) 
+	};
 
 	struct WindowArgs
 	{

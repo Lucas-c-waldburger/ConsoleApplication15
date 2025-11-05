@@ -282,7 +282,7 @@
     <ClCompile Include="test\catch\test_utils\ImageUtilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\catch\render\GlyphFormattingTests.cpp">
+    <ClCompile Include="test\catch\render\GlyphCacheHandlerTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="render\GlyphFormattingUtils.cpp">

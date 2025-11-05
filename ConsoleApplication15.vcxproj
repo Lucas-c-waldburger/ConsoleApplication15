@@ -232,7 +232,7 @@
     <ClCompile Include="systems\TimerSystem.cpp" />
     <ClCompile Include="render\GlyphFormattingUtils.cpp" />
     <ClCompile Include="test\AudioPlayground.cpp" />
-    <ClCompile Include="test\catch\render\GlyphFormattingTests.cpp" />
+    <ClCompile Include="test\catch\render\GlyphCacheHandlerTests.cpp" />
     <ClCompile Include="test\catch\test_utils\AtlasTestUtils.cpp" />
     <ClCompile Include="test\catch\atlas\GlyphAtlasTests.cpp" />
     <ClCompile Include="test\catch\atlas\SpriteAtlasTests.cpp" />

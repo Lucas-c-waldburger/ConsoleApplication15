@@ -7,7 +7,7 @@ void SimpleTrigger::AddObserver(Callback&& observer)
 
 void SimpleTrigger::Trigger()
 {
-    for (int i = 0; i < observers_.size(); i++)
+    for (int i = 0; i < static_cast<int>(observers_.size()); i++)
     {
         if (!observers_[i] || observers_[i]() == ReturnSignal::StopObserving)
         {

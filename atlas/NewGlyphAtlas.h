@@ -28,6 +28,8 @@ public:
 	static constexpr char kEndChar = 127;
 	static constexpr char kInvalidChar = kStartChar - 1;
 
+	static inline constexpr Glyph kNewlineGlyph{ .character = '\n' };
+
 	NewGlyphAtlas() = default;
 	~NewGlyphAtlas() = default;
 
