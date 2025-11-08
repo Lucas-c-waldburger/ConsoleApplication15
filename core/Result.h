@@ -176,7 +176,7 @@ private:
 #define TRY_ASSIGN_OR_RETURN_INTERNAL(dest, src, temp, returnValue) \
     auto temp = (src); \
     if (!temp.Success()) { return (returnValue); } \
-    dest = std::move(temp).GetValue();
+    dest = std::move((temp).GetValue());
 
 #define TRY_ASSIGN(dest, src) TRY_ASSIGN_INTERNAL(dest, src, CONCAT(_result, __COUNTER__))
 #define TRY_ASSIGN_INTERNAL(dest, src, temp) TRY_ASSIGN_OR_RETURN_INTERNAL(dest, src, temp, temp.GetError())

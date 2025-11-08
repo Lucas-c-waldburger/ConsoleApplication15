@@ -8,6 +8,7 @@
 #include "../sdl/SDLite.h"
 #include "../sdl/SDLUtils.h"
 #include "../render/TextureMods.h"
+#include "../core/Anchor.h"
 #include "TransformComponent.h"
 #include <variant>
 
@@ -25,45 +26,14 @@ struct DebugDrawSet
     DebugDraw collider = { .on = true, .color = SDLite::kColorBlue };
 };
 
-//enum class Anchor 
-//{
-//    TopLeft,
-//    TopRight,
-//    BottomLeft,
-//    BottomRight,
-//    Center
-//};
-//
-//class Origin
-//{
-//public:
-//    static constexpr SDL_FPoint kTopLeft = { 0.0f, 0.0f };
-//    static constexpr SDL_FPoint kTopRight = { 1.0f, 0.0f };
-//    static constexpr SDL_FPoint kBottomLeft = { 0.0f, 1.0f };
-//    static constexpr SDL_FPoint kBottomRight = { 1.0f, 1.0f };
-//    static constexpr SDL_FPoint kCenter = { 0.5f, 0.5f };
-//
-//    template <SDLRectType R>
-//    static constexpr SDL_FPoint FromAnchor(const R& rect, Anchor anchor)
-//    {
-//        switch (anchor)
-//        {
-//        case Anchor::TopRight:          return { static_cast<float>(rect.w), 0.0f };
-//        case Anchor::BottomLeft:        return { 0.0f, static_cast<float>(rect.h) };
-//        case Anchor::BottomRight:       return { static_cast<float>(rect.w), 
-//                                           static_cast<float>(rect.h) };
-//        case Anchor::Center:            return { static_cast<float>(rect.w) / 2.0f, 
-//                                           static_cast<float>(rect.h) / 2.0f };
-//        case Anchor::TopLeft: default:  return { 0.0f, 0.0f };
-//        }
-//    }
-//
-//private:
-//    Origin() = default;
-//};
-
 struct RenderProfile
 {
+    struct Anchors
+    {
+        Anchor scale = Anchor::Center;
+        Anchor rotation = Anchor::Center;
+    };
+
     int drawOrder = 0;
     TextureMods mods;
     SDL_RendererFlip flip = SDL_FLIP_NONE;
@@ -71,6 +41,7 @@ struct RenderProfile
     DebugDrawSet debugDraw;
     bool isOverlay = false;
     float parallaxFactor = 0.0f;
+    Anchors anchor;
 };
 
 enum class TextAlign
@@ -80,17 +51,11 @@ enum class TextAlign
     Right
 };
 
-// should recompute if:
-    // text context has changed
-    // dimensions have changed
-    // transform.scale has changed
-    // align has changed
-    // rotation has changed
 struct GlyphCacheData
 {
-    Glyph glyph; // <- recompute only if text changed
-    SDL_Rect destRect = { 0, 0, 0, 0 };  // <- recompute if text or transforms changed (align, dimensions, scale, etc)
-    SDL_Point rotationCenter = { 0, 0 }; // <- recompute if text, transforms, or rotation changed
+    Glyph glyph;
+    SDL_Rect destRect = { 0, 0, 0, 0 };
+    SDL_Point rotationCenter = { 0, 0 }; 
 };
 
 struct TextFormatting

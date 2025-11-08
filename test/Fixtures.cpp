@@ -243,6 +243,7 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 	fixture->systems_.InitializeSystem<EntityStateSystem>();
 	fixture->systems_.InitializeSystem<GameLoopSystem>();
 	fixture->systems_.InitializeSystem<AudioSystem>();
+	fixture->systems_.InitializeSystem<NewRenderSystem>();
 
 	//auto& callbackSystem = fixture->systems_.InitializeSystem<EventCallbackSystem>();
 	//callbackSystem->ConnectToEventBus();

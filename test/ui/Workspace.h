@@ -1,6 +1,40 @@
-//#pragma once
-//#include <cassert>
-//#include "Fixtures.h"
+#pragma once
+#include <cassert>
+#include "Button.h"
+
+namespace ui {
+
+class Workspace
+{
+public:
+	static Result<Workspace> Create(SDL_Renderer* renderer, NewTextureRepository& repo,
+									EventBus2& bus);
+
+	Result<Handle<Button>> PlaceButton(Button::Params&& params);
+
+private: 
+	struct ButtonData
+	{
+		std::unordered_map<Handle<Button>, Button> buttons;
+		SizedEnumMap<Button::Color, Button::ButtonSprites> spritesByColor;
+		GlyphTextWriter writer;
+	};
+
+	NewTextureRepository* textureRepo_ = nullptr;
+	EventBus2* eventBus_ = nullptr;
+	ButtonData buttonData_;
+};
+
+
+
+}
+
+
+
+
+
+
+
 //
 //
 //namespace ui {

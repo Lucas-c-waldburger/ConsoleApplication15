@@ -6,7 +6,8 @@ using namespace util;
 
 namespace {
 
-constexpr SDL_FPoint GetRectCenter(SDL_Rect rect)
+template <SDLRectType R>
+constexpr SDL_FPoint GetRectCenter(R rect)
 {
 	return { static_cast<float>(rect.x) + (static_cast<float>(rect.w) / 2.0f),
 			 static_cast<float>(rect.y) + (static_cast<float>(rect.h) / 2.0f) };
@@ -20,6 +21,7 @@ constexpr SDL_Rect MakeProjectedBoundingRect(Dimensions<int> dims, SDL_FPoint sc
 	};
 }
 
+
 void FillGlyphRectsLeftAlign(std::vector<GlyphCacheData>& cache,
 							 const FormatArgs& format)
 {
@@ -32,15 +34,15 @@ void FillGlyphRectsLeftAlign(std::vector<GlyphCacheData>& cache,
 		if (glyph == NewGlyphAtlas::kNewlineGlyph)
 		{
 			xPos = format.start.x;
-			yPos += static_cast<int>(format.fontHeight * format.scale.y);
+			yPos += static_cast<int>(format.fontHeight * format.layoutScale.y);
 
 			continue;
 		}
 
-		destRect = { xPos, yPos, static_cast<int>(glyph.plot.rect.w * format.scale.x),
-								 static_cast<int>(glyph.plot.rect.h * format.scale.y) };
+		destRect = { xPos, yPos, static_cast<int>(glyph.plot.rect.w * format.layoutScale.x),
+								 static_cast<int>(glyph.plot.rect.h * format.layoutScale.y) };
 
-		xPos += static_cast<int>(glyph.advance * format.scale.x);
+		xPos += static_cast<int>(glyph.advance * format.layoutScale.x);
 
 	}
 }
@@ -50,7 +52,7 @@ void FillGlyphRectsRightAlign(std::vector<GlyphCacheData>& cache,
 {
 	auto [xPos, yPos] = format.start;
 
-	yPos += static_cast<int>(format.fontHeight * format.scale.y) * format.numNewlines;
+	yPos += static_cast<int>(format.fontHeight * format.layoutScale.y) * format.numNewlines;
 
 	for (int i = static_cast<int>(cache.size()) - 1; i >= 0; i--)
 	{
@@ -61,16 +63,15 @@ void FillGlyphRectsRightAlign(std::vector<GlyphCacheData>& cache,
 		if (glyph.character == '\n')
 		{
 			xPos = format.start.x;
-			yPos -= static_cast<int>(format.fontHeight * format.scale.y);
+			yPos -= static_cast<int>(format.fontHeight * format.layoutScale.y);
 
 			continue;
 		}
 
-		destRect = { xPos - static_cast<int>(glyph.plot.rect.w * format.scale.x), yPos,
-					 static_cast<int>(glyph.plot.rect.w * format.scale.x),
-					 static_cast<int>(glyph.plot.rect.h * format.scale.y) };
+		xPos -= static_cast<int>(glyph.advance * format.layoutScale.x);
 
-		xPos -= static_cast<int>(glyph.advance * format.scale.x);
+		destRect = { xPos, yPos, static_cast<int>(glyph.plot.rect.w * format.layoutScale.x),
+								 static_cast<int>(glyph.plot.rect.h * format.layoutScale.y) };
 	}
 }
 
@@ -89,7 +90,7 @@ void FillGlyphRectsCenterAlign(std::string_view text, std::vector<GlyphCacheData
 		newlinePos = std::min(newlinePos, text.size());
 
 		int rowWidth = CalculateGlyphRowWidth(cache, currentTextPos,
-			newlinePos, format.scale.x);
+			newlinePos, format.layoutScale.x);
 
 		int xPos = format.start.x - static_cast<int>(rowWidth / 2.0f);
 
@@ -99,13 +100,13 @@ void FillGlyphRectsCenterAlign(std::string_view text, std::vector<GlyphCacheData
 
 			assert(glyph.character != kInvalidChar);
 
-			destRect = { xPos , yPos, static_cast<int>(glyph.plot.rect.w * format.scale.x),
-									  static_cast<int>(glyph.plot.rect.h * format.scale.y) };
+			destRect = { xPos , yPos, static_cast<int>(glyph.plot.rect.w * format.layoutScale.x),
+									  static_cast<int>(glyph.plot.rect.h * format.layoutScale.y) };
 
-			xPos += static_cast<int>(glyph.advance * format.scale.x);
+			xPos += static_cast<int>(glyph.advance * format.layoutScale.x);
 		}
 
-		yPos += static_cast<int>(format.fontHeight * format.scale.y);
+		yPos += static_cast<int>(format.fontHeight * format.layoutScale.y);
 		currentTextPos = newlinePos + 1;
 	}
 } 
@@ -124,78 +125,137 @@ void GlyphCacheHandler::RepopulateGlyphCacheGlyphs(std::string_view text,
 	}
 }
 
-void GlyphCacheHandler::ReprojectGlyphCacheGeometry(
-	std::vector<GlyphCacheData>& cache, const TextRenderableComponent& textRenderable,
-	const Transform& transform, SDL_Rect projectedRect, const NewGlyphAtlas& glyphAtlas)
+void GlyphCacheHandler::ReprojectGlyphCacheGeometry(TextRenderableGlyphCache& cacheComponent, 
+													const TextRenderableComponent& textRenderable,
+													const NewGlyphAtlas& glyphAtlas)
 {
-	auto format = MakeFormatArgs(textRenderable.writer.text, cache,
-								 textRenderable.formatting.bounds,
-								 textRenderable.formatting.scaleToBounds,
-								 transform, glyphAtlas);
+	//auto format = MakeFormatArgs(textRenderable.writer.text, cache,
+	//							 textRenderable.formatting.bounds,
+	//							 textRenderable.formatting.scaleToBounds,
+	//							 glyphAtlas.GetFontDescriptor().fontHeight);
+	auto formatArgs = MakeFormatArgs(textRenderable, cacheComponent,
+									 glyphAtlas.GetFontDescriptor().fontHeight);
 
 	switch (textRenderable.formatting.align)
 	{
 	case TextAlign::Left:
-		format.start.x = projectedRect.x;
-		FillGlyphRectsLeftAlign(cache, format);
+		//format.start.x = projectedRect.x;
+		FillGlyphRectsLeftAlign(cacheComponent.cache, formatArgs);
 		break;
 	case TextAlign::Right:
-		format.start.x = projectedRect.x + projectedRect.w;
-		FillGlyphRectsRightAlign(cache, format);
+		//format.start.x = projectedRect.x + projectedRect.w;
+		FillGlyphRectsRightAlign(cacheComponent.cache, formatArgs);
 		break;
 	case TextAlign::Center: default:
-		format.start.x = projectedRect.x + (projectedRect.w / 2);
-		FillGlyphRectsCenterAlign(textRenderable.writer.text, cache, format);
+		//format.start.x = projectedRect.x + (projectedRect.w / 2);
+		FillGlyphRectsCenterAlign(textRenderable.writer.text, 
+								  cacheComponent.cache, formatArgs);
 		break;
 	}
 }
 
-void GlyphCacheHandler::AdjustGlyphCacheRotation(std::vector<GlyphCacheData>& cache,
-												 SDL_Rect projectedRenderRect,
-												 float angleDegrees)
+void GlyphCacheHandler::RotateGlyphCache(std::vector<GlyphCacheData>& cache,
+										 Anchor rotateAnchor, float angleDegrees)
 {
-	SDL_FPoint bboxCenter = GetRectCenter(projectedRenderRect);
+	SDL_FRect textBlockBbox = ComputeGlyphDataBoundingBox(cache);
+	SDL_FPoint textBlockPivotPoint = GetRectAnchorPoint(textBlockBbox, rotateAnchor);
 
-	float radians = angleDegrees * static_cast<float>(M_PI) / 180.0f;
-	float cosA = std::cos(radians);
-	float sinA = std::sin(radians);
+	static const float radians = angleDegrees * static_cast<float>(M_PI) / 180.0f;
+	static const float cosA = std::cos(radians);
+	static const float sinA = std::sin(radians);
 
-	for (auto& [glyph, destRect, rotCenter] : cache)
+	for (auto& [_, destRect, rotCenter] : cache)
 	{
-		SDL_Rect srcRect = glyph.plot.rect;
+		SDL_FPoint center = GetRectCenter(destRect);
 
-		SDL_FPoint destCenter = GetRectCenter(destRect);
+		// vector from pivot Å® glyph center
+		float dx = center.x - textBlockPivotPoint.x;
+		float dy = center.y - textBlockPivotPoint.y;
 
-		// Offset from bounding box center
-		float dx = destCenter.x - bboxCenter.x;
-		float dy = destCenter.y - bboxCenter.y;
+		// rotate that vector
+		float rx = dx * cosA - dy * sinA;
+		float ry = dx * sinA + dy * cosA;
 
-		// Rotate position
-		float rotatedX = dx * cosA - dy * sinA;
-		float rotatedY = dx * sinA + dy * cosA;
+		SDL_FPoint newCenter{ textBlockPivotPoint.x + rx, textBlockPivotPoint.y + ry };
 
-		SDL_FPoint newPos = {
-			bboxCenter.x + rotatedX,
-			bboxCenter.y + rotatedY
-		};
+		// write back (keep current width/height)
+		destRect.x = static_cast<int>(newCenter.x - destRect.w * 0.5f);
+		destRect.y = static_cast<int>(newCenter.y - destRect.h * 0.5f);
 
-		// Adjust dest rect for new center
-		destRect.x = static_cast<int>(newPos.x - destRect.w / 2.0f);
-		destRect.y = static_cast<int>(newPos.y - destRect.h / 2.0f);
+		// rotation center remains glyph-local center (already set by ScaleGlyphCache)
+		// but keep in sync in case sizes changed:
+		rotCenter.x = destRect.w * 0.5f;
+		rotCenter.y = destRect.h * 0.5f;
 
-		rotCenter = {
-			static_cast<int>(destRect.w / 2.0f),
-			static_cast<int>(destRect.h / 2.0f)
-		};
+		//SDL_Rect srcRect = glyph.plot.rect;
+
+		//SDL_FPoint destCenter = GetRectCenter(destRect);
+
+		//// Offset from bounding box center
+		//float dx = destCenter.x - bboxCenter.x;
+		//float dy = destCenter.y - bboxCenter.y;
+
+		//// Rotate position
+		//float rotatedX = dx * cosA - dy * sinA;
+		//float rotatedY = dx * sinA + dy * cosA;
+
+		//SDL_FPoint newPos = {
+		//	bboxCenter.x + rotatedX,
+		//	bboxCenter.y + rotatedY
+		//};
+
+		//// Adjust dest rect for new center
+		//destRect.x = static_cast<int>(newPos.x - destRect.w / 2.0f);
+		//destRect.y = static_cast<int>(newPos.y - destRect.h / 2.0f);
+
+		//rotCenter = {
+		//	static_cast<int>(destRect.w / 2.0f),
+		//	static_cast<int>(destRect.h / 2.0f)
+		//};
 	}
 }
 
-void GlyphCacheHandler::AdjustGlyphCachePosition(TextRenderableGlyphCache& cacheComponent,
-											     SDL_FPoint newPos,
-											     SDL_FPoint newOffset)
+void GlyphCacheHandler::ScaleGlyphCache(std::vector<GlyphCacheData>& cache, Anchor scaleAnchor,
+										SDL_FPoint tfScale)
+{
+	SDL_FRect textBlockBbox = ComputeGlyphDataBoundingBox(cache);
+	SDL_FPoint textBlockPivotPoint = GetRectAnchorPoint(textBlockBbox, scaleAnchor);
+
+	// pivot is in local block-space; scale everything relative to it
+	for (auto& [_, destRect, rotCenter] : cache)
+	{
+		SDL_FPoint oldDestRectCenter = GetRectCenter(destRect);
+
+		// offset from pivot
+		float dx = oldDestRectCenter.x - textBlockPivotPoint.x;
+		float dy = oldDestRectCenter.y - textBlockPivotPoint.y;
+
+		// apply transform.scale
+		float newDestRectCenterX = textBlockPivotPoint.x + dx * tfScale.x;
+		float newDestRectCenterY = textBlockPivotPoint.y + dy * tfScale.y;
+
+		int newW = static_cast<int>(destRect.w * tfScale.x);
+		int newH = static_cast<int>(destRect.h * tfScale.y);
+
+		// update dest rect & rotCenter
+		destRect.w = newW;
+		destRect.h = newH;
+		destRect.x = static_cast<int>(newDestRectCenterX - newW * 0.5f);
+		destRect.y = static_cast<int>(newDestRectCenterY - newH * 0.5f);
+
+		rotCenter.x = newW * 0.5f; 
+		rotCenter.y = newH * 0.5f;	
+	}
+}
+
+
+
+void GlyphCacheHandler::RepositionGlyphCache(TextRenderableGlyphCache& cacheComponent,
+											 SDL_FPoint newPos, SDL_FPoint newOffset)
 {
 	SDL_FPoint adjust = (newPos - cacheComponent.context.transform.position) +
 						(newOffset - cacheComponent.context.offset);
+	//SDL_FPoint adjust = newPos + newOffset;
 
 	for (auto& cacheData : cacheComponent.cache)
 	{
@@ -217,37 +277,99 @@ void GlyphCacheHandler::UpdateGlyphCache(const NewGlyphAtlas& glyphAtlas,
 		return;
 	}
 
-	if (changeLog & (AtlasChanged | TextChanged))
+	// 1) Rebuild glyphs
+	static constexpr uint8_t kNeedsRepopulate = (AtlasChanged | TextChanged);
+	if (changeLog & kNeedsRepopulate)
 	{
-		RepopulateGlyphCacheGlyphs(textRenderable.writer.text, glyphCache.cache,
-								   glyphAtlas);
+		RepopulateGlyphCacheGlyphs(textRenderable.writer.text, glyphCache.cache, glyphAtlas);
 	}
 
-	if (changeLog & NeedsReprojection || changeLog & RotationChanged)
+	// 2) Layout (unscaled local block-space) if formatting or glyph set changed
+	static constexpr uint8_t kNeedsReprojection = (FormatChanged | kNeedsRepopulate);
+	if (changeLog & kNeedsReprojection)
 	{
-		SDL_Rect projectedRect = MakeProjectedBoundingRect(
-			textRenderable.formatting.bounds, transform.scale
-		);
-
-		if (changeLog & NeedsReprojection)
-		{
-			ReprojectGlyphCacheGeometry(glyphs, textRenderable, transform,
-										projectedRect, glyphAtlas);
-		}
-		if (changeLog & RotationChanged)
-		{
-			AdjustGlyphCacheRotation(glyphs, projectedRect, transform.rotation);
-		}
+		ReprojectGlyphCacheGeometry(glyphCache, textRenderable, glyphAtlas);
+		ctx.transform.position = { 0.0f, 0.0f };
+		ctx.offset = { 0.0f, 0.0f };
 	}
 
-	if (changeLog & PositionChanged)
+	// 3) Apply transform.scale if scale changed OR if reprojection produced new layout
+	//    We apply scale if either scale changed, or reprojection happened (which generated unscaled rects).
+	static constexpr uint8_t kNeedsScaling = (ScaleChanged | kNeedsReprojection);
+	if (changeLog & kNeedsScaling)
 	{
-		AdjustGlyphCachePosition(glyphCache, transform.position,
-								 textRenderable.profile.offset);
+		ScaleGlyphCache(glyphCache.cache, textRenderable.profile.anchor.scale, transform.scale);
 	}
 
+	// 4) Rotate if rotation changed
+	if (changeLog & RotationChanged)
+	{
+		RotateGlyphCache(glyphCache.cache, textRenderable.profile.anchor.rotation, transform.rotation);
+	}
+
+	// 5) Reposition (translate to world) if position or offset changed,
+	//    or if any of reprojection/scale/rotation happened (we need to re-place in world space)
+	static constexpr uint8_t kNeedsReposition = (PositionChanged | RotationChanged | kNeedsScaling);
+	if (changeLog & kNeedsReposition)
+	{
+		RepositionGlyphCache(glyphCache, transform.position, textRenderable.profile.offset);
+	}
+
+	// 6) update cached context
 	ctx.transform = transform;
 	ctx.formatting = textRenderable.formatting;
 	ctx.offset = textRenderable.profile.offset;
 	ctx.sourceAtlas = textRenderable.writer.sourceAtlas;
 }
+
+
+//void GlyphCacheHandler::UpdateGlyphCache(const NewGlyphAtlas& glyphAtlas,
+//										 TextRenderableComponent& textRenderable,
+//										 TextRenderableGlyphCache& glyphCache,
+//										 const Transform& transform)
+//{
+//	uint8_t changeLog = MakeChangeLog(textRenderable, transform, glyphCache);
+//	if (changeLog == NoChange)
+//	{
+//		return;
+//	}
+//
+//	auto& [cache, ctx] = glyphCache;
+//
+//	if (changeLog & (AtlasChanged | TextChanged))
+//	{
+//		RepopulateGlyphCacheGlyphs(textRenderable.writer.text, cache, glyphAtlas);
+//	}
+//
+//	if (changeLog & NeedsReprojection || changeLog & RotationChanged)
+//	{
+//		SDL_Rect projectedRect = { 0, 0,
+//			static_cast<int>(textRenderable.formatting.bounds.w * transform.scale.x),
+//			static_cast<int>(textRenderable.formatting.bounds.h * transform.scale.y)
+//		};
+//
+//		if (changeLog & NeedsReprojection)
+//		{
+//			ReprojectGlyphCacheGeometry(cache, textRenderable, transform,
+//										projectedRect, glyphAtlas);
+//		}
+//		if (changeLog & ScaleChanged)
+//		{
+//			ScaleGlyphCache(cache, textRenderable.profile.scaleAnchor, transform.scale);
+//		}
+//		if (changeLog & RotationChanged)
+//		{
+//			RotateGlyphCache(cache, projectedRect, transform.rotation);
+//		}
+//	}
+//
+//	if (changeLog & PositionChanged)
+//	{
+//		RepositionGlyphCache(glyphCache, transform.position, textRenderable.profile.offset);
+//	}
+//
+//	ctx.transform = transform;
+//	ctx.formatting = textRenderable.formatting;
+//	ctx.offset = textRenderable.profile.offset;
+//	ctx.sourceAtlas = textRenderable.writer.sourceAtlas;
+//}

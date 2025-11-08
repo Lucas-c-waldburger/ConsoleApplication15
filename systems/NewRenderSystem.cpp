@@ -126,14 +126,11 @@ bool SameAtlasHandle(const Entity& lhs, const Entity& rhs)
 
 auto ChunkEntitiesByAtlas(const std::vector<Entity>& entities)
 {
-	auto chunkedByAtlas = entities | std::views::chunk_by(SameAtlasHandle);
-	auto it = chunkedByAtlas.begin();
-	if (it != chunkedByAtlas.end() && !GetAtlasHandle((*it).front()).IsValid())
-	{
-		++it;
-	}
-
-	return std::ranges::subrange(it, chunkedByAtlas.end());
+	return entities 
+		| std::views::chunk_by(SameAtlasHandle)
+		| std::views::drop_while([](auto group) {
+			return !GetAtlasHandle(group.front()).IsValid();
+		});
 }
 
 size_t ComputeRenderCallCount(const std::vector<Entity>& entities)
@@ -203,6 +200,11 @@ void AddGlyphRenderCalls(const Entity& entity, const Camera& camera,
 
 	for (const auto& [glyph, destRect, rotationCenter] : glyphCache.cache)
 	{
+		if (glyph == NewGlyphAtlas::kNewlineGlyph)
+		{
+			continue;
+		}
+
 		// was pre-transformed by glyph caching in preprocessor
 		SDL_Rect renderDestRect = destRect;
 		SDL_Point renderRotationCenter = rotationCenter;
@@ -273,7 +275,9 @@ void NewRenderSystem::Update(SDL_Renderer* renderer, const Camera& camera,
 
 	SortRenderableEntities(entities);
 
-	for (auto group : ChunkEntitiesByAtlas(entities))
+	auto chunked = ChunkEntitiesByAtlas(entities);
+
+	for (auto group : chunked)
 	{
 		const auto& srcAtlasHandle = GetAtlasHandle(group.front());
 

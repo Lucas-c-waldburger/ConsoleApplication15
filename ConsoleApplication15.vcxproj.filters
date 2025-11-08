@@ -234,7 +234,7 @@
     <ClCompile Include="ecs\EntityManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\AudioPlayground.cpp">
+    <ClCompile Include="test\ui\Workspace.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\catch\audio\AudioTests.cpp">
@@ -307,6 +307,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="render\GlyphCacheHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\systems\RenderSystemTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\Button.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1298,7 +1304,7 @@
     <ClInclude Include="inputs\mouse\MouseInputField.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\AudioPlayground.h">
+    <ClInclude Include="test\ui\Workspace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inputs\SignalListCollection.h">
@@ -1329,9 +1335,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="atlas\NewAtlas.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="atlas\NewAtlasHandle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="atlas\NewGlyphAtlas.h">
@@ -1377,6 +1380,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="render\GlyphCacheHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Anchor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\Button.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

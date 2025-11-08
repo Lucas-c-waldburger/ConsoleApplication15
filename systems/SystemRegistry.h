@@ -3,6 +3,7 @@
 #include "CollisionSystem.h"
 #include "PhysicsSystem.h"
 #include "RenderSystem.h"
+#include "NewRenderSystem.h"
 #include "SDLInputSystem.h"
 #include "EventCallbackSystem.h"
 #include "TimerSystem.h"
@@ -23,7 +24,8 @@
 	SpriteAnimationSystem, \
 	EntityStateSystem, \
 	GameLoopSystem, \
-	AudioSystem
+	AudioSystem, \
+	NewRenderSystem
 
 
 using SystemTypeList = TypeList<
@@ -36,6 +38,7 @@ using SystemTypeList = TypeList<
 	SpriteAnimationSystem, 
 	EntityStateSystem,
 	GameLoopSystem,
-	AudioSystem
+	AudioSystem,
+	NewRenderSystem
 >;
 

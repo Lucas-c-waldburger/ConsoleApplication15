@@ -105,6 +105,14 @@ inline constexpr P operator+(P lhs, P rhs)
         lhs.y + rhs.y
     };
 }
+template <SDLPointType P>
+inline constexpr P operator*(P lhs, P rhs)
+{
+    return P{
+        lhs.x * rhs.x,
+        lhs.y * rhs.y
+    };
+}
 
 // Scalar
 template <SDLPointType P, ArithmeticType T>

@@ -1,6 +1,7 @@
 #include "NewGlyphAtlas.h"
 #include <algorithm>
 #include <SDL_ttf.h>
+#include <filesystem>
 #include "../core/ScopedInvoker.h"
 #include "PackingTools.h"
 
@@ -16,20 +17,40 @@ static constexpr size_t GetPlotIndexForChar(char c)
     return static_cast<size_t>(c - kStartChar);
 }
 
+Result<Void> PrepareFontDescriptor(FontDescriptor& descriptor)
+{
+    if (descriptor.fontSize <= 0)
+    {
+        return MAKE_ERROR_FMT("Invalid font size: '{}'", descriptor.fontSize);
+    }
+    if (descriptor.filepath.empty())
+    {
+        return MAKE_ERROR("Font filepath was empty");
+    }
+    if (descriptor.fontName.empty())
+    {
+        descriptor.fontName =
+            std::filesystem::path(descriptor.filepath).stem().string();
+    }
+
+    return Void{};
+}
+
 } // unnamed namespace 
 
 Result<Void> NewGlyphAtlas::LoadImpl(SDL_Renderer* renderer, 
                                      FontDescriptor&& descriptor)
 {
-    fontDescriptor_ = std::move(descriptor);
+    TRY(PrepareFontDescriptor(descriptor));
 
-    TTF_Font* font = TTF_OpenFont(fontDescriptor_.filepath.c_str(), 
-                                  fontDescriptor_.fontSize);
+    TTF_Font* font = TTF_OpenFont(descriptor.filepath.c_str(), 
+                                  descriptor.fontSize);
     if (!font)
     {
         return MAKE_ERROR_FMT("Failed to load font: {}", TTF_GetError());
     }
 
+    fontDescriptor_ = std::move(descriptor);
     fontDescriptor_.fontHeight = TTF_FontHeight(font);
 
     static constexpr size_t numGlyphs = static_cast<size_t>(kEndChar - kStartChar);

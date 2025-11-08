@@ -231,8 +231,10 @@
     <ClCompile Include="systems\SpriteAnimationSystem.cpp" />
     <ClCompile Include="systems\TimerSystem.cpp" />
     <ClCompile Include="render\GlyphFormattingUtils.cpp" />
-    <ClCompile Include="test\AudioPlayground.cpp" />
+    <ClCompile Include="test\ui\Button.cpp" />
+    <ClCompile Include="test\ui\Workspace.cpp" />
     <ClCompile Include="test\catch\render\GlyphCacheHandlerTests.cpp" />
+    <ClCompile Include="test\catch\systems\RenderSystemTests.cpp" />
     <ClCompile Include="test\catch\test_utils\AtlasTestUtils.cpp" />
     <ClCompile Include="test\catch\atlas\GlyphAtlasTests.cpp" />
     <ClCompile Include="test\catch\atlas\SpriteAtlasTests.cpp" />
@@ -254,7 +256,6 @@
     <ClInclude Include="atlas\Atlas.h" />
     <ClInclude Include="atlas\AtlasMap.h" />
     <ClInclude Include="atlas\NewAtlas.h" />
-    <ClInclude Include="atlas\NewAtlasHandle.h" />
     <ClInclude Include="atlas\NewGlyphAtlas.h" />
     <ClInclude Include="atlas\NewTextureRepository.h" />
     <ClInclude Include="atlas\PackingTools.h" />
@@ -287,6 +288,7 @@
     <ClInclude Include="components\driver\ControllerInputCallbackDriver.h" />
     <ClInclude Include="components\util\CallbackUtils.h" />
     <ClInclude Include="components\util\SpriteAnimationUtils.h" />
+    <ClInclude Include="core\Anchor.h" />
     <ClInclude Include="core\CatTypeID.h" />
     <ClInclude Include="ecs\ComponentMasks.h" />
     <ClInclude Include="core\Dictionary.h" />
@@ -591,7 +593,8 @@
     <ClInclude Include="systems\util\DebugDrawUtils.h" />
     <ClInclude Include="render\GlyphFormattingUtils.h" />
     <ClInclude Include="systems\util\RenderUtils.h" />
-    <ClInclude Include="test\AudioPlayground.h" />
+    <ClInclude Include="test\ui\Button.h" />
+    <ClInclude Include="test\ui\Workspace.h" />
     <ClInclude Include="test\callbacks\AnimationCallbacks.h" />
     <ClInclude Include="test\callbacks\GameControllerCallbacks.h" />
     <ClInclude Include="test\catch\CatchUtils.h" />

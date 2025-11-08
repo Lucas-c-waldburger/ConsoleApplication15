@@ -6,37 +6,17 @@
 template <SomeEventData T>
 using EventSignal = Signal<const T&>;
 
-//template <typename Fn>
-//concept EventSignalCompliantFn = requires() {
-//	HasFuncTraits<Fn>; // is a function
-//	std::same_as<typename func_traits<Fn>::return_type, void>; // returns void
-//	func_traits<Fn>::arg_types::size == 1; // single argument
-//	SomeEventData<type_at_index_t<0, typename func_traits<Fn>::arg_types>>; // arg is an event data type
-//	is_const_reference_v<type_at_index_t<0, typename func_traits<Fn>::arg_types>>; // arg is const T&
-//};
-
 namespace detail {
-	template <typename TList>
-	struct event_signal_list;
+template <typename TList>
+struct event_signal_list;
 
-	template <SomeEventData...Ts>
-	struct event_signal_list<TypeList<Ts...>> {
-		using type = std::tuple<EventSignal<Ts>...>;
-	};
+template <SomeEventData...Ts>
+struct event_signal_list<TypeList<Ts...>> {
+	using type = std::tuple<EventSignal<Ts>...>;
+};
 } // detail
 
 using event_signal_list_t = typename detail::event_signal_list<EventDataTypeList>::type;
-
-//template <typename Fn, SomeEventData T>
-//static constexpr bool convertible_to_slot_callback_v =
-//	std::convertible_to<Fn, typename EventSignal<T>::SlotCallbackType>;
-//
-//template <typename Fn>
-//using extracted_raw_event_data_t = valid_signal_fn<Fn>::first_arg_raw;
-
-//template <EventSignalCompliantFn Fn>
-//using extracted_raw_event_data_t =
-//	raw_type_t<type_at_index_t<0, typename func_traits<Fn>::arg_types>>;
 
 class EventSignalList
 {

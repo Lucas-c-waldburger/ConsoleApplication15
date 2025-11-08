@@ -1,4 +1,5 @@
 #pragma once
+#include "../core/Algorithms.h"
 #include "NewGlyphAtlas.h"
 #include "SpriteAtlas.h"
 #include "../components/RenderableComponent.h"
@@ -153,6 +154,17 @@ private:
 		default:
 			return false;
 		}
+	}
+
+	NewGlyphAtlas* FindGlyphAtlasByFontName(std::string_view fontName)
+	{
+		auto& glyphAtlases = GetAtlasVector<NewGlyphAtlas>();
+
+		auto it = core::FindIf(glyphAtlases, [fontName](const auto& atlas) {
+			atlas.GetFontDescriptor().fontName == fontName;
+		});
+
+		return (it != glyphAtlases.end()) ? &(*it) : nullptr;
 	}
 
 	//template <typename T>

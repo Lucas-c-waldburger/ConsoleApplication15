@@ -14,12 +14,9 @@ void RenderTextGlyphs(std::string_view fileName, const TextRenderableGlyphCache&
 {
 	REQUIRE(srcTexture != nullptr);
 
-	SDL_PumpEvents();
-
-	SDLite::Renderer().Clear(SDLite::kColorWhite);
-
 	auto [r, g, b] = textRenderable.profile.mods.color;
 	SDL_SetTextureColorMod(srcTexture, r, g, b);
+	SDL_SetTextureAlphaMod(srcTexture, textRenderable.profile.mods.alpha);
 	SDL_SetTextureBlendMode(srcTexture, SDL_BLENDMODE_BLEND);
 
 	for (const auto& [glyph, destRect, rotCenter] : glyphCache.cache)
@@ -67,7 +64,7 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 	TextRenderableComponent textRenderable{
 		.writer = glyphAtlas.GetTextWriter(),
 		.formatting = {
-			.bounds = { 300, 200 },
+			.bounds = { 500, 200 },
 			.scaleToBounds = false
 		}
 	};
@@ -104,8 +101,37 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 		CHECK(glyphs[i].destRect.h > 0);
 	}
 
+	auto renderOriginalTransparent = 
+		[srcTexture = glyphAtlas.GetSourceTexture(), cacheCopy = glyphCache,
+		 color = textRenderable.profile.mods.color, 
+		tfRot = transform.rotation, flip = textRenderable.profile.flip] {
+
+		SDL_PumpEvents();
+
+		SDLite::Renderer().Clear(SDLite::kColorWhite);
+
+		auto [r, g, b] = color;
+		SDL_SetTextureColorMod(srcTexture, r, g, b);
+		SDL_SetTextureAlphaMod(srcTexture, 90);
+		SDL_SetTextureBlendMode(srcTexture, SDL_BLENDMODE_BLEND);
+
+		for (const auto& [glyph, destRect, rotCenter] : cacheCopy.cache)
+		{
+			if (glyph == NewGlyphAtlas::kNewlineGlyph)
+			{
+				continue;
+			}
+			SDL_RenderCopyEx(SDLite::Renderer(), srcTexture, &glyph.plot.rect, &destRect,
+				static_cast<double>(tfRot + glyph.plot.rotation), &rotCenter, flip);
+		}
+	};
+
 	SECTION("No changes")
 	{
+		SDL_PumpEvents();
+
+		SDLite::Renderer().Clear(SDLite::kColorWhite);
+
 		RenderTextGlyphs("GlyphCacheHandler_no_changes.png",
 			glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
 
@@ -141,6 +167,7 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 			CHECK(oldGlyphs[i].destRect.y != newGlyphs[i].destRect.y);
 		}
 
+		renderOriginalTransparent();
 		RenderTextGlyphs("GlyphCacheHandler_change_transform_pos.png",
 			glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
 
@@ -176,6 +203,7 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 			CHECK(oldGlyphs[i].destRect.y != newGlyphs[i].destRect.y);
 		}
 
+		renderOriginalTransparent();
 		RenderTextGlyphs("GlyphCacheHandler_change_offset_pos.png",
 			glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
 
@@ -211,6 +239,7 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 			CHECK(oldGlyphs[i].destRect.y != newGlyphs[i].destRect.y);
 		}
 
+		renderOriginalTransparent();
 		RenderTextGlyphs("GlyphCacheHandler_change_scale.png",
 			glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
 
@@ -245,6 +274,7 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 			CHECK(oldGlyphs[i].destRect.y != newGlyphs[i].destRect.y);
 		}
 
+		renderOriginalTransparent();
 		RenderTextGlyphs("GlyphCacheHandler_change_rotation.png",
 			glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
 
@@ -284,6 +314,7 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 			}
 		}
 
+		renderOriginalTransparent();
 		RenderTextGlyphs("GlyphCacheHandler_change_text.png",
 			glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
 
@@ -292,34 +323,42 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 
 	SECTION("Change formatting")
 	{
-		textRenderable.formatting.align = TextAlign::Right;
+		static constexpr std::array kOtherTextAligns = {
+			std::make_pair(TextAlign::Right, "right"),
+			std::make_pair(TextAlign::Center, "center")
+		};
 
-		auto [oldGlyphs, oldCtx] = glyphCache;
-
-		GlyphCacheHandler::UpdateGlyphCache(glyphAtlas, textRenderable,
-											glyphCache, transform);
-
-		auto& [newGlyphs, newCtx] = glyphCache;
-		CHECK(newCtx.transform == transform);
-		CHECK(newCtx.formatting == textRenderable.formatting);
-		CHECK(newCtx.sourceAtlas == textRenderable.writer.sourceAtlas);
-		CHECK(newCtx.offset == textRenderable.profile.offset);
-
-		REQUIRE(newGlyphs.size() == oldGlyphs.size());
-		for (size_t i = 0; i < newGlyphs.size(); i++)
+		for (const auto& [align, alignStr] : kOtherTextAligns)
 		{
-			CHECK(oldGlyphs[i].glyph == newGlyphs[i].glyph);
-			//CHECK(oldGlyphs[i].rotationCenter != newGlyphs[i].rotationCenter);
+			textRenderable.formatting.align = align;
 
-			CHECK(oldGlyphs[i].destRect.w == newGlyphs[i].destRect.w);
-			CHECK(oldGlyphs[i].destRect.h == newGlyphs[i].destRect.h);
+			auto [oldGlyphs, oldCtx] = glyphCache;
 
-			CHECK(oldGlyphs[i].destRect.x != newGlyphs[i].destRect.x);
-			CHECK(oldGlyphs[i].destRect.y != newGlyphs[i].destRect.y);
+			GlyphCacheHandler::UpdateGlyphCache(glyphAtlas, textRenderable,
+				glyphCache, transform);
+
+			auto& [newGlyphs, newCtx] = glyphCache;
+			CHECK(newCtx.transform == transform);
+			CHECK(newCtx.formatting == textRenderable.formatting);
+			CHECK(newCtx.sourceAtlas == textRenderable.writer.sourceAtlas);
+			CHECK(newCtx.offset == textRenderable.profile.offset);
+
+			REQUIRE(newGlyphs.size() == oldGlyphs.size());
+			for (size_t i = 0; i < newGlyphs.size(); i++)
+			{
+				CHECK(oldGlyphs[i].glyph == newGlyphs[i].glyph);
+				//CHECK(oldGlyphs[i].rotationCenter != newGlyphs[i].rotationCenter);
+
+				CHECK(oldGlyphs[i].destRect.w == newGlyphs[i].destRect.w);
+				CHECK(oldGlyphs[i].destRect.h == newGlyphs[i].destRect.h);
+
+				//CHECK(oldGlyphs[i].destRect.x != newGlyphs[i].destRect.x);
+			}
+
+			renderOriginalTransparent();
+			RenderTextGlyphs(std::format("GlyphCacheHandler_change_text_align_{}.png", alignStr),
+				glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
 		}
-
-		RenderTextGlyphs("GlyphCacheHandler_change_text_align.png",
-			glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
 
 		SDLite::Exit();
 	}

@@ -16,8 +16,8 @@ enum ChangeLog : uint8_t
 	PositionChanged = 1 << 3,
 	ScaleChanged = 1 << 4,
 	AtlasChanged = 1 << 5,
-	NeedsRepopulate = TextChanged | AtlasChanged,
-	NeedsReprojection = FormatChanged | ScaleChanged | NeedsRepopulate
+	NeedsReprojection = FormatChanged | TextChanged | AtlasChanged,
+	NeedsReposition = PositionChanged | NeedsReprojection | ScaleChanged | RotationChanged
 };
 
 uint8_t MakeChangeLog(const TextRenderableComponent& textRenderable,
@@ -27,24 +27,31 @@ uint8_t MakeChangeLog(const TextRenderableComponent& textRenderable,
 struct FormatArgs
 {
 	Dimensions<int> bounds = { 0, 0 };
-	SDL_FPoint scale = { 0.0f, 0.0f };
+	SDL_FPoint layoutScale = { 1.0f, 1.0f };
 	SDL_Point start = { 0, 0 };
 	int numNewlines = 0;
 	int fontHeight = 0;
 	int totalHeight = 0;
 };
 
-FormatArgs MakeFormatArgs(std::string_view text, std::vector<GlyphCacheData>& cache,
-						  Dimensions<int> bounds, bool scaleToFit,
-						  const Transform& transform, const NewGlyphAtlas& glyphAtlas);
+//FormatArgs MakeFormatArgs(std::string_view text, std::vector<GlyphCacheData>& cache,
+//						  Dimensions<int> bounds, bool scaleToFit, int fontHeight);
+
+FormatArgs MakeFormatArgs(const TextRenderableComponent& textRenderable,
+						  const TextRenderableGlyphCache& cacheComponent, int fontHeight);
+
+int GetFormatArgsStartX(const TextRenderableComponent& textRenderable, const FormatArgs& formatArgs,
+						const std::vector<GlyphCacheData>& cache);
 
 int CalculateGlyphRowWidth(const std::vector<GlyphCacheData>& cache,
 						   int currentPos, int newlinePos, float scaleX);
 
-float GetScaleToFitFactor(std::string_view text,
-						  std::vector<GlyphCacheData>& cache,
-						  const FormatArgs& format);
+int CalculateLongestRowWidth(std::string_view text, const FormatArgs& format,
+							 const std::vector<GlyphCacheData>& cache);
 
-SDL_Rect ComputeGlyphDataBoundingBox(const std::vector<GlyphCacheData>& cache);
+float GetScaleToFitFactor(std::string_view text, const std::vector<GlyphCacheData>& cache,
+						  const FormatArgs& formatArgs);
+
+SDL_FRect ComputeGlyphDataBoundingBox(const std::vector<GlyphCacheData>& cache);
 
 } // util

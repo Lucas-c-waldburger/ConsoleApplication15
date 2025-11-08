@@ -2,6 +2,7 @@
 #include <SDL_rect.h>
 #include <string_view>
 #include <vector>
+#include "../core/Anchor.h"
 
 class NewGlyphAtlas;
 struct Transform;
@@ -22,15 +23,16 @@ public:
 										   std::vector<GlyphCacheData>& cache,
 										   const NewGlyphAtlas& glyphAtlas);
 
-	static void ReprojectGlyphCacheGeometry(std::vector<GlyphCacheData>& cache,
+	static void ReprojectGlyphCacheGeometry(TextRenderableGlyphCache& cacheComponent,
 											const TextRenderableComponent& textRenderable,
-											const Transform& transform,
-											SDL_Rect projectedRect,
 											const NewGlyphAtlas& glyphAtlas);
 
-	static void AdjustGlyphCacheRotation(std::vector<GlyphCacheData>& cache,
-										 SDL_Rect projectedRenderRect, float angleDegrees);
+	static void ScaleGlyphCache(std::vector<GlyphCacheData>& cache, Anchor scaleAnchor,
+								SDL_FPoint tfScale);
 
-	static void AdjustGlyphCachePosition(TextRenderableGlyphCache& cacheComponent,
-										 SDL_FPoint newPos, SDL_FPoint newOffset);
+	static void RotateGlyphCache(std::vector<GlyphCacheData>& cache, Anchor rotateAnchor,
+								 float angleDegrees);
+
+	static void RepositionGlyphCache(TextRenderableGlyphCache& cacheComponent,
+									 SDL_FPoint newPos, SDL_FPoint newOffset);
 };

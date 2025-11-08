@@ -1,10 +1,11 @@
 #include "SpriteAtlas.h"
-#include "../core/commonObjects.h"
 #include <SDL_image.h>
 #include <cassert>
 #include <ranges>
+#include <filesystem>
 #include "PackingTools.h"
 #include "../core/Algorithms.h"
+#include "../core/commonObjects.h"
 #include "../core/ScopedInvoker.h"
 
 namespace {
@@ -239,6 +240,12 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
     }
 
     assert(spriteInfo_.size() == sprites_.size());
+
+    if (descriptor.spriteName.empty())
+    {
+        descriptor.spriteName = 
+            std::filesystem::path(descriptor.filepath).stem().string();
+    }
 
     spriteInfo_.emplace_back(SpriteInfo{
         .spriteName = std::move(descriptor.spriteName),
