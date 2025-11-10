@@ -5,6 +5,50 @@
 
 namespace ui {
 
+auto Button::GetButtonPressCallback()
+{
+	return [this](const events::MouseInput& ev) {
+		if (ev.input.state != InputState::Pressed ||
+			ev.input.state != InputState::Released)
+		{
+			return;
+		}
+
+		SDL_FRect bounds = GetButtonBoundingBox();
+		SDL_FPoint mousePos = ev.input.value.cursor.position.absolute;
+		bool colliding = SDL_PointInFRect(&mousePos, &bounds);
+
+		auto& sprite = self_.GetComponent<SpriteRenderableComponent>().sprite;
+
+		if (ev.input.state == InputState::Pressed && colliding)
+		{
+			assert(!wasPressed_);
+			wasPressed_ = true;
+			sprite = sprites_.down;
+
+			if (txt_.IsValid()) // scoot text down to look like depressed
+			{
+				AdjustTextYPos(3.0f);
+			}
+		}
+		else if (ev.input.state == InputState::Released)
+		{
+			if (wasPressed_ && colliding && onClick_)
+			{
+				onClick_();
+			}
+
+			wasPressed_ = false;
+			sprite = sprites_.up;
+
+			if (txt_.IsValid()) // return text to normal position
+			{
+				AdjustTextYPos(-3.0f);
+			}
+		}
+	};
+}
+
 Button::Button(const Handle<Button>& handle, EventBus2& bus, 
 	const ButtonSprites& sprites, const GlyphTextWriter& writer, SDL_FPoint pos,
 	Callback&& onClick, std::string_view text, SDL_FPoint scale) :
@@ -67,49 +111,7 @@ void Button::AdjustTextYPos(float yAdjust)
 	txtTf.position.y = (selfTf.position.y + yAdjust) * txtTf.scale.y;
 }
 
-auto Button::GetButtonPressCallback()
-{
-	return [this](const events::MouseInput& ev) {
-		if (ev.input.state != InputState::Pressed ||
-			ev.input.state != InputState::Released)
-		{
-			return;
-		}
 
-		SDL_FRect bounds = GetButtonBoundingBox();
-		SDL_FPoint mousePos = ev.input.value.cursor.position.absolute;
-		bool colliding = SDL_PointInFRect(&mousePos, &bounds);
-
-		auto& sprite = self_.GetComponent<SpriteRenderableComponent>().sprite;
-
-		if (ev.input.state == InputState::Pressed && colliding)
-		{
-			assert(!wasPressed_);
-			wasPressed_ = true;
-			sprite = sprites_.down;
-
-			if (txt_.IsValid()) // scoot text down to look like depressed
-			{
-				AdjustTextYPos(3.0f);
-			}
-		}
-		else if (ev.input.state == InputState::Released)
-		{
-			if (wasPressed_ && colliding && onClick_)
-			{
-				onClick_();
-			}
-
-			wasPressed_ = false;
-			sprite = sprites_.up;
-
-			if (txt_.IsValid()) // return text to normal position
-			{
-				AdjustTextYPos(-3.0f);
-			}
-		}
-	};
-}
 
 Result<Button::ButtonSprites> 
 Button::LoadButtonSprites(SDL_Renderer* renderer, NewTextureRepository& repo, 

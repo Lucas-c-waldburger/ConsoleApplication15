@@ -97,6 +97,7 @@ struct hash<std::pair<T1, T2>> {
 template<class... Ts> struct Overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> Overloaded(Ts...) -> Overloaded<Ts...>;
 
+
 static constexpr int GetNextPowerOfTwo(int x)
 {
     if (x <= 0) return 1;

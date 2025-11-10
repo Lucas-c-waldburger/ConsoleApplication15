@@ -9,7 +9,8 @@
 #include "../core/Hooks.h"
 #include "../core/Counter.h"
 #include "../systems/SystemManager.h"
-#include "../atlas/TextureRepository.h"
+//#include "../atlas/TextureRepository.h"
+#include "../atlas/NewTextureRepository.h"
 #include "../events/EventBus2.h"
 
 class SceneFixture
@@ -51,25 +52,11 @@ public:
 	template <typename T> 
 	std::unique_ptr<T>& GetSystem() { return systems_.GetSystem<T>(); }
 	HookManager& GetHooks() { return hooks_; }
-	TextureRepository& GetTextureRepository() { return textureRepo_; }
+	NewTextureRepository& GetTextureRepository() { return textureRepo_; }
 	B2World& GetWorld() { return world_; }
 	ScriptManager& GetScripts() { return scripts_; }
-
-
-	// helpers
-	template <SupportedAtlasType T, typename LoadData>
-	Result<Handle<T>> LoadTextureAtlas(LoadData&& loadData)
-	{
-		return textureRepo_.LoadNewAtlas<T>(SDLite::Renderer(), std::forward<LoadData>(loadData));
-	}
-	Result<Handle<SpriteSeriesAtlas>> LoadNewSpriteSeriesAtlas(SpriteSeriesResourcePackets&& packets)
-	{
-		return textureRepo_.LoadNewAtlas<SpriteSeriesAtlas>(SDLite::Renderer(), std::move(packets));
-	}
-	Result<Handle<GlyphAtlas>> LoadNewGlyphAtlas(FontResourcePacket& packet)
-	{
-		return textureRepo_.LoadNewAtlas<GlyphAtlas>(SDLite::Renderer(), std::move(packet));
-	}
+	SDL_Renderer* GetRenderer() { return SDLite::Renderer(); }
+	
 	float GetDeltaTime() const { return systems_.GetSystem<GameLoopSystem>()->GetDeltaTime(); }
 
 	// bundled processes
@@ -85,10 +72,27 @@ public:
 	// creation
 	static Result<std::shared_ptr<SceneFixture>> GetInstance();
 
+	Result<NewGlyphAtlas*> LoadGlyphAtlas(const Result<std::string>& fpResult, int fontSize) {
+		if (!fpResult.Success())
+		{
+			return fpResult.GetError();
+		}
+
+		TRY(NewGlyphAtlas::Create(SDLite::Renderer(), {
+			.filepath = fpResult.GetValue(),
+			.fontSize = fontSize
+		}), glyphAtlas);
+
+		auto handle = glyphAtlas.GetHandle();
+
+		return textureRepo_.AttachAtlas(std::move(glyphAtlas));
+	}
+
 private:
 	void UpdateTimers();
 
-	TextureRepository textureRepo_;
+	//TextureRepository textureRepo_;
+	NewTextureRepository textureRepo_;
 	impl::SystemManager systems_;
 	HookManager hooks_;
 	B2World world_;

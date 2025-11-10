@@ -172,16 +172,18 @@ Result<Void> SceneFixture::UpdateAudio()
 
 Result<Void> SceneFixture::UpdateRender()
 {
-	assert(systems_.IsSystemInitialized<RenderSystem>());
+	//assert(systems_.IsSystemInitialized<RenderSystem>());
+	assert(systems_.IsSystemInitialized<NewRenderSystem>());
 	assert(systems_.IsSystemInitialized<SpriteAnimationSystem>());
 	assert(systems_.IsSystemInitialized<GameLoopSystem>());
 
-	systems_.GetSystem<SpriteAnimationSystem>()->Update(textureRepo_);
+	//systems_.GetSystem<SpriteAnimationSystem>()->Update(textureRepo_);
 
 	systems_.GetSystem<GameLoopSystem>()->UpdateLoopStepRender(eventBus_);
 
 	auto& cam = systems_.GetSystem<CameraSystem>()->GetCamera();
-	systems_.GetSystem<RenderSystem>()->Update(SDLite::Renderer(), cam, textureRepo_);
+	//systems_.GetSystem<RenderSystem>()->Update(SDLite::Renderer(), cam, textureRepo_);
+	systems_.GetSystem<NewRenderSystem>()->Update(SDLite::Renderer(), cam, textureRepo_);
 
 	return Void{};
 }
@@ -235,8 +237,8 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 
 	fixture->world_ = B2World::Create(0, 9.8f);
 
-	fixture->systems_.InitializeSystem<RenderSystem>();
-	fixture->systems_.InitializeSystem<SpriteAnimationSystem>();
+	//fixture->systems_.InitializeSystem<RenderSystem>();
+	//fixture->systems_.InitializeSystem<SpriteAnimationSystem>();
 	fixture->systems_.InitializeSystem<PhysicsSystem>();
 	fixture->systems_.InitializeSystem<SDLInputSystem>();
 	fixture->systems_.InitializeSystem<TimerSystem>();

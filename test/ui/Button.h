@@ -1,5 +1,7 @@
 #pragma once
 #include "../../ecs/Ecs.h"
+#include "../../core/SizedEnumMap.h"
+#include <string_view>
 
 class EventBus2;
 class NewTextureRepository;

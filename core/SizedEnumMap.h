@@ -1,5 +1,6 @@
 #pragma once
 #include "SizedEnum.h"
+#include "Literals.h"
 #include <array>
 #include <cassert>
 
@@ -11,39 +12,75 @@ class SizedEnumMap
 public:
 	using MapType = std::array<Value, enum_size_v<EnumKey>>;
 
-	template <typename MapRef>
+	template <typename V>
 	struct IteratorTemplate
 	{
+		using MapPtr = 
+			std::conditional_t<std::is_const_v<V>, const MapType*, MapType*>;
+
+		struct Item
+		{
+			constexpr Item(EnumKey k, V& v) : key(k), val(v) {}
+
+			EnumKey key;
+			V& val;
+
+			friend constexpr bool operator==(const Item& lhs, const Item& rhs) {
+				return lhs.key == rhs.key && lhs.val == rhs.val;
+			}
+		};
+
 		using iterator_category = std::forward_iterator_tag;
-		using value_type = std::pair<EnumKey, std::remove_reference_t<MapRef>&>;
+		using value_type = Item;
 		using difference_type = std::ptrdiff_t;
-		using reference = std::pair<EnumKey, MapRef&>;
+		using reference = Item&;
+		using pointer = Item*;
 
-		constexpr IteratorTemplate(MapRef& map, size_t idx) : map_(map), idx_(idx) {}
+		constexpr IteratorTemplate(MapPtr arr = nullptr, std::size_t idx = 0)
+			: arr_(arr), idx_(idx) {}
 
-		constexpr reference operator*() const {
-			return { static_cast<EnumKey>(idx_), map_[idx_] };
+		constexpr value_type operator*() const
+		{
+			return Item( static_cast<EnumKey>(idx_), (*arr_)[idx_] );
 		}
 
-		constexpr IteratorTemplate& operator++() { ++idx_; return *this; }
-		constexpr IteratorTemplate operator++(int) { IteratorTemplate tmp = *this; ++idx_; return tmp; }
+		constexpr IteratorTemplate& operator++() 
+		{ 
+			++idx_;
+			return *this; 
+		}
+		constexpr IteratorTemplate operator++(int) 
+		{ 
+			IteratorTemplate tmp = *this; 
+			++(*this);
+			return tmp; 
+		}
 
-		constexpr bool operator==(const IteratorTemplate& other) const { return idx_ == other.idx_; }
-		constexpr bool operator!=(const IteratorTemplate& other) const { return idx_ != other.idx_; }
+		constexpr bool operator==(IteratorTemplate const& other) const 
+		{ 
+			return arr_ == other.arr_ && idx_ == other.idx_;
+		}
+		constexpr bool operator!=(IteratorTemplate const& other) const 
+		{ 
+			return !(*this == other);
+		}
 
 	private:
-		MapRef& map_;
+		MapPtr arr_;
 		size_t idx_;
 	};
 
-	using Iterator = IteratorTemplate<Value>;
-	using ConstIterator = IteratorTemplate<const Value>;
+	using iterator = IteratorTemplate<Value>;
+	using const_iterator = IteratorTemplate<const Value>;
 
-	constexpr Iterator begin() { return Iterator(map_, 0); }
-	constexpr Iterator end() { return Iterator(map_, map_.size()); }
+	constexpr iterator begin() { return iterator(&map_, 0_uz); }
+	constexpr iterator end() { return iterator(&map_, map_.size()); }
 
-	constexpr ConstIterator begin() const { return ConstIterator(map_, 0); }
-	constexpr ConstIterator end()   const { return ConstIterator(map_, map_.size()); }
+	constexpr const_iterator begin() const { return const_iterator(&map_, 0_uz); }
+	constexpr const_iterator end()   const { return const_iterator(&map_, map_.size()); }
+
+	constexpr const_iterator cbegin() const { return begin(); }
+	constexpr const_iterator cend() const { return end(); }
 
 	template <typename K, typename V, typename...Rest>
 		requires (std::same_as<std::remove_cvref_t<K>, EnumKey> && 
@@ -84,20 +121,12 @@ public:
 
 	constexpr auto& operator[](EnumKey key)
 	{
-		auto idx = static_cast<std::underlying_type_t<EnumKey>>(key);
-
-		//assert(idx >= 0 && idx < enum_size_v<EnumKey>);
-
-		return map_[static_cast<size_t>(idx)];
+		return map_[static_cast<size_t>(key)];
 	}
 
 	constexpr const auto& operator[](EnumKey key) const
 	{
-		auto idx = static_cast<std::underlying_type_t<EnumKey>>(key);
-
-		//assert(idx >= 0 && idx < enum_size_v<EnumKey>);
-
-		return map_[static_cast<size_t>(idx)];
+		return map_[static_cast<size_t>(key)];
 	}
 
 	constexpr auto& operator[](size_t idx)
@@ -110,13 +139,13 @@ public:
 		return map_[idx];
 	}
 
+	template <EnumKey e>
+	constexpr auto& operator()() { return map_[static_cast<size_t>(e)]; }
+
+	template <EnumKey e>
+	constexpr const auto& operator()() const { return map_[static_cast<size_t>(e)]; }
+
 	constexpr size_t Size() const { return enum_size_v<EnumKey>; }
-
-	//constexpr auto begin() { return map_.begin(); }
-	//constexpr auto begin() const { return map_.begin(); }
-
-	//constexpr auto end() { return map_.end(); }
-	//constexpr auto end() const { return map_.end(); }
 
 private:
 	MapType map_;

@@ -161,7 +161,7 @@ private:
 		auto& glyphAtlases = GetAtlasVector<NewGlyphAtlas>();
 
 		auto it = core::FindIf(glyphAtlases, [fontName](const auto& atlas) {
-			atlas.GetFontDescriptor().fontName == fontName;
+			return atlas.GetFontDescriptor().fontName == fontName;
 		});
 
 		return (it != glyphAtlases.end()) ? &(*it) : nullptr;
@@ -280,7 +280,7 @@ public:
 	}
 
 	template <SomeTextureAtlas T>
-	Result<Void> AttachAtlas(T&& atlas)
+	Result<T*> AttachAtlas(T&& atlas)
 	{
 		if (!atlas.IsLoaded())
 		{
@@ -296,9 +296,9 @@ public:
 		auto [_, inserted] = indexMap_.emplace(atlas.GetHandle(), MakeIndexData(vec));
 		assert(inserted);
 
-		vec.emplace_back(std::move(atlas));
+		auto& stored = vec.emplace_back(std::move(atlas));
 
-		return Void{};
+		return &stored;
 	}
 
 	bool DestroyAtlas(const Handle<NewTextureAtlas>& handle)
