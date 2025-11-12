@@ -741,6 +741,8 @@
     <Image Include="resources\sprites\particles\circle_0.png" />
     <Image Include="resources\sprites\particles\symbol\symbol_0.png" />
     <Image Include="resources\sprites\particles\symbol\symbol_1.png" />
+    <Image Include="resources\sprites\ui\button\button_rectangle_depth_gradient.png" />
+    <Image Include="resources\sprites\ui\button\button_rectangle_gradient.png" />
     <Image Include="test\catch\test_images\airborne_series_sprites.png" />
     <Image Include="test\catch\test_images\GlyphCacheHandler_change_offset_pos.png" />
     <Image Include="test\catch\test_images\GlyphCacheHandler_change_rotation.png" />

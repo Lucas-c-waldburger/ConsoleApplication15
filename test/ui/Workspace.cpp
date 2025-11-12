@@ -16,6 +16,11 @@ Result<Workspace> Workspace::Create(SDL_Renderer* renderer,
 	{
 		const auto& [upName, downName] = spritesFilenames;
 
+		if (upName.empty() || downName.empty())
+		{
+			continue;
+		}
+
 		TRY(Button::LoadButtonSprites(renderer, repo, upName, downName), sprites);
 
 		ws.buttonData_.spritesByColor[color] = std::move(sprites);
@@ -44,7 +49,9 @@ Result<Handle<Button>> Workspace::PlaceButton(Button::Params&& params)
 
 	auto handle = Handle<Button>::Create();
 
-	buttonData_.buttons.try_emplace(handle, Button{
+	auto& newButton = buttonData_.buttons[handle];
+
+	newButton.Init(
 		handle,
 		*eventBus_,
 		buttonData_.spritesByColor[params.color],
@@ -53,7 +60,20 @@ Result<Handle<Button>> Workspace::PlaceButton(Button::Params&& params)
 		std::move(params.onClick),
 		params.text,
 		params.scale
-	});
+	);
+
+	assert(newButton.IsValid());
+
+	//buttonData_.buttons.try_emplace(handle, Button{
+	//	handle,
+	//	*eventBus_,
+	//	buttonData_.spritesByColor[params.color],
+	//	buttonData_.writer,
+	//	params.position,
+	//	std::move(params.onClick),
+	//	params.text,
+	//	params.scale
+	//});
 
 	return handle;
 }

@@ -70,7 +70,10 @@ void MouseInputUpdater::Update(const SDL_Event& ev)
 		auto btnSource = static_cast<Source>(ev.button.button);
 		auto& input = inputs_[btnSource];
 
-		input.state = (SDL_MOUSEBUTTONDOWN) ? InputState::Pressed : InputState::Released;
+		input.state = (ev.type == SDL_MOUSEBUTTONDOWN) 
+			? InputState::Pressed 
+			: InputState::Released;
+
 		input.stateDuration = 0;
 
 		size_t idx = static_cast<size_t>(btnSource);
@@ -128,29 +131,31 @@ void MouseInputUpdater::FinalizeAndPushEvents(float delta, EventBus2& bus)
 		{
 			if (IsInputSourceButton(input.source))
 			{
-				// already updated state during the update loop, skip
-				continue;
+				// already updated state during the update loop, skip state update
 			}
+			else
+			{ 
+				// cursor or wheel
+				const auto lastState = input.state;
 
-			// cursor or wheel
-			const auto lastState = input.state;
+				input.state = (input.source == Source::Cursor) ?
+					GetNextCursorOrWheelState(lastState, cursorValue_.position.relative) :
+					GetNextCursorOrWheelState(lastState, wheelValue_.scroll);
 
-			input.state = (input.source == Source::Cursor) ?
-				GetNextCursorOrWheelState(lastState, cursorValue_.position.relative) :
-				GetNextCursorOrWheelState(lastState, wheelValue_.scroll);
+				assert(input.state != InputState::None);
 
-			assert(input.state != InputState::None);
-
-			input.stateDuration = (input.state == InputState::Held)
-				? input.stateDuration + static_cast<uint32_t>(delta * 1000.0f)
-				: 0;				
+				input.stateDuration = (input.state == InputState::Held)
+					? input.stateDuration + static_cast<uint32_t>(delta * 1000.0f)
+					: 0;			
+			}
 		}
 
 		if (input.state != InputState::None)
 		{
 			events::MouseInput mouseInputEvent{ .input = input };
 
-			if (input.source == Source::Cursor)
+			if (IsInputSourceButton(input.source) || 
+				input.source == Source::Cursor)
 			{
 				mouseInputEvent.input.value.cursor = cursorValue_;
 			}

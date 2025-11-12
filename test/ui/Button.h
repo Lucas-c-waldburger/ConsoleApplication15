@@ -42,8 +42,8 @@ public:
 
 	static constexpr std::string_view kButtonUpSpriteName = "button_up";
 	static constexpr std::string_view kButtonDownSpriteName = "button_down";
-	static constexpr std::string_view kButtonUpFilename = "ui/button/button_rectangle_depth_gradient.png";
-	static constexpr std::string_view kButtonDownFilename = "ui/button/button_rectangle_gradient.png";
+	static constexpr std::string_view kButtonUpFilename = "ui/button/button_rectangle_gradient.png";
+	static constexpr std::string_view kButtonDownFilename = "ui/button/button_rectangle_depth_gradient.png";
 	static constexpr std::string_view kButtonFontFilename = "GoNotoKurrent-Bold.ttf";
 
 	using StringViewPair = std::pair<std::string_view, std::string_view>;
@@ -52,17 +52,48 @@ public:
 		Color::Green, StringViewPair{kButtonDownFilename, kButtonUpFilename}
 	};
 
-	Button(const Handle<Button>& handle, EventBus2& bus, const ButtonSprites& sprites,
-		   const GlyphTextWriter& writer, SDL_FPoint pos,
-		   Callback&& onClick, std::string_view text, SDL_FPoint scale);
-
+	Button() = default;
+	//Button(const Handle<Button>& handle, EventBus2& bus, const ButtonSprites& sprites,
+	//	   const GlyphTextWriter& writer, SDL_FPoint pos,
+	//	   Callback&& onClick, std::string_view text, SDL_FPoint scale);
 	~Button();
 
 	Button(const Button&) = delete;
 	Button& operator=(const Button&) = delete;
-
+	
 	Button(Button&&) noexcept = default;
 	Button& operator=(Button&&) noexcept = default;
+
+	void Init(const Handle<Button>& handle, EventBus2& bus, const ButtonSprites& sprites,
+			  const GlyphTextWriter& writer, SDL_FPoint pos,
+			  Callback&& onClick, std::string_view text, SDL_FPoint scale);
+
+	bool IsValid() const { return handle_.IsValid() && self_.IsValid(); }
+
+	//Button(Button&& other) noexcept : handle_(other.handle_), self_(other.self_),
+	//	txt_(other.txt_), sprites_(std::move(other.sprites_)),
+	//	onClick_(std::move(other.onClick_)), wasPressed_(other.wasPressed_)
+	//{
+	//	other.self_ = {};
+	//	other.txt_ = {};
+	//}
+
+	//Button& operator=(Button&& other) noexcept
+	//{
+	//	if (this != &other)
+	//	{
+	//		handle_ = other.handle_;
+	//		self_ = other.self_;
+	//		txt_ = other.txt_;
+	//		sprites_ = std::move(other.sprites_);
+	//		onClick_ = std::move(other.onClick_);
+	//		wasPressed_ = other.wasPressed_;
+
+	//		other.self_ = {};
+	//		other.txt_ = {};
+	//	}
+	//	return *this;
+	//}
 
 	Handle<Button> GetHandle() const { return handle_; }
 

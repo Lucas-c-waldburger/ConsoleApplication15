@@ -174,7 +174,7 @@ Result<Void> SceneFixture::UpdateRender()
 {
 	//assert(systems_.IsSystemInitialized<RenderSystem>());
 	assert(systems_.IsSystemInitialized<NewRenderSystem>());
-	assert(systems_.IsSystemInitialized<SpriteAnimationSystem>());
+	//assert(systems_.IsSystemInitialized<SpriteAnimationSystem>());
 	assert(systems_.IsSystemInitialized<GameLoopSystem>());
 
 	//systems_.GetSystem<SpriteAnimationSystem>()->Update(textureRepo_);

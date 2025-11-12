@@ -22,8 +22,8 @@ struct DebugDraw
 };
 struct DebugDrawSet
 {
-    DebugDraw boundingBox = { .on = true, .color = SDLite::kColorRed };
-    DebugDraw collider = { .on = true, .color = SDLite::kColorBlue };
+    DebugDraw boundingBox = { .on = false, .color = SDLite::kColorRed };
+    DebugDraw collider = { .on = false, .color = SDLite::kColorBlue };
 };
 
 struct RenderProfile

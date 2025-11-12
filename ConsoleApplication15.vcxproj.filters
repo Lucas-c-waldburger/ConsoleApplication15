@@ -1807,6 +1807,12 @@
     <Image Include="test\catch\test_images\GoNotoCurrent_Regular_font_glyphs_color_mod.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="resources\sprites\ui\button\button_rectangle_depth_gradient.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\button\button_rectangle_gradient.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\scripts\b2body_test.lua" />

@@ -137,7 +137,7 @@ public:
     {
         const auto entityIndex = GetEntity_tIndex(entity);
 
-        assert(entityIndex < kMaxEntities);
+        assert(entityIndex < kMaxEntityIndex);
 
         indexWithEntityIdxToGetComponentSignature_[entityIndex] |= T::componentBit;
 
@@ -151,7 +151,7 @@ public:
     {
         const auto entityIndex = GetEntity_tIndex(entity);
 
-        assert(entityIndex < kMaxEntities);
+        assert(entityIndex < kMaxEntityIndex);
 
         indexWithEntityIdxToGetComponentSignature_[entityIndex] |= T::componentBit;
 

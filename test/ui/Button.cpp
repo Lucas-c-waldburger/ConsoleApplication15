@@ -8,7 +8,7 @@ namespace ui {
 auto Button::GetButtonPressCallback()
 {
 	return [this](const events::MouseInput& ev) {
-		if (ev.input.state != InputState::Pressed ||
+		if (ev.input.state != InputState::Pressed &&
 			ev.input.state != InputState::Released)
 		{
 			return;
@@ -49,16 +49,63 @@ auto Button::GetButtonPressCallback()
 	};
 }
 
-Button::Button(const Handle<Button>& handle, EventBus2& bus, 
-	const ButtonSprites& sprites, const GlyphTextWriter& writer, SDL_FPoint pos,
-	Callback&& onClick, std::string_view text, SDL_FPoint scale) :
-	self_(ECS::CreateEntity()), onClick_(std::move(onClick)),
-	sprites_(sprites), handle_(handle)
+//Button::Button(const Handle<Button>& handle, EventBus2& bus, 
+//	const ButtonSprites& sprites, const GlyphTextWriter& writer, SDL_FPoint pos,
+//	Callback&& onClick, std::string_view text, SDL_FPoint scale) :
+//	self_(ECS::CreateEntity()), onClick_(std::move(onClick)),
+//	sprites_(sprites), handle_(handle)
+//{
+//	auto& tf = self_.AddComponent(Transform{ .position = pos, .scale = scale });
+//	auto& r = self_.AddComponent(SpriteRenderableComponent{
+//		.sprite = sprites.up
+//	});
+//
+//	auto& tks = self_.AddComponent(SignalTokenStorage{});
+//	tks.signalTokens.push_back(bus.ConnectToInput(
+//		MouseInputSource::LeftButton, GetButtonPressCallback()));
+//
+//	if (!text.empty())
+//	{
+//		txt_ = ECS::CreateEntity();
+//		auto& txTf = txt_.AddComponent<Transform>();
+//		txTf = tf;
+//
+//		int boundsW = r.sprite.plot.rect.w * tf.scale.x * 0.8f;
+//		int boundsH = r.sprite.plot.rect.h * tf.scale.y * 0.8f;
+//
+//		auto& txR = txt_.AddComponent(TextRenderableComponent{
+//			.writer = writer,
+//			.formatting = {
+//				.bounds = { boundsW, boundsH },
+//				.align = TextAlign::Center,
+//				.scaleToBounds = true
+//			}
+//		});
+//
+//		txR.writer.text = text;
+//	}
+//}
+
+Button::~Button()
 {
+	txt_.Destroy();
+	self_.Destroy();
+}
+
+void Button::Init(const Handle<Button>& handle, EventBus2& bus, 
+				  const ButtonSprites& sprites, const GlyphTextWriter& writer, 
+				  SDL_FPoint pos, Callback&& onClick, std::string_view text, 
+				  SDL_FPoint scale)
+{
+	self_ = ECS::CreateEntity();
+	onClick_ = std::move(onClick);
+	sprites_ = std::move(sprites);
+	handle_ = handle;
+
 	auto& tf = self_.AddComponent(Transform{ .position = pos, .scale = scale });
 	auto& r = self_.AddComponent(SpriteRenderableComponent{
 		.sprite = sprites.up
-	});
+		});
 
 	auto& tks = self_.AddComponent(SignalTokenStorage{});
 	tks.signalTokens.push_back(bus.ConnectToInput(
@@ -80,16 +127,10 @@ Button::Button(const Handle<Button>& handle, EventBus2& bus,
 				.align = TextAlign::Center,
 				.scaleToBounds = true
 			}
-		});
+			});
 
 		txR.writer.text = text;
 	}
-}
-
-Button::~Button()
-{
-	txt_.Destroy();
-	self_.Destroy();
 }
 
 SDL_FRect Button::GetButtonBoundingBox() const
@@ -117,8 +158,7 @@ Result<Button::ButtonSprites>
 Button::LoadButtonSprites(SDL_Renderer* renderer, NewTextureRepository& repo, 
 						  std::string_view buttonUpFilename, 
 						  std::string_view buttonDownFilename)
-{
-	ButtonSprites sprites;
+{	ButtonSprites sprites;
 
 	TRY(ResourcePath::Sprite(buttonUpFilename), btnUpFilepath);
 	TRY(ResourcePath::Sprite(buttonDownFilename), btnDownFilepath);

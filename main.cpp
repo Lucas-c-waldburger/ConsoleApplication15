@@ -29,8 +29,10 @@ int main(int argc, char* argv[])
 
     auto entity = ECS::CreateEntity();
 
-    auto& tf = entity.AddComponent(Transform{ .position = SDLite::kFWindowCenter });
-    tf.position.y -= 100;
+    auto& tf = entity.AddComponent(Transform{
+        .position = { SDLite::kFWindowCenter.x - 100.0f,
+                      SDLite::kFWindowCenter.y - 100.0f } 
+    });
 
     auto& textRenderable = entity.AddComponent(TextRenderableComponent{
         .writer = glyphAtlas->GetTextWriter(),
