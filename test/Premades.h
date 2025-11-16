@@ -15,9 +15,81 @@
 #include "../components/builder/ColliderComponentBuilder.h"
 #include "../events/EventBus2.h"
 #include "../core/EvaluationProperty.h"
-//#include "../callbacks/StateTransitionCallbackRegistry.h"
-//#include "callbacks/AnimationCallbacks.h"
-//#include "callbacks/GameControllerCallbacks.h"
+#include "../atlas/NewTextureRepository.h"
+
+//struct HitboxInfo
+//{
+//    Dimensions<float> dimensions;
+//    SDL_FPoint localPos = { 0.0f, 0.0f };
+//};
+//
+//inline constexpr std::array kSwordHitboxInfo = {
+//    HitboxInfo{ .dimensions = { 14.0f, 37.0f }, .localPos = { 24.0f, 5.0f } },
+//    HitboxInfo{ .dimensions = { 42.0f, 42.0f }, .localPos = { 52.0f, 12.0f } },
+//    HitboxInfo{ .dimensions = { 38.0f, 66.0f }, .localPos = { 79.0f, 26.0f } },
+//    HitboxInfo{ .dimensions = { 37.0f, 31.0f }, .localPos = { 79.0f, 60.0f } },
+//    HitboxInfo{ .dimensions = { 37.0f, 31.0f }, .localPos = { 79.0f, 60.0f } },
+//    HitboxInfo{ .dimensions = { 37.0f, 14.0f }, .localPos = { 79.0f, 77.0f } }
+//};
+//
+//inline constexpr std::array kSwordSpritePaths = {
+//    "sword_slash/sword_slash_000.png",
+//    "sword_slash/sword_slash_001.png",
+//    "sword_slash/sword_slash_002.png",
+//    "sword_slash/sword_slash_003.png",
+//    "sword_slash/sword_slash_004.png"
+//};
+//
+//class SwordHandler
+//{
+//public:
+//    static constexpr int8_t kInactive = -1;
+//
+//    SwordHandler(Entity& parent, EventBus2& bus, SDL_Renderer* renderer, 
+//                 NewTextureRepository& textureRepo);
+//
+//private:
+//    auto MakeSwordSwingCallback();
+//    auto MakeTimerCallback();
+//
+//    SDL_FRect GetParentBodyBoundingBox();
+//    static SDL_FRect GetSpriteEntityBoundingBox(const Entity& e);
+//
+//    static Transform TranslateBoundingBoxToTransform(const SDL_FRect& bbox);
+//    static SDL_FPoint GetTransformPositionForSword(const Entity& parentEnt, Entity& swordEnt);
+//
+//    Result<Void> LoadSprites(SDL_Renderer* renderer, NewTextureRepository& textureRepo);
+//
+//    Entity coordinator_;
+//    std::array<Entity, 6> swordFrames_;
+//    Entity_t bodyParentId_ = kInvalidEntity;
+//    int8_t activeFrame_ = kInactive;
+//};
+
+//namespace ui {
+//
+//class ColliderBoxMaker
+//{
+//public:
+//    ColliderBoxMaker() = default;
+//
+//    Result<Void> Export(std::string_view ident);
+//    void Draw(SDL_Renderer* renderer);
+//
+//    static Result<ColliderBoxMaker> Create(SDL_Renderer* renderer, 
+//        EventBus2& bus, Result<std::string>&& spritePath);
+//
+//private:
+//    auto GetAddPointCallback();
+//
+//    NewTextureRepository textureRepo_;
+//    Entity self_;
+//    std::vector<SDL_FPoint> points_;
+//    SDL_Color color_ = SDLite::kColorRed;
+//};
+//
+//} // ui
+
 
 static Result<Entity> MakeColliderBoxEntity(B2World& world, SDL_FPoint position, Dimensions<float> dimensions, 
                                             B2Body::Type bodyType, const ColliderSettings& settings = {},

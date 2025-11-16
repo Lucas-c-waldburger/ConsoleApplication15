@@ -183,6 +183,7 @@
     <ClCompile Include="inputs\controller\GameControllerInputMap.cpp" />
     <ClCompile Include="sprite\SpriteAnimationSeriesMap.cpp" />
     <ClCompile Include="systems\AudioSystem.cpp" />
+    <ClCompile Include="systems\EntityDestructionSystem.cpp" />
     <ClCompile Include="systems\EntityStateSystem.cpp" />
     <ClCompile Include="systems\EventCallbackSystem.cpp" />
     <ClCompile Include="events\EventDispatchListener.cpp" />
@@ -286,6 +287,7 @@
     <ClInclude Include="components\builder\ComponentBuilder.h" />
     <ClInclude Include="components\EntityFlagsComponent.h" />
     <ClInclude Include="components\driver\ControllerInputCallbackDriver.h" />
+    <ClInclude Include="components\MarkedDestroyedComponent.h" />
     <ClInclude Include="components\util\CallbackUtils.h" />
     <ClInclude Include="components\util\SpriteAnimationUtils.h" />
     <ClInclude Include="core\Anchor.h" />
@@ -384,6 +386,7 @@
     <ClInclude Include="sprite\SpriteAnimationSeries.h" />
     <ClInclude Include="sprite\SpriteAnimationSeriesMap.h" />
     <ClInclude Include="systems\AudioSystem.h" />
+    <ClInclude Include="systems\EntityDestructionSystem.h" />
     <ClInclude Include="systems\EntityStateSystem.h" />
     <ClInclude Include="systems\EventCallbackSystem.h" />
     <ClInclude Include="events\Event.h" />
@@ -741,6 +744,11 @@
     <Image Include="resources\sprites\particles\circle_0.png" />
     <Image Include="resources\sprites\particles\symbol\symbol_0.png" />
     <Image Include="resources\sprites\particles\symbol\symbol_1.png" />
+    <Image Include="resources\sprites\sword_slash\sword_slash_000.png" />
+    <Image Include="resources\sprites\sword_slash\sword_slash_001.png" />
+    <Image Include="resources\sprites\sword_slash\sword_slash_002.png" />
+    <Image Include="resources\sprites\sword_slash\sword_slash_003.png" />
+    <Image Include="resources\sprites\sword_slash\sword_slash_004.png" />
     <Image Include="resources\sprites\ui\button\button_rectangle_depth_gradient.png" />
     <Image Include="resources\sprites\ui\button\button_rectangle_gradient.png" />
     <Image Include="test\catch\test_images\airborne_series_sprites.png" />

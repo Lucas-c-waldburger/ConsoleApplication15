@@ -40,16 +40,6 @@ size_t EstimateDebugDrawPointCount(const Entity& entity, const RenderProfile& pr
 	return est;
 }
 
-void ClearGlyphCache(Entity& entity)
-{
-	if (!entity.HasComponent<TextRenderableGlyphCache>())
-	{
-		return;
-	}
-
-	entity.GetComponent<TextRenderableGlyphCache>() = TextRenderableGlyphCache{};
-}
-
 } // unnamed
 
 void RenderablePreProcessor::Update(const NewTextureRepository& textureRepo)
@@ -103,7 +93,7 @@ void RenderablePreProcessor::Update(const NewTextureRepository& textureRepo)
 				continue;
 			}
 
-			auto& glyphCache = entity.AddComponent<TextRenderableGlyphCache>();
+			auto& glyphCache = entity.AddComponent<TextRenderableGlyphCache>(GetEntityPassKey());
 
 			GlyphCacheHandler::UpdateGlyphCache(*glyphAtlas, textRenderable, 
 												glyphCache, transform);
@@ -112,4 +102,15 @@ void RenderablePreProcessor::Update(const NewTextureRepository& textureRepo)
 			debugDrawPointCount_ += EstimateDebugDrawPointCount(entity, profile);
 		}
 	}
+}
+
+void RenderablePreProcessor::ClearGlyphCache(Entity& entity)
+{
+	if (!entity.HasComponent<TextRenderableGlyphCache>())
+	{
+		return;
+	}
+
+	entity.GetComponent<TextRenderableGlyphCache>(GetEntityPassKey()) = 
+		TextRenderableGlyphCache{};
 }

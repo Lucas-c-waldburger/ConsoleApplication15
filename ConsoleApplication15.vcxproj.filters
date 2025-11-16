@@ -315,6 +315,9 @@
     <ClCompile Include="test\ui\Button.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="systems\EntityDestructionSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1388,6 +1391,12 @@
     <ClInclude Include="test\ui\Button.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="components\MarkedDestroyedComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\EntityDestructionSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -1811,6 +1820,21 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="resources\sprites\ui\button\button_rectangle_gradient.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\sword_slash\sword_slash_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\sword_slash\sword_slash_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\sword_slash\sword_slash_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\sword_slash\sword_slash_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\sword_slash\sword_slash_004.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

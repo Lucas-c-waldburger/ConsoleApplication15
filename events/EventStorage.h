@@ -21,8 +21,40 @@ public:
 	void Emplace(T&& event)
 	{
 		auto& storageVec = std::get<std::vector<T>>(storage_);
+		if (storageVec.empty())
+		{
+			// need to mark that this event type has at least 1 event to be dispatched
+			heldEventIndices_[heldEventHead_++] = T::eventType;
+		}
+
 		storageVec.emplace_back(std::forward<T>(event));
-		heldEventIndices_[heldEventHead_++] = T::eventType;
+
+		//auto& storageVec = std::get<std::vector<T>>(storage_);
+		//storageVec.emplace_back(std::forward<T>(event));
+		//heldEventIndices_[heldEventHead_++] = T::eventType;
+	}
+
+	template <SomeEventData T>
+	void EmplaceRange(std::vector<T>&& events)
+	{
+		if (events.empty())
+		{
+			return;
+		}
+
+		auto& storageVec = std::get<std::vector<T>>(storage_);
+		if (storageVec.empty())
+		{
+			heldEventIndices_[heldEventHead_++] = T::eventType;
+		}
+
+		const size_t eventsSize = events.size();
+		const size_t storageSize = storageVec.size();
+		storageVec.resize(storageSize + eventsSize);
+
+		storageVec.insert(storageVec.begin() + storageSize, 
+			std::make_move_iterator(events.begin()), 
+			std::make_move_iterator(events.end()));
 	}
 
 	void Dispatch(SignalListCollection& signalListCollection)
@@ -92,7 +124,7 @@ private:
 	};
 	 
 	StorageTuple storage_;
-	std::array<size_t, N> heldEventIndices_;
+	std::array<size_t, N> heldEventIndices_; // keep track which types actually hold events
 	size_t heldEventHead_;
 };
 

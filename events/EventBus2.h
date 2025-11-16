@@ -33,6 +33,9 @@ public:
 
 	template <SomeEventData T>
 	void PushEvent(T&& ev) { eventStorage_.Emplace(std::forward<T>(ev)); }
+
+	template <SomeEventData T>
+	void PushEvents(std::vector<T>&& evs) { eventStorage_.EmplaceRange(std::move(evs)); }
 	 
 	void DispatchEvents() { eventStorage_.Dispatch(signalLists_); }
 

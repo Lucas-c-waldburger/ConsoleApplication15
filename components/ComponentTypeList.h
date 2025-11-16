@@ -29,6 +29,7 @@ struct TextRenderableGlyphCache;
 struct NewRenderable;
 struct TextRenderableComponent;
 struct SpriteRenderableComponent;
+struct MarkedDestroyed;
 
 using ComponentTypeList = TypeList<
 	ActiveState,
@@ -58,7 +59,8 @@ using ComponentTypeList = TypeList<
 	TextRenderableGlyphCache,
 	NewRenderable,
 	TextRenderableComponent,
-	SpriteRenderableComponent
+	SpriteRenderableComponent,
+	MarkedDestroyed
 >;
 
 static_assert(ComponentTypeList::size <= 64, "Component bits cannot exceed 64");

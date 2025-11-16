@@ -12,6 +12,8 @@ public:
 	size_t GetDebugDrawPointCount() const noexcept { return debugDrawPointCount_; }
 
 private:
+	void ClearGlyphCache(Entity& entity);
+
 	size_t renderCallCount_ = 0;
 	size_t debugDrawPointCount_ = 0;
 };

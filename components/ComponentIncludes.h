@@ -21,5 +21,6 @@
 #include "EntityStateComponent.h"
 #include "EntityFlagsComponent.h"
 #include "AudioComponents.h"
+#include "MarkedDestroyedComponent.h"
 
 

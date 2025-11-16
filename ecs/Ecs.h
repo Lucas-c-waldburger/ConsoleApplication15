@@ -22,8 +22,9 @@ public:
         !(RelationalComponentType<T>    ||
           std::same_as<T, EntityFlags>  ||
           std::same_as<T, ActiveState>  ||
-          std::same_as<T, ActiveAudio>) ||
-          std::same_as<T, TextRenderableGlyphCache>
+          std::same_as<T, ActiveAudio>  ||
+          std::same_as<T, TextRenderableGlyphCache> ||
+          std::same_as<T, MarkedDestroyed>)
     );
 
     Entity() : id_(kInvalidEntity), ecs_(nullptr) {}
@@ -342,12 +343,20 @@ private:
 
         for (const auto& entity : activeEntities)
         {
+            // get full list of components that entity has
+            uint64_t entitySig = componentManager_.GetSignature(entity);
+
+            // unless the Get() call explicitly asks to include MarkDestroyed component, omit entity
+            if (componentManager_.HasComponent<MarkedDestroyed>(entity) &&
+                ((componentMasks.includeMask & MarkedDestroyed::componentBit) == 0))
+            {
+                continue;
+            }
+
             assert(componentManager_.HasComponent<EntityFlags>(entity));
 
-            // get full list of components that entity has, remove invisible components
-            uint64_t entitySig = 
-                componentManager_.GetSignature(entity) &
-                componentManager_.GetComponent<EntityFlags>(entity).componentVisibilityFlags;
+            // remove invisible components
+            entitySig &= componentManager_.GetComponent<EntityFlags>(entity).componentVisibilityFlags;
           
             if (componentMasks.ShouldIncludeEntity(entitySig))
             {
