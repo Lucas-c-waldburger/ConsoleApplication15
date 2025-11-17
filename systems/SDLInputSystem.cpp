@@ -1,11 +1,17 @@
 #include "SDLInputSystem.h"
 #include "../events/EventBus.h"
 #include "../events/data/GameControllerEvents.h"
+#include "../gui/ImguiContext.h"
 
 bool SDLInputSystem::Update(float delta, EventBus2& bus)
 {
 	while (SDL_PollEvent(&sdlEvent_))
 	{
+		if (ImguiContext::IsInitialized())
+		{
+			ImguiContext::ProcessEvent(sdlEvent_);
+		}
+
 		switch (sdlEvent_.type)
 		{
 		case SDL_QUIT:

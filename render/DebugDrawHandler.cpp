@@ -218,5 +218,3 @@ void DebugDrawHandler::Draw(SDL_Renderer* renderer)
 		SetRenderDrawColor(renderer, originalDrawColor);
 	}
 }
-
-

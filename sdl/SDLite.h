@@ -125,7 +125,11 @@ namespace SDLite
 		int x = SDL_WINDOWPOS_UNDEFINED;
 		int y = SDL_WINDOWPOS_UNDEFINED;
 		std::string title;
-		Uint32 flags = SDL_WINDOW_SHOWN;
+		Uint32 flags = (
+			SDL_WINDOW_SHOWN |
+			SDL_WINDOW_RESIZABLE |
+			SDL_WINDOW_ALLOW_HIGHDPI
+		);
 	};
 
 	using WindowPtr = AppPtr<SDL_Window, WindowArgs,

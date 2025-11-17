@@ -77,7 +77,7 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
@@ -97,7 +97,7 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
@@ -117,7 +117,7 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
@@ -137,7 +137,7 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
@@ -159,13 +159,21 @@
     <ClCompile Include="callbacks\StateTransitionCallback.cpp" />
     <ClCompile Include="core\Counter.cpp" />
     <ClCompile Include="deps\catch\catch_amalgamated.cpp" />
+    <ClCompile Include="deps\imgui\backends\imgui_impl_sdl2.cpp" />
+    <ClCompile Include="deps\imgui\backends\imgui_impl_sdlrenderer2.cpp" />
+    <ClCompile Include="deps\imgui\imgui.cpp" />
+    <ClCompile Include="deps\imgui\imgui_draw.cpp" />
+    <ClCompile Include="deps\imgui\imgui_tables.cpp" />
+    <ClCompile Include="deps\imgui\imgui_widgets.cpp" />
     <ClCompile Include="ecs\EntityAccess.cpp" />
     <ClCompile Include="ecs\EntityManager.cpp" />
     <ClCompile Include="file\FilePathUtility.cpp" />
+    <ClCompile Include="gui\ImguiContext.cpp" />
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp" />
     <ClCompile Include="render\DebugDrawHandler.cpp" />
     <ClCompile Include="render\GlyphCacheHandler.cpp" />
     <ClCompile Include="render\RenderBatchHandler.cpp" />
+    <ClCompile Include="sdl\SDLContext.cpp" />
     <ClCompile Include="state\EntityState.cpp" />
     <ClCompile Include="state\EntityStateBuilder.cpp" />
     <ClCompile Include="components\driver\EntityStateDriver.cpp" />
@@ -225,7 +233,6 @@
     <ClCompile Include="systems\NewRenderSystem.cpp" />
     <ClCompile Include="systems\util\DebugDrawUtils.cpp" />
     <ClCompile Include="systems\util\RenderUtils.cpp" />
-    <ClCompile Include="systems\RenderSystem.cpp" />
     <ClCompile Include="systems\PhysicsSystem.cpp" />
     <ClCompile Include="core\AABB.cpp" />
     <ClCompile Include="systems\SDLInputSystem.cpp" />
@@ -292,6 +299,15 @@
     <ClInclude Include="components\util\SpriteAnimationUtils.h" />
     <ClInclude Include="core\Anchor.h" />
     <ClInclude Include="core\CatTypeID.h" />
+    <ClInclude Include="deps\imgui-master\examples\libs\emscripten\emscripten_mainloop_stub.h" />
+    <ClInclude Include="deps\imgui-master\examples\libs\glfw\include\GLFW\glfw3.h" />
+    <ClInclude Include="deps\imgui-master\examples\libs\glfw\include\GLFW\glfw3native.h" />
+    <ClInclude Include="deps\imgui-master\examples\libs\usynergy\uSynergy.h" />
+    <ClInclude Include="deps\imgui\backends\imgui_impl_sdl2.h" />
+    <ClInclude Include="deps\imgui\backends\imgui_impl_sdlrenderer2.h" />
+    <ClInclude Include="deps\imgui\imgui.h" />
+    <ClInclude Include="deps\nlohmann\json.hpp" />
+    <ClInclude Include="deps\nlohmann\json_fwd.hpp" />
     <ClInclude Include="ecs\ComponentMasks.h" />
     <ClInclude Include="core\Dictionary.h" />
     <ClInclude Include="core\EvaluationProperty.h" />
@@ -311,6 +327,8 @@
     <ClInclude Include="file\Asset.h" />
     <ClInclude Include="core\SizedEnumMap.h" />
     <ClInclude Include="file\FilePathUtility.h" />
+    <ClInclude Include="gui\ImguiContext.h" />
+    <ClInclude Include="gui\ImguiUtils.h" />
     <ClInclude Include="inputs\InputField.h" />
     <ClInclude Include="inputs\SignalListCollection.h" />
     <ClInclude Include="inputs\InputSource.h" />
@@ -329,6 +347,11 @@
     <ClInclude Include="scripting\user_types\AudioUserType.h" />
     <ClInclude Include="scripting\user_types\EntityUserType.h" />
     <ClInclude Include="scripting\user_types\SDLUsertypes.h" />
+    <ClInclude Include="sdl\SDLContext.h" />
+    <ClInclude Include="serial\Serialization.h" />
+    <ClInclude Include="serial\user_types\CoreJsonUserTypes.h" />
+    <ClInclude Include="serial\user_types\SDLJsonUserTypes.h" />
+    <ClInclude Include="serial\user_types\ComponentJsonUserType.h" />
     <ClInclude Include="state\EntityState.h" />
     <ClInclude Include="state\EntityStateBuilder.h" />
     <ClInclude Include="components\builder\RigidBodyComponentBuilder.h" />
@@ -582,7 +605,6 @@
     <ClInclude Include="systems\GameLoopSystem.h" />
     <ClInclude Include="systems\RenderablePreProcessorSystem.h" />
     <ClInclude Include="systems\NewRenderSystem.h" />
-    <ClInclude Include="systems\RenderSystem.h" />
     <ClInclude Include="systems\PhysicsSystem.h" />
     <ClInclude Include="core\TypeUtils.h" />
     <ClInclude Include="core\AABB.h" />
@@ -766,6 +788,7 @@
     <Text Include="resources\scripts\b2body_test.lua" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="deps\imgui-master\examples\libs\emscripten\shell_minimal.html" />
     <None Include="resources\audio\music\greenpath.ogg" />
     <None Include="resources\audio\sounds\bell_hit.flac" />
     <None Include="resources\scripts\game_controller_test.lua" />

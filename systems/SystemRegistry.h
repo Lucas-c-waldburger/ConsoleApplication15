@@ -2,7 +2,6 @@
 #include "CameraSystem.h"
 #include "CollisionSystem.h"
 #include "PhysicsSystem.h"
-#include "RenderSystem.h"
 #include "NewRenderSystem.h"
 #include "SDLInputSystem.h"
 #include "EventCallbackSystem.h"
@@ -19,7 +18,6 @@
 	PhysicsSystem, \
 	SDLInputSystem, \
 	EventCallbackSystem, \
-	RenderSystem, \
 	TimerSystem, \
 	SpriteAnimationSystem, \
 	EntityStateSystem, \
@@ -33,7 +31,6 @@ using SystemTypeList = TypeList<
 	PhysicsSystem, 
 	SDLInputSystem, 
 	EventCallbackSystem, 
-	RenderSystem, 
 	TimerSystem, 
 	SpriteAnimationSystem, 
 	EntityStateSystem,

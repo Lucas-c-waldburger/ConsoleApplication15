@@ -17,6 +17,12 @@ template <typename...Ts> struct TypeList
 		return std::forward<Fn>(fn).template operator()<Ts...>(std::forward<Args>(args)...);
 	}
 
+	template <typename Fn>
+	static constexpr void ForEachType(Fn&& fn)
+	{
+		((fn.template operator()<Ts>()), ...);
+	}
+
 	// for static member functions
 	// must wrap static function in class with static method named "Apply"
 	template <typename Fn, typename...Args>
