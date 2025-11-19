@@ -1,10 +1,10 @@
 #include "SpriteAnimationSystem.h"
 #include "../ecs/Ecs.h"
-#include "../atlas/TextureRepository.h"
+#include "../atlas/NewTextureRepository.h"
 
 void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 {
-	auto entities = ECS::GetAllEntitiesWith<NeedsUpdate, Renderable, SpriteAnimations>();
+	/*auto entities = ECS::GetAllEntitiesWith<NeedsUpdate, Renderable, SpriteAnimations>();
 
 	for (auto& entity : entities)
 	{
@@ -50,5 +50,5 @@ void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 			
 		spriteRenderable->sourceAtlas = newAtlas;
 		spriteRenderable->sourcePlot = newPlot;
-	}
+	}*/
 }

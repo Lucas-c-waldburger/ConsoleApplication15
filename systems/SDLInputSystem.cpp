@@ -1,16 +1,23 @@
 #include "SDLInputSystem.h"
+#include "../FeatureFlags.h"
 #include "../events/EventBus.h"
 #include "../events/data/GameControllerEvents.h"
-#include "../gui/ImguiContext.h"
+
+#if IMGUI_ENABLED
+#include "../gui/GuiContext.h"
+#endif
 
 bool SDLInputSystem::Update(float delta, EventBus2& bus)
 {
 	while (SDL_PollEvent(&sdlEvent_))
 	{
-		if (ImguiContext::IsInitialized())
+
+#if IMGUI_ENABLED
+		if (GuiContext::IsInitialized())
 		{
-			ImguiContext::ProcessEvent(sdlEvent_);
+			GuiContext::ProcessEvent(sdlEvent_);
 		}
+#endif
 
 		switch (sdlEvent_.type)
 		{

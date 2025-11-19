@@ -1,6 +1,7 @@
 #include "Fixtures.h"
 #include "../ecs/Ecs.h"
 #include "../physics/B2World.h"
+#include "../gui/GuiContext.h"
 
 SceneFixture::~SceneFixture()
 {
@@ -16,10 +17,8 @@ Result<Void> SceneFixture::RunGameLoopMs(int ms)
 	while (elapsed < sec)
 	{
 		LoopStart();
-		
-		//float delta = GetDeltaTime();
+
 		elapsed += GetDeltaTime();
-		//LOG_DEBUG_FMT("Elapsed: {} sec", elapsed);
 
 		TRY(UpdateSDLInputs(), cont);
 		if (!cont)
@@ -172,17 +171,12 @@ Result<Void> SceneFixture::UpdateAudio()
 
 Result<Void> SceneFixture::UpdateRender()
 {
-	//assert(systems_.IsSystemInitialized<RenderSystem>());
 	assert(systems_.IsSystemInitialized<NewRenderSystem>());
-	//assert(systems_.IsSystemInitialized<SpriteAnimationSystem>());
 	assert(systems_.IsSystemInitialized<GameLoopSystem>());
-
-	//systems_.GetSystem<SpriteAnimationSystem>()->Update(textureRepo_);
 
 	systems_.GetSystem<GameLoopSystem>()->UpdateLoopStepRender(eventBus_);
 
 	auto& cam = systems_.GetSystem<CameraSystem>()->GetCamera();
-	//systems_.GetSystem<RenderSystem>()->Update(SDLite::Renderer(), cam, textureRepo_);
 	systems_.GetSystem<NewRenderSystem>()->Update(SDLite::Renderer(), cam, textureRepo_);
 
 	return Void{};
@@ -205,9 +199,23 @@ void SceneFixture::LoopEnd()
 
 Result<Void> SceneFixture::RenderScene(SDL_Color bgColor)
 {
+#if IMGUI_ENABLED
+	assert(systems_.IsSystemInitialized<GuiSystem>());
+
+	systems_.GetSystem<GuiSystem>()->NewFrame();
+	systems_.GetSystem<GuiSystem>()->Update();
+	systems_.GetSystem<GuiSystem>()->RenderPrepare();
+#endif
+
 	SDLite::Renderer().Clear(bgColor);
 
 	TRY(UpdateRender());
+
+#if IMGUI_ENABLED
+	assert(systems_.IsSystemInitialized<GuiSystem>());
+
+	systems_.GetSystem<GuiSystem>()->RenderPresent(GetRenderer());
+#endif
 
 	SDLite::Renderer().Show();
 
@@ -224,8 +232,13 @@ void SceneFixture::TearDown()
 
 	world_.Destroy();
 
-	Logger::EndSession();
+#if IMGUI_ENABLED
+	assert(GuiContext::IsInitialized());
+	GuiContext::Exit();
+#endif
+
 	SDLite::Exit();
+	Logger::EndSession();
 }
 
 Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
@@ -237,8 +250,11 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 
 	fixture->world_ = B2World::Create(0, 9.8f);
 
-	//fixture->systems_.InitializeSystem<RenderSystem>();
-	//fixture->systems_.InitializeSystem<SpriteAnimationSystem>();
+#if IMGUI_ENABLED
+	TRY(GuiContext::Init(fixture->GetWindow(), fixture->GetRenderer()));
+	fixture->systems_.InitializeSystem<GuiSystem>();
+#endif
+
 	fixture->systems_.InitializeSystem<PhysicsSystem>();
 	fixture->systems_.InitializeSystem<SDLInputSystem>();
 	fixture->systems_.InitializeSystem<TimerSystem>();
@@ -246,9 +262,6 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 	fixture->systems_.InitializeSystem<GameLoopSystem>();
 	fixture->systems_.InitializeSystem<AudioSystem>();
 	fixture->systems_.InitializeSystem<NewRenderSystem>();
-
-	//auto& callbackSystem = fixture->systems_.InitializeSystem<EventCallbackSystem>();
-	//callbackSystem->ConnectToEventBus();
 
 	Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
 								   static_cast<float>(SDLite::kWindowHeight) };

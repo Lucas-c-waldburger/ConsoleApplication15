@@ -1,4 +1,8 @@
 #pragma once
+#include "../FeatureFlags.h"
+
+#if IMGUI_ENABLED
+
 #include <imgui.h>
 #include "../sdl/SDLUtils.h"
 
@@ -23,11 +27,6 @@ inline constexpr ImVec2 SDLPointToImVec2(P p)
 	};
 }
 
-
-
-
-
-
-
-
 } // util
+
+#endif

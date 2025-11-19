@@ -24,7 +24,7 @@ TEST_CASE("Glyph Atlas tests", "[atlas]")
 		.fontSize = 24
 	};
 
-	auto loadResult = NewGlyphAtlas::Create(SDLite::Renderer(), std::move(descriptorReg));
+	auto loadResult = GlyphAtlas::Create(SDLite::Renderer(), std::move(descriptorReg));
 	REQUIRE_RESULT(loadResult);
 
 	auto& glyphAtlas = loadResult.GetValue();

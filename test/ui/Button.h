@@ -4,7 +4,7 @@
 #include <string_view>
 
 class EventBus2;
-class NewTextureRepository;
+class TextureRepository;
 
 namespace ui {
 
@@ -115,7 +115,7 @@ public:
 
 private:
 	static Result<ButtonSprites> LoadButtonSprites(
-		SDL_Renderer* renderer, NewTextureRepository& repo,
+		SDL_Renderer* renderer, TextureRepository& repo,
 		std::string_view buttonUpFilename, std::string_view buttonDownFilename);
 
 	template <typename T>

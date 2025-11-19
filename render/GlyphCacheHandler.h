@@ -4,7 +4,7 @@
 #include <vector>
 #include "../core/Anchor.h"
 
-class NewGlyphAtlas;
+class GlyphAtlas;
 struct Transform;
 struct TextRenderableComponent;
 struct RenderProfile;
@@ -14,18 +14,18 @@ struct GlyphCacheData;
 class GlyphCacheHandler
 {
 public:
-	static void UpdateGlyphCache(const NewGlyphAtlas& glyphAtlas,
+	static void UpdateGlyphCache(const GlyphAtlas& glyphAtlas,
 								 TextRenderableComponent& textRenderable,
 								 TextRenderableGlyphCache& glyphCache, 
 								 const Transform& transform);
 
 	static void RepopulateGlyphCacheGlyphs(std::string_view text,
 										   std::vector<GlyphCacheData>& cache,
-										   const NewGlyphAtlas& glyphAtlas);
+										   const GlyphAtlas& glyphAtlas);
 
 	static void ReprojectGlyphCacheGeometry(TextRenderableGlyphCache& cacheComponent,
 											const TextRenderableComponent& textRenderable,
-											const NewGlyphAtlas& glyphAtlas);
+											const GlyphAtlas& glyphAtlas);
 
 	static void ScaleGlyphCache(std::vector<GlyphCacheData>& cache, Anchor scaleAnchor,
 								SDL_FPoint tfScale);

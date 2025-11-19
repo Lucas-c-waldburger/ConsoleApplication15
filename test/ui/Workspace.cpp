@@ -6,7 +6,7 @@ namespace ui {
 
 
 Result<Workspace> Workspace::Create(SDL_Renderer* renderer, 
-									NewTextureRepository& repo, EventBus2& bus)
+									TextureRepository& repo, EventBus2& bus)
 {
 	Workspace ws{};
 	ws.textureRepo_ = &repo;
@@ -29,7 +29,7 @@ Result<Workspace> Workspace::Create(SDL_Renderer* renderer,
 	// load font
 	TRY(ResourcePath::Font(Button::kButtonFontFilename), fontFilepath);
 
-	TRY(NewGlyphAtlas::Create(renderer, {
+	TRY(GlyphAtlas::Create(renderer, {
 		.filepath = fontFilepath, .fontSize = 24 }), glyphAtlas);
 
 	ws.buttonData_.writer = glyphAtlas.GetTextWriter();

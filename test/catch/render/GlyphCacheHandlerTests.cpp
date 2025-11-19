@@ -21,7 +21,7 @@ void RenderTextGlyphs(std::string_view fileName, const TextRenderableGlyphCache&
 
 	for (const auto& [glyph, destRect, rotCenter] : glyphCache.cache)
 	{
-		if (glyph == NewGlyphAtlas::kNewlineGlyph)
+		if (glyph == GlyphAtlas::kNewlineGlyph)
 		{
 			continue;
 		}
@@ -54,7 +54,7 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 		.fontSize = 24
 	};
 
-	auto glyphAtlasResult = NewGlyphAtlas::Create(SDLite::Renderer(), std::move(fontDesc));
+	auto glyphAtlasResult = GlyphAtlas::Create(SDLite::Renderer(), std::move(fontDesc));
 	REQUIRE_RESULT(glyphAtlasResult);
 	CHECK(glyphAtlasResult.GetValue().IsLoaded());
 
@@ -117,7 +117,7 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 
 		for (const auto& [glyph, destRect, rotCenter] : cacheCopy.cache)
 		{
-			if (glyph == NewGlyphAtlas::kNewlineGlyph)
+			if (glyph == GlyphAtlas::kNewlineGlyph)
 			{
 				continue;
 			}
@@ -307,7 +307,7 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 			CHECK(newGlyphs[i].glyph == newGlyphsFromAtlas[i]);
 			CHECK(newGlyphs[i].glyph.character == textRenderable.writer.text[i]);
 
-			if (newGlyphs[i].glyph != NewGlyphAtlas::kNewlineGlyph)
+			if (newGlyphs[i].glyph != GlyphAtlas::kNewlineGlyph)
 			{
 				CHECK(newGlyphs[i].destRect.w > 0);
 				CHECK(newGlyphs[i].destRect.h > 0);

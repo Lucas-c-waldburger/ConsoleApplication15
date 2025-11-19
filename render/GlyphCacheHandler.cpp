@@ -29,9 +29,9 @@ void FillGlyphRectsLeftAlign(std::vector<GlyphCacheData>& cache,
 
 	for (auto& [glyph, destRect, _] : cache)
 	{
-		assert(glyph.character != kInvalidChar);
+		assert(glyph.character != Glyph::kInvalidChar);
 
-		if (glyph == NewGlyphAtlas::kNewlineGlyph)
+		if (glyph == GlyphAtlas::kNewlineGlyph)
 		{
 			xPos = format.start.x;
 			yPos += static_cast<int>(format.fontHeight * format.layoutScale.y);
@@ -58,7 +58,7 @@ void FillGlyphRectsRightAlign(std::vector<GlyphCacheData>& cache,
 	{
 		auto& [glyph, destRect, _] = cache[i];
 
-		assert(glyph.character != kInvalidChar);
+		assert(glyph.character != Glyph::kInvalidChar);
 
 		if (glyph.character == '\n')
 		{
@@ -98,7 +98,7 @@ void FillGlyphRectsCenterAlign(std::string_view text, std::vector<GlyphCacheData
 		{
 			auto& [glyph, destRect, _] = cache[j];
 
-			assert(glyph.character != kInvalidChar);
+			assert(glyph.character != Glyph::kInvalidChar);
 
 			destRect = { xPos , yPos, static_cast<int>(glyph.plot.rect.w * format.layoutScale.x),
 									  static_cast<int>(glyph.plot.rect.h * format.layoutScale.y) };
@@ -114,7 +114,7 @@ void FillGlyphRectsCenterAlign(std::string_view text, std::vector<GlyphCacheData
 } // unnamed
 
 void GlyphCacheHandler::RepopulateGlyphCacheGlyphs(std::string_view text,
-	std::vector<GlyphCacheData>& cache, const NewGlyphAtlas& glyphAtlas)
+	std::vector<GlyphCacheData>& cache, const GlyphAtlas& glyphAtlas)
 {
 	cache.resize(text.size());
 
@@ -127,7 +127,7 @@ void GlyphCacheHandler::RepopulateGlyphCacheGlyphs(std::string_view text,
 
 void GlyphCacheHandler::ReprojectGlyphCacheGeometry(TextRenderableGlyphCache& cacheComponent, 
 													const TextRenderableComponent& textRenderable,
-													const NewGlyphAtlas& glyphAtlas)
+													const GlyphAtlas& glyphAtlas)
 {
 	//auto format = MakeFormatArgs(textRenderable.writer.text, cache,
 	//							 textRenderable.formatting.bounds,
@@ -264,7 +264,7 @@ void GlyphCacheHandler::RepositionGlyphCache(TextRenderableGlyphCache& cacheComp
 	}
 }
 
-void GlyphCacheHandler::UpdateGlyphCache(const NewGlyphAtlas& glyphAtlas,
+void GlyphCacheHandler::UpdateGlyphCache(const GlyphAtlas& glyphAtlas,
 										 TextRenderableComponent& textRenderable,
 										 TextRenderableGlyphCache& glyphCache,
 										 const Transform& transform)

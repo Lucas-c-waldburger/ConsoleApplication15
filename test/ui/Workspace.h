@@ -7,7 +7,7 @@ namespace ui {
 class Workspace
 {
 public:
-	static Result<Workspace> Create(SDL_Renderer* renderer, NewTextureRepository& repo,
+	static Result<Workspace> Create(SDL_Renderer* renderer, TextureRepository& repo,
 									EventBus2& bus);
 
 	Result<Handle<Button>> PlaceButton(Button::Params&& params);
@@ -20,7 +20,7 @@ private:
 		GlyphTextWriter writer;
 	};
 
-	NewTextureRepository* textureRepo_ = nullptr;
+	TextureRepository* textureRepo_ = nullptr;
 	EventBus2* eventBus_ = nullptr;
 	ButtonData buttonData_;
 };

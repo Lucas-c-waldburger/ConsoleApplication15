@@ -63,16 +63,6 @@ public:
     {
         return Super::erase(std::string{ sv });
     }
-
-    typename Super::iterator erase(typename Super::iterator pos)
-    {
-        return Super::erase(pos);
-    }
-
-    typename Super::iterator erase(typename Super::const_iterator pos)
-    {
-        return Super::erase(pos);
-    }
 };
 
 

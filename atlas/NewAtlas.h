@@ -1,25 +1,58 @@
 #pragma once
-#include "TextureHandle.h"
-#include "Atlas.h"
-#include <variant>
+#include <memory>
+#include "../sdl/SDLUtils.h"
+#include "../core/Handle.h"
+#include "PackingTools.h"
+
+using UniqueTexturePtr = std::unique_ptr < SDL_Texture,
+	decltype([](SDL_Texture* t) { SDL_DestroyTexture(t); }) > ;
+
+inline UniqueTexturePtr MakeUniqueTexturePtr(SDL_Renderer* renderer, SDL_PixelFormatEnum fmt,
+	SDL_TextureAccess access, int w, int h)
+{
+	return UniqueTexturePtr{ SDL_CreateTexture(renderer, fmt, access, w, h) };
+}
+
+inline UniqueTexturePtr MakeUniqueTexturePtrFromSurface(SDL_Renderer* renderer, SDL_Surface* surface)
+{
+	return UniqueTexturePtr{ SDL_CreateTextureFromSurface(renderer, surface) };
+}
+
+enum class TextureType
+{
+	Unknown = -1,
+	Glyph,
+	Sprite
+};
+
+struct AtlasPlot
+{
+	SDL_Rect rect = { 0, 0, 0, 0 };
+	float rotation = 0.0f;
+
+	friend constexpr bool operator==(const AtlasPlot& lhs, const AtlasPlot& rhs)
+	{
+		return lhs.rect == rhs.rect && lhs.rotation == rhs.rotation;
+	}
+};
 
 static constexpr size_t kSizeMax = std::numeric_limits<size_t>::max();
 
-class NewTextureAtlas
+class TextureAtlas
 {
 public:
-	NewTextureAtlas() = default;
-	~NewTextureAtlas() = default;
+	TextureAtlas() = default;
+	~TextureAtlas() = default;
 
-	NewTextureAtlas(const NewTextureAtlas&) = delete;
-	NewTextureAtlas& operator=(const NewTextureAtlas&) = delete;
+	TextureAtlas(const TextureAtlas&) = delete;
+	TextureAtlas& operator=(const TextureAtlas&) = delete;
 
-	NewTextureAtlas(NewTextureAtlas&& other) noexcept : 
+	TextureAtlas(TextureAtlas&& other) noexcept : 
 		atlasTexture_(std::move(other.atlasTexture_)),
 		binPack_(std::move(other.binPack_)), handle_(other.handle_) 
 	{}
 
-	NewTextureAtlas& operator=(NewTextureAtlas&& other) noexcept
+	TextureAtlas& operator=(TextureAtlas&& other) noexcept
 	{
 		if (this != &other)
 		{
@@ -32,18 +65,18 @@ public:
 
 	SDL_Texture* const GetSourceTexture() const { return atlasTexture_.get(); }
 
-	const Handle<NewTextureAtlas>& GetHandle() const { return handle_; }
+	const Handle<TextureAtlas>& GetHandle() const { return handle_; }
 
 	bool IsLoaded() const { return handle_.IsValid() && atlasTexture_; }
 
 protected:
-	explicit NewTextureAtlas(Handle<NewTextureAtlas>&& handle) : 
+	explicit TextureAtlas(Handle<TextureAtlas>&& handle) : 
 		handle_(std::move(handle)) {}
 
 	UniqueTexturePtr atlasTexture_;
 	rbp::MaxRectsBinPack binPack_;
 
 private:
-	Handle<NewTextureAtlas> handle_;
+	Handle<TextureAtlas> handle_;
 };
 

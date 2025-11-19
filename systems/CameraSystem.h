@@ -1,11 +1,12 @@
 #pragma once
+#include "System.h"
 #include "../camera/Camera.h"
 #include "../components/CameraTargetComponent.h"
 #include <optional>
 
 class Entity;
 
-class CameraSystem
+class CameraSystem : public System
 {
 public:
 	CameraSystem() = default;

@@ -14,7 +14,6 @@ struct Script;
 struct EventCallbacks;
 struct CameraTarget;
 struct SpriteAnimations;
-struct Renderable;
 struct EventProductionFlags;
 struct GameControllerInputCallbacks;
 struct Timer;
@@ -26,7 +25,6 @@ struct NewAudioRequest;
 struct AudioUpdateRequest;
 struct ActiveAudio;
 struct TextRenderableGlyphCache;
-struct NewRenderable;
 struct TextRenderableComponent;
 struct SpriteRenderableComponent;
 struct MarkedDestroyed;
@@ -45,7 +43,6 @@ using ComponentTypeList = TypeList<
 	EventCallbacks,
 	CameraTarget,
 	SpriteAnimations,
-	Renderable,
 	EventProductionFlags,
 	GameControllerInputCallbacks,
 	Timer,
@@ -57,7 +54,6 @@ using ComponentTypeList = TypeList<
 	AudioUpdateRequest,
 	ActiveAudio,
 	TextRenderableGlyphCache,
-	NewRenderable,
 	TextRenderableComponent,
 	SpriteRenderableComponent,
 	MarkedDestroyed

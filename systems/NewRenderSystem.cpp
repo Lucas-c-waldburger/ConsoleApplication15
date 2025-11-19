@@ -48,7 +48,7 @@ constexpr T BitIf(bool condition, T flag) noexcept
 	return static_cast<T>(-static_cast<int>(condition) & static_cast<int>(flag));
 }
 
-const Handle<NewTextureAtlas>& GetAtlasHandle(const Entity& e)
+const Handle<TextureAtlas>& GetAtlasHandle(const Entity& e)
 {
 	return (e.HasComponent<SpriteRenderableComponent>())
 		? e.GetComponent<SpriteRenderableComponent>().sprite.sourceAtlas
@@ -200,7 +200,7 @@ void AddGlyphRenderCalls(const Entity& entity, const Camera& camera,
 
 	for (const auto& [glyph, destRect, rotationCenter] : glyphCache.cache)
 	{
-		if (glyph == NewGlyphAtlas::kNewlineGlyph)
+		if (glyph == GlyphAtlas::kNewlineGlyph)
 		{
 			continue;
 		}
@@ -259,7 +259,7 @@ void FillRenderBatches(const Entity& entity, const Camera& camera,
 } // unnamed
 
 void NewRenderSystem::Update(SDL_Renderer* renderer, const Camera& camera,
-							 const NewTextureRepository& textureRepo)
+							 const TextureRepository& textureRepo)
 {
 	auto entities = ECS::GetAllEntitiesWith<Transform, Any<SpriteRenderableComponent, 
 														   TextRenderableComponent>>();

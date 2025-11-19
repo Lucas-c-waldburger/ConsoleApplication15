@@ -155,7 +155,7 @@ void Button::AdjustTextYPos(float yAdjust)
 
 
 Result<Button::ButtonSprites> 
-Button::LoadButtonSprites(SDL_Renderer* renderer, NewTextureRepository& repo, 
+Button::LoadButtonSprites(SDL_Renderer* renderer, TextureRepository& repo, 
 						  std::string_view buttonUpFilename, 
 						  std::string_view buttonDownFilename)
 {	ButtonSprites sprites;

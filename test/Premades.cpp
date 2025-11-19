@@ -2,6 +2,8 @@
 #include <ranges>
 #include "../events/data/EventDataIncludes.h"
 #include "../file/FilePathUtility.h"
+#include "ui/Workspace.h"
+#include "Fixtures.h"
 
 
 auto ui::PointDrawHandler::GetLayPointCallback()
@@ -291,7 +293,7 @@ auto SwordHandler::MakeSwordSwingCallback()
 }
 
 SwordHandler::SwordHandler(Entity& parent, EventBus2& bus, SDL_Renderer* renderer, 
-                           NewTextureRepository& textureRepo) :
+                           TextureRepository& textureRepo) :
     coordinator_(ECS::CreateEntity()), bodyParentId_(parent.GetID())
 {
     assert(parent.IsValid());
@@ -349,7 +351,7 @@ SwordHandler::SwordHandler(Entity& parent, EventBus2& bus, SDL_Renderer* rendere
 
 
 
-Result<Void> SwordHandler::LoadSprites(SDL_Renderer* renderer, NewTextureRepository& textureRepo)
+Result<Void> SwordHandler::LoadSprites(SDL_Renderer* renderer, TextureRepository& textureRepo)
 {
     SpriteDescriptorPackage package{
         .seriesName = "sword_swing"
@@ -405,4 +407,51 @@ void ui::PointDrawHandler::Draw(SDL_Renderer* renderer)
     }
 
     SDL_SetRenderDrawColor(renderer, r, g, b, a);
+}
+
+Result<Void> ui::TestButton()
+{
+    auto fixResult = SceneFixture::GetInstance();
+    ASSERT_RESULT(fixResult);
+    auto& fixture = fixResult.GetValue();
+
+    auto& repo = fixture->GetTextureRepository();
+
+    auto atlasResult = fixture->LoadGlyphAtlas(
+        ResourcePath::Font("GoNotoKurrent-Bold.ttf"), 24);
+    ASSERT_RESULT(atlasResult);
+    auto& glyphAtlas = atlasResult.GetValue();
+
+    auto entity = ECS::CreateEntity();
+
+    auto& tf = entity.AddComponent(Transform{
+        .position = { SDLite::kFWindowCenter.x - 100.0f,
+                      SDLite::kFWindowCenter.y - 100.0f }
+        });
+
+    auto& textRenderable = entity.AddComponent(TextRenderableComponent{
+        .writer = glyphAtlas->GetTextWriter(),
+        .formatting = {.bounds = { 100, 500 } }
+        });
+
+    static constexpr std::string_view kYouPressedIt = "Yay you pressed it!";
+
+    auto wsResult = ui::Workspace::Create(
+        fixture->GetRenderer(),
+        fixture->GetTextureRepository(),
+        fixture->GetEventBus()
+    );
+    ASSERT_RESULT(wsResult);
+
+    auto& workspace = wsResult.GetValue();
+
+    auto handleResult = workspace.PlaceButton({
+        .position = SDLite::kFWindowCenter,
+        .color = ui::Button::Color::Green,
+        .onClick = [entity]() mutable {
+            entity.GetComponent<TextRenderableComponent>().writer.text = kYouPressedIt;
+        }
+        });
+
+    ASSERT_RESULT(fixture->RunGameLoop());
 }

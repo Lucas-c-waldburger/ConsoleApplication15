@@ -1,7 +1,10 @@
-#include "ImguiContext.h"
-#include "ImguiUtils.h"
+#include "GuiContext.h"
 
-void ImguiContext::Exit()
+#if IMGUI_ENABLED
+
+#include "GuiUtils.h"
+
+void GuiContext::Exit()
 {
     if (!isInitialized_) { return; }
 
@@ -10,7 +13,7 @@ void ImguiContext::Exit()
     ImGui::DestroyContext();
 }
 
-Result<Void> ImguiContext::Init(SDL_Window* window, SDL_Renderer* renderer)
+Result<Void> GuiContext::Init(SDL_Window* window, SDL_Renderer* renderer)
 {
     if (isInitialized_) { return Void{}; }
 
@@ -30,34 +33,32 @@ Result<Void> ImguiContext::Init(SDL_Window* window, SDL_Renderer* renderer)
     return Void{};
 }
 
-void ImguiContext::ProcessEvent(SDL_Event& ev)
+void GuiContext::ProcessEvent(SDL_Event& ev)
 {
     if (!isInitialized_) { return; }
 
     ImGui_ImplSDL2_ProcessEvent(&ev);
 }
 
-void ImguiContext::RenderPrepare()
+void GuiContext::RenderPrepare()
 {
     if (!isInitialized_) { return; }
 
     ImGui::Render();
 }
 
-void ImguiContext::RenderPresent(SDL_Renderer* renderer)
+void GuiContext::RenderPresent(SDL_Renderer* renderer)
 {
     if (!isInitialized_) { return; }
 
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
 }
 
-//// IMGUIWINDOW
-//ImguiWindow::ImguiWindow(const char* title, bool* pOpen, ImGuiWindowFlags flags)
-//{
-//    ImGui::Begin(title, pOpen, flags);
-//}
-//
-//ImguiWindow::~ImguiWindow()
-//{
-//    ImGui::End();
-//}
+void GuiContext::NewFrame()
+{
+    ImGui_ImplSDLRenderer2_NewFrame();
+    ImGui_ImplSDL2_NewFrame();
+    ImGui::NewFrame();
+}
+
+#endif

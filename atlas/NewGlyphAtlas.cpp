@@ -2,6 +2,9 @@
 #include <algorithm>
 #include <SDL_ttf.h>
 #include <filesystem>
+#include "../core/Handle.h"
+#include "../core/Result.h"
+#include "../core/commonObjects.h"
 #include "../core/ScopedInvoker.h"
 #include "PackingTools.h"
 
@@ -9,12 +12,12 @@ namespace {
 
 static constexpr size_t GetPlotIndexForChar(char c)
 {
-    if (c < kStartChar || c > kEndChar)
+    if (c < GlyphAtlas::kStartChar || c > GlyphAtlas::kEndChar)
     {
         return std::numeric_limits<size_t>::max();
     }
 
-    return static_cast<size_t>(c - kStartChar);
+    return static_cast<size_t>(c - GlyphAtlas::kStartChar);
 }
 
 Result<Void> PrepareFontDescriptor(FontDescriptor& descriptor)
@@ -38,7 +41,7 @@ Result<Void> PrepareFontDescriptor(FontDescriptor& descriptor)
 
 } // unnamed namespace 
 
-Result<Void> NewGlyphAtlas::LoadImpl(SDL_Renderer* renderer, 
+Result<Void> GlyphAtlas::LoadImpl(SDL_Renderer* renderer, 
                                      FontDescriptor&& descriptor)
 {
     TRY(PrepareFontDescriptor(descriptor));
@@ -167,22 +170,22 @@ Result<Void> NewGlyphAtlas::LoadImpl(SDL_Renderer* renderer,
     return Void{};
 }
 
-Result<NewGlyphAtlas> NewGlyphAtlas::Create(SDL_Renderer* renderer, 
+Result<GlyphAtlas> GlyphAtlas::Create(SDL_Renderer* renderer, 
                                             FontDescriptor&& descriptor)
 {
-    NewGlyphAtlas glyphAtlas{ Handle<NewTextureAtlas>::Create() };
+    GlyphAtlas glyphAtlas{ Handle<TextureAtlas>::Create() };
 
     TRY(glyphAtlas.LoadImpl(renderer, std::move(descriptor)));
 
     return glyphAtlas;
 }
 
-const FontDescriptor& NewGlyphAtlas::GetFontDescriptor() const
+const FontDescriptor& GlyphAtlas::GetFontDescriptor() const
 {
     return fontDescriptor_;
 }
 
-bool NewGlyphAtlas::IsTextWriterValid(const GlyphTextWriter& writer) const
+bool GlyphAtlas::IsTextWriterValid(const GlyphTextWriter& writer) const
 {
     return writer.sourceAtlas == GetHandle() &&
            std::all_of(writer.text.begin(), writer.text.end(), [this](auto ch) {
@@ -216,7 +219,7 @@ bool NewGlyphAtlas::IsTextWriterValid(const GlyphTextWriter& writer) const
 //    return Void{};
 //}
 
-Glyph NewGlyphAtlas::GetGlyph(char c) const
+Glyph GlyphAtlas::GetGlyph(char c) const
 {
     if (c == '\n') { return kNewlineGlyph; }
 
@@ -225,7 +228,7 @@ Glyph NewGlyphAtlas::GetGlyph(char c) const
     return (idx < glyphs_.size()) ? glyphs_[idx] : Glyph{};
 }
 
-std::vector<Glyph> NewGlyphAtlas::GetGlyphsForString(std::string_view text) const
+std::vector<Glyph> GlyphAtlas::GetGlyphsForString(std::string_view text) const
 {
     std::vector<Glyph> glyphs;
     glyphs.reserve(text.size());

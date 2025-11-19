@@ -1,7 +1,6 @@
 #pragma once
-#include "Atlas.h"
 #include "NewAtlas.h"
-#include "TextureHandle.h"
+#include "../core/Result.h"
 #include "../core/Dictionary.h"
 
 
@@ -19,7 +18,7 @@ struct SpriteDescriptorPackage
 
 struct Sprite
 {
-	Handle<NewTextureAtlas> sourceAtlas;
+	Handle<TextureAtlas> sourceAtlas;
 	AtlasPlot plot;
 	size_t spriteIndex = kSizeMax;
 
@@ -36,7 +35,7 @@ struct SpriteInfo
 	bool operator==(const SpriteInfo&) const = default;
 };
 
-class SpriteAtlas : public NewTextureAtlas
+class SpriteAtlas : public TextureAtlas
 {
 public:
 	static const SpriteInfo kInvalidSpriteInfo;
@@ -50,7 +49,7 @@ public:
 	SpriteAtlas(const SpriteAtlas&) = delete;
 	SpriteAtlas& operator=(const SpriteAtlas&) = delete;
 
-	SpriteAtlas(SpriteAtlas&& other) noexcept : NewTextureAtlas(std::move(other)),
+	SpriteAtlas(SpriteAtlas&& other) noexcept : TextureAtlas(std::move(other)),
 		sprites_(std::move(other.sprites_)),
 		spriteInfo_(std::move(other.spriteInfo_)),
 		spriteSeriesRanges_(std::move(other.spriteSeriesRanges_))
@@ -60,7 +59,7 @@ public:
 	{
 		if (this != &other)
 		{
-			NewTextureAtlas::operator=(std::move(other));
+			TextureAtlas::operator=(std::move(other));
 			sprites_ = std::move(other.sprites_);
 			spriteInfo_ = std::move(other.spriteInfo_);
 			spriteSeriesRanges_ = std::move(other.spriteSeriesRanges_);
@@ -84,8 +83,8 @@ public:
 	bool IsSpriteValid(const Sprite& sprite) const;
 
 private:
-	explicit SpriteAtlas(Handle<NewTextureAtlas>&& handle) : 
-		NewTextureAtlas(std::move(handle)) {}
+	explicit SpriteAtlas(Handle<TextureAtlas>&& handle) : 
+		TextureAtlas(std::move(handle)) {}
 
 	Result<Sprite> LoadSpriteImpl(SDL_Renderer* renderer, SpriteDescriptor&& descriptor);
 	Result<std::vector<Sprite>>

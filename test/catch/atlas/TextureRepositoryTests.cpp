@@ -17,7 +17,7 @@ TEST_CASE("Texture Repository tests", "[atlas]")
 	auto status = SDLite::Start();
 	REQUIRE(status.Good());
 
-	NewTextureRepository textureRepo{};
+	TextureRepository textureRepo{};
 
 	// make a sprite atlas
 	auto spriteAtlasResult = SpriteAtlas::Create(SDLite::Renderer());
@@ -41,7 +41,7 @@ TEST_CASE("Texture Repository tests", "[atlas]")
 		.fontSize = 24
 	};
 
-	auto glyphAtlasResult = NewGlyphAtlas::Create(SDLite::Renderer(), std::move(fontDesc));
+	auto glyphAtlasResult = GlyphAtlas::Create(SDLite::Renderer(), std::move(fontDesc));
 	REQUIRE_RESULT(glyphAtlasResult);
 	CHECK(glyphAtlasResult.GetValue().IsLoaded());
 
@@ -57,7 +57,7 @@ TEST_CASE("Texture Repository tests", "[atlas]")
 	CHECK(retrievedSpriteAtlas != nullptr);
 
 	// retrieve glyph atlas
-	auto* retrievedGlyphAtlas = textureRepo.GetAtlas<NewGlyphAtlas>(glyphAtlasHandle);
+	auto* retrievedGlyphAtlas = textureRepo.GetAtlas<GlyphAtlas>(glyphAtlasHandle);
 	CHECK(retrievedGlyphAtlas != nullptr);
 
 	// retrieve sprite atlas src texture
@@ -85,9 +85,9 @@ TEST_CASE("Texture Repository can hold multiple atlases of same type", "[atlas]"
 	auto status = SDLite::Start();
 	REQUIRE(status.Good());
 
-	NewTextureRepository textureRepo{};
+	TextureRepository textureRepo{};
 
-	std::array<Handle<NewTextureAtlas>, 11> spriteAtlasHandles;
+	std::array<Handle<TextureAtlas>, 11> spriteAtlasHandles;
 
 	// make and attach sprite atlases
 	for (size_t i = 0; i < spriteAtlasHandles.size(); i++)

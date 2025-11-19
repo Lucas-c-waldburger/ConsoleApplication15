@@ -59,7 +59,7 @@ TEST_CASE("System handles single sprite", "[rendering][system]")
 	const auto& spriteInfo = spriteAtlas.GetSpriteInfo(sprite);
 	CHECK(spriteInfo.spriteName == "Idle_000");
 
-	NewTextureRepository textureRepo{};
+	TextureRepository textureRepo{};
 	auto attachResult = textureRepo.AttachAtlas(std::move(spriteAtlas));
 	REQUIRE_RESULT(attachResult);
 
@@ -95,7 +95,7 @@ TEST_CASE("System handles sprites and glyphs", "[rendering][system]")
 	REQUIRE_RESULT(fixtureResult);
 	auto& fixture = fixtureResult.GetValue();
 
-	NewTextureRepository textureRepo{};
+	TextureRepository textureRepo{};
 
 	auto airbornePathsResult =
 		ResourcePaths::SpriteDirectory("knight_new/airborne", std::less<std::string>{});

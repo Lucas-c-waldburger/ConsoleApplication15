@@ -1,9 +1,9 @@
 #include "RenderingTestUtils.h"
-#include "../../../atlas/TextureRepository.h"
+#include "../../../atlas/NewTextureRepository.h"
 #include "../../../ecs/Ecs.h"
 #include "../../../sdl/SDLite.h"
 
-Result<Void> test::QuickRender(const Entity& entity, const NewTextureRepository& textureRepo)
+Result<Void> test::QuickRender(const Entity& entity, const TextureRepository& textureRepo)
 {
 	//if (!SDLite::Running())
 	//{

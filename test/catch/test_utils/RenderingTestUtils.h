@@ -3,11 +3,11 @@
 #include "../../../core/commonObjects.h"
 
 class Entity;
-class NewTextureRepository;
+class TextureRepository;
 
 namespace test {
 
-Result<Void> QuickRender(const Entity& entity, const NewTextureRepository& textureRepo);
+Result<Void> QuickRender(const Entity& entity, const TextureRepository& textureRepo);
 
 
 

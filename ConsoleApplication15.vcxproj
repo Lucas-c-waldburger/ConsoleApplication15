@@ -168,7 +168,7 @@
     <ClCompile Include="ecs\EntityAccess.cpp" />
     <ClCompile Include="ecs\EntityManager.cpp" />
     <ClCompile Include="file\FilePathUtility.cpp" />
-    <ClCompile Include="gui\ImguiContext.cpp" />
+    <ClCompile Include="gui\GuiContext.cpp" />
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp" />
     <ClCompile Include="render\DebugDrawHandler.cpp" />
     <ClCompile Include="render\GlyphCacheHandler.cpp" />
@@ -211,7 +211,6 @@
     <ClCompile Include="core\Logger.cpp" />
     <ClCompile Include="render\TextureMods.cpp" />
     <ClCompile Include="systems\CameraSystem.cpp" />
-    <ClCompile Include="atlas\GlyphAtlas.cpp" />
     <ClCompile Include="inputs\controller\GameController.cpp" />
     <ClCompile Include="events\handler\GameControllerEventHandler.cpp" />
     <ClCompile Include="inputs\InputDataCache.cpp" />
@@ -226,7 +225,6 @@
     <ClCompile Include="scripting\ScriptManager.cpp" />
     <ClCompile Include="sdl\SDLite.cpp" />
     <ClCompile Include="sdl\SDLUtils.cpp" />
-    <ClCompile Include="atlas\SpriteSeriesAtlas.cpp" />
     <ClCompile Include="systems\CollisionSystem.cpp" />
     <ClCompile Include="systems\GameLoopSystem.cpp" />
     <ClCompile Include="systems\RenderablePreProcessorSystem.cpp" />
@@ -240,6 +238,7 @@
     <ClCompile Include="systems\TimerSystem.cpp" />
     <ClCompile Include="render\GlyphFormattingUtils.cpp" />
     <ClCompile Include="test\ui\Button.cpp" />
+    <ClCompile Include="test\ui\FileTreeView.cpp" />
     <ClCompile Include="test\ui\Workspace.cpp" />
     <ClCompile Include="test\catch\render\GlyphCacheHandlerTests.cpp" />
     <ClCompile Include="test\catch\systems\RenderSystemTests.cpp" />
@@ -261,16 +260,11 @@
     <ClCompile Include="test\Premades.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="atlas\Atlas.h" />
-    <ClInclude Include="atlas\AtlasMap.h" />
     <ClInclude Include="atlas\NewAtlas.h" />
     <ClInclude Include="atlas\NewGlyphAtlas.h" />
     <ClInclude Include="atlas\NewTextureRepository.h" />
     <ClInclude Include="atlas\PackingTools.h" />
-    <ClInclude Include="atlas\ResourcePacket.h" />
     <ClInclude Include="atlas\SpriteAtlas.h" />
-    <ClInclude Include="atlas\TextureHandle.h" />
-    <ClInclude Include="atlas\TextureRepository.h" />
     <ClInclude Include="audio\AudioBank.h" />
     <ClInclude Include="audio\AudioHandle.h" />
     <ClInclude Include="audio\AudioCommon.h" />
@@ -324,11 +318,12 @@
     <ClInclude Include="events\EventSignal.h" />
     <ClInclude Include="events\EventSignalConcepts.h" />
     <ClInclude Include="events\EventStorage.h" />
+    <ClInclude Include="FeatureFlags.h" />
     <ClInclude Include="file\Asset.h" />
     <ClInclude Include="core\SizedEnumMap.h" />
     <ClInclude Include="file\FilePathUtility.h" />
-    <ClInclude Include="gui\ImguiContext.h" />
-    <ClInclude Include="gui\ImguiUtils.h" />
+    <ClInclude Include="gui\GuiContext.h" />
+    <ClInclude Include="gui\GuiUtils.h" />
     <ClInclude Include="inputs\InputField.h" />
     <ClInclude Include="inputs\SignalListCollection.h" />
     <ClInclude Include="inputs\InputSource.h" />
@@ -583,7 +578,6 @@
     <ClInclude Include="ecs\EntityRelationsHelper.h" />
     <ClInclude Include="render\TextureMods.h" />
     <ClInclude Include="systems\CameraSystem.h" />
-    <ClInclude Include="atlas\GlyphAtlas.h" />
     <ClInclude Include="core\HandleFactory.h" />
     <ClInclude Include="inputs\controller\GameController.h" />
     <ClInclude Include="events\handler\GameControllerEventHandler.h" />
@@ -600,9 +594,9 @@
     <ClInclude Include="scripting\ScriptManager.h" />
     <ClInclude Include="sdl\SDLite.h" />
     <ClInclude Include="sdl\SDLUtils.h" />
-    <ClInclude Include="atlas\SpriteSeriesAtlas.h" />
     <ClInclude Include="systems\CollisionSystem.h" />
     <ClInclude Include="systems\GameLoopSystem.h" />
+    <ClInclude Include="systems\GuiSystem.h" />
     <ClInclude Include="systems\RenderablePreProcessorSystem.h" />
     <ClInclude Include="systems\NewRenderSystem.h" />
     <ClInclude Include="systems\PhysicsSystem.h" />
@@ -611,7 +605,6 @@
     <ClInclude Include="systems\SDLInputSystem.h" />
     <ClInclude Include="systems\SpriteAnimationSystem.h" />
     <ClInclude Include="systems\System.h" />
-    <ClInclude Include="systems\SystemFeature.h" />
     <ClInclude Include="systems\SystemManager.h" />
     <ClInclude Include="systems\SystemRegistry.h" />
     <ClInclude Include="systems\TimerSystem.h" />
@@ -619,6 +612,7 @@
     <ClInclude Include="render\GlyphFormattingUtils.h" />
     <ClInclude Include="systems\util\RenderUtils.h" />
     <ClInclude Include="test\ui\Button.h" />
+    <ClInclude Include="test\ui\FileTreeView.h" />
     <ClInclude Include="test\ui\Workspace.h" />
     <ClInclude Include="test\callbacks\AnimationCallbacks.h" />
     <ClInclude Include="test\callbacks\GameControllerCallbacks.h" />

@@ -5,6 +5,7 @@
 #include <filesystem>
 #include "PackingTools.h"
 #include "../core/Algorithms.h"
+#include "../core/Handle.h"
 #include "../core/commonObjects.h"
 #include "../core/ScopedInvoker.h"
 
@@ -91,7 +92,7 @@ SpriteAtlas::LoadSpritesImpl(SDL_Renderer* renderer, SpriteDescriptorPackage&& p
 
 Result<SpriteAtlas> SpriteAtlas::Create(SDL_Renderer* renderer, size_t size)
 {
-    SpriteAtlas atlas{ Handle<NewTextureAtlas>::Create() };
+    SpriteAtlas atlas{ Handle<TextureAtlas>::Create() };
 
     size = IsPowerOfTwo(size) ? size : 
            size > kMaxAtlasSize ? kMaxAtlasSize :

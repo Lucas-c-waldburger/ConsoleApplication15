@@ -42,7 +42,7 @@ size_t EstimateDebugDrawPointCount(const Entity& entity, const RenderProfile& pr
 
 } // unnamed
 
-void RenderablePreProcessor::Update(const NewTextureRepository& textureRepo)
+void RenderablePreProcessor::Update(const TextureRepository& textureRepo)
 {
 	auto entities = ECS::GetAllEntitiesWith<Transform, Any<SpriteRenderableComponent,
 														   TextRenderableComponent>>();
@@ -85,7 +85,7 @@ void RenderablePreProcessor::Update(const NewTextureRepository& textureRepo)
 				continue;
 			}
 
-			const auto* glyphAtlas = textureRepo.GetAtlas<NewGlyphAtlas>(writer.sourceAtlas);
+			const auto* glyphAtlas = textureRepo.GetAtlas<GlyphAtlas>(writer.sourceAtlas);
 			if (!glyphAtlas)
 			{
 				writer.sourceAtlas = {};

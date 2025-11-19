@@ -30,12 +30,6 @@
     <ClCompile Include="sdl\SDLUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="atlas\GlyphAtlas.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="atlas\SpriteSeriesAtlas.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="core\Error.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -336,7 +330,7 @@
     <ClCompile Include="sdl\SDLContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gui\ImguiContext.cpp">
+    <ClCompile Include="gui\GuiContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -716,15 +710,6 @@
     <ClInclude Include="sdl\SDLUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="atlas\GlyphAtlas.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="atlas\SpriteSeriesAtlas.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="atlas\Atlas.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="core\Result.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1025,12 +1010,6 @@
     <ClInclude Include="components\SpriteAnimationsComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="atlas\AtlasMap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="atlas\TextureRepository.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="components\EventProductionFlagsComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1068,9 +1047,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="deps\RectangleBinPack\SkylineBinPack.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="atlas\ResourcePacket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="atlas\PackingTools.h">
@@ -1170,9 +1146,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="callbacks\ICallbackSource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="systems\SystemFeature.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\Dictionary.h">
@@ -1352,9 +1325,6 @@
     <ClInclude Include="atlas\SpriteAtlas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="atlas\TextureHandle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="atlas\NewAtlas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1457,10 +1427,16 @@
     <ClInclude Include="sdl\SDLContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gui\ImguiContext.h">
+    <ClInclude Include="gui\GuiContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gui\ImguiUtils.h">
+    <ClInclude Include="gui\GuiUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\GuiSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FeatureFlags.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -9,7 +9,6 @@
 #include "../core/Hooks.h"
 #include "../core/Counter.h"
 #include "../systems/SystemManager.h"
-//#include "../atlas/TextureRepository.h"
 #include "../atlas/NewTextureRepository.h"
 #include "../events/EventBus2.h"
 
@@ -26,6 +25,11 @@ public:
 		Lua lua;
 		FileChangeMonitor fileMonitor;
 		Handle<HookAttachment> hookAttachmentHandle;
+	};
+
+	enum FixtureFlag : uint8_t
+	{
+		ImGuiEnabled = 1 << 0
 	};
 
 	SceneFixture() = default;
@@ -51,11 +55,16 @@ public:
 	// getters
 	template <typename T> 
 	std::unique_ptr<T>& GetSystem() { return systems_.GetSystem<T>(); }
+
+	template <typename T>
+	bool IsSystemInitialized() { return systems_.IsSystemInitialized<T>(); }
+
 	HookManager& GetHooks() { return hooks_; }
-	NewTextureRepository& GetTextureRepository() { return textureRepo_; }
+	TextureRepository& GetTextureRepository() { return textureRepo_; }
 	B2World& GetWorld() { return world_; }
 	ScriptManager& GetScripts() { return scripts_; }
 	SDL_Renderer* GetRenderer() { return SDLite::Renderer(); }
+	SDL_Window* GetWindow() { return SDLite::Window(); }
 	
 	float GetDeltaTime() const { return systems_.GetSystem<GameLoopSystem>()->GetDeltaTime(); }
 
@@ -72,13 +81,13 @@ public:
 	// creation
 	static Result<std::shared_ptr<SceneFixture>> GetInstance();
 
-	Result<NewGlyphAtlas*> LoadGlyphAtlas(const Result<std::string>& fpResult, int fontSize) {
+	Result<GlyphAtlas*> LoadGlyphAtlas(const Result<std::string>& fpResult, int fontSize) {
 		if (!fpResult.Success())
 		{
 			return fpResult.GetError();
 		}
 
-		TRY(NewGlyphAtlas::Create(SDLite::Renderer(), {
+		TRY(GlyphAtlas::Create(SDLite::Renderer(), {
 			.filepath = fpResult.GetValue(),
 			.fontSize = fontSize
 		}), glyphAtlas);
@@ -91,9 +100,8 @@ public:
 private:
 	void UpdateTimers();
 
-	//TextureRepository textureRepo_;
-	NewTextureRepository textureRepo_;
-	impl::SystemManager systems_;
+	TextureRepository textureRepo_;
+	SystemManager systems_;
 	HookManager hooks_;
 	B2World world_;
 	ScriptManager scripts_;

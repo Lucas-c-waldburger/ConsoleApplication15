@@ -46,7 +46,7 @@ public:
     static constexpr int8_t kInactive = -1;
 
     SwordHandler(Entity& parent, EventBus2& bus, SDL_Renderer* renderer, 
-                 NewTextureRepository& textureRepo);
+                 TextureRepository& textureRepo);
 
 private:
     auto MakeSwordSwingCallback();
@@ -58,7 +58,7 @@ private:
     static Transform TranslateBoundingBoxToTransform(const SDL_FRect& bbox);
     //static SDL_FPoint GetTransformPositionForSword(const Entity& parentEnt, Entity& swordEnt);
 
-    Result<Void> LoadSprites(SDL_Renderer* renderer, NewTextureRepository& textureRepo);
+    Result<Void> LoadSprites(SDL_Renderer* renderer, TextureRepository& textureRepo);
 
     Entity coordinator_;
     std::array<Entity, 6> swordFrames_;
@@ -67,6 +67,8 @@ private:
 };
 
 namespace ui {
+
+Result<Void> TestButton();
 
 class PointDrawHandler
 {

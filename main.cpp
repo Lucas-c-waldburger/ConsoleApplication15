@@ -15,50 +15,21 @@ int main(int argc, char* argv[])
     return Catch::Session().run(argc, argv);
 
 #elif RUN_MODE(RUN_UI_VISUALIZER)
+    auto fixtureResult = SceneFixture::GetInstance();
+    ASSERT_RESULT(fixtureResult);
+    
+    auto& fixture = fixtureResult.GetValue();
 
-    auto fixResult = SceneFixture::GetInstance();
-    ASSERT_RESULT(fixResult);
-    auto& fixture = fixResult.GetValue();
+    auto& gui = fixture->GetSystem<GuiSystem>();
 
-    auto& repo = fixture->GetTextureRepository();
-
-    auto atlasResult = fixture->LoadGlyphAtlas(
-        ResourcePath::Font("GoNotoKurrent-Bold.ttf"), 24);
-    ASSERT_RESULT(atlasResult);
-    auto& glyphAtlas = atlasResult.GetValue();
-
-    auto entity = ECS::CreateEntity();
-
-    auto& tf = entity.AddComponent(Transform{
-        .position = { SDLite::kFWindowCenter.x - 100.0f,
-                      SDLite::kFWindowCenter.y - 100.0f } 
-    });
-
-    auto& textRenderable = entity.AddComponent(TextRenderableComponent{
-        .writer = glyphAtlas->GetTextWriter(),
-        .formatting = { .bounds = { 100, 500 } }
-    });
-
-    static constexpr std::string_view kYouPressedIt = "Yay you pressed it!";
-
-    auto wsResult = ui::Workspace::Create(
-        fixture->GetRenderer(),
-        fixture->GetTextureRepository(),
-        fixture->GetEventBus()
-    );
-    ASSERT_RESULT(wsResult);
-
-    auto& workspace = wsResult.GetValue();
-
-    auto handleResult = workspace.PlaceButton({
-        .position = SDLite::kFWindowCenter,
-        .color = ui::Button::Color::Green,
-        .onClick = [entity]() mutable {
-            entity.GetComponent<TextRenderableComponent>().writer.text = kYouPressedIt;
+    gui->AddWidget("my window", [] {
+        if (ImGui::Button("Press me!"))
+        {
+            ImGui::Text("You pressed it!");
         }
     });
 
-    ASSERT_RESULT(fixture->RunGameLoop());
+    fixture->RunGameLoop();
 
 #else
     auto sceneFixture = SceneFixture::GetInstance();
@@ -71,9 +42,9 @@ int main(int argc, char* argv[])
     //ASSERT_RESULT(ParticleScene::Run(sceneFixture.GetValue()));
     ASSERT_RESULT(AudioScene::Run(sceneFixture.GetValue()));
 
-    return 0;
 
 #endif
+    return 0;
 }
 
  

@@ -1,8 +1,17 @@
 #pragma once
 #include "NewAtlas.h"
-#include "GlyphAtlas.h"
+#include "../core/Result.h"
 #include <ranges>
 
+struct Glyph
+{
+	static constexpr char kInvalidChar = static_cast<char>(-1);
+
+	char character = kInvalidChar;
+	AtlasPlot plot;
+	int advance = 0;
+	bool operator==(const Glyph&) const = default;
+};
 
 struct FontDescriptor
 {
@@ -14,45 +23,44 @@ struct FontDescriptor
 
 struct GlyphTextWriter
 {
-	Handle<NewTextureAtlas> sourceAtlas;
+	Handle<TextureAtlas> sourceAtlas;
 	std::string text;
 
 	bool operator==(const GlyphTextWriter&) const = default;
 };
 
 
-class NewGlyphAtlas : public NewTextureAtlas
+class GlyphAtlas : public TextureAtlas
 {
 public:
 	static constexpr char kStartChar = 32;
 	static constexpr char kEndChar = 127;
-	static constexpr char kInvalidChar = kStartChar - 1;
 
 	static inline constexpr Glyph kNewlineGlyph{ .character = '\n' };
 
-	NewGlyphAtlas() = default;
-	~NewGlyphAtlas() = default;
+	GlyphAtlas() = default;
+	~GlyphAtlas() = default;
 
-	NewGlyphAtlas(const NewGlyphAtlas&) = delete;
-	NewGlyphAtlas& operator=(const NewGlyphAtlas&) = delete;
+	GlyphAtlas(const GlyphAtlas&) = delete;
+	GlyphAtlas& operator=(const GlyphAtlas&) = delete;
 
-	NewGlyphAtlas(NewGlyphAtlas&& other) noexcept : NewTextureAtlas(std::move(other)),
+	GlyphAtlas(GlyphAtlas&& other) noexcept : TextureAtlas(std::move(other)),
 		fontDescriptor_(std::move(other.fontDescriptor_)),
 		glyphs_(std::move(other.glyphs_))
 	{}
 
-	NewGlyphAtlas& operator=(NewGlyphAtlas&& other) noexcept
+	GlyphAtlas& operator=(GlyphAtlas&& other) noexcept
 	{
 		if (this != &other)
 		{
-			NewTextureAtlas::operator=(std::move(other));
+			TextureAtlas::operator=(std::move(other));
 			fontDescriptor_ = std::move(other.fontDescriptor_);
 			glyphs_ = std::move(other.glyphs_);
 		}
 		return *this;
 	}
 
-	static Result<NewGlyphAtlas> Create(SDL_Renderer* renderer, FontDescriptor&& descriptor);
+	static Result<GlyphAtlas> Create(SDL_Renderer* renderer, FontDescriptor&& descriptor);
 
 	Glyph GetGlyph(char c) const;
 	std::vector<Glyph> GetGlyphsForString(std::string_view text) const;
@@ -64,8 +72,8 @@ public:
 	bool IsTextWriterValid(const GlyphTextWriter& writer) const;
 
 private:
-	explicit NewGlyphAtlas(Handle<NewTextureAtlas>&& handle) :
-		NewTextureAtlas(std::move(handle)) {
+	explicit GlyphAtlas(Handle<TextureAtlas>&& handle) :
+		TextureAtlas(std::move(handle)) {
 	}
 
 	struct GlyphSurface

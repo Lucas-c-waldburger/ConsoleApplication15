@@ -1,7 +1,7 @@
 #include "../CatchUtils.h"
 #include "../test_utils/ImageUtilities.h"
 #include "../test_utils/AtlasTestUtils.h"
-#include "../../../atlas/TextureRepository.h"
+#include "../../../atlas/NewTextureRepository.h"
 #include "../../../file/FilePathUtility.h"
 
 namespace {
@@ -109,7 +109,7 @@ TEST_CASE("Glyphs rendered correctly", "[rendering]")
 		.fontSize = 48
 	};
 
-	auto loadResult = NewGlyphAtlas::Create(SDLite::Renderer(), std::move(descriptorReg));
+	auto loadResult = GlyphAtlas::Create(SDLite::Renderer(), std::move(descriptorReg));
 	REQUIRE_RESULT(loadResult);
 
 	auto& glyphAtlas = loadResult.GetValue();

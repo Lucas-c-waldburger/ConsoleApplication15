@@ -1,12 +1,12 @@
 #pragma once
 #include "System.h"
 
-class NewTextureRepository;
+class TextureRepository;
 
 class RenderablePreProcessor : public System
 {
 public:
-	void Update(const NewTextureRepository& textureRepo);
+	void Update(const TextureRepository& textureRepo);
 
 	size_t GetRenderCallCount() const noexcept { return renderCallCount_; }
 	size_t GetDebugDrawPointCount() const noexcept { return debugDrawPointCount_; }

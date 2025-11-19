@@ -103,6 +103,22 @@ template <typename...Ts>
 static constexpr bool pack_types_unique_v = detail::pack_types_unique<Ts...>::value;
 /**/
 
+/* UNIQUE TYPE LIST */
+namespace detail {
+template <typename TList>
+struct unique_type_list : std::false_type {};
+
+template <typename...Ts>
+struct unique_type_list<TypeList<Ts...>>
+{
+	static constexpr bool value = pack_types_unique_v<Ts...>;
+};
+} // detail
+
+template <typename TList>
+static constexpr bool unique_type_list_v = detail::unique_type_list<TList>::value;
+/**/
+
 /* INDEX OF TYPE IN TUPLE-LIKE */
 namespace detail {
 
