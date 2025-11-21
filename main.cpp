@@ -22,11 +22,49 @@ int main(int argc, char* argv[])
 
     auto& gui = fixture->GetSystem<GuiSystem>();
 
-    gui->AddWidget("my window", [] {
-        if (ImGui::Button("Press me!"))
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    io.FontGlobalScale = 1.5f;
+    style.ScaleAllSizes(1.3f);
+
+    static constexpr std::array kComponentNames = {
+        "Transform", "SpriteRenderable", "TextRenderable"
+    };
+    size_t selectedIndex = 0;
+    float x = 0.0f;
+
+    gui->AddWidget("Components", [&] {
+        for (size_t i = 0; i < kComponentNames.size(); i++)
         {
-            ImGui::Text("You pressed it!");
+            const bool isSelected = (selectedIndex == i);
+
+            if (ImGui::Selectable(kComponentNames[i], isSelected))
+            {
+                selectedIndex = i; // clicked
+            }
+
+            ImGui::SameLine(ImGui::GetWindowWidth() - 30);  // Push to right side
+
+            ImGui::PushID((int)i);  // To avoid ID collisions
+            if (ImGui::SmallButton("X"))
+            {
+                // Remove component
+                //components.erase(components.begin() + i);
+
+                // Fix selection
+                //if (selectedIndex >= components.size())
+                //    selectedIndex = components.empty() ? 0 : components.size() - 1;
+
+                ImGui::PopID();
+                break; // Exit loop because vector changed
+            }
+            ImGui::PopID();
         }
+
+        ImGui::PushItemWidth(80);
+        ImGui::DragFloat("x", &x, 0.1f);
+        ImGui::PopItemWidth();
     });
 
     fixture->RunGameLoop();

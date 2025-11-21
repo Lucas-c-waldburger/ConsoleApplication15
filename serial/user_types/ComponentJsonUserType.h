@@ -1,7 +1,11 @@
 #pragma once
-#include "../../deps/nlohmann/json.hpp"
-#include "../../components/TransformComponent.h"
+#include "../Serialization.h"
+#include "../../components/ComponentIncludes.h"
 
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Transform, position, scale, rotation)
+DEF_COMPONENT_SERIALIZABLE(Transform, position, scale, rotation);
+DEF_COMPONENT_SERIALIZABLE(CameraTarget, offset, followSpeed);
+DEF_COMPONENT_SERIALIZABLE(TextRenderableComponent, writer, formatting, profile);
+DEF_COMPONENT_SERIALIZABLE(SpriteRenderableComponent, profile);
+
 

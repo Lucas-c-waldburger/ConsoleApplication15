@@ -181,6 +181,78 @@ template <typename...TLists>
 using concat_type_lists_t = detail::concat_type_lists_impl<TLists...>::type;
 /**/
 
+/* TRANSFORM / FILTER TUPLE */
+/* PREPEND */
+namespace detail {
+template <typename T, typename TList>
+struct prepend_type;
+
+template <typename T, typename...Ts>
+struct prepend_type<T, TypeList<Ts...>> {
+	using type = TypeList<T, Ts...>;
+};
+} // detail
+
+template <typename T, typename TList>
+using prepend_type_t = detail::prepend_type<T, TList>::type;
+
+/* FILTER */
+namespace detail {
+template <typename List, template <typename> class Pred>
+struct filter_types;
+
+template <template <typename> class Pred>
+struct filter_types<TypeList<>, Pred> {
+	using type = TypeList<>;
+};
+
+template <typename T, typename... Ts, template <typename> class Pred>
+struct filter_types<TypeList<T, Ts...>, Pred> {
+private:
+	using tail = typename filter_types<TypeList<Ts...>, Pred>::type;
+
+public:
+	using type = std::conditional_t<
+		Pred<T>::value, prepend_type_t<T, tail>,
+		tail
+	>;
+};
+} // detail
+
+template <typename List, template <typename> class Pred>
+using filter_types_t = detail::filter_types<List, Pred>::type;
+
+/* AS TUPLE */
+namespace detail {
+//template <typename List>
+//struct as_tuple;
+//
+//template <template <typename...> class List, typename...Ts>
+//struct as_tuple<List<Ts...>> {
+//	using type = std::tuple<Ts...>;
+//};
+
+template <typename List>
+struct as_tuple;
+
+template <template <typename...> class List, typename...Ts>
+struct as_tuple<List<Ts...>> {
+	template <template <typename> class Wrap>
+	struct inner {
+		using type = std::tuple<Wrap<Ts>...>;
+	};
+};
+
+} // detail
+
+//template <typename List>
+//using as_tuple_t = 
+//	typename detail::as_tuple<List>::inner<std::type_identity_t>::type;
+
+template <typename List, template <typename> class Wrap = std::type_identity_t>
+using as_tuple_t = 
+	typename detail::as_tuple<List>::template inner<Wrap>::type;
+
 /* TYPE AT TUPLE-LIKE INDEX */
 namespace detail {
 //template <size_t Idx, typename Tup>

@@ -229,6 +229,7 @@
     <ClCompile Include="systems\GameLoopSystem.cpp" />
     <ClCompile Include="systems\RenderablePreProcessorSystem.cpp" />
     <ClCompile Include="systems\NewRenderSystem.cpp" />
+    <ClCompile Include="systems\SerializationSystem.cpp" />
     <ClCompile Include="systems\util\DebugDrawUtils.cpp" />
     <ClCompile Include="systems\util\RenderUtils.cpp" />
     <ClCompile Include="systems\PhysicsSystem.cpp" />
@@ -344,7 +345,10 @@
     <ClInclude Include="scripting\user_types\SDLUsertypes.h" />
     <ClInclude Include="sdl\SDLContext.h" />
     <ClInclude Include="serial\Serialization.h" />
+    <ClInclude Include="serial\user_types\AudioComponentsJsonUserType.h" />
     <ClInclude Include="serial\user_types\CoreJsonUserTypes.h" />
+    <ClInclude Include="serial\user_types\EntityJsonUserType.h" />
+    <ClInclude Include="serial\user_types\RenderableJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\SDLJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\ComponentJsonUserType.h" />
     <ClInclude Include="state\EntityState.h" />
@@ -603,6 +607,7 @@
     <ClInclude Include="core\TypeUtils.h" />
     <ClInclude Include="core\AABB.h" />
     <ClInclude Include="systems\SDLInputSystem.h" />
+    <ClInclude Include="systems\SerializationSystem.h" />
     <ClInclude Include="systems\SpriteAnimationSystem.h" />
     <ClInclude Include="systems\System.h" />
     <ClInclude Include="systems\SystemManager.h" />
@@ -612,6 +617,7 @@
     <ClInclude Include="render\GlyphFormattingUtils.h" />
     <ClInclude Include="systems\util\RenderUtils.h" />
     <ClInclude Include="test\ui\Button.h" />
+    <ClInclude Include="test\ui\EntityView.h" />
     <ClInclude Include="test\ui\FileTreeView.h" />
     <ClInclude Include="test\ui\Workspace.h" />
     <ClInclude Include="test\callbacks\AnimationCallbacks.h" />

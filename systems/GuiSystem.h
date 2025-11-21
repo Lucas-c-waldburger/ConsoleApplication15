@@ -11,6 +11,8 @@
 class GuiSystem : public System
 {
 public:
+	using Command = fu2::unique_function<void()>;
+
 	GuiSystem() = default;
 
 	template <typename Fn> requires std::invocable<Fn>
@@ -51,11 +53,10 @@ public:
 
 private:
 	UnorderedDictionary<bool> widgetStates_;
-	std::vector<fu2::unique_function<void()>> widgetCommands_;
+	std::vector<Command> widgetCommands_;
 
-	template <typename Fn> requires std::convertible_to<Fn, fu2::unique_function<void()>>
-	fu2::unique_function<void()> PrepareWidget(std::string_view widgetName, 
-											   Fn&& fn, ImGuiWindowFlags flags)
+	template <typename Fn> requires std::convertible_to<Fn, Command>
+	Command PrepareWidget(std::string_view widgetName, Fn&& fn, ImGuiWindowFlags flags)
 	{
 		if (widgetStates_.contains(widgetName))
 		{

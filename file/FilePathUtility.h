@@ -27,6 +27,7 @@ constexpr std::string_view kSoundsDirName = "sounds";
 constexpr std::string_view kSpritesDirName = "sprites";
 constexpr std::string_view kFontsDirName = "fonts";
 constexpr std::string_view kScriptsDirName = "scripts";
+constexpr std::string_view kJsonDirName = "json";
 
 template <typename...Args>
 inline fs::path JoinPathsImpl(Args&&...args)
@@ -80,6 +81,11 @@ public:
 	static Result<std::string> Script(std::string_view file)
 	{
 		return JoinPaths(kScriptsDirName, file);
+	}
+
+	static Result<std::string> Json(std::string_view file)
+	{
+		return JoinPaths(kJsonDirName, file);
 	}
 
 private:
