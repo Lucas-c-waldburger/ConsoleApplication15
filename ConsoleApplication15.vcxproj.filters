@@ -1463,6 +1463,9 @@
     <ClInclude Include="systems\SerializationSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="serial\DeserializationReport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">

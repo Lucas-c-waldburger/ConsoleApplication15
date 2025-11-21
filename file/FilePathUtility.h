@@ -37,14 +37,25 @@ inline fs::path JoinPathsImpl(Args&&...args)
 }
 
 template <typename...Args>
-inline Result<std::string> JoinPaths(Args&&...args)
+inline Result<std::string> JoinPaths(bool createIfNotExists, Args&&...args)
 {
 	fs::path fp = JoinPathsImpl(std::forward<Args>(args)...);
 	std::string fpStr = fp.string();
 
 	if (!fs::exists(fp))
 	{
-		return MAKE_ERROR_FMT("Path does not exist: '{}'", fpStr);
+		if (createIfNotExists)
+		{
+			std::ofstream file(fp);
+			if (!file) 
+			{
+				return MAKE_ERROR_FMT("Failed to create file at path: '{}'", fpStr);
+			}
+		}
+		else
+		{
+			return MAKE_ERROR_FMT("Path does not exist: '{}'", fpStr);
+		}
 	}
 	if (!fs::is_regular_file(fp))
 	{
@@ -54,38 +65,39 @@ inline Result<std::string> JoinPaths(Args&&...args)
 	return fpStr;
 }
 
+using ResourcePathResult = Result<std::string>;
 
 class ResourcePath
 {
 public:
 	static Result<std::string> Music(std::string_view file)
 	{
-		return JoinPaths(kAudioDirName, kMusicDirName, file);
+		return JoinPaths(false, kAudioDirName, kMusicDirName, file);
 	}
 
 	static Result<std::string> Sound(std::string_view file)
 	{
-		return JoinPaths(kAudioDirName, kSoundsDirName, file);
+		return JoinPaths(false, kAudioDirName, kSoundsDirName, file);
 	}
 
 	static Result<std::string> Sprite(std::string_view file)
 	{
-		return JoinPaths(kSpritesDirName, file);
+		return JoinPaths(false, kSpritesDirName, file);
 	}
 
 	static Result<std::string> Font(std::string_view file)
 	{
-		return JoinPaths(kFontsDirName, file);
+		return JoinPaths(false, kFontsDirName, file);
 	}
 
-	static Result<std::string> Script(std::string_view file)
+	static Result<std::string> Script(std::string_view file, bool createIfNotExists = false)
 	{
-		return JoinPaths(kScriptsDirName, file);
+		return JoinPaths(createIfNotExists, kScriptsDirName, file);
 	}
 
-	static Result<std::string> Json(std::string_view file)
+	static Result<std::string> Json(std::string_view file, bool createIfNotExists = false)
 	{
-		return JoinPaths(kJsonDirName, file);
+		return JoinPaths(createIfNotExists, kJsonDirName, file);
 	}
 
 private:

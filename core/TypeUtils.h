@@ -245,10 +245,6 @@ struct as_tuple<List<Ts...>> {
 
 } // detail
 
-//template <typename List>
-//using as_tuple_t = 
-//	typename detail::as_tuple<List>::inner<std::type_identity_t>::type;
-
 template <typename List, template <typename> class Wrap = std::type_identity_t>
 using as_tuple_t = 
 	typename detail::as_tuple<List>::template inner<Wrap>::type;

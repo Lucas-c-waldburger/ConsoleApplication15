@@ -47,12 +47,34 @@ struct some_json_serializable_component_pred :
 };
 } // detail
 
-
-using SerializableComponentTuple = as_tuple_t<
-	filter_types_t<ComponentTypeList, detail::some_json_serializable_component_pred>,
-	std::optional
->;
-
 using SerializableComponentTypeList = 
 	filter_types_t<ComponentTypeList, detail::some_json_serializable_component_pred>;
+
+
+/* COMPONENT DESERIALIZATION TARGET */
+template <JsonSerializableComponent T>
+using ComponentDeserializationTargetWrapper = Result<std::optional<T>>;
 	
+using ComponentDeserializationTarget = as_tuple_t<SerializableComponentTypeList,
+												  ComponentDeserializationTargetWrapper>;
+
+namespace detail {
+template <typename CmpList>
+struct make_component_deserialization_target_impl;
+
+template <typename...Ts> requires 
+	std::same_as<TypeList<Ts...>, SerializableComponentTypeList>
+struct make_component_deserialization_target_impl<TypeList<Ts...>>
+{
+	static ComponentDeserializationTarget Call()
+	{
+		return std::make_tuple(Result<std::optional<Ts>>{}, ...);
+	}
+};
+} // detail
+
+inline ComponentDeserializationTarget MakeComponentDeserializationTarget()
+{
+	return detail::make_component_deserialization_target_impl<
+		SerializableComponentTypeList>::Call();
+}

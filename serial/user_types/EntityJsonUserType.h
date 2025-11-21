@@ -1,6 +1,7 @@
 #pragma once
-#include "../Serialization.h"
+#include "../DeserializationReport.h"
 #include "../../ecs/Ecs.h"
+
 
 inline void to_json(nlohmann::json& j, const Entity& e)
 {
@@ -20,69 +21,64 @@ inline void to_json(nlohmann::json& j, const Entity& e)
 	SerializableComponentTypeList::ForEachType(impl);
 }
 
-inline void from_json(const nlohmann::json& j, Entity& e)
+//inline void from_json(const nlohmann::json& j, Entity& e)
+//{
+//	if (!e.IsValid())
+//	{
+//		LOG_ERROR("Cannot deserialize into an invalid entity.");
+//		return;
+//	}
+//
+//	auto impl = [&]<typename T>
+//	{
+//		if (j.contains(ComponentTypeToName<T>::value))
+//		{
+//			T cmp{};
+//
+//			try {
+//				cmp = j.at(ComponentTypeToName<T>::value).get<T>();
+//			}
+//			catch (const nlohmann::json::exception& ex) {
+//				DeserializationReport::PushComponentError<T>(ex);
+//			}
+//
+//			e.AddComponent(std::move(cmp));
+//		}	
+//	};
+//
+//	SerializableComponentTypeList::ForEachType(impl);
+//}
+
+template <JsonSerializableComponent T>
+inline Error MakeComponentDeserializationError(const nlohmann::json::exception& err)
 {
-	if (!e.IsValid())
-	{
-		LOG_ERROR("Cannot deserialize into an invalid entity.");
-		return;
-	}
+	static constexpr std::string_view errFmt = "Could not deserialize component '{}': {}";
 
-	auto impl = [&]<typename T>
-	{
-		if (j.contains(ComponentTypeToName<T>::value))
-		{
-			e.AddComponent(j.at(ComponentTypeToName<T>::value).get<T>());
-		}	
-	};
-
-	SerializableComponentTypeList::ForEachType(impl);
+	return MAKE_ERROR_FMT(errFmt, ComponentTypeToName<T>::value, err.what()));
 }
 
-inline void from_json(const nlohmann::json& j, SerializableComponentTuple& tup)
+inline void from_json(const nlohmann::json& j, ComponentDeserializationTarget& target)
 {
 	auto impl = [&]<typename T>
 	{
-		if (j.contains(ComponentTypeToName<T>::value))
+		constexpr std::string_view componentName = ComponentTypeToName<T>::value;
+
+		using Field = ComponentDeserializationTargetWrapper<T>;
+
+		auto& field = std::get<T>(target);
+
+		if (j.contains(componentName))
 		{
-			std::get<T>(tup).emplace(j.at(ComponentTypeToName<T>::value).get<T>());
+			try 
+			{
+				field = Field{ std::make_optional(j.at(componentName).get<T>()) };
+			}
+			catch (const nlohmann::json::exception& ex) 
+			{
+				field = Field{ MakeComponentDeserializationError<T>(ex) };
+			}
 		}
 	};
 
 	SerializableComponentTypeList::ForEachType(impl);
 }
-
-//inline SerializableComponentTuple MakeSerializableComponentTuple(const Entity& e)
-//{
-//	if (!e.IsValid())
-//	{
-//		LOG_ERROR("Cannot make serializable component tuple for an invalid entity.");
-//		return;
-//	}
-//
-//	SerializableComponentTuple tup{};
-//
-//	auto impl = [&]<typename T> {
-//		if constexpr (JsonSerializableComponent<T>)
-//		{
-//			if (e.HasComponent<T>())
-//			{
-//				std::get<T>(tup).emplace(e.GetComponent<T>());
-//			}
-//		}
-//	};
-//
-//	ComponentTypeList::ForEachType(impl);
-//
-//	return tup;
-//}
-//
-//inline void to_json(nlohmann::json& j, const SerializableComponentTuple& tup)
-//{
-//	auto impl = [&]<size_t I> {
-//		if (std::get<I>(tup).has_value())
-//		{
-//
-//		}
-//	};
-//}

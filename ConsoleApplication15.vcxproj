@@ -344,6 +344,7 @@
     <ClInclude Include="scripting\user_types\EntityUserType.h" />
     <ClInclude Include="scripting\user_types\SDLUsertypes.h" />
     <ClInclude Include="sdl\SDLContext.h" />
+    <ClInclude Include="serial\DeserializationReport.h" />
     <ClInclude Include="serial\Serialization.h" />
     <ClInclude Include="serial\user_types\AudioComponentsJsonUserType.h" />
     <ClInclude Include="serial\user_types\CoreJsonUserTypes.h" />
