@@ -659,4 +659,3 @@ inline void Entity::SetEventProduction(bool tf)
 
     eventProductionFlags.Set<T>(tf);
 }
-

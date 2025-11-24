@@ -8,6 +8,8 @@ struct SpriteDescriptor
 {
 	std::string spriteName;
 	std::string filepath;
+
+	bool operator==(const SpriteDescriptor&) const = default;
 };
 
 struct SpriteDescriptorPackage
@@ -81,6 +83,8 @@ public:
 
 	Result<Void> ValidateSprite(const Sprite& sprite) const;
 	bool IsSpriteValid(const Sprite& sprite) const;
+
+	bool CanFitSprite(SDL_Renderer* renderer, const SpriteDescriptor& descriptor) const;
 
 private:
 	explicit SpriteAtlas(Handle<TextureAtlas>&& handle) : 

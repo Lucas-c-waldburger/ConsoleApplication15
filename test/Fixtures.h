@@ -41,6 +41,7 @@ public:
 	Result<Void> RunGameLoopMs(int ms);
 	template <typename Fn> requires std::is_invocable_r_v<bool, Fn>
 	Result<Void> RunGameLoopCondition(Fn&& fn);
+	Result<Void> RunGameLoopConditional(bool& cond);
 
 	// updates
 	void LoopStart();

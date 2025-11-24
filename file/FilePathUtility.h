@@ -30,32 +30,21 @@ constexpr std::string_view kScriptsDirName = "scripts";
 constexpr std::string_view kJsonDirName = "json";
 
 template <typename...Args>
-inline fs::path JoinPathsImpl(Args&&...args)
+inline fs::path JoinPathsRaw(Args&&...args)
 {
 	return FilePathUtility::GetRootPath() / kResourcesDirName /
 		(fs::path(std::forward<Args>(args)) / ...);
 }
 
 template <typename...Args>
-inline Result<std::string> JoinPaths(bool createIfNotExists, Args&&...args)
+inline Result<std::string> JoinPaths(Args&&...args)
 {
-	fs::path fp = JoinPathsImpl(std::forward<Args>(args)...);
+	fs::path fp = JoinPathsRaw(std::forward<Args>(args)...);
 	std::string fpStr = fp.string();
 
 	if (!fs::exists(fp))
 	{
-		if (createIfNotExists)
-		{
-			std::ofstream file(fp);
-			if (!file) 
-			{
-				return MAKE_ERROR_FMT("Failed to create file at path: '{}'", fpStr);
-			}
-		}
-		else
-		{
-			return MAKE_ERROR_FMT("Path does not exist: '{}'", fpStr);
-		}
+		return MAKE_ERROR_FMT("Path does not exist: '{}'", fpStr);
 	}
 	if (!fs::is_regular_file(fp))
 	{
@@ -72,32 +61,32 @@ class ResourcePath
 public:
 	static Result<std::string> Music(std::string_view file)
 	{
-		return JoinPaths(false, kAudioDirName, kMusicDirName, file);
+		return JoinPaths(kAudioDirName, kMusicDirName, file);
 	}
 
 	static Result<std::string> Sound(std::string_view file)
 	{
-		return JoinPaths(false, kAudioDirName, kSoundsDirName, file);
+		return JoinPaths(kAudioDirName, kSoundsDirName, file);
 	}
 
 	static Result<std::string> Sprite(std::string_view file)
 	{
-		return JoinPaths(false, kSpritesDirName, file);
+		return JoinPaths(kSpritesDirName, file);
 	}
 
 	static Result<std::string> Font(std::string_view file)
 	{
-		return JoinPaths(false, kFontsDirName, file);
+		return JoinPaths(kFontsDirName, file);
 	}
 
-	static Result<std::string> Script(std::string_view file, bool createIfNotExists = false)
+	static Result<std::string> Script(std::string_view file)
 	{
-		return JoinPaths(createIfNotExists, kScriptsDirName, file);
+		return JoinPaths(kScriptsDirName, file);
 	}
 
-	static Result<std::string> Json(std::string_view file, bool createIfNotExists = false)
+	static Result<std::string> Json(std::string_view file)
 	{
-		return JoinPaths(createIfNotExists, kJsonDirName, file);
+		return JoinPaths(kJsonDirName, file);
 	}
 
 private:
@@ -184,7 +173,7 @@ private:
 													 std::same_as<T, fs::path>)
 	static Result<std::vector<T>> GetDirPaths(Args&&...args)
 	{
-		fs::path dir = JoinPathsImpl(std::forward<Args>(args)...);
+		fs::path dir = JoinPathsRaw(std::forward<Args>(args)...);
 
 		if (!fs::exists(dir))
 		{

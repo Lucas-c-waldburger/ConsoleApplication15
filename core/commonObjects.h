@@ -110,6 +110,9 @@ struct FixedString {
 
     // Enable structural equality for NTTP
     consteval bool operator==(FixedString const&) const = default;
+
+    constexpr std::size_t size() const { return N; }
+    constexpr operator const char*() const { return value; }
 };
 
 

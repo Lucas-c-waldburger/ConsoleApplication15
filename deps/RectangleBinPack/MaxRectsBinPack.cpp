@@ -163,6 +163,14 @@ double MaxRectsBinPack::Occupancy() const
 	return (double)usedSurfaceArea / ((uint64_t)binWidth * binHeight);
 }
 
+bool MaxRectsBinPack::WillFit(int width, int height, FreeRectChoiceHeuristic method) const
+{
+	int dummy1, dummy2;
+	auto r = ScoreRect(width, height, method, dummy1, dummy2);
+
+	return r.width != 0 && r.height != 0;
+}
+
 Rect MaxRectsBinPack::FindPositionForNewNodeBottomLeft(int width, int height, int &bestY, int &bestX) const
 {
 	Rect bestNode = {};

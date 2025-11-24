@@ -1,5 +1,6 @@
 #pragma once
-#include "../Serialization.h"
+#include "SDLJsonUserTypes.h"
+#include "CoreJsonUserTypes.h"
 #include "../../components/RenderableComponent.h"
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RGB, r, g, b)
@@ -24,7 +25,6 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AtlasPlot, rect, rotation)
 
-//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Sprite)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Glyph, character, plot, advance)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GlyphCacheData, glyph, destRect, rotationCenter)
@@ -35,3 +35,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GlyphTextWriter, text)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextRenderableGlyphCache::CacheContext, transform, 
 								   formatting, offset)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextRenderableGlyphCache, cache, context)
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Sprite, sourceAtlas)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpriteInfo, spriteName, filepath, 
+								   seriesName, seriesIndex)
+

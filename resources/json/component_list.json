@@ -1,0 +1,124 @@
+{
+  "components": {
+    "CameraTarget": {
+      "followSpeed": 5.0,
+      "offset": {
+        "x": 0.0,
+        "y": 0.0
+      }
+    },
+    "SpriteRenderableComponent": {
+      "profile": {
+        "anchor": {
+          "rotation": "Center",
+          "scale": "Center"
+        },
+        "debugDraw": {
+          "boundingBox": {
+            "color": {
+              "a": 255,
+              "b": 0,
+              "g": 0,
+              "r": 255
+            },
+            "on": false
+          },
+          "collider": {
+            "color": {
+              "a": 255,
+              "b": 255,
+              "g": 0,
+              "r": 0
+            },
+            "on": false
+          }
+        },
+        "drawOrder": 0,
+        "flip": "SDL_FLIP_NONE",
+        "isOverlay": false,
+        "mods": {
+          "alpha": 255,
+          "blend": "SDL_BLENDMODE_BLEND",
+          "color": {
+            "b": 255,
+            "g": 255,
+            "r": 255
+          }
+        },
+        "offset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "parallaxFactor": 0.0
+      }
+    },
+    "TextRenderableComponent": {
+      "formatting": {
+        "align": "Left",
+        "bounds": {
+          "h": 1,
+          "w": 1
+        },
+        "letterSpacing": 1.0,
+        "scaleToBounds": true
+      },
+      "profile": {
+        "anchor": {
+          "rotation": "Center",
+          "scale": "Center"
+        },
+        "debugDraw": {
+          "boundingBox": {
+            "color": {
+              "a": 255,
+              "b": 0,
+              "g": 0,
+              "r": 255
+            },
+            "on": false
+          },
+          "collider": {
+            "color": {
+              "a": 255,
+              "b": 255,
+              "g": 0,
+              "r": 0
+            },
+            "on": false
+          }
+        },
+        "drawOrder": 0,
+        "flip": "SDL_FLIP_NONE",
+        "isOverlay": true,
+        "mods": {
+          "alpha": 255,
+          "blend": "SDL_BLENDMODE_BLEND",
+          "color": {
+            "b": 0,
+            "g": 0,
+            "r": 0
+          }
+        },
+        "offset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "parallaxFactor": 0.0
+      },
+      "writer": {
+        "text": ""
+      }
+    },
+    "Transform": {
+      "position": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "rotation": 0.0,
+      "scale": {
+        "x": 1.0,
+        "y": 1.0
+      }
+    }
+  }
+}

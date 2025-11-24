@@ -51,6 +51,9 @@ public:
 	/// Computes the ratio of used surface area to the total bin area.
 	double Occupancy() const;
 
+	/// Call ScoreRect with dummy values to test if rect can fit, non-mutating
+	bool WillFit(int width, int height, FreeRectChoiceHeuristic method) const;
+
 private:
 	int binWidth;
 	int binHeight;

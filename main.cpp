@@ -4,7 +4,15 @@
 #include "test/catch/Config.h"
 #include "deps/catch/catch_amalgamated.hpp"
 #include "test/Fixtures.h"
-#include "test/ui/Workspace.h"
+#include "test/ui/EntityView.h"
+#include "atlas/SpriteInfo.h"
+
+using SpriteInfoTest = StableSOA<
+    SOAMember<"spriteName", std::string>,
+    SOAMember<"filepath", std::string>,
+    SOAMember<"seriesName", std::string>,
+    SOAMember<"seriesIndex", size_t>
+>;
 
 int main(int argc, char* argv[]) 
 {
@@ -15,59 +23,83 @@ int main(int argc, char* argv[])
     return Catch::Session().run(argc, argv);
 
 #elif RUN_MODE(RUN_UI_VISUALIZER)
-    auto fixtureResult = SceneFixture::GetInstance();
+    //ASSERT_RESULT(ui::MakeComponentListJson());
+    SpriteInfoTest info;
+    std::cout << info.Size();
+
+   /* auto fixtureResult = SceneFixture::GetInstance();
     ASSERT_RESULT(fixtureResult);
     
     auto& fixture = fixtureResult.GetValue();
 
+    auto entity = ECS::CreateEntity();*/
+
+
+
+    //entity.AddComponent(Transform{
+    //    .position = { 4.0f, 6.0f },
+    //    .rotation = 45.0f,
+    //    .scale = { 1.5f, 1.5f }
+    //});
+
+    /*fixture->GetSystem<SerializationSystem>()->SerializeEntities(
+        "entities.json", fixture->GetTextureRepository());
+
     auto& gui = fixture->GetSystem<GuiSystem>();
+    bool cont = true;
 
-    ImGuiIO& io = ImGui::GetIO();
-    ImGuiStyle& style = ImGui::GetStyle();
-
-    io.FontGlobalScale = 1.5f;
-    style.ScaleAllSizes(1.3f);
-
-    static constexpr std::array kComponentNames = {
-        "Transform", "SpriteRenderable", "TextRenderable"
-    };
-    size_t selectedIndex = 0;
-    float x = 0.0f;
-
-    gui->AddWidget("Components", [&] {
-        for (size_t i = 0; i < kComponentNames.size(); i++)
-        {
-            const bool isSelected = (selectedIndex == i);
-
-            if (ImGui::Selectable(kComponentNames[i], isSelected))
-            {
-                selectedIndex = i; // clicked
-            }
-
-            ImGui::SameLine(ImGui::GetWindowWidth() - 30);  // Push to right side
-
-            ImGui::PushID((int)i);  // To avoid ID collisions
-            if (ImGui::SmallButton("X"))
-            {
-                // Remove component
-                //components.erase(components.begin() + i);
-
-                // Fix selection
-                //if (selectedIndex >= components.size())
-                //    selectedIndex = components.empty() ? 0 : components.size() - 1;
-
-                ImGui::PopID();
-                break; // Exit loop because vector changed
-            }
-            ImGui::PopID();
-        }
-
-        ImGui::PushItemWidth(80);
-        ImGui::DragFloat("x", &x, 0.1f);
-        ImGui::PopItemWidth();
+    gui->AddWidget("Entity Inspector", [&] {
+        cont = ui::EntityInspector::Draw(entity);
     });
 
-    fixture->RunGameLoop();
+    ASSERT_RESULT(fixture->RunGameLoopConditional(cont));*/
+
+    //ImGuiIO& io = ImGui::GetIO();
+    //ImGuiStyle& style = ImGui::GetStyle();
+
+    //io.FontGlobalScale = 1.5f;
+    //style.ScaleAllSizes(1.3f);
+
+    //static constexpr std::array kComponentNames = {
+    //    "Transform", "SpriteRenderable", "TextRenderable"
+    //};
+    //size_t selectedIndex = 0;
+    //float x = 0.0f;
+
+    //gui->AddWidget("Components", [&] {
+    //    for (size_t i = 0; i < kComponentNames.size(); i++)
+    //    {
+    //        const bool isSelected = (selectedIndex == i);
+
+    //        if (ImGui::Selectable(kComponentNames[i], isSelected))
+    //        {
+    //            selectedIndex = i; // clicked
+    //        }
+
+    //        ImGui::SameLine(ImGui::GetWindowWidth() - 30);  // Push to right side
+
+    //        ImGui::PushID((int)i);  // To avoid ID collisions
+    //        if (ImGui::SmallButton("X"))
+    //        {
+    //            // Remove component
+    //            //components.erase(components.begin() + i);
+
+    //            // Fix selection
+    //            //if (selectedIndex >= components.size())
+    //            //    selectedIndex = components.empty() ? 0 : components.size() - 1;
+
+    //            ImGui::PopID();
+    //            break; // Exit loop because vector changed
+    //        }
+    //        ImGui::PopID();
+    //    }
+
+    //    ImGui::PushItemWidth(80);
+    //    ImGui::DragFloat("x", &x, 0.1f);
+    //    ImGui::PopItemWidth();
+    //});
+
+    //fixture->RunGameLoop();
 
 #else
     auto sceneFixture = SceneFixture::GetInstance();

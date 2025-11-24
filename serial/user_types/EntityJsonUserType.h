@@ -1,5 +1,5 @@
 #pragma once
-#include "../DeserializationReport.h"
+#include "../Serialization.h"
 #include "../../ecs/Ecs.h"
 
 
@@ -11,15 +11,26 @@ inline void to_json(nlohmann::json& j, const Entity& e)
 		return;
 	}
 
+	j["id"] = e.GetID();
+
+	//auto& cmps = j["components"];
+	nlohmann::ordered_json cmps;
+	cmps = nlohmann::ordered_json::object();
+
 	auto impl = [&]<typename T> {
 		if (e.HasComponent<T>())
 		{
-			j[ComponentTypeToName<T>::value] = e.GetComponent<T>();
+			auto& obj = cmps[ComponentName<T>::value];
+
+			to_json(obj, e.GetComponent<T>());
 		}
 	};
 
 	SerializableComponentTypeList::ForEachType(impl);
+
+	j["components"] = std::move(cmps);
 }
+
 
 //inline void from_json(const nlohmann::json& j, Entity& e)
 //{
@@ -54,18 +65,18 @@ inline Error MakeComponentDeserializationError(const nlohmann::json::exception& 
 {
 	static constexpr std::string_view errFmt = "Could not deserialize component '{}': {}";
 
-	return MAKE_ERROR_FMT(errFmt, ComponentTypeToName<T>::value, err.what()));
+	return MAKE_ERROR_FMT(errFmt, ComponentName<T>::value, err.what());
 }
 
 inline void from_json(const nlohmann::json& j, ComponentDeserializationTarget& target)
 {
 	auto impl = [&]<typename T>
 	{
-		constexpr std::string_view componentName = ComponentTypeToName<T>::value;
+		constexpr std::string_view componentName = ComponentName<T>::value;
 
 		using Field = ComponentDeserializationTargetWrapper<T>;
 
-		auto& field = std::get<T>(target);
+		Field& field = std::get<Field>(target);
 
 		if (j.contains(componentName))
 		{

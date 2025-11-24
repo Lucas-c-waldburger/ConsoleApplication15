@@ -12,26 +12,11 @@
 #include "EntityStateSystem.h"
 #include "GameLoopSystem.h"
 #include "AudioSystem.h"
+#include "SerializationSystem.h"
 
 #if IMGUI_ENABLED
 #include "GuiSystem.h"
 #endif
-
-// TODO: Either make into type list or dont require strong typing like this for system managing
-
-//#define SYSTEM_REGISTRY_LIST \
-//	CameraSystem, \
-//	PhysicsSystem, \
-//	SDLInputSystem, \
-//	EventCallbackSystem, \
-//	TimerSystem, \
-//	SpriteAnimationSystem, \
-//	EntityStateSystem, \
-//	GameLoopSystem, \
-//	AudioSystem, \
-//	NewRenderSystem, \
-//	GuiSystem
-
 
 using SystemTypeList = TypeList<
 	CameraSystem, 
@@ -44,9 +29,12 @@ using SystemTypeList = TypeList<
 	GameLoopSystem,
 	AudioSystem,
 	NewRenderSystem,
+	SerializationSystem,
+
 #if IMGUI_ENABLED
 	GuiSystem
 #endif
+
 >;
 
 static_assert(unique_type_list_v<SystemTypeList>);

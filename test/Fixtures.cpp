@@ -106,6 +106,33 @@ Result<Void> SceneFixture::RunGameLoop()
 	return Void{};
 }
 
+Result<Void> SceneFixture::RunGameLoopConditional(bool& cond)
+{
+	while (cond)
+	{
+		LoopStart();
+
+		TRY(UpdateSDLInputs(), cont);
+		if (!cont)
+		{
+			break;
+		}
+
+		TRY(UpdateEntityStates());
+
+		TRY(UpdatePhysics());
+
+		TRY(UpdateAudio());
+		TRY(UpdateCamera());
+
+		TRY(RenderScene());
+
+		LoopEnd();
+	}
+
+	return Void{};
+}
+
 void SceneFixture::LoopStart()
 {
 	assert(systems_.IsSystemInitialized<GameLoopSystem>());
@@ -253,7 +280,7 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 #if IMGUI_ENABLED
 	TRY(GuiContext::Init(fixture->GetWindow(), fixture->GetRenderer()));
 	fixture->systems_.InitializeSystem<GuiSystem>();
-#endif
+#endif 
 
 	fixture->systems_.InitializeSystem<PhysicsSystem>();
 	fixture->systems_.InitializeSystem<SDLInputSystem>();
@@ -262,6 +289,7 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 	fixture->systems_.InitializeSystem<GameLoopSystem>();
 	fixture->systems_.InitializeSystem<AudioSystem>();
 	fixture->systems_.InitializeSystem<NewRenderSystem>();
+	fixture->systems_.InitializeSystem<SerializationSystem>();
 
 	Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
 								   static_cast<float>(SDLite::kWindowHeight) };

@@ -238,6 +238,7 @@
     <ClCompile Include="systems\SpriteAnimationSystem.cpp" />
     <ClCompile Include="systems\TimerSystem.cpp" />
     <ClCompile Include="render\GlyphFormattingUtils.cpp" />
+    <ClCompile Include="systems\util\SerializationSystemUtils.cpp" />
     <ClCompile Include="test\ui\Button.cpp" />
     <ClCompile Include="test\ui\FileTreeView.cpp" />
     <ClCompile Include="test\ui\Workspace.cpp" />
@@ -266,6 +267,7 @@
     <ClInclude Include="atlas\NewTextureRepository.h" />
     <ClInclude Include="atlas\PackingTools.h" />
     <ClInclude Include="atlas\SpriteAtlas.h" />
+    <ClInclude Include="atlas\SpriteInfo.h" />
     <ClInclude Include="audio\AudioBank.h" />
     <ClInclude Include="audio\AudioHandle.h" />
     <ClInclude Include="audio\AudioCommon.h" />
@@ -294,6 +296,7 @@
     <ClInclude Include="components\util\SpriteAnimationUtils.h" />
     <ClInclude Include="core\Anchor.h" />
     <ClInclude Include="core\CatTypeID.h" />
+    <ClInclude Include="core\ErrorCode.h" />
     <ClInclude Include="deps\imgui-master\examples\libs\emscripten\emscripten_mainloop_stub.h" />
     <ClInclude Include="deps\imgui-master\examples\libs\glfw\include\GLFW\glfw3.h" />
     <ClInclude Include="deps\imgui-master\examples\libs\glfw\include\GLFW\glfw3native.h" />
@@ -346,6 +349,7 @@
     <ClInclude Include="sdl\SDLContext.h" />
     <ClInclude Include="serial\DeserializationReport.h" />
     <ClInclude Include="serial\Serialization.h" />
+    <ClInclude Include="serial\SerializationConcepts.h" />
     <ClInclude Include="serial\user_types\AudioComponentsJsonUserType.h" />
     <ClInclude Include="serial\user_types\CoreJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\EntityJsonUserType.h" />
@@ -617,9 +621,11 @@
     <ClInclude Include="systems\util\DebugDrawUtils.h" />
     <ClInclude Include="render\GlyphFormattingUtils.h" />
     <ClInclude Include="systems\util\RenderUtils.h" />
+    <ClInclude Include="systems\util\SerializationSystemUtils.h" />
     <ClInclude Include="test\ui\Button.h" />
     <ClInclude Include="test\ui\EntityView.h" />
     <ClInclude Include="test\ui\FileTreeView.h" />
+    <ClInclude Include="test\ui\TextureRepositoryContext.h" />
     <ClInclude Include="test\ui\Workspace.h" />
     <ClInclude Include="test\callbacks\AnimationCallbacks.h" />
     <ClInclude Include="test\callbacks\GameControllerCallbacks.h" />

@@ -151,6 +151,27 @@ bool SpriteAtlas::IsSpriteValid(const Sprite& sprite) const
            sprite.plot.rect.w > 0 && sprite.plot.rect.h > 0;
 }
 
+bool SpriteAtlas::CanFitSprite(SDL_Renderer* renderer, const SpriteDescriptor& descriptor) const
+{
+    SDL_Surface* spriteSurface = IMG_Load(descriptor.filepath.c_str());
+    if (!spriteSurface)
+    {
+        return false;
+    }
+
+    Dimensions<int> spriteDims = { spriteSurface->w, spriteSurface->h }; 
+
+    SDL_FreeSurface(spriteSurface);
+
+    if (spriteDims.w <= 0 || spriteDims.h <= 0)
+    {
+        return false;
+    }
+
+    return binPack_.WillFit(spriteDims.w, spriteDims.h,
+                            rbp::MaxRectsBinPack::RectBestAreaFit);
+}
+
 Sprite SpriteAtlas::GetSprite(std::string_view spriteName) const
 {
     for (size_t i = 0; i < spriteInfo_.size(); i++)

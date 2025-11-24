@@ -1,30 +1,32 @@
 #pragma once
 #include "../../deps/nlohmann/json.hpp"
 #include "../../core/commonObjects.h"
+#include "../../core/Literals.h"
+#include "../../core/Handle.h"
 #include "../../core/Anchor.h"
 
-template <typename T>
-inline void to_json(nlohmann::json& j, const HandedPair<T>& p)
+template <typename BasicJson, typename T>
+inline void to_json(BasicJson& j, const HandedPair<T>& p)
 {
 	j["left"] = p.left;
 	j["right"] = p.right;
 }
-template <typename T>
-inline void from_json(const nlohmann::json& j, HandedPair<T>& p)
+template <typename BasicJson, typename T>
+inline void from_json(const BasicJson& j, HandedPair<T>& p)
 {
 	j.at("left").get_to(p.left);
 	j.at("right").get_to(p.right);
 }
 
 
-template <typename T>
-inline void to_json(nlohmann::json& j, const Dimensions<T>& d)
+template <typename BasicJson, typename T>
+inline void to_json(BasicJson& j, const Dimensions<T>& d)
 {
 	j["w"] = d.w;
 	j["h"] = d.h;
 }
-template <typename T>
-inline void from_json(const nlohmann::json& j, Dimensions<T>& d)
+template <typename BasicJson, typename T>
+inline void from_json(const BasicJson& j, Dimensions<T>& d)
 {
 	j.at("w").get_to(d.w);
 	j.at("h").get_to(d.h);
@@ -47,3 +49,20 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 	}
 )
 
+/* HANDLE */
+template <typename BasicJson, typename T>
+inline void to_json(BasicJson& j, const Handle<T>& handle)
+{
+	if (handle.IsValid())
+	{
+		j["hash"] = handle.GetHash();
+	}
+	else
+	{
+		j["hash"] = nullptr;
+	}	
+}
+template <typename BasicJson, typename T>
+inline void from_json(const BasicJson& j, Handle<T>& handle)
+{
+}

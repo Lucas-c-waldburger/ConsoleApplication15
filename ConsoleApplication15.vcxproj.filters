@@ -339,6 +339,9 @@
     <ClCompile Include="systems\SerializationSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="systems\util\SerializationSystemUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1464,6 +1467,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="serial\DeserializationReport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="serial\SerializationConcepts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\TextureRepositoryContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\util\SerializationSystemUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\ErrorCode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\SpriteInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
