@@ -18,7 +18,7 @@ constexpr bool IsPowerOfTwo(size_t x) noexcept
 
 } // unnamed namespace
 
-const SpriteInfo SpriteAtlas::kInvalidSpriteInfo{};
+//const SpriteInfo SpriteAtlas::kInvalidSpriteInfo{};
 
 Result<Sprite> 
 SpriteAtlas::LoadSprite(SDL_Renderer* renderer, SpriteDescriptor&& descriptor)
@@ -55,7 +55,7 @@ SpriteAtlas::LoadSpritesImpl(SDL_Renderer* renderer, SpriteDescriptorPackage&& p
             package.seriesName);
     }
 
-    spriteInfo_.reserve(spriteInfo_.size() +
+    spriteInfo_.Reserve(spriteInfo_.Size() +
                         package.descriptors.size());
 
     std::vector<Sprite> sprites;
@@ -71,9 +71,13 @@ SpriteAtlas::LoadSpritesImpl(SDL_Renderer* renderer, SpriteDescriptorPackage&& p
 
         if (isSpriteSeries)
         {
-            auto& info = spriteInfo_[newSprite.spriteIndex];
-            info.seriesName = package.seriesName;
-            info.seriesIndex = i;
+            auto [sName, sIdx] = spriteInfo_.GetView<&SpriteInfo::seriesName,
+                                                     &SpriteInfo::seriesIndex>
+                                                     (newSprite.spriteIndex);
+
+            //auto& info = spriteInfo_[newSprite.spriteIndex];
+            sName = package.seriesName;
+            sIdx = i;
         }
     }
 
@@ -113,16 +117,28 @@ Result<SpriteAtlas> SpriteAtlas::Create(SDL_Renderer* renderer, size_t size)
     return atlas;
 }
 
-const SpriteInfo& SpriteAtlas::GetSpriteInfo(const Sprite& sprite) const
+//const SpriteInfo& SpriteAtlas::GetSpriteInfo(const Sprite& sprite) const
+//{
+//    auto validated = ValidateSprite(sprite);
+//    if (!validated.Success())
+//    {
+//        LOG_ERROR(validated.GetError());
+//        return kInvalidSpriteInfo;
+//    }
+//
+//    return spriteInfo_[sprite.spriteIndex];
+//}
+
+SpriteInfo SpriteAtlas::GetSpriteInfo(const Sprite& sprite) const
 {
     auto validated = ValidateSprite(sprite);
     if (!validated.Success())
     {
         LOG_ERROR(validated.GetError());
-        return kInvalidSpriteInfo;
+        return {};
     }
-
-    return spriteInfo_[sprite.spriteIndex];
+    
+    return spriteInfo_.MakeSlice(sprite.spriteIndex);
 }
 
 Result<Void> SpriteAtlas::ValidateSprite(const Sprite& sprite) const
@@ -174,13 +190,16 @@ bool SpriteAtlas::CanFitSprite(SDL_Renderer* renderer, const SpriteDescriptor& d
 
 Sprite SpriteAtlas::GetSprite(std::string_view spriteName) const
 {
-    for (size_t i = 0; i < spriteInfo_.size(); i++)
+    size_t i = 0;
+    for (auto [name] : spriteInfo_.ForEach<&SpriteInfo::spriteName>())
     {
-        if (spriteInfo_[i].spriteName == spriteName)
+        if (name == spriteName)
         {
             assert(i < sprites_.size());
             return sprites_[i];
         }
+
+        ++i;
     }
 
     return {};
@@ -208,6 +227,22 @@ std::vector<Sprite> SpriteAtlas::GetSpriteSeries(std::string_view seriesName) co
     }
 
     return sprites;
+}
+
+Sprite SpriteAtlas::MakeSprite(size_t spriteIndex) const
+{
+    if (spriteIndex >= spriteInfo_.Size())
+    {
+        return {};
+    }
+
+    auto [plot] = spriteInfo_.GetView<&SpriteInfo::plot>(spriteIndex);
+
+    return Sprite{
+        .sourceAtlas = GetHandle(),
+        .plot = plot,
+        .spriteIndex = spriteIndex
+    };
 }
 
 Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
@@ -261,7 +296,7 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
         return MAKE_ERROR(SDL_GetError());
     }
 
-    assert(spriteInfo_.size() == sprites_.size());
+    assert(spriteInfo_.Size() == sprites_.size());
 
     if (descriptor.spriteName.empty())
     {
@@ -269,7 +304,7 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
             std::filesystem::path(descriptor.filepath).stem().string();
     }
 
-    spriteInfo_.emplace_back(SpriteInfo{
+    spriteInfo_.PushBack({
         .spriteName = std::move(descriptor.spriteName),
         .filepath = std::move(descriptor.filepath)
     });

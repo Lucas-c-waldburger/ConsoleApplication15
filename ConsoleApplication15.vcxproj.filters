@@ -342,6 +342,9 @@
     <ClCompile Include="systems\util\SerializationSystemUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\catch\core\StableSOATests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1481,7 +1484,19 @@
     <ClInclude Include="core\ErrorCode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="atlas\StableSOA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="atlas\SpriteInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\SOAInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\StableSOA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\SOAConcepts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

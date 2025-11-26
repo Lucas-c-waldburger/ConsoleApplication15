@@ -37,6 +37,6 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextRenderableGlyphCache::CacheContext, trans
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextRenderableGlyphCache, cache, context)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Sprite, sourceAtlas)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpriteInfo, spriteName, filepath, 
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpriteInfo::Slice, spriteName, filepath, 
 								   seriesName, seriesIndex)
 

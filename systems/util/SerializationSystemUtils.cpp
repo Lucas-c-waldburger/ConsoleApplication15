@@ -112,7 +112,7 @@ Result<Void> RenderableSerializationHelper::SerializeSprite(
 		return MAKE_ERROR("Sprite source atlas not found in Texture Repository");
 	}
 
-	const auto& info = spriteAtlas->GetSpriteInfo(sprite);
+	auto info = spriteAtlas->GetSpriteInfo(sprite);
 	if (info.filepath.empty())
 	{
 		return MAKE_ERROR("Sprite filepath was empty, meaning sprite index was invalid");
@@ -139,7 +139,7 @@ Result<Sprite> RenderableSerializationHelper::DeserializeSprite(
 		return MAKE_ERROR_FMT("JSON key '{}' not found", kSpriteInfoJsonKey);
 	}
 
-	SpriteInfo spriteInfo;
+	SpriteInfo::Slice spriteInfo;
 	from_json(spriteComponentJson.at(kSpriteInfoJsonKey), spriteInfo);
 
 	// validate sprite info

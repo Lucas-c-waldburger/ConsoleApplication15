@@ -239,6 +239,7 @@
     <ClCompile Include="systems\TimerSystem.cpp" />
     <ClCompile Include="render\GlyphFormattingUtils.cpp" />
     <ClCompile Include="systems\util\SerializationSystemUtils.cpp" />
+    <ClCompile Include="test\catch\core\StableSOATests.cpp" />
     <ClCompile Include="test\ui\Button.cpp" />
     <ClCompile Include="test\ui\FileTreeView.cpp" />
     <ClCompile Include="test\ui\Workspace.cpp" />
@@ -268,6 +269,7 @@
     <ClInclude Include="atlas\PackingTools.h" />
     <ClInclude Include="atlas\SpriteAtlas.h" />
     <ClInclude Include="atlas\SpriteInfo.h" />
+    <ClInclude Include="atlas\StableSOA.h" />
     <ClInclude Include="audio\AudioBank.h" />
     <ClInclude Include="audio\AudioHandle.h" />
     <ClInclude Include="audio\AudioCommon.h" />
@@ -297,6 +299,9 @@
     <ClInclude Include="core\Anchor.h" />
     <ClInclude Include="core\CatTypeID.h" />
     <ClInclude Include="core\ErrorCode.h" />
+    <ClInclude Include="core\SOAConcepts.h" />
+    <ClInclude Include="core\SOAInterface.h" />
+    <ClInclude Include="core\StableSOA.h" />
     <ClInclude Include="deps\imgui-master\examples\libs\emscripten\emscripten_mainloop_stub.h" />
     <ClInclude Include="deps\imgui-master\examples\libs\glfw\include\GLFW\glfw3.h" />
     <ClInclude Include="deps\imgui-master\examples\libs\glfw\include\GLFW\glfw3native.h" />

@@ -5,14 +5,7 @@
 #include "deps/catch/catch_amalgamated.hpp"
 #include "test/Fixtures.h"
 #include "test/ui/EntityView.h"
-#include "atlas/SpriteInfo.h"
 
-using SpriteInfoTest = StableSOA<
-    SOAMember<"spriteName", std::string>,
-    SOAMember<"filepath", std::string>,
-    SOAMember<"seriesName", std::string>,
-    SOAMember<"seriesIndex", size_t>
->;
 
 int main(int argc, char* argv[]) 
 {
@@ -24,8 +17,7 @@ int main(int argc, char* argv[])
 
 #elif RUN_MODE(RUN_UI_VISUALIZER)
     //ASSERT_RESULT(ui::MakeComponentListJson());
-    SpriteInfoTest info;
-    std::cout << info.Size();
+
 
    /* auto fixtureResult = SceneFixture::GetInstance();
     ASSERT_RESULT(fixtureResult);

@@ -304,6 +304,18 @@ template <typename T>
 inline constexpr bool is_const_reference_v = detail::is_const_reference<T>::value;
 /**/
 
+/* ADD CONST REFERENCE */
+namespace detail {
+template <typename T>
+struct add_const_ref
+{
+	using type = std::add_const_t<std::add_lvalue_reference_t<T>>;
+};
+}
+
+template <typename T>
+using add_const_ref_t = detail::add_const_ref<T>::type;
+
 template <typename T> concept ArithmeticType = std::is_arithmetic_v<T>;
 
 template <typename T, typename U> concept ConvertibleType = std::convertible_to<T, U>;
