@@ -1,6 +1,8 @@
 #pragma once
+#include <ranges>
 #include "SDLJsonUserTypes.h"
 #include "CoreJsonUserTypes.h"
+#include "AtlasJsonUserTypes.h"
 #include "../../components/RenderableComponent.h"
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RGB, r, g, b)
@@ -23,7 +25,6 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 	}
 )
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AtlasPlot, rect, rotation)
 
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Glyph, character, plot, advance)
@@ -36,7 +37,5 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextRenderableGlyphCache::CacheContext, trans
 								   formatting, offset)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextRenderableGlyphCache, cache, context)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Sprite, sourceAtlas)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpriteInfo::Slice, spriteName, filepath, 
-								   seriesName, seriesIndex)
+
 

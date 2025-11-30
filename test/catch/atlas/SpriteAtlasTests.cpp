@@ -68,7 +68,7 @@ TEST_CASE("Sprite Atlas Tests", "[atlas]")
 	CHECK(seriesPaths.size() == 4);
 
 	auto package = test::MakeSpriteTestPackage(std::move(seriesPaths), "knight_fall_series");
-	CHECK(package.descriptors.size() == 4);
+	CHECK(package.data.size() == 4);
 	CHECK(package.seriesName == "knight_fall_series");
 
 	auto loadResult = spriteAtlas.LoadSprites(SDLite::Renderer(),

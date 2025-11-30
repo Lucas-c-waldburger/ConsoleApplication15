@@ -139,6 +139,8 @@ Result<Void> GlyphAtlas::LoadImpl(SDL_Renderer* renderer,
         0, atlasSideLen, atlasSideLen, 32, SDL_PIXELFORMAT_RGBA32
     );
 
+    textureSize_ = static_cast<size_t>(atlasSideLen);
+
     SDL_FillRect(atlasSurface, nullptr, 
         SDL_MapRGBA(atlasSurface->format, 0, 0, 0, 0));
 
@@ -171,7 +173,7 @@ Result<Void> GlyphAtlas::LoadImpl(SDL_Renderer* renderer,
 }
 
 Result<GlyphAtlas> GlyphAtlas::Create(SDL_Renderer* renderer, 
-                                            FontDescriptor&& descriptor)
+                                      FontDescriptor&& descriptor)
 {
     GlyphAtlas glyphAtlas{ Handle<TextureAtlas>::Create() };
 

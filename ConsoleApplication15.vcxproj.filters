@@ -1484,12 +1484,6 @@
     <ClInclude Include="core\ErrorCode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="atlas\StableSOA.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="atlas\SpriteInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="core\SOAInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1497,6 +1491,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\SOAConcepts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="serial\user_types\AtlasJsonUserTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\AtlasConcepts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

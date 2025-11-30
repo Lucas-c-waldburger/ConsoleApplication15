@@ -1,5 +1,6 @@
 #include "SerializationSystemUtils.h"
 #include "../../core/Algorithms.h"
+#include "../../serial/user_types/AtlasJsonUserTypes.h"
 #include "../../serial/user_types/RenderableJsonUserTypes.h"
 #include "../../serial/Serialization.h"
 #include "../../components/RenderableComponent.h"
@@ -92,9 +93,86 @@ namespace {
 //
 //	return Void{};
 //}
+//template <typename Fn, typename Arg>
+//Result<Void> ExpandTillError(Fn&& fn, Arg&& arg) 
+//{
+//	return std::invoke(fn, std::forward<Arg>(arg));
+//}
+//
+//template <typename Fn, typename Arg, typename...Args>
+//Result<Void> ExpandTillError(Fn&& fn) {
+//	if (auto result = f.template operator() < T > ();     // call for T
+//		result != FailReturn{})                       // adjust test as needed
+//		return result;                                // fail immediately
+//
+//	if constexpr (sizeof...(Ts) > 0)
+//		return short_circuit_expand<FailReturn, F, Ts...>(std::forward<F>(f));
+//
+//	return FailReturn{};
+//}
+
+//std::array stringViews{ std::string_view{svs}... };
+
+//template <typename Fn, typename...Ts, typename...Strs>
+//Result<Void> ForEachString(Fn&& fn, const Strs&...strs) 
+//	requires ((std::convertible_to<Strs, std::string_view> && ...) && 
+//			  (std::is_invocable_r_v<Result<Void>, Fn, std::string_view>))
+//{
+//	//for (const auto& sv : { std::string_view{svs}... })
+//	//{
+//	//	TRY(std::invoke(fn, sv));
+//	//}
+//	//return Void{};
+//	auto call = [&](const std::string_view sv) -> Result<Void> {
+//		return std::invoke(fn, sv);
+//	};
+//
+//	((TRY(call(std::string_view{ strs }))), ...);
+//
+//	return Void{};
+//}
 
 
+template <typename BasicJson, typename...Keys> requires 
+	(std::convertible_to<Keys, std::string_view> && ...)
+Result<Void> ValidateJsonKeys(BasicJson& j, const Keys&...keys) 
+{	
+	auto impl = [&](std::string_view key) -> Result<Void> {
+		if (!j.contains(key))
+		{
+			return MAKE_ERROR_FMT("Atlas JSON missing key '{}'", key);
+		}
+		return Void{};
+	}
 
+	((TRY(impl(std::string_view{ strs }))), ...);
+
+	return Void{};
+}
+
+Result<FixedSpriteAtlas> 
+TextureRepositorySerializationHelper::DeserializeSpriteAtlas(nlohmann::json& j, 
+															 SDL_Renderer* renderer)
+{
+	if (!j.is_object())
+	{
+		return MAKE_ERROR("Json was not an object type");
+	}
+
+	TRY(ValidateJsonKeys(j,kSpriteInfoKey, kSeriesIndexRangesKey, kTextureSizeKey));
+
+	return FixedSpriteAtlas::Create(renderer,
+		j.at(kSpriteInfoKey).get<SpriteInfoSOA>(),
+		j.at(kSeriesIndexRangesKey).get<BaseSpriteAtlas::SeriesIndexRangeMap>(),
+		j.at(kTextureSizeKey).get<size_t>()
+	);
+}
+
+Result<Void>
+TextureRepositorySerializationHelper::SerializeSpriteAtlas(const DynamicSpriteAtlas& atlas)
+{
+
+}
 
 Result<Void> RenderableSerializationHelper::SerializeSprite(
 	const Sprite& sprite, nlohmann::json& spriteComponentJson)
@@ -139,7 +217,7 @@ Result<Sprite> RenderableSerializationHelper::DeserializeSprite(
 		return MAKE_ERROR_FMT("JSON key '{}' not found", kSpriteInfoJsonKey);
 	}
 
-	SpriteInfo::Slice spriteInfo;
+	SpriteInfo spriteInfo;
 	from_json(spriteComponentJson.at(kSpriteInfoJsonKey), spriteInfo);
 
 	// validate sprite info

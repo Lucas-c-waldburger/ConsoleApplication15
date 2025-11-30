@@ -105,11 +105,11 @@ TEST_CASE("System handles sprites and glyphs", "[rendering][system]")
 	CHECK(airbornePaths.size() == 12);
 
 	auto package = test::MakeSpriteTestPackage(std::move(airbornePaths), "airborne_series");
-	CHECK(package.descriptors.size() == 12);
+	CHECK(package.data.size() == 12);
 	CHECK(package.seriesName == "airborne_series");
 
 	std::vector<Entity> entities;
-	for (size_t i = 0; i < package.descriptors.size(); i++)
+	for (size_t i = 0; i < package.data.size(); i++)
 	{
 		auto spriteAtlasResult = SpriteAtlas::Create(SDLite::Renderer(), 2048);
 		REQUIRE_RESULT(spriteAtlasResult);
@@ -120,7 +120,7 @@ TEST_CASE("System handles sprites and glyphs", "[rendering][system]")
 		
 		//atlasHandles.push_back(spriteAtlas.GetHandle());
 		auto spriteResult = spriteAtlas.LoadSprite(
-			SDLite::Renderer(), std::move(package.descriptors[i]));
+			SDLite::Renderer(), std::move(package.data[i]));
 		REQUIRE_RESULT(spriteResult);
 
 		auto attachResult = textureRepo.AttachAtlas(std::move(spriteAtlas));

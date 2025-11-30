@@ -19,7 +19,17 @@ constexpr inline bool WasRectPacked(rbp::Rect rect)
 	return !(rect.width == 0 || rect.height == 0);
 }
 
-constexpr SDL_Rect RbpToSDLRect(rbp::Rect rect)
+constexpr inline SDL_Rect RbpToSDLRect(rbp::Rect rect)
 {
 	return { rect.x, rect.y, rect.width, rect.height };
+}
+
+constexpr inline rbp::Rect SDLToRbpRect(SDL_Rect rect)
+{
+	return { rect.x, rect.y, rect.w, rect.h };
+}
+
+constexpr inline rbp::RectSize SDLToRbpRectSize(SDL_Rect rect)
+{
+	return { rect.w, rect.h };
 }

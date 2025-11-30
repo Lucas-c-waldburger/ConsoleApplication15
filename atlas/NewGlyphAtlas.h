@@ -54,6 +54,7 @@ public:
 		if (this != &other)
 		{
 			TextureAtlas::operator=(std::move(other));
+			binPack_ = std::move(other.binPack_);
 			fontDescriptor_ = std::move(other.fontDescriptor_);
 			glyphs_ = std::move(other.glyphs_);
 		}
@@ -73,8 +74,8 @@ public:
 
 private:
 	explicit GlyphAtlas(Handle<TextureAtlas>&& handle) :
-		TextureAtlas(std::move(handle)) {
-	}
+		TextureAtlas(std::move(handle)) 
+	{}
 
 	struct GlyphSurface
 	{

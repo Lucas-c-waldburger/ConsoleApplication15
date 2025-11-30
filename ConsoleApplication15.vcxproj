@@ -263,13 +263,12 @@
     <ClCompile Include="test\Premades.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="atlas\AtlasConcepts.h" />
     <ClInclude Include="atlas\NewAtlas.h" />
     <ClInclude Include="atlas\NewGlyphAtlas.h" />
     <ClInclude Include="atlas\NewTextureRepository.h" />
     <ClInclude Include="atlas\PackingTools.h" />
     <ClInclude Include="atlas\SpriteAtlas.h" />
-    <ClInclude Include="atlas\SpriteInfo.h" />
-    <ClInclude Include="atlas\StableSOA.h" />
     <ClInclude Include="audio\AudioBank.h" />
     <ClInclude Include="audio\AudioHandle.h" />
     <ClInclude Include="audio\AudioCommon.h" />
@@ -355,6 +354,7 @@
     <ClInclude Include="serial\DeserializationReport.h" />
     <ClInclude Include="serial\Serialization.h" />
     <ClInclude Include="serial\SerializationConcepts.h" />
+    <ClInclude Include="serial\user_types\AtlasJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\AudioComponentsJsonUserType.h" />
     <ClInclude Include="serial\user_types\CoreJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\EntityJsonUserType.h" />

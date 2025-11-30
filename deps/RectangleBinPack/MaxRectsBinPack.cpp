@@ -109,6 +109,73 @@ void MaxRectsBinPack::Insert(std::vector<RectSize> &rects, std::vector<Rect> &ds
 	}
 }
 
+std::vector<Rect> MaxRectsBinPack::StableIndexInsert(const std::vector<RectSize>& input,
+													 FreeRectChoiceHeuristic method)
+{
+	// Output with one slot per original input rect.
+	std::vector<Rect> result(input.size());
+
+	// Internal working list: rect + original index
+	struct W {
+		RectSize size;
+		size_t original;
+	};
+
+	std::vector<W> work;
+	work.reserve(input.size());
+	for (size_t i = 0; i < input.size(); ++i)
+		work.push_back({ input[i], i });
+
+	// RBP internal ordering: packing order
+	while (!work.empty())
+	{
+		int bestScore1 = std::numeric_limits<int>::max();
+		int bestScore2 = std::numeric_limits<int>::max();
+		int bestRectIndex = -1;
+		Rect bestNode;
+
+		// Find best node exactly like original
+		for (size_t i = 0; i < work.size(); ++i)
+		{
+			int score1, score2;
+			Rect newNode =
+				ScoreRect(work[i].size.width,
+					work[i].size.height,
+					method,
+					score1,
+					score2);
+
+			if (score1 < bestScore1 ||
+				(score1 == bestScore1 && score2 < bestScore2))
+			{
+				bestScore1 = score1;
+				bestScore2 = score2;
+				bestNode = newNode;
+				bestRectIndex = (int)i;
+			}
+		}
+
+		if (bestRectIndex == -1)
+		{
+			result.clear();
+			return result; 
+		}
+
+		// Place it in the bin
+		PlaceRect(bestNode);
+
+		// Write output at the original index
+		size_t originalIndex = work[bestRectIndex].original;
+		result[originalIndex] = bestNode;
+
+		// Remove chosen rect (swap + pop), preserving original index
+		work[bestRectIndex] = work.back();
+		work.pop_back();
+	}
+
+	return result;
+}
+
 void MaxRectsBinPack::PlaceRect(const Rect &node)
 {
 	for(size_t i = 0; i < freeRectangles.size();)

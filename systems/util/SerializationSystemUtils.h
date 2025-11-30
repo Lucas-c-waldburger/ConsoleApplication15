@@ -28,6 +28,23 @@ namespace util {
 //	std::vector<SpriteDescriptorPackage> packages_;
 //};
 
+class TextureRepositorySerializationHelper
+{
+public:
+	TextureRepositorySerializationHelper(TextureRepository& repo, SDL_Renderer* renderer) :
+		textureRepository_(repo), renderer_(renderer) 
+	{}
+
+	//Result<Void> SerializeAtlases
+
+	static Result<Void> SerializeSpriteAtlas(const DynamicSpriteAtlas& atlas);
+	static Result<FixedSpriteAtlas> DeserializeSpriteAtlas(nlohmann::json& j, SDL_Renderer* renderer);
+
+private:
+	TextureRepository& textureRepository_;
+	SDL_Renderer* renderer_ = nullptr;
+};
+
 class RenderableSerializationHelper
 {
 public:

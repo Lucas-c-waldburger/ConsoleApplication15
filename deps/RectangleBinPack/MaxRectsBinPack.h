@@ -45,6 +45,9 @@ public:
 	/// @param method The rectangle placement rule to use when packing.
 	void Insert(std::vector<RectSize> &rects, std::vector<Rect> &dst, FreeRectChoiceHeuristic method);
 
+	/// Insert that maintains orignal vector's indices
+	std::vector<Rect> StableIndexInsert(const std::vector<RectSize>& input, FreeRectChoiceHeuristic method);
+
 	/// Inserts a single rectangle into the bin, possibly rotated.
 	Rect Insert(int width, int height, FreeRectChoiceHeuristic method);
 

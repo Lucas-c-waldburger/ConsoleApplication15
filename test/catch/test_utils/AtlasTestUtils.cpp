@@ -3,12 +3,12 @@
 
 namespace test {
 
-SpriteDescriptorPackage MakeSpriteTestPackage(const std::vector<std::string>& pathStrs,
+SpriteDescriptors MakeSpriteTestPackage(const std::vector<std::string>& pathStrs,
 											  std::string_view seriesName)
 {
-	SpriteDescriptorPackage package{};
+	SpriteDescriptors package{};
 	package.seriesName = seriesName;
-	package.descriptors.resize(pathStrs.size());
+	package.data.resize(pathStrs.size());
 
 	constexpr auto stripName = [](std::string_view pathSv) {
 		auto path = std::filesystem::path(pathSv);
@@ -16,7 +16,7 @@ SpriteDescriptorPackage MakeSpriteTestPackage(const std::vector<std::string>& pa
 		return (std::filesystem::exists(path)) ? path.stem().string() : std::string{};
 	};
 
-	std::transform(pathStrs.begin(), pathStrs.end(), package.descriptors.begin(),
+	std::transform(pathStrs.begin(), pathStrs.end(), package.data.begin(),
 		[](auto&& pathStr) {
 			return SpriteDescriptor{
 				.spriteName = stripName(pathStr),
@@ -24,7 +24,7 @@ SpriteDescriptorPackage MakeSpriteTestPackage(const std::vector<std::string>& pa
 			};
 		});
 
-	if (std::any_of(package.descriptors.begin(), package.descriptors.end(),
+	if (std::any_of(package.data.begin(), package.data.end(),
 		[](const auto& desc) { return desc.spriteName.empty() || desc.filepath.empty(); }))
 	{
 		return {};

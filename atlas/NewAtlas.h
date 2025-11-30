@@ -41,6 +41,9 @@ static constexpr size_t kSizeMax = std::numeric_limits<size_t>::max();
 class TextureAtlas
 {
 public:
+	static constexpr size_t kDefaultAtlasSize = 1024;
+	static constexpr size_t kMaxAtlasSize = 4096;
+
 	TextureAtlas() = default;
 	~TextureAtlas() = default;
 
@@ -49,7 +52,9 @@ public:
 
 	TextureAtlas(TextureAtlas&& other) noexcept : 
 		atlasTexture_(std::move(other.atlasTexture_)),
-		binPack_(std::move(other.binPack_)), handle_(other.handle_) 
+		binPack_(std::move(other.binPack_)),
+		textureSize_(other.textureSize_),
+		handle_(std::move(other.handle_)) 
 	{}
 
 	TextureAtlas& operator=(TextureAtlas&& other) noexcept
@@ -58,16 +63,19 @@ public:
 		{
 			atlasTexture_ = std::move(other.atlasTexture_);
 			binPack_ = std::move(other.binPack_);
-			handle_ = other.handle_;
+			textureSize_ = other.textureSize_;
+			handle_ = std::move(other.handle_);
 		}
 		return *this;
 	}
 
-	SDL_Texture* const GetSourceTexture() const { return atlasTexture_.get(); }
+	SDL_Texture* GetSourceTexture() const { return atlasTexture_.get(); }
 
 	const Handle<TextureAtlas>& GetHandle() const { return handle_; }
 
 	bool IsLoaded() const { return handle_.IsValid() && atlasTexture_; }
+
+	size_t GetTextureSize() const noexcept { return textureSize_; }
 
 protected:
 	explicit TextureAtlas(Handle<TextureAtlas>&& handle) : 
@@ -75,8 +83,25 @@ protected:
 
 	UniqueTexturePtr atlasTexture_;
 	rbp::MaxRectsBinPack binPack_;
+	size_t textureSize_ = 0;
 
 private:
 	Handle<TextureAtlas> handle_;
 };
 
+
+//template <typename DerivedAtlas> 
+//class AtlasContract : public TextureAtlas
+//{
+//public:
+//	AtlasContract() = default;
+//	~AtlasContract() = default;
+//
+//	template <typename...Args>
+//	static Result<DerivedAtlas> Create(SDL_Renderer* renderer, Args&&...args)
+//	{
+//		return DerivedAtlas::CreateImpl(renderer, std::forward<Args>(args)...);
+//	}
+//
+//private:
+//};

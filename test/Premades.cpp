@@ -353,17 +353,17 @@ SwordHandler::SwordHandler(Entity& parent, EventBus2& bus, SDL_Renderer* rendere
 
 Result<Void> SwordHandler::LoadSprites(SDL_Renderer* renderer, TextureRepository& textureRepo)
 {
-    SpriteDescriptorPackage package{
+    SpriteDescriptors package{
         .seriesName = "sword_swing"
     };
-    package.descriptors = kSwordSpritePaths
+    package.data = kSwordSpritePaths
         | std::views::transform([](const auto& str) { return ResourcePath::Sprite(str); })
         | std::views::filter([](auto&& res) { return res.Success(); })
         | std::views::transform([](auto&& res) { 
             return SpriteDescriptor{ .filepath = std::move(res.GetValue())  }; 
         }) | std::ranges::to<std::vector>();
 
-    assert(package.descriptors.size() == swordFrames_.size());
+    assert(package.data.size() == swordFrames_.size());
 
     TRY(SpriteAtlas::Create(renderer), temp);
     TRY(temp.LoadSprites(renderer, std::move(package)), spriteSeries);

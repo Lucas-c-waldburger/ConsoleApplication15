@@ -45,7 +45,7 @@ TEST_CASE("Sprites rendered correctly", "[rendering]")
 	CHECK(airbornePaths.size() == 12);
 
 	auto package = test::MakeSpriteTestPackage(std::move(airbornePaths), "airborne_series");
-	CHECK(package.descriptors.size() == 12);
+	CHECK(package.data.size() == 12);
 	CHECK(package.seriesName == "airborne_series");
 
 	auto loadResult = spriteAtlas.LoadSprites(SDLite::Renderer(), std::move(package));

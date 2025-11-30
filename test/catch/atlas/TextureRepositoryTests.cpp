@@ -112,7 +112,7 @@ TEST_CASE("Texture Repository can hold multiple atlases of same type", "[atlas]"
 
 	auto airbornePathsCopy = airbornePaths;
 	auto package = test::MakeSpriteTestPackage(std::move(airbornePathsCopy), "airborne_series");
-	CHECK(package.descriptors.size() == 12);
+	CHECK(package.data.size() == 12);
 	CHECK(package.seriesName == "airborne_series");
 
 	// load a sprite on each atlas
@@ -122,7 +122,7 @@ TEST_CASE("Texture Repository can hold multiple atlases of same type", "[atlas]"
 		REQUIRE(retrieved != nullptr);
 		CHECK(retrieved->GetSourceTexture() != nullptr);
 
-		auto descriptorCopy = package.descriptors[i];
+		auto descriptorCopy = package.data[i];
 		auto loadResult = retrieved->LoadSprite(SDLite::Renderer(), std::move(descriptorCopy));
 		REQUIRE_RESULT(loadResult);
 	}
