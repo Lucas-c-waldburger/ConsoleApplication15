@@ -3,7 +3,7 @@
 #include "../../core/Result.h"
 
 #define CAPTURE_RESULT(result_) do { \
-	if (!result_.Success()) { INFO(result_.GetError().GetMessage()); } \
+	if (!result_.Success()) { CATCH_MAKE_MSG(result_.GetError().GetMessage()); } \
 } while(0)
 
 #define CHECK_RESULT(result_) do { \

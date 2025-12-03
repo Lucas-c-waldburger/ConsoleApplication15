@@ -21,7 +21,7 @@ inline Result<T> GetJsonNativeValue(const nlohmann::json& j, std::string_view ke
 
 	const auto& val = j.at(keyName);
 
-	if (j.is_array() || j.is_object())
+	if (val.is_array() || val.is_object())
 	{
 		return MAKE_ERROR(makeErrorMsg());
 	}
@@ -31,7 +31,7 @@ inline Result<T> GetJsonNativeValue(const nlohmann::json& j, std::string_view ke
 		{
 			return MAKE_ERROR(makeErrorMsg());
 		}
-		return j.get<bool>();
+		return val.get<bool>();
 	}
 	else if constexpr (std::same_as<T, std::string>)
 	{
@@ -39,7 +39,7 @@ inline Result<T> GetJsonNativeValue(const nlohmann::json& j, std::string_view ke
 		{
 			return MAKE_ERROR(makeErrorMsg());
 		}
-		return j.get<std::string>();
+		return val.get<std::string>();
 	}
 	else if constexpr (std::is_arithmetic_v<T>)
 	{
@@ -57,7 +57,7 @@ inline Result<T> GetJsonNativeValue(const nlohmann::json& j, std::string_view ke
 					return MAKE_ERROR(makeErrorMsg());
 				}
 
-				uint64_t temp = j.get<uint64_t>();
+				uint64_t temp = val.get<uint64_t>();
 				if (temp > static_cast<uint64_t>(std::numeric_limits<T>::max()))
 				{
 					return MAKE_ERROR("Unsigned value in Json exceeds "
@@ -73,7 +73,7 @@ inline Result<T> GetJsonNativeValue(const nlohmann::json& j, std::string_view ke
 					return MAKE_ERROR(makeErrorMsg());
 				}
 
-				int64_t temp = j.get<int64_t>();
+				int64_t temp = val.get<int64_t>();
 				if (temp > static_cast<int64_t>(std::numeric_limits<T>::max()) ||
 					temp < static_cast<int64_t>(std::numeric_limits<T>::min()))
 				{
@@ -91,7 +91,7 @@ inline Result<T> GetJsonNativeValue(const nlohmann::json& j, std::string_view ke
 				return MAKE_ERROR(makeErrorMsg());
 			}
 
-			double temp = j.get<double>();
+			double temp = val.get<double>();
 			if (temp > static_cast<double>(std::numeric_limits<T>::max()) ||
 				temp < static_cast<double>(std::numeric_limits<T>::min()))
 			{

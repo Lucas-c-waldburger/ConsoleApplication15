@@ -116,14 +116,15 @@ TEST_CASE("Atlas Deserialization", "[serial]")
 
 	auto handleHashMapResult =
 		util::TextureRepositorySerializationHelper::DeserializeAtlases(
-			SDLite::Renderer(), repo, j);
+			SDLite::Renderer(), repo, j.at(kTextureAtlasesKey));
 	REQUIRE_RESULT(handleHashMapResult);
 
 	const auto& handleHashMap = handleHashMapResult.GetValue();
 	CHECK(handleHashMap.size() == 2);
 
-	for (const auto& [_, handle] : handleHashMap)
+	for (const auto& [hash, handle] : handleHashMap)
 	{
+		CHECK(hash > 0);
 		CHECK(repo.HasAtlas(handle));
 	}
 
@@ -137,9 +138,11 @@ TEST_CASE("Atlas Deserialization", "[serial]")
 
 	auto* spriteAtlas = repo.GetAtlas<SpriteAtlas>(spriteAtlasHandle);
 	REQUIRE(spriteAtlas);
+	CHECK(spriteAtlas->GetTextureSize() == 1024);
 
 	auto* glyphAtlas = repo.GetAtlas<GlyphAtlas>(glyphAtlasHandle);
 	REQUIRE(glyphAtlas);
+	CHECK(glyphAtlas->GetTextureSize() == 512);
 
 	// check sprites
 	auto sprite1PathResult = ResourcePath::Sprite("knight\\walk_anim\\knight_walk_0.png");
@@ -188,7 +191,7 @@ TEST_CASE("Atlas Deserialization", "[serial]")
 	auto sprite3 = spriteAtlas->GetSprite(kSprite3Name);
 	{
 		CHECK(sprite3.sourceAtlas == spriteAtlasHandle);
-		CHECK(sprite3.spriteIndex == 0);
+		CHECK(sprite3.spriteIndex == 2);
 		CHECK(sprite3.plot.rect.w > 0);
 		CHECK(sprite3.plot.rect.h > 0);
 

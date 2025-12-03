@@ -63,10 +63,10 @@ TextureRepositorySerializationHelper::DeserializeSpriteAtlases(SDL_Renderer* ren
 
 	for (const auto& atlasJson : j)
 	{
-		TRY(CheckJsonKey(j, kSpriteDescriptorsKey, nlohmann::json::value_t::array));
+		TRY(CheckJsonKey(atlasJson, kSpriteDescriptorsKey, nlohmann::json::value_t::array));
 
-		TRY(GetJsonNativeValue<size_t>(j, kTextureSizeKey), textureSize);
-		TRY(GetJsonNativeValue<size_t>(j, kHashKey), hash);
+		TRY(GetJsonNativeValue<size_t>(atlasJson, kTextureSizeKey), textureSize);
+		TRY(GetJsonNativeValue<size_t>(atlasJson, kHashKey), hash);
 
 		if (handleHashMap.contains(hash))
 		{
@@ -79,7 +79,7 @@ TextureRepositorySerializationHelper::DeserializeSpriteAtlases(SDL_Renderer* ren
 		handleHashMap[hash] = atlas->GetHandle();
 
 		package.clear();
-		j.at(kSpriteDescriptorsKey).get_to(package);
+		atlasJson.at(kSpriteDescriptorsKey).get_to(package);
 		
 		for (auto&& descriptors : package)
 		{
@@ -100,9 +100,9 @@ TextureRepositorySerializationHelper::DeserializeGlyphAtlases(SDL_Renderer* rend
 	
 	for (const auto& atlasJson : j)
 	{
-		TRY(CheckJsonKey(j, kFontDescriptorKey));
+		TRY(CheckJsonKey(atlasJson, kFontDescriptorKey));
 
-		TRY(GetJsonNativeValue<size_t>(j, kHashKey), hash);
+		TRY(GetJsonNativeValue<size_t>(atlasJson, kHashKey), hash);
 
 		if (handleHashMap.contains(hash))
 		{
@@ -110,7 +110,7 @@ TextureRepositorySerializationHelper::DeserializeGlyphAtlases(SDL_Renderer* rend
 		}
 
 		TRY(repo.CreateAtlas<GlyphAtlas>(renderer,
-			j.at(kFontDescriptorKey).get<FontDescriptor>()), atlas);
+			atlasJson.at(kFontDescriptorKey).get<FontDescriptor>()), atlas);
 		assert(atlas);
 
 		handleHashMap[hash] = atlas->GetHandle();
