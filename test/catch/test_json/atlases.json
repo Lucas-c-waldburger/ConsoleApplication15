@@ -1,0 +1,41 @@
+{
+    "textureAtlases": {
+        "glyphAtlases": [
+            {
+                "fontDescriptor": {
+                    "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\fonts\\GoNotoKurrent-Regular.ttf",
+                    "fontHeight": 44,
+                    "fontName": "GoNotoKurrent-Regular",
+                    "fontSize": 32
+                },
+                "hash": 3777005120,
+                "textureSize": 512
+            }
+        ],
+        "spriteAtlases": [
+            {
+                "hash": 2119241935,
+                "spriteDescriptors": [
+                    {
+                        "data": [
+                            {
+                                "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\knight\\walk_anim\\knight_walk_0.png",
+                                "spriteName": "knight_walk_0"
+                            },
+                            {
+                                "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\knight\\jump_anim\\knight_jump_0.png",
+                                "spriteName": "knight_jump_0"
+                            },
+                            {
+                                "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\knight\\fall_anim\\knight_fall_0.png",
+                                "spriteName": "knight_fall_0"
+                            }
+                        ],
+                        "seriesName": ""
+                    }
+                ],
+                "textureSize": 1024
+            }
+        ]
+    }
+}

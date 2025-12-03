@@ -3,61 +3,18 @@
 #include "../serial/user_types/EntityJsonUserType.h"
 #include "util/SerializationSystemUtils.h"
 
-namespace {
-
-//Result<Void> SerializeSprite(const Sprite& sprite, nlohmann::json& j, 
-//							 TextureRepository& textureRepo)
-//{
-//	static constexpr std::string_view spriteComponentName = 
-//		ComponentName<SpriteRenderableComponent>::value;
-//	if (!j.contains(spriteComponentName))
-//	{
-//		return MAKE_ERROR_FMT("Entity's components JSON field was not "
-//			"populated with key '{}'", spriteComponentName);
-//	}
-//
-//	if (!sprite.sourceAtlas.IsValid())
-//	{
-//		LOG_ERROR("Sprite source atlas handle was marked invalid");
-//
-//		return Void{};
-//	}
-//
-//	auto* spriteAtlas = textureRepo.GetAtlas<SpriteAtlas>(sprite.sourceAtlas);
-//	if (!spriteAtlas)
-//	{
-//		return MAKE_ERROR("Sprite source atlas not found in Texture Repository");
-//	}
-//
-//	const auto& info = spriteAtlas->GetSpriteInfo(sprite);
-//	if (info.filepath.empty())
-//	{
-//		return MAKE_ERROR("Sprite filepath was empty, meaning sprite index was invalid");
-//	}
-//
-//	if (!std::filesystem::exists(info.filepath))
-//	{
-//		return MAKE_ERROR("Sprite filepath does not exist");
-//	}
-//
-//	auto& spriteComponentField = j.at(spriteComponentName);
-//	spriteComponentField["filepath"] = info.filepath;
-//
-//	return Void{};
-//}
-
-
-//Result<Void> DeserializeSprite(Sprite& sprite, std::string_view spriteFilepath,
-//							   TextureRepository& textureRepo)
-//{
-//
-//}
-
-}
-
-Result<Void> SerializationSystem::SerializeEntities(std::string_view jsonFilename, 
-													TextureRepository& textureRepo)
+Result<Void> SerializationSystem::SerializeState(std::string_view jsonFilename, 
+												 TextureRepository& textureRepo)
 {
+	// serialize atlases
+	nlohmann::json j;
+	
+	auto& atlasesJson = j[kTextureAtlasesKey] = nlohmann::json::object();
+
+	TRY(util::TextureRepositorySerializationHelper::SerializeAtlases(
+		textureRepo, atlasesJson));
+
+	// serialize entities
 	auto entities = ECS::GetAllActiveEntities();
 	if (entities.empty())
 	{
@@ -72,23 +29,17 @@ Result<Void> SerializationSystem::SerializeEntities(std::string_view jsonFilenam
 		return MAKE_ERROR_FMT("Could not open JSON file at path: '{}'", path.string());
 	}
 
-	nlohmann::json j;
 	auto& entityArr = j[kJsonEntitiesKey] = nlohmann::json::array();
-
-	util::ComponentSerializationResolver serializationResolver{ 
-		textureRepo, SDLite::Renderer() };
 
 	for (const auto& entity : entities)
 	{
-		auto& entityField = entityArr.emplace_back(entity);
-		if (!entityField.contains(kJsonComponentsKey))
-		{
-			return MAKE_ERROR("Entity was not serialized with a components JSON field");
-		}
+		auto& entityJson = entityArr.emplace_back(entity);
 
-		auto& componentsField = entityField.at(kJsonComponentsKey);
+		TRY(util::CheckJsonKey(entityJson, kJsonComponentsKey));
 
-		auto resolveResult = serializationResolver.Serialize(entity, componentsField);
+		auto resolveResult = util::ComponentSerializationResolver::Serialize(
+			entity, textureRepo, entityJson.at(kJsonComponentsKey)
+		);
 		if (!resolveResult.Success())
 		{
 			LOG_ERROR(resolveResult.GetError());
@@ -100,11 +51,12 @@ Result<Void> SerializationSystem::SerializeEntities(std::string_view jsonFilenam
 	return Void{};
 }
 
-std::vector<Error> SerializationSystem::DeserializeEntities(
+std::vector<Error> SerializationSystem::DeserializeState(
 	std::string_view jsonFilename, TextureRepository& textureRepo)
 {
 	std::vector<Error> errors{};
 
+	// load json
 	auto path = ResourcePath::Json(jsonFilename);
 	if (!path.Success())
 	{
@@ -131,32 +83,52 @@ std::vector<Error> SerializationSystem::DeserializeEntities(
 		return errors;
 	}
 
-	if (!j.contains(kJsonEntitiesKey))
+	// deserialize atlases
+	auto checkAtlases = util::CheckJsonKey(j, kTextureAtlasesKey, 
+										   nlohmann::json::value_t::object);
+	if (!checkAtlases.Success())
 	{
-		errors.push_back(MAKE_ERROR("Entities JSON key not found"));
+		errors.push_back(std::move(checkAtlases.GetError()));
 		return errors;
 	}
 
-	util::ComponentSerializationResolver serializationResolver{
-		textureRepo, SDLite::Renderer() };
-
-	size_t entityFieldCount = 0;
-	for (const auto& entityField : j.at(kJsonEntitiesKey))
+	auto handleHashMapResult =
+		util::TextureRepositorySerializationHelper::DeserializeAtlases(
+			SDLite::Renderer(), textureRepo, j.at(kTextureAtlasesKey));
+	if (!handleHashMapResult.Success())
 	{
-		if (!entityField.contains(kJsonComponentsKey))
+		errors.push_back(std::move(handleHashMapResult.GetError()));
+		return errors;
+	}
+
+	const auto& handleHashMap = handleHashMapResult.GetValue();
+
+	// deserialize entities
+	auto checkEnts = util::CheckJsonKey(j, kJsonEntitiesKey, 
+										nlohmann::json::value_t::array);
+	if (!checkEnts.Success())
+	{
+		errors.push_back(std::move(checkEnts.GetError()));
+		return errors;
+	}
+
+	size_t entityCount = 0;
+	for (const auto& entityJson : j.at(kJsonEntitiesKey))
+	{
+		if (!entityJson.contains(kJsonComponentsKey))
 		{
 			errors.push_back(MAKE_ERROR_FMT(
-				"Components JSON key not found in entity field '{}',", entityFieldCount));
+				"Components JSON key not found in entity field '{}',", entityCount));
 
-			++entityFieldCount;
+			++entityCount;
 			continue;
 		}
 
-		auto& componentsField = entityField.at(kJsonComponentsKey);
+		const auto& componentsJson = entityJson.at(kJsonComponentsKey);
 
 		auto deserializationTarget = MakeComponentDeserializationTarget();
 
-		from_json(entityField.at(componentsField), deserializationTarget);
+		from_json(componentsJson, deserializationTarget);
 
 		auto entity = ECS::CreateEntity();
 		assert(entity.IsValid());
@@ -179,13 +151,15 @@ std::vector<Error> SerializationSystem::DeserializeEntities(
 
 		ForEachInTuple(std::move(deserializationTarget), tryAddComponent);
 
-		auto resolveResult = serializationResolver.Deserialize(entity, componentsField);
+		auto resolveResult = util::ComponentSerializationResolver::Deserialize(
+			entity, textureRepo, componentsJson, handleHashMap
+		);
 		if (!resolveResult.Success())
 		{
 			errors.push_back(std::move(resolveResult.GetError()));
 		}
 
-		++entityFieldCount;
+		++entityCount;
 	}
 
 	return errors;

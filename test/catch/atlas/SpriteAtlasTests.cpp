@@ -46,12 +46,15 @@ TEST_CASE("Sprite Atlas Tests", "[atlas]")
 	CHECK_RESULT(validateResult);
 
 	// get info
-	const auto& info = spriteAtlas.GetSpriteInfo(sprite);
+	const auto info = spriteAtlas.GetSpriteInfo(sprite);
+	REQUIRE(info.has_value());
+
+	const auto& [_, name, filepath, series, seriesIdx] = *info;
 	//CHECK(info != SpriteAtlas::kInvalidSpriteInfo);
-	CHECK(info.spriteName == "knight_fall_0");
-	CHECK(info.filepath == path);
-	CHECK(info.seriesName.empty());
-	CHECK(info.seriesIndex == kSizeMax);
+	CHECK(name == "knight_fall_0");
+	CHECK(filepath == path);
+	CHECK(series.empty());
+	CHECK(seriesIdx == kSizeMax);
 
 	// retrieve it
 	auto retrievedSprite = spriteAtlas.GetSprite("knight_fall_0");
@@ -96,12 +99,14 @@ TEST_CASE("Sprite Atlas Tests", "[atlas]")
 	// get info	
 	for (size_t i = 0; i < sprites.size(); i++)
 	{
-		const auto& info = spriteAtlas.GetSpriteInfo(sprites[i]);
+		auto info = spriteAtlas.GetSpriteInfo(sprites[i]);
+		REQUIRE(info.has_value());
+		const auto& [_, name, path, series, seriesIdx] = *info;
 		//CHECK(info != SpriteAtlas::kInvalidSpriteInfo);
-		CHECK(info.spriteName == std::format("knight_fall_{}", i));
-		CHECK(info.filepath == seriesPaths[i]);
-		CHECK(info.seriesName == "knight_fall_series");
-		CHECK(info.seriesIndex == i);
+		CHECK(name == std::format("knight_fall_{}", i));
+		CHECK(path == seriesPaths[i]);
+		CHECK(series == "knight_fall_series");
+		CHECK(seriesIdx == i);
 	}
 
 	// retrieve them

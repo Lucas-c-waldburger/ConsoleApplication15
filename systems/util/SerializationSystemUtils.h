@@ -1,83 +1,98 @@
 #pragma once
 #include "../../atlas/NewTextureRepository.h"
-#include "../../deps/nlohmann/json.hpp"
+#include "../../serial/SerializationUtils.h"
 
 class Entity;
 
+//template <typename T> struct ComponentSerializer;
+//template <typename T> struct ComponentDeserializer;
+//
+//template <typename T>
+//concept ExtraSerializationSteps = requires() {
+//
+//}
+//
+//struct ComponentSerializationResolver
+//{
+//	template <typename T> requires 
+//};
 
+
+inline constexpr std::string_view kTextureAtlasesKey = "textureAtlases";
+inline constexpr std::string_view kGlyphAtlasesKey = "glyphAtlases";
+inline constexpr std::string_view kSpriteAtlasesKey = "spriteAtlases";
+inline constexpr std::string_view kSpriteKey = "sprite";
+inline constexpr std::string_view kSourceAtlasHashKey = "sourceAtlasHash";
+inline constexpr std::string_view kWriterKey = "writer";
+inline constexpr std::string_view kTextKey = "text";
 
 namespace util {
 
-//using EntityToSpriteInfoMap = std::unordered_map<Entity, SpriteInfo>;
-//
-//
-//class SpriteDescriptorPackageMaker
-//{
-//public:
-//	SpriteDescriptorPackageMaker();
-//
-//	Result<Void> PushBack(SpriteInfo&& info);
-//
-//	auto begin() { return packages_.begin(); }
-//	auto end() { return packages_.end(); }
-//
-//private:
-//	static constexpr std::string_view kNoSeriesName = "__no_series";
-//
-//	std::unordered_map<std::string_view, size_t> spriteSeriesNameToPackageIndex_;
-//	std::vector<SpriteDescriptorPackage> packages_;
-//};
+Result<Void> CheckJsonKey(const nlohmann::json& j, std::string_view key,
+						  std::optional<nlohmann::json::value_t> expectedValueType = {});
+
+using AtlasHandleHashMap = std::unordered_map<size_t, Handle<TextureAtlas>>;
 
 class TextureRepositorySerializationHelper
 {
 public:
-	TextureRepositorySerializationHelper(TextureRepository& repo, SDL_Renderer* renderer) :
-		textureRepository_(repo), renderer_(renderer) 
-	{}
+	static Result<Void> SerializeAtlases(const TextureRepository& repo,
+										 nlohmann::json& j);
 
-	//Result<Void> SerializeAtlases
-
-	static Result<Void> SerializeSpriteAtlas(const DynamicSpriteAtlas& atlas);
-	static Result<FixedSpriteAtlas> DeserializeSpriteAtlas(nlohmann::json& j, SDL_Renderer* renderer);
+	static Result<AtlasHandleHashMap> DeserializeAtlases(SDL_Renderer* renderer, 
+														 TextureRepository& repo,
+														 const nlohmann::json& j);
 
 private:
-	TextureRepository& textureRepository_;
-	SDL_Renderer* renderer_ = nullptr;
+	static Result<Void> DeserializeSpriteAtlases(SDL_Renderer* renderer, 
+												 TextureRepository& repo, 
+												 const nlohmann::json& j,
+												 AtlasHandleHashMap& handleHashMap);
+	static Result<Void> DeserializeGlyphAtlases(SDL_Renderer* renderer,
+												TextureRepository& repo,
+												const nlohmann::json& j,
+												AtlasHandleHashMap& handleHashMap);
+
+	TextureRepositorySerializationHelper() = default;
 };
 
 class RenderableSerializationHelper
-{
+{ 
 public:
-	static constexpr std::string_view kFilepathJsonKey = "filepath";
-	static constexpr std::string_view kSpriteInfoJsonKey = "spriteInfo";
-	static constexpr std::string_view kSourceAtlasJsonKey = "sourceAtlas";
-	static constexpr std::string_view kHandleHashJsonKey = "hash";
+	static Result<Void> SerializeSprite(const Sprite& sprite, 
+										const TextureRepository& repo,
+										nlohmann::json& spriteComponentJson);
+	static Result<Sprite>
+	DeserializeSprite(const nlohmann::json& spriteComponentJson,
+					  const TextureRepository& repo,
+					  const AtlasHandleHashMap& handleHashMap);
 
-	RenderableSerializationHelper(TextureRepository& repo, SDL_Renderer* renderer) :
-		textureRepository_(repo), renderer_(renderer) {}
-
-	Result<Void> SerializeSprite(const Sprite& sprite, nlohmann::json& spriteComponentJson);
-	Result<Sprite> DeserializeSprite(const nlohmann::json& spriteComponentJson);
+	static Result<Void> SerializeGlyphTextWriter(const GlyphTextWriter& writer,
+												 const TextureRepository& repo,
+												 nlohmann::json& textComponentJson);
+	static Result<GlyphTextWriter>
+	DeserializeGlyphTextWriter(const nlohmann::json& textComponentJson,
+							   const TextureRepository& repo,
+							   const AtlasHandleHashMap& handleHashMap);
 
 private:
-	TextureRepository& textureRepository_;
-	SDL_Renderer* renderer_ = nullptr;
-	std::unordered_map<size_t, Handle<TextureAtlas>> atlasHandleHashMap_;
+	RenderableSerializationHelper() = default;
 };
 
 
 class ComponentSerializationResolver
 {
 public:
-	explicit ComponentSerializationResolver(TextureRepository& repo, SDL_Renderer* renderer) :
-		renderableSerializationHelper_(repo, renderer) {}
-
-	Result<Void> Serialize(const Entity& entity, nlohmann::json& componentsJson);
-	Result<Void> Deserialize(Entity& entity, const nlohmann::json& componentsJson);
+	static Result<Void> Serialize(const Entity& entity, const TextureRepository& repo, 
+								  nlohmann::json& componentsJson);
+	static Result<Void> Deserialize(Entity& entity, const TextureRepository& repo, 
+									const nlohmann::json& componentsJson,
+									const AtlasHandleHashMap& handleHashMap);
 
 private:
-	RenderableSerializationHelper renderableSerializationHelper_;
+	ComponentSerializationResolver() = default;
 };
+
 
 
 

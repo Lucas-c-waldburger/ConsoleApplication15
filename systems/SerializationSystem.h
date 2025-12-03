@@ -19,8 +19,8 @@ public:
 		ErrorOutOnInvalidComponent
 	};
 
-	Result<Void> SerializeEntities(std::string_view jsonFilename, 
+	Result<Void> SerializeState(std::string_view jsonFilename, 
 								   TextureRepository& textureRepo);
-	std::vector<Error> DeserializeEntities(std::string_view jsonFilename, 
+	std::vector<Error> DeserializeState(std::string_view jsonFilename, 
 										   TextureRepository& textureRepo);
 };

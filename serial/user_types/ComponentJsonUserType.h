@@ -12,9 +12,9 @@ template <> struct ComponentName<cmpType> {								\
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(cmpType, __VA_ARGS__)				\
 DEF_COMPONENT_NAME(cmpType)
 
-
-
-
+//#define DEF_COMPONENT_SERIALIZABLE_EX(cmpType, ...)						\
+//DEF_COMPONENT_SERIALIZABLE(cmpType, __VA_ARGS__);						\
+//template <> struct NeedsExtraDeserializing<cmpType> : std::true_type {}
 
 
 DEF_COMPONENT_SERIALIZABLE(Transform, position, rotation, scale);

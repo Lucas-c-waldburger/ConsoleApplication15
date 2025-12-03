@@ -17,7 +17,51 @@
 
 #include "MaxRectsBinPack.h"
 
+#include "../nlohmann/json.hpp"
+
 namespace rbp {
+
+// JSON SERIALIZATION
+void to_json(nlohmann::json& j, const Rect& rect)
+{
+	j = nlohmann::json{
+		{ "x", rect.x },
+		{ "y", rect.y },
+		{ "width", rect.width },
+		{ "height", rect.height }
+	};
+}
+void from_json(const nlohmann::json& j, Rect& rect)
+{
+	j.at("x").get_to(rect.x);
+	j.at("y").get_to(rect.y);
+	j.at("width").get_to(rect.width);
+	j.at("height").get_to(rect.height);
+}
+
+void to_json(nlohmann::json& j, const MaxRectsBinPack& binPack)
+{
+	j = nlohmann::json{
+		{ "binWidth", binPack.binWidth },
+		{ "binHeight", binPack.binHeight },
+		{ "binAllowFlip", binPack.binAllowFlip },
+		{ "newFreeRectanglesLastSize", binPack.newFreeRectanglesLastSize },
+		{ "newFreeRectangles", binPack.newFreeRectangles },
+		{ "usedRectangles", binPack.usedRectangles },
+		{ "freeRectangles", binPack.freeRectangles }
+	};
+}
+
+void from_json(const nlohmann::json& j, MaxRectsBinPack& binPack)
+{
+	j.at("binWidth").get_to(binPack.binWidth);
+	j.at("binHeight").get_to(binPack.binHeight);
+	j.at("binAllowFlip").get_to(binPack.binAllowFlip);
+	j.at("newFreeRectanglesLastSize").get_to(binPack.newFreeRectanglesLastSize);
+	j.at("newFreeRectangles").get_to(binPack.newFreeRectangles);
+	j.at("usedRectangles").get_to(binPack.usedRectangles);
+	j.at("freeRectangles").get_to(binPack.freeRectangles);
+}
 
 using namespace std;
 
@@ -609,5 +653,7 @@ void MaxRectsBinPack::PruneFreeList()
 		}
 #endif
 }
+
+
 
 }

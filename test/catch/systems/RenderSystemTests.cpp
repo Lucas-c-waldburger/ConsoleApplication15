@@ -56,8 +56,9 @@ TEST_CASE("System handles single sprite", "[rendering][system]")
 	CHECK(sprite.plot.rect.h > 0);
 	CHECK(sprite.sourceAtlas.IsValid());
 
-	const auto& spriteInfo = spriteAtlas.GetSpriteInfo(sprite);
-	CHECK(spriteInfo.spriteName == "Idle_000");
+	const auto spriteName = spriteAtlas.GetSpriteInfo<&SpriteInfo::spriteName>(sprite);
+	CHECK(spriteName.has_value());
+	CHECK(std::get<0>(*spriteName) == "Idle_000");
 
 	TextureRepository textureRepo{};
 	auto attachResult = textureRepo.AttachAtlas(std::move(spriteAtlas));

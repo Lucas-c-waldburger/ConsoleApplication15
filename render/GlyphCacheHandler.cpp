@@ -184,8 +184,8 @@ void GlyphCacheHandler::RotateGlyphCache(std::vector<GlyphCacheData>& cache,
 
 		// rotation center remains glyph-local center (already set by ScaleGlyphCache)
 		// but keep in sync in case sizes changed:
-		rotCenter.x = destRect.w * 0.5f;
-		rotCenter.y = destRect.h * 0.5f;
+		rotCenter.x = static_cast<int>(destRect.w * 0.5f);
+		rotCenter.y = static_cast<int>(destRect.h * 0.5f);
 
 		//SDL_Rect srcRect = glyph.plot.rect;
 
@@ -243,8 +243,8 @@ void GlyphCacheHandler::ScaleGlyphCache(std::vector<GlyphCacheData>& cache, Anch
 		destRect.x = static_cast<int>(newDestRectCenterX - newW * 0.5f);
 		destRect.y = static_cast<int>(newDestRectCenterY - newH * 0.5f);
 
-		rotCenter.x = newW * 0.5f; 
-		rotCenter.y = newH * 0.5f;	
+		rotCenter.x = static_cast<int>(newW * 0.5f); 
+		rotCenter.y = static_cast<int>(newH * 0.5f);	
 	}
 }
 

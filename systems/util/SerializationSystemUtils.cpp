@@ -8,174 +8,119 @@
 
 namespace util {
 
-namespace {
-
-
-//bool IsDuplicateSpriteDescriptor(const SpriteDescriptor& descriptor, 
-//					             const std::vector<SpriteDescriptorPackage>& packages)
-//{
-//	return core::Find(packages, descriptor) != packages.end();
-//}
-
-//Result<nlohmann::ordered_json> MakeSerializedSpriteInfo
-
-} // unnamed
-
-//SpriteDescriptorPackageMaker::SpriteDescriptorPackageMaker()
-//{
-//	spriteSeriesNameToPackageIndex_[kNoSeriesName] = 0;
-//	packages_.emplace_back();
-//}
-//
-//Result<Void> SpriteDescriptorPackageMaker::PushBack(SpriteInfo&& info)
-//{
-//	if (info.filepath.empty())
-//	{
-//		return MAKE_ERROR("Sprite info filepath was empty");
-//	}
-//	if (!std::filesystem::exists(info.filepath))
-//	{
-//		return MAKE_ERROR("Sprite info filepath does not exist");
-//	}
-//
-//	SpriteDescriptor newDescriptor{
-//		.spriteName = std::move(info.spriteName),
-//		.filepath = std::move(info.filepath)
-//	};
-//	
-//	// Not in a series
-//	if (info.seriesName.empty())
-//	{
-//		// if not duplicate descriptor, add
-//		if (core::Find(packages_.front().descriptors, newDescriptor) == 
-//			packages_.front().descriptors.end())
-//		{
-//			packages_.front().descriptors.emplace_back(std::move(newDescriptor));
-//		}
-//
-//		return Void{};
-//	}
-//	
-//	auto it = spriteSeriesNameToPackageIndex_.find(info.seriesName);
-//	if (it == spriteSeriesNameToPackageIndex_.end())
-//	{
-//		// in a new series
-//		size_t seriesIdx = packages_.size();
-//
-//		auto& descriptorRef = packages_.emplace_back(SpriteDescriptorPackage{
-//			.descriptors = { std::move(newDescriptor) },
-//			.seriesName = std::move(info.seriesName)
-//		});
-//
-//		spriteSeriesNameToPackageIndex_[descriptorRef.seriesName] = seriesIdx;
-//
-//		return Void{};
-//	}
-//
-//	// part of an existing series
-//	const size_t packageIdx = it->second;
-//	assert(packageIdx < packages_.size());
-//
-//	auto& seriesDescriptors = packages_[packageIdx].descriptors;
-//	if (seriesDescriptors.size() <= info.seriesIndex)
-//	{
-//		seriesDescriptors.resize(info.seriesIndex + 1);
-//	}
-//
-//	auto& destination = seriesDescriptors[info.seriesIndex];
-//	if (!destination.filepath.empty() && destination == newDescriptor)
-//	{
-//		return MAKE_ERROR_FMT("Conflicting descriptor data for series '{}' at index '{}'",
-//			packages_[packageIdx].seriesName, info.seriesIndex);
-//	}
-//
-//	destination = std::move(newDescriptor);
-//
-//	return Void{};
-//}
-//template <typename Fn, typename Arg>
-//Result<Void> ExpandTillError(Fn&& fn, Arg&& arg) 
-//{
-//	return std::invoke(fn, std::forward<Arg>(arg));
-//}
-//
-//template <typename Fn, typename Arg, typename...Args>
-//Result<Void> ExpandTillError(Fn&& fn) {
-//	if (auto result = f.template operator() < T > ();     // call for T
-//		result != FailReturn{})                       // adjust test as needed
-//		return result;                                // fail immediately
-//
-//	if constexpr (sizeof...(Ts) > 0)
-//		return short_circuit_expand<FailReturn, F, Ts...>(std::forward<F>(f));
-//
-//	return FailReturn{};
-//}
-
-//std::array stringViews{ std::string_view{svs}... };
-
-//template <typename Fn, typename...Ts, typename...Strs>
-//Result<Void> ForEachString(Fn&& fn, const Strs&...strs) 
-//	requires ((std::convertible_to<Strs, std::string_view> && ...) && 
-//			  (std::is_invocable_r_v<Result<Void>, Fn, std::string_view>))
-//{
-//	//for (const auto& sv : { std::string_view{svs}... })
-//	//{
-//	//	TRY(std::invoke(fn, sv));
-//	//}
-//	//return Void{};
-//	auto call = [&](const std::string_view sv) -> Result<Void> {
-//		return std::invoke(fn, sv);
-//	};
-//
-//	((TRY(call(std::string_view{ strs }))), ...);
-//
-//	return Void{};
-//}
-
-
-template <typename BasicJson, typename...Keys> requires 
-	(std::convertible_to<Keys, std::string_view> && ...)
-Result<Void> ValidateJsonKeys(BasicJson& j, const Keys&...keys) 
-{	
-	auto impl = [&](std::string_view key) -> Result<Void> {
-		if (!j.contains(key))
-		{
-			return MAKE_ERROR_FMT("Atlas JSON missing key '{}'", key);
-		}
-		return Void{};
+Result<Void> CheckJsonKey(const nlohmann::json& j, std::string_view key,
+						  std::optional<nlohmann::json::value_t> expectedValueType)
+{
+	if (!j.contains(key))
+	{
+		return MAKE_ERROR_FMT("Json missing key: '{}'", key);
 	}
-
-	((TRY(impl(std::string_view{ strs }))), ...);
+	if (expectedValueType.has_value() && *expectedValueType != j.at(key).type())
+	{
+		return MAKE_ERROR_FMT("Json type '{}' differs from expected type", j.type_name());
+	}
 
 	return Void{};
 }
 
-Result<FixedSpriteAtlas> 
-TextureRepositorySerializationHelper::DeserializeSpriteAtlas(nlohmann::json& j, 
-															 SDL_Renderer* renderer)
+Result<Void> 
+TextureRepositorySerializationHelper::SerializeAtlases(const TextureRepository& repo,
+													   nlohmann::json& j)
 {
-	if (!j.is_object())
+	j[kSpriteAtlasesKey] = repo.GetAtlasVector<SpriteAtlas>();
+	j[kGlyphAtlasesKey] = repo.GetAtlasVector<GlyphAtlas>();
+
+	return Void{};
+}
+
+
+
+Result<AtlasHandleHashMap> 
+TextureRepositorySerializationHelper::DeserializeAtlases(SDL_Renderer* renderer, 
+														 TextureRepository& repo, 
+														 const nlohmann::json& j)										
+{
+	assert(renderer);
+	AtlasHandleHashMap handleHashMap{};
+
+	TRY(CheckJsonKey(j, kSpriteAtlasesKey, nlohmann::json::value_t::array));
+	TRY(DeserializeSpriteAtlases(renderer, repo, j.at(kSpriteAtlasesKey), handleHashMap));
+
+	TRY(CheckJsonKey(j, kGlyphAtlasesKey, nlohmann::json::value_t::array));
+	TRY(DeserializeGlyphAtlases(renderer, repo, j.at(kGlyphAtlasesKey), handleHashMap));
+
+	return handleHashMap;
+}
+
+Result<Void> 
+TextureRepositorySerializationHelper::DeserializeSpriteAtlases(SDL_Renderer* renderer,
+															   TextureRepository& repo,
+															   const nlohmann::json& j,
+															   AtlasHandleHashMap& handleHashMap)
+{
+	handleHashMap.reserve(handleHashMap.size() + j.size());
+	SpriteDescriptorPackage package;
+
+	for (const auto& atlasJson : j)
 	{
-		return MAKE_ERROR("Json was not an object type");
+		TRY(CheckJsonKey(j, kSpriteDescriptorsKey, nlohmann::json::value_t::array));
+
+		TRY(GetJsonNativeValue<size_t>(j, kTextureSizeKey), textureSize);
+		TRY(GetJsonNativeValue<size_t>(j, kHashKey), hash);
+
+		if (handleHashMap.contains(hash))
+		{
+			return MAKE_ERROR("Duplicate hash value for sprite atlas");
+		}
+
+		TRY(repo.CreateAtlas<SpriteAtlas>(renderer, textureSize), atlas);
+		assert(atlas);
+
+		handleHashMap[hash] = atlas->GetHandle();
+
+		package.clear();
+		j.at(kSpriteDescriptorsKey).get_to(package);
+		
+		for (auto&& descriptors : package)
+		{
+			TRY(atlas->LoadSprites(renderer, std::move(descriptors)));
+		}
 	}
 
-	TRY(ValidateJsonKeys(j,kSpriteInfoKey, kSeriesIndexRangesKey, kTextureSizeKey));
-
-	return FixedSpriteAtlas::Create(renderer,
-		j.at(kSpriteInfoKey).get<SpriteInfoSOA>(),
-		j.at(kSeriesIndexRangesKey).get<BaseSpriteAtlas::SeriesIndexRangeMap>(),
-		j.at(kTextureSizeKey).get<size_t>()
-	);
+	return Void{};
 }
 
 Result<Void>
-TextureRepositorySerializationHelper::SerializeSpriteAtlas(const DynamicSpriteAtlas& atlas)
+TextureRepositorySerializationHelper::DeserializeGlyphAtlases(SDL_Renderer* renderer, 
+															  TextureRepository& repo, 
+															  const nlohmann::json& j, 
+															  AtlasHandleHashMap& handleHashMap)
 {
+	handleHashMap.reserve(handleHashMap.size() + j.size());
+	
+	for (const auto& atlasJson : j)
+	{
+		TRY(CheckJsonKey(j, kFontDescriptorKey));
 
+		TRY(GetJsonNativeValue<size_t>(j, kHashKey), hash);
+
+		if (handleHashMap.contains(hash))
+		{
+			return MAKE_ERROR("Duplicate hash value for glyph atlas");
+		}
+
+		TRY(repo.CreateAtlas<GlyphAtlas>(renderer,
+			j.at(kFontDescriptorKey).get<FontDescriptor>()), atlas);
+		assert(atlas);
+
+		handleHashMap[hash] = atlas->GetHandle();
+	}
+
+	return Void{};
 }
 
-Result<Void> RenderableSerializationHelper::SerializeSprite(
-	const Sprite& sprite, nlohmann::json& spriteComponentJson)
+Result<Void> RenderableSerializationHelper::SerializeSprite(const Sprite& sprite, 
+	const TextureRepository& repo, nlohmann::json& spriteComponentJson)
 {
 	if (!sprite.sourceAtlas.IsValid())
 	{
@@ -184,118 +129,112 @@ Result<Void> RenderableSerializationHelper::SerializeSprite(
 		return Void{};
 	}
 
-	auto* spriteAtlas = textureRepository_.GetAtlas<SpriteAtlas>(sprite.sourceAtlas);
+	const auto* spriteAtlas = repo.GetAtlas<SpriteAtlas>(sprite.sourceAtlas);
 	if (!spriteAtlas)
 	{
 		return MAKE_ERROR("Sprite source atlas not found in Texture Repository");
 	}
 
-	auto info = spriteAtlas->GetSpriteInfo(sprite);
-	if (info.filepath.empty())
+	auto spriteName = spriteAtlas->GetSpriteInfo<&SpriteInfo::spriteName>(sprite);
+	if (!spriteName.has_value())
 	{
-		return MAKE_ERROR("Sprite filepath was empty, meaning sprite index was invalid");
+		return MAKE_ERROR("Sprite not found in sprite atlas");
 	}
 
-	if (!std::filesystem::exists(info.filepath))
-	{
-		return MAKE_ERROR("Sprite filepath does not exist");
-	}
-
-	spriteComponentJson[kSpriteInfoJsonKey] = info;
+	spriteComponentJson[kSpriteKey] = {
+		{ kSourceAtlasHashKey, sprite.sourceAtlas.GetHash() },
+		{ kSpriteNameKey, *spriteName }
+	};
 
 	return Void{};
 }
 
 Result<Sprite> RenderableSerializationHelper::DeserializeSprite(
-	const nlohmann::json& spriteComponentJson)
+	const nlohmann::json& spriteComponentJson, const TextureRepository& repo, 
+	const AtlasHandleHashMap& handleHashMap)
 {
-	assert(renderer_);
+	TRY(CheckJsonKey(spriteComponentJson, kSpriteKey));
+	const auto& spriteJson = spriteComponentJson.at(kSpriteKey);
 
-	// extract sprite info
-	if (!spriteComponentJson.contains(kSpriteInfoJsonKey))
+	TRY(GetJsonNativeValue<std::string>(spriteJson, kSpriteNameKey), spriteName);
+	TRY(GetJsonNativeValue<size_t>(spriteJson, kSourceAtlasHashKey), sourceAtlasHash);
+
+	auto it = handleHashMap.find(sourceAtlasHash);
+	if (it == handleHashMap.end())
 	{
-		return MAKE_ERROR_FMT("JSON key '{}' not found", kSpriteInfoJsonKey);
+		return MAKE_ERROR("Sprite serialized with unrecognized source atlas hash");
 	}
 
-	SpriteInfo spriteInfo;
-	from_json(spriteComponentJson.at(kSpriteInfoJsonKey), spriteInfo);
-
-	// validate sprite info
-	if (spriteInfo.filepath.empty())
-	{
-		return MAKE_ERROR("Sprite filepath was empty");
-	}
-	if (!std::filesystem::exists(spriteInfo.filepath))
-	{
-		return MAKE_ERROR("Sprite filepath does not exist");
-	}
-
-	// extract source atlas hash
-	if (!spriteComponentJson.contains(kSourceAtlasJsonKey))
-	{
-		return MAKE_ERROR_FMT("JSON key '{}' not found", kSourceAtlasJsonKey);
-	}
-
-	auto& sourceAtlasField = spriteComponentJson.at(kSourceAtlasJsonKey);
-	if (!sourceAtlasField.contains(kHandleHashJsonKey))
-	{
-		return MAKE_ERROR_FMT("JSON key '{}' not found inside '{}'", 
-			kHandleHashJsonKey, kSourceAtlasJsonKey);
-	}
-
-	auto& hashField = sourceAtlasField.at(kHandleHashJsonKey);
-	if (hashField.is_null())
-	{
-		return MAKE_ERROR_FMT("Value for JSON key '{}' was null", kHandleHashJsonKey);
-	}
-	if (!hashField.is_number())
-	{
-		return MAKE_ERROR_FMT("Value for JSON key '{}' was not a number", kHandleHashJsonKey);
-	}
-
-	const size_t handleHash = hashField.get<size_t>();
-	
-	// make sprite
-	SpriteAtlas* spriteAtlas = nullptr;
-
-	auto it = atlasHandleHashMap_.find(handleHash);
-	if (it == atlasHandleHashMap_.end())
-	{
-		// need new sprite atlas
-		TRY(SpriteAtlas::Create(renderer_), temp);
-		TRY_ASSIGN(spriteAtlas, textureRepository_.AttachAtlas(std::move(temp)));
-
-		assert(spriteAtlas);
-
-		atlasHandleHashMap_[handleHash] = spriteAtlas->GetHandle();
-	}
-	else
-	{
-		spriteAtlas = textureRepository_.GetAtlas<SpriteAtlas>(it->second);
-	}
-
+	const auto* spriteAtlas = repo.GetAtlas<SpriteAtlas>(it->second);
 	if (!spriteAtlas)
 	{
-		return MAKE_ERROR("Sprite atlas could not be retrieved from Texture Repository");
-	}
-	
-	auto sprite = spriteAtlas->GetSprite(spriteInfo.spriteName);
-	if (sprite.spriteIndex == kSizeMax)
-	{
-		// sprite needs to be loaded
-		TRY_ASSIGN(sprite, spriteAtlas->LoadSprite(renderer_, SpriteDescriptor{
-			.spriteName = std::move(spriteInfo.spriteName),
-			.filepath = std::move(spriteInfo.filepath)
-		}));
+		return MAKE_ERROR("Handle not found in texture repository");
 	}
 
-	assert(sprite.spriteIndex != kSizeMax);
+	auto sprite = spriteAtlas->GetSprite(spriteName);
+	if (sprite.sourceAtlas != spriteAtlas->GetHandle())
+	{
+		return MAKE_ERROR("Sprite not found in sprite atlas");
+	}
 
 	return sprite;
 }
 
+Result<Void> RenderableSerializationHelper::SerializeGlyphTextWriter(
+	const GlyphTextWriter& writer, const TextureRepository& repo, 
+	nlohmann::json& textComponentJson)
+{
+	if (!writer.sourceAtlas.IsValid())
+	{
+		LOG_ERROR("Glyph text writer source atlas handle was marked invalid");
+
+		return Void{};
+	}
+
+	if (!repo.HasAtlas(writer.sourceAtlas))
+	{
+		return MAKE_ERROR("Glyph text writer source atlas not found in Texture Repository");
+	}
+
+	textComponentJson[kWriterKey] = {
+		{ kSourceAtlasHashKey, writer.sourceAtlas.GetHash() },
+		{ kTextKey, writer.text }
+	};
+
+	return Void{};
+}
+
+Result<GlyphTextWriter> RenderableSerializationHelper::DeserializeGlyphTextWriter(
+	const nlohmann::json& textComponentJson, const TextureRepository& repo, 
+	const AtlasHandleHashMap& handleHashMap)
+{
+	TRY(CheckJsonKey(textComponentJson, kSpriteKey));
+	const auto& writerJson = textComponentJson.at(kWriterKey);
+
+	TRY(GetJsonNativeValue<size_t>(writerJson, kSourceAtlasHashKey), sourceAtlasHash);
+	TRY(GetJsonNativeValue<std::string>(writerJson, kTextKey), writerText);
+
+	auto it = handleHashMap.find(sourceAtlasHash);
+	if (it == handleHashMap.end())
+	{
+		return MAKE_ERROR("Text writer serialized with unrecognized source atlas hash");
+	}
+
+	const auto* glyphAtlas = repo.GetAtlas<GlyphAtlas>(it->second);
+	if (!glyphAtlas)
+	{
+		return MAKE_ERROR("Handle not found in texture repository");
+	}
+
+	auto writer = glyphAtlas->GetTextWriter();
+	writer.text = std::move(writerText);
+
+	return writer;
+}
+
 Result<Void> ComponentSerializationResolver::Serialize(
-	const Entity& entity, nlohmann::json& componentsJson)
+	const Entity& entity, const TextureRepository& repo, 
+	nlohmann::json& componentsJson)
 {
 	if (!entity.IsValid())
 	{
@@ -310,22 +249,33 @@ Result<Void> ComponentSerializationResolver::Serialize(
 	{
 		static constexpr std::string_view spriteComponentName =
 			ComponentName<SpriteRenderableComponent>::value;
-		if (!componentsJson.contains(spriteComponentName))
-		{
-			return MAKE_ERROR_FMT("Components JSON did not contain expected key '{}'",
-				spriteComponentName);
-		}
 
-		TRY(renderableSerializationHelper_.SerializeSprite(
+		TRY(CheckJsonKey(componentsJson, spriteComponentName, 
+			nlohmann::json::value_t::object));
+
+		TRY(RenderableSerializationHelper::SerializeSprite(
 			entity.GetComponent<SpriteRenderableComponent>().sprite,
-			componentsJson.at(spriteComponentName)));
+			repo, componentsJson.at(spriteComponentName)));
+	}
+	else if (entity.HasComponent<TextRenderableComponent>())
+	{
+		static constexpr std::string_view textComponentName =
+			ComponentName<TextRenderableComponent>::value;
+
+		TRY(CheckJsonKey(componentsJson, textComponentName,
+			nlohmann::json::value_t::object));
+
+		TRY(RenderableSerializationHelper::SerializeGlyphTextWriter(
+			entity.GetComponent<TextRenderableComponent>().writer,
+			repo, componentsJson.at(textComponentName)));
 	}
 
 	return Void{};
 }
 
-Result<Void> ComponentSerializationResolver::Deserialize(
-	Entity& entity, const nlohmann::json& componentsJson)
+Result<Void> ComponentSerializationResolver::Deserialize(Entity& entity,
+	const TextureRepository& repo, const nlohmann::json& componentsJson, 
+	const AtlasHandleHashMap& handleHashMap)
 {
 	if (!entity.IsValid())
 	{
@@ -340,15 +290,25 @@ Result<Void> ComponentSerializationResolver::Deserialize(
 	{
 		static constexpr std::string_view spriteComponentName =
 			ComponentName<SpriteRenderableComponent>::value;
-		if (!componentsJson.contains(spriteComponentName))
-		{
-			return MAKE_ERROR_FMT("Components JSON did not contain expected key '{}'",
-				spriteComponentName);
-		}
+
+		TRY(CheckJsonKey(componentsJson, spriteComponentName,
+			nlohmann::json::value_t::object));
 
 		TRY_ASSIGN(entity.GetComponent<SpriteRenderableComponent>().sprite,
-			renderableSerializationHelper_.DeserializeSprite(
-			componentsJson.at(spriteComponentName)));
+			RenderableSerializationHelper::DeserializeSprite(
+			componentsJson.at(spriteComponentName), repo, handleHashMap));
+	}
+	else if (entity.HasComponent<TextRenderableComponent>())
+	{
+		static constexpr std::string_view textComponentName =
+			ComponentName<TextRenderableComponent>::value;
+
+		TRY(CheckJsonKey(componentsJson, textComponentName,
+			nlohmann::json::value_t::object));
+
+		TRY_ASSIGN(entity.GetComponent<TextRenderableComponent>().writer,
+			RenderableSerializationHelper::DeserializeGlyphTextWriter(
+			componentsJson.at(textComponentName), repo, handleHashMap));
 	}
 
 	return Void{};

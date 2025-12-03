@@ -12,6 +12,12 @@ concept JsonSerializable = requires(nlohmann::json & j, const T & t) {
 template <SomeComponent T>
 struct ComponentName;
 
+template <SomeComponent T>
+struct NeedsExtraDeserializing : std::false_type {};
+
+template <SomeComponent T>
+inline constexpr bool needs_extra_deserializing_v = NeedsExtraDeserializing::value;
+
 // bi-directional between name and type
 template <typename T>
 concept HasComponentName = requires {

@@ -197,6 +197,16 @@ public:
         };
     }
 
+    auto TryGetView(size_t index)
+    {
+        return TryGetView<MemberPtrs...>(index);
+    }
+
+    auto TryGetView(size_t index) const
+    {
+        return TryGetView<MemberPtrs...>(index);
+    }
+
     auto ForEach()
     {
         return std::apply([](auto&...vecs) {
@@ -204,13 +214,11 @@ public:
             }, memberValues_);
     }
 
-    template <auto...PtrArgs> requires (sizeof...(PtrArgs) > 1)
-    auto ForEach()
+    auto ForEach() const
     {
-        return std::views::zip(
-            std::get<index_of_member_ptr<PtrArgs, 0, MemberPtrs...>::value>(
-                memberValues_)
-            ...);
+        return std::apply([](auto&...vecs) {
+            return std::views::zip(vecs...);
+            }, memberValues_);
     }
 
     template <auto PtrArg>
@@ -229,13 +237,6 @@ public:
                 memberValues_));
     }
 
-    auto ForEach() const
-    {
-        return std::apply([](auto&...vecs) {
-            return std::views::zip(vecs...);
-            }, memberValues_);
-    }
-
     template <auto...PtrArgs> requires (sizeof...(PtrArgs) > 1)
     auto ForEach() const
     {
@@ -245,12 +246,13 @@ public:
             ...);
     }
 
-    template <auto PtrArg>
-    auto ForEach() const
+    template <auto...PtrArgs> requires (sizeof...(PtrArgs) > 1)
+        auto ForEach()
     {
-        return std::views::all(
+        return std::views::zip(
             std::get<index_of_member_ptr<PtrArgs, 0, MemberPtrs...>::value>(
-                memberValues_));
+                memberValues_)
+            ...);
     }
 };
 

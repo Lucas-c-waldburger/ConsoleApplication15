@@ -8,16 +8,22 @@
 #pragma once
 
 #include <vector>
-
+#include "../nlohmann/json_fwd.hpp"
 #include "Rect.h"
 
 namespace rbp {
+
+void to_json(nlohmann::json& j, const Rect& rect);
+void from_json(const nlohmann::json& j, Rect& rect);
 
 /** MaxRectsBinPack implements the MAXRECTS data structure and different bin packing algorithms that 
 	use this structure. */
 class MaxRectsBinPack
 {
 public:
+	friend void to_json(nlohmann::json& j, const MaxRectsBinPack& binPack);
+	friend void from_json(const nlohmann::json& j, MaxRectsBinPack& binPack);
+
 	/// Instantiates a bin of size (0,0). Call Init to create a new bin.
 	MaxRectsBinPack();
 

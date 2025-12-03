@@ -80,6 +80,7 @@
       <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -100,6 +101,7 @@
       <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -120,6 +122,7 @@
       <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -140,6 +143,7 @@
       <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -240,6 +244,7 @@
     <ClCompile Include="render\GlyphFormattingUtils.cpp" />
     <ClCompile Include="systems\util\SerializationSystemUtils.cpp" />
     <ClCompile Include="test\catch\core\StableSOATests.cpp" />
+    <ClCompile Include="test\catch\serial\SerializationTests.cpp" />
     <ClCompile Include="test\ui\Button.cpp" />
     <ClCompile Include="test\ui\FileTreeView.cpp" />
     <ClCompile Include="test\ui\Workspace.cpp" />
@@ -298,6 +303,7 @@
     <ClInclude Include="core\Anchor.h" />
     <ClInclude Include="core\CatTypeID.h" />
     <ClInclude Include="core\ErrorCode.h" />
+    <ClInclude Include="core\Hash.h" />
     <ClInclude Include="core\SOAConcepts.h" />
     <ClInclude Include="core\SOAInterface.h" />
     <ClInclude Include="core\StableSOA.h" />
@@ -310,6 +316,7 @@
     <ClInclude Include="deps\imgui\imgui.h" />
     <ClInclude Include="deps\nlohmann\json.hpp" />
     <ClInclude Include="deps\nlohmann\json_fwd.hpp" />
+    <ClInclude Include="deps\rapidhash\rapidhash.h" />
     <ClInclude Include="ecs\ComponentMasks.h" />
     <ClInclude Include="core\Dictionary.h" />
     <ClInclude Include="core\EvaluationProperty.h" />
@@ -352,8 +359,10 @@
     <ClInclude Include="scripting\user_types\SDLUsertypes.h" />
     <ClInclude Include="sdl\SDLContext.h" />
     <ClInclude Include="serial\DeserializationReport.h" />
+    <ClInclude Include="serial\MaxRectsBinPackSerializationHelper.h" />
     <ClInclude Include="serial\Serialization.h" />
     <ClInclude Include="serial\SerializationConcepts.h" />
+    <ClInclude Include="serial\SerializationUtils.h" />
     <ClInclude Include="serial\user_types\AtlasJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\AudioComponentsJsonUserType.h" />
     <ClInclude Include="serial\user_types\CoreJsonUserTypes.h" />
