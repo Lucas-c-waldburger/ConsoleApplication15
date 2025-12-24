@@ -5,7 +5,7 @@
 
 struct BodyParameters
 {
-    B2Body::Type bodyType = B2Body::Type::Static;
+    B2Body::Type bodyType = B2Body::Type::Dynamic;
     SDL_FPoint position = { 0.0f, 0.0f };
     float gravityScale = 1.0f;
     bool fixedRotation = false;
@@ -31,10 +31,11 @@ public:
     {
         if (!world.IsValid())
         {
+            LOG_ERROR("B2World was invalid");
             return {};
         }
 
-        B2BodyDefinition definition;
+        B2BodyDefinition definition{};
         definition.bodyData.type = static_cast<b2BodyType>(bodyParams_.bodyType);
         definition.bodyData.position = ToB2VecScaled(bodyParams_.position);
         definition.bodyData.gravityScale = bodyParams_.gravityScale;

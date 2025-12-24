@@ -51,6 +51,7 @@ public:
 	Result<Void> UpdateCamera();	
 	Result<Void> UpdateAudio();
 	Result<Void> UpdateRender();
+	Result<Void> UpdateUi();
 	void LoopEnd();
 
 	// getters

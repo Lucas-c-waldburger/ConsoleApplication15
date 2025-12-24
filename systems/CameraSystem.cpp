@@ -48,7 +48,8 @@ void CameraSystem::Update(float deltaTime)
 		SDL_FPoint newPos = 
 			CalculateCameraPositionFromTransform(camera_.GetPosition(), transform, 
 												 cameraTarget, deltaTime);
-		camera_.SetPosition(newPos);
+
+		camera_.SetPosition(newPos, false);
 	}
 }
 

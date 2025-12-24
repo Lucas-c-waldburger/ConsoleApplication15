@@ -10,6 +10,7 @@
 #include <functional>
 #include <vector>
 #include <cassert>
+#include "SDLUtils.h"
 
 namespace SDLite
 {
@@ -87,7 +88,6 @@ namespace SDLite
 		const Status& GetStatus() const { return status_; }
 
 	private:
-		typename AppPtrT::PtrType appPtr_;
 		Status status_;
 
 	protected:
@@ -107,6 +107,7 @@ namespace SDLite
 			return status_;
 		}
 
+		typename AppPtrT::PtrType appPtr_;
 	};
 
 	static constexpr int kWindowWidth = 1200;
@@ -120,8 +121,11 @@ namespace SDLite
 
 	struct WindowArgs
 	{
-		int w = 1200;
-		int h = 900;
+		static constexpr int kScreenPaddingX = 40;
+		static constexpr int kScreenPaddingY = 60;
+
+		int w = 0;
+		int h = 0;
 		int x = SDL_WINDOWPOS_UNDEFINED;
 		int y = SDL_WINDOWPOS_UNDEFINED;
 		std::string title;
@@ -141,6 +145,27 @@ namespace SDLite
 	{
 	public:
 		friend Status Start(WindowArgs);
+
+		template <IntOrFloat T = int>
+		Dimensions<T> GetSize() const;
+		template <IntOrFloat T = int>
+		void SetSize(Dimensions<T> dims);
+
+		template <SDLPointType P = SDL_Point>
+		P GetPosition() const;
+		template <SDLPointType P = SDL_Point>
+		void SetPosition(P p);
+
+		template <SDLPointType P = SDL_Point>
+		P GetLocalCenter() const;
+
+		void Minimize() { SDL_MinimizeWindow(appPtr_.get()); }
+		void Maximize() { SDL_MaximizeWindow(appPtr_.get()); }
+		Uint32 GetFlags() const { return SDL_GetWindowFlags(appPtr_.get()); }
+		bool IsMinimized() const { return GetFlags() & SDL_WINDOW_MINIMIZED; }
+		bool IsMaximized() const { return GetFlags() & SDL_WINDOW_MAXIMIZED; }
+		void Restore() { SDL_RestoreWindow(appPtr_.get()); }
+		//SDL_FPoint GetDpiScaling() const;
 
 	private:
 		AppWindow() : AppObject() {}
@@ -185,257 +210,6 @@ namespace SDLite
 		AppRenderer() : AppObject() {}
 	};
 
-	struct TextureArgs
-	{
-		SDL_Renderer* renderer = nullptr;
-		SDL_Surface* surface = nullptr;
-	};
-
-	using TexturePtr = AppPtr<SDL_Texture, TextureArgs,
-		[](TextureArgs args) { return SDL_CreateTextureFromSurface(args.renderer, args.surface); },
-		[](SDL_Texture* tx) { SDL_DestroyTexture(tx); }
-	>;
-
-	class Texture : public AppObject<TexturePtr>
-	{
-	public:
-		Texture() : AppObject() {}
-
-		static Texture Create(TextureArgs args)
-		{
-			Texture tx{};
-			HandleStatus(tx.Init(std::move(args)));
-
-			return tx;
-		}
-	};
-
-	template <typename AppObj>
-	class AppCallback
-	{
-	public:
-		struct RunTracker
-		{
-			int numTimes;
-			std::function<bool()> untilFn;
-		};
-
-		using Fn = std::function<void()>;
-		using Pred = std::function<bool()>;
-
-		AppCallback& Run(Fn&& fn)
-		{
-			func_ = std::move(fn);
-			return *this;
-		}
-
-		AppCallback& For(int numTimes)
-		{
-			tracker_.numTimes = numTimes;
-			return *this;
-		}
-
-		AppCallback& Until(Pred&& pred)
-		{
-			tracker_.untilFn = std::move(pred);
-			return *this;
-		}
-
-		bool Done() const { return tracker_ == 0; }
-
-		void operator--() { --tracker_.numTimes; }
-
-	private:
-		Fn func_;
-		RunTracker tracker_;
-	};
-
-	class AppEvents
-	{
-	public:
-		bool Process()
-		{
-			while (SDL_PollEvent(&ev_))
-			{
-				if (ev_.type == SDL_QUIT)
-				{
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-	private:
-		SDL_Event ev_;
-	};
-
-	class AppScripts
-	{
-	public:
-		//void AddScript(std::string scr)
-		//{
-		//	lua_.script(std::move(scr));
-		//}
-
-		//sol::function operator[](std::string_view nm)
-		//{
-		//	return lua_[nm];
-		//}
-
-		//template <typename T>    
-		//void RegisterType()
-
-		//template <typename T>
-
-		//template <typename T, typename...Args>
-		//T Run(std::string_view fnName, Args&&...args)
-		//{
-		//	return static_cast<T>(lua_[fnName](std::forward<Args>(args)...));
-		//}
-
-	private:
-		//sol::state lua_;
-	};
-
-	class CanvasObject
-	{
-	public:
-		friend class AppCanvas;
-		using SharedPtr = std::shared_ptr<CanvasObject>;
-		virtual ~CanvasObject() = default;
-
-		virtual void Move(int newX, int newY) = 0;
-		virtual void SetPos(int newX, int newY) = 0;
-
-	private:
-		virtual void Draw(AppRenderer&) = 0;
-	};
-
-	struct Color
-	{
-		enum Option { Outline, Fill };
-		SDL_Color values;
-		Option option = Fill;
-	};
-
-	class Geometry : public virtual CanvasObject
-	{
-	public:
-		virtual ~Geometry() = default;
-
-		virtual void Move(int newX, int newY) = 0;
-		virtual void SetPos(int newX, int newY) = 0;
-
-		Color color;
-
-	private:
-		virtual void Draw(AppRenderer&) = 0;
-	};
-
-	class Rectangle : public Geometry, public SDL_Rect
-	{
-	public:
-		operator SDL_Rect*() { return this; }
-		virtual ~Rectangle() = default;
-
-		void Move(int newX, int newY) override { x += newX; y += newY; }
-		void SetPos(int newX, int newY) override { x = newX; y = newY; }
-
-	private:
-		void Draw(AppRenderer& renderer) override
-		{
-			renderer.SetColor(color.values);
-
-			(color.option == Color::Fill) ? SDL_RenderFillRect(renderer, this) :
-											SDL_RenderDrawRect(renderer, this);
-		}
-	};
-
-	class Point : public Geometry, public SDL_Point
-	{
-	public:
-		operator SDL_Point* () { return this; }
-		virtual ~Point() = default;
-
-		void Move(int newX, int newY) override { x += newX; y += newY; }
-		void SetPos(int newX, int newY) override { x = newX; y = newY; }
-
-	private:
-		void Draw(AppRenderer& renderer) override
-		{
-			renderer.SetColor(color.values);
-			SDL_RenderDrawPoint(renderer, x, y);
-		}
-	};
-
-	struct Line : public Geometry
-	{
-	public:
-		virtual ~Line() = default;
-
-		void Move(int newX, int newY) override 
-		{ 
-			for (auto& p : points) { p.Move(newX, newY); }
-		}
-
-		void SetPos(int newX, int newY) override 
-		{ 
-			if (points.empty()) { return; }
-
-			auto& anchor = points.front();
-			int xDiff = newX - anchor.x;
-			int yDiff = newY - anchor.y;
-
-			Move(xDiff, yDiff);
-		}
-
-	private:
-		std::vector<Point> points;
-		void Draw(AppRenderer& renderer) override
-		{
-			renderer.SetColor(color.values);
-			SDL_RenderDrawLines(renderer, points.data(), points.size());
-		}
-	};
-
-	template <typename T>
-	concept CanvasObjectType = std::derived_from<T, CanvasObject>;
-
-	class AppCanvas
-	{
-	public:
-		template <CanvasObjectType T>
-		CanvasObject::SharedPtr AddObject(T&& obj)
-		{
-			return objects_.emplace_back(std::make_shared<T>(std::move(obj)));
-		}
-
-		bool RemoveObject(const CanvasObject::SharedPtr& obj)
-		{
-			return std::erase(objects_, obj);
-		}
-
-		void Draw(AppRenderer& renderer)
-		{
-			SDL_Color currentClr = renderer.GetColor();
-
-			for (auto& obj : objects_)
-			{
-				if (!obj)
-				{
-					continue;
-				}
-
-				obj->Draw(renderer);
-			}
-
-			renderer.SetColor(currentClr);
-		}
-
-		std::vector<CanvasObject::SharedPtr> objects_;
-	};
-
 	class App
 	{
 	public:
@@ -445,9 +219,6 @@ namespace SDLite
 
 		friend AppWindow& Window();
 		friend AppRenderer& Renderer();
-		friend AppCanvas& Canvas();
-		friend AppEvents& Events();
-		friend AppScripts& Scripts();
 
 		~App() { if (app_) { delete app_; } }
 		App(const App&) = delete;
@@ -463,8 +234,6 @@ namespace SDLite
 
 		AppWindow window_;
 		AppRenderer renderer_;
-		AppCanvas canvas_;
-		AppEvents events_;
 	};
 
 #define TRY_RET_APP_MEMBER(appMember) do { \
@@ -480,16 +249,6 @@ namespace SDLite
 	static AppRenderer& Renderer()
 	{
 		TRY_RET_APP_MEMBER(renderer_);
-	}
-
-	static AppCanvas& Canvas()
-	{
-		TRY_RET_APP_MEMBER(canvas_);
-	}
-
-	static AppEvents& Events()
-	{
-		TRY_RET_APP_MEMBER(events_);
 	}
 
 	static Status Start(WindowArgs winArgs={})
@@ -519,6 +278,20 @@ namespace SDLite
 
 		App::app_ = new App{ {}, {} };
 
+		if (winArgs.w <= 0 || winArgs.h <= 0)
+		{
+			SDL_DisplayMode mode;
+			if (SDL_GetDesktopDisplayMode(0, &mode) == 0)
+			{
+				winArgs.w = mode.w - WindowArgs::kScreenPaddingX;
+				winArgs.h = mode.h - WindowArgs::kScreenPaddingY;
+			}
+			else
+			{
+				winArgs.w = kWindowWidth;
+				winArgs.h = kWindowHeight;
+			}
+		}
 		const auto& winStatus = App::app_->window_.Init(std::move(winArgs));
 		if (!winStatus.Good())
 		{
@@ -551,6 +324,77 @@ namespace SDLite
 	static bool Running()
 	{
 		return App::app_ != nullptr;
+	}
+
+	//SDL_FPoint AppWindow::GetDpiScaling() const
+	//{
+	//	if (!Renderer())
+	//	{
+	//		return { 1.0f, 1.0f };
+	//	}
+
+	//	int logicalW, logicalH;
+	//	SDL_GetWindowSize(appPtr_.get(), &logicalW, &logicalH);
+	//	if (logicalW == 0 || logicalH == 0)
+	//	{
+	//		return { 1.0f, 1.0f };
+	//	}
+
+	//	int pixelW, pixelH;
+	//	SDL_GetRendererOutputSize(Renderer(), &pixelW, &pixelH);
+
+	//	return {
+	//		static_cast<float>(pixelW) / static_cast<float>(logicalW),
+	//		static_cast<float>(pixelH) / static_cast<float>(logicalH),
+	//	};
+	//}
+
+	template <IntOrFloat T>
+	Dimensions<T> AppWindow::GetSize() const
+	{
+		int w, h;
+		SDL_GetWindowSize(appPtr_.get(), &w, &h);
+
+		if (Renderer())
+		{
+			SDL_GetRendererOutputSize(Renderer(), &w, &h);
+		}
+
+		return Dimensions<T>{ static_cast<T>(w), static_cast<T>(h) };
+	}
+	template <IntOrFloat T>
+	void AppWindow::SetSize(Dimensions<T> dims)
+	{
+		SDL_SetWindowSize(appPtr_.get(), static_cast<int>(dims.w),
+										 static_cast<int>(dims.h));
+	}
+
+	template <SDLPointType P>
+	P AppWindow::GetPosition() const
+	{
+		using ValueType = std::remove_cvref_t<decltype(P::x)>;
+		int x, y;
+		SDL_GetWindowPosition(appPtr_.get(), &x, &y);
+
+		return P{ static_cast<ValueType>(x), static_cast<ValueType>(y) };
+	}
+	template <SDLPointType P>
+	void AppWindow::SetPosition(P p)
+	{
+		SDL_SetWindowPosition(appPtr_.get(), static_cast<int>(p.x),
+											 static_cast<int>(p.y));
+	}
+
+	template <SDLPointType P>
+	P AppWindow::GetLocalCenter() const
+	{
+		using ValueType = std::remove_cvref_t<decltype(P::x)>;
+		auto dims = GetSize<ValueType>();
+
+		return P{
+			static_cast<ValueType>(dims.w / 2.0f),
+			static_cast<ValueType>(dims.h / 2.0f)
+		};
 	}
 };
 

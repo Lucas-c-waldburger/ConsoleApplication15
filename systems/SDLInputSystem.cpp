@@ -2,27 +2,31 @@
 #include "../FeatureFlags.h"
 #include "../events/EventBus.h"
 #include "../events/data/GameControllerEvents.h"
+#include "../atlas/NewTextureRepository.h"
 
 #if IMGUI_ENABLED
 #include "../gui/GuiContext.h"
 #endif
 
-bool SDLInputSystem::Update(float delta, EventBus2& bus)
+bool SDLInputSystem::Update(float delta, EventBus2& bus, 
+							TextureRepository& repo, SDL_Renderer* renderer)
 {
 	while (SDL_PollEvent(&sdlEvent_))
 	{
-
 #if IMGUI_ENABLED
 		if (GuiContext::IsInitialized())
 		{
 			GuiContext::ProcessEvent(sdlEvent_);
 		}
 #endif
-
 		switch (sdlEvent_.type)
 		{
 		case SDL_QUIT:
 			return false;
+
+		case SDL_RENDER_TARGETS_RESET:
+			LOG_IF_ERROR(repo.RebuildAtlasTextures(renderer));
+			break;
 
 		case SDL_CONTROLLERDEVICEADDED:
 		case SDL_CONTROLLERDEVICEREMOVED:

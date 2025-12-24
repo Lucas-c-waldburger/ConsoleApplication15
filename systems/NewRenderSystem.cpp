@@ -8,8 +8,24 @@
 
 namespace {
 
-SDL_Rect MakeRenderDestRect(const Camera& camera, const Transform& transform,
-							int w, int h, const RenderProfile& profile)
+constexpr SDL_Rect MakeTransformedRect(const Transform& transform, 
+									   int w, int h, const RenderProfile& profile)
+{
+	float scaledW = w * transform.scale.x;
+	float scaledH = h * transform.scale.y;
+
+	SDL_FPoint resolvedXY = transform.position + profile.offset;
+
+	return SDL_Rect{
+		static_cast<int>(resolvedXY.x - (scaledW / 2.0f)),
+		static_cast<int>(resolvedXY.y - (scaledH / 2.0f)),
+		static_cast<int>(scaledW),
+		static_cast<int>(scaledH)
+	};
+}
+
+constexpr SDL_Rect MakeScreenRenderRect(const Camera& camera, const Transform& transform,
+										int w, int h, const RenderProfile& profile)
 {
 	float scaledW = w * transform.scale.x;
 	float scaledH = h * transform.scale.y;
@@ -33,6 +49,32 @@ SDL_Rect MakeRenderDestRect(const Camera& camera, const Transform& transform,
 		static_cast<int>(scaledH)
 	};
 }
+
+//SDL_Rect MakeRenderDestRect(const Camera& camera, const Transform& transform,
+//							int w, int h, const RenderProfile& profile)
+//{
+//	float scaledW = w * transform.scale.x;
+//	float scaledH = h * transform.scale.y;
+//
+//	SDL_FPoint renderXY = transform.position + profile.offset;
+//
+//	if (!profile.isOverlay)
+//	{
+//		renderXY = camera.WorldToScreen<SDL_FPoint>(renderXY);
+//	}
+//	else if (profile.parallaxFactor != 0.0f)
+//	{
+//		SDL_FPoint screenXY = camera.WorldToScreen<SDL_FPoint>(renderXY);
+//		renderXY = screenXY + (renderXY - screenXY) * profile.parallaxFactor;
+//	}
+//
+//	return SDL_Rect{
+//		static_cast<int>(renderXY.x - (scaledW / 2.0f)),
+//		static_cast<int>(renderXY.y - (scaledH / 2.0f)),
+//		static_cast<int>(scaledW),
+//		static_cast<int>(scaledH)
+//	};
+//}
 
 SDL_Point GetScreenAdjust(const Camera& camera, SDL_Rect rect)
 {
@@ -153,17 +195,29 @@ void AddSpriteRenderCall(const Entity& entity, const Camera& camera,
 						 RenderBatchHandler& renderBatchHandler,
 						 DebugDrawHandler& debugDrawHandler)
 {
-	auto [renderable, transform] = entity.GetComponents<SpriteRenderableComponent, Transform>();
+	auto [renderable, transform] = 
+		entity.GetComponents<SpriteRenderableComponent, Transform>();
 
 	const auto& plot = renderable.sprite.plot;
 
-	SDL_Rect renderDestRect = MakeRenderDestRect(camera, transform, plot.rect.w, 
-										         plot.rect.h, renderable.profile);
+	SDL_Rect transformedRect = MakeTransformedRect(transform, plot.rect.w, 
+												   plot.rect.h, renderable.profile);
 
-	if (!camera.GetViewport().IntersectsBoundingBox(renderDestRect))
+	if (!camera.GetViewport().IntersectsBoundingBox(transformedRect))
 	{
+		LOG_DEBUG_FMT("Culled sprite '{}'", entity.GetID());
 		return;
 	}
+
+	//SDL_Rect renderDestRect = camera.WorldToScreen<SDL_Rect>(transformedRect);
+
+	SDL_Rect renderDestRect = MakeScreenRenderRect(camera, transform, plot.rect.w, 
+										           plot.rect.h, renderable.profile);
+
+	//if (!camera.GetViewport().IntersectsBoundingBox(renderDestRect))
+	//{
+	//	return;
+	//}
 	 
 	renderBatchHandler.PushBack({
 		.srcRect = plot.rect,
@@ -256,6 +310,28 @@ void FillRenderBatches(const Entity& entity, const Camera& camera,
 		: AddGlyphRenderCalls(entity, camera, renderBatchHandler, debugDrawHandler);
 }
 
+void DrawDebugColliderShapeForInvalids(auto& group, const Camera& camera, 
+									   DebugDrawHandler& debugDrawHandler)
+{
+	for (const auto& entity : group)
+	{
+		if (!entity.HasComponent<Collider>())
+		{
+			continue;
+		}
+
+		const auto& profile = entity.HasComponent<SpriteRenderableComponent>()
+			? entity.GetComponent<SpriteRenderableComponent>().profile
+			: entity.GetComponent<TextRenderableComponent>().profile;
+
+		if (profile.debugDraw.collider.on)
+		{
+			debugDrawHandler.AddColliderShape(camera, entity.GetComponent<Collider>(),
+											  profile);
+		}
+	}
+}
+
 } // unnamed
 
 void NewRenderSystem::Update(SDL_Renderer* renderer, const Camera& camera,
@@ -275,11 +351,18 @@ void NewRenderSystem::Update(SDL_Renderer* renderer, const Camera& camera,
 
 	SortRenderableEntities(entities);
 
-	auto chunked = ChunkEntitiesByAtlas(entities);
+	auto chunked = entities | std::views::chunk_by(SameAtlasHandle);
 
 	for (auto group : chunked)
 	{
 		const auto& srcAtlasHandle = GetAtlasHandle(group.front());
+
+		if (!srcAtlasHandle.IsValid())
+		{
+			// still draw debug collider if relevant
+			DrawDebugColliderShapeForInvalids(group, camera, debugDrawHandler_);
+			continue;
+		}
 
 		auto* srcTexture = textureRepo.GetSourceTexture(srcAtlasHandle);
 		assert(srcTexture);

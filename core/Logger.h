@@ -8,13 +8,14 @@
 class LogLevel
 {
 public:
-    enum Level
+    enum Level : uint8_t
     {
-        DEBUG,
-        INFO,
-        WARNING,
-        ERROR,
-        CRITICAL
+        DEBUG = 1 << 0,
+        INFO = 1 << 1,
+        WARNING = 1 << 2,
+        ERROR = 1 << 3,
+        CRITICAL = 1 << 4,
+        ALL = DEBUG | INFO | WARNING | ERROR | CRITICAL
     };
 
     friend std::ostream& operator<<(std::ostream& os, LogLevel::Level lvl);
@@ -68,13 +69,25 @@ public:
         return Logger::Get().LogImpl(lvl, std::forward<Ts>(data)...);
     }
 
+    static void SilenceLogLevel(LogLevel::Level logLvls, bool silence)
+    {
+        if (silence)
+        {
+            Logger::Get().flags_ &= ~(logLvls);
+        }
+        else
+        {
+            Logger::Get().flags_ |= logLvls;
+        }
+    }
+
     static Logger& Get();
 
 private:
     enum Flag : uint8_t
     {
-        SessionStarted = 1 << 0,
-        WriteToConsole = 1 << 1
+        SessionStarted = 1 << 5,
+        WriteToConsole = 1 << 6
     };
 
     Logger() = default;
@@ -88,6 +101,8 @@ private:
         {
             return;
         }
+
+        if ((flags_ & lvl))
 
         if (flags_ & Flag::WriteToConsole)
         {
@@ -110,7 +125,7 @@ private:
     static void LogHeader(std::ostream& os, LogLevel::Level lvl);
 
     std::ofstream fileStream_;
-    uint8_t flags_ = 0;
+    uint8_t flags_ = LogLevel::ALL;
 };
 
 #define LOG_DEBUG(...) Logger::Log(LogLevel::DEBUG, __VA_ARGS__)

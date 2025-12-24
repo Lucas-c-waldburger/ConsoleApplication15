@@ -58,87 +58,87 @@ namespace fs = std::filesystem;
 //};
 
 
-inline Result<Void> LoadSpriteDirectory(const std::string& directoryPath,
-								 SpriteSeriesResourcePackets& allPackets)
-{
-	auto dirPath = fs::path{ directoryPath };
-	if (!fs::exists(dirPath))
-	{
-		return MAKE_ERROR_FMT("Directory path '{}' does not exist", directoryPath);
-	}
-
-	SpriteSeriesMetadata metadata{ .seriesName = dirPath.stem().string() };
-	std::map<size_t, std::string, std::less<>> spriteIdxToPaths;
-
-	for (const auto& entry : fs::directory_iterator(dirPath))
-	{
-		auto entryPath = entry.path();
-
-		if (entry.is_directory())
-		{
-			TRY(LoadSpriteDirectory(entryPath.string(), allPackets));
-			continue;
-		}
-
-		if (entry.is_regular_file())
-		{
-			std::string stem = entryPath.stem().string();
-			auto stemView = std::string_view{ stem };
-			
-			size_t idxSepPos = stemView.find_last_of('_');
-			if (idxSepPos == std::string_view::npos)
-			{
-				return MAKE_ERROR_FMT("Invalid sprite file stem format '{}'", stemView);
-			}
-
-			auto idxStr = std::string{ stemView.substr(idxSepPos + 1) };
-			int idx = -1;
-			
-			try {
-				idx = std::stoi(idxStr);
-			}
-			catch (std::exception& ex) {
-				return MAKE_ERROR(ex.what());
-			}
-			
-			if (idx < 0)
-			{
-				return MAKE_ERROR_FMT("Invalid sprite index '{}'", idx);
-			}
-
-			auto [_, inserted] = spriteIdxToPaths.try_emplace(idx, entry.path().string());
-			if (!inserted)
-			{
-				return MAKE_ERROR_FMT("Duplicate sprite index in series '{}'", idx);
-			}
-		}
-	}
-
-	if (spriteIdxToPaths.empty())
-	{
-		return Void{};
-	}
-	
-	std::vector<std::string> paths;
-	paths.reserve(spriteIdxToPaths.size());
-
-	for (size_t i = 0; i < spriteIdxToPaths.size(); i++)
-	{
-		auto it = spriteIdxToPaths.find(i);
-		if (it == spriteIdxToPaths.end())
-		{
-			return MAKE_ERROR_FMT("Sprite series had missing index '{}'", i);
-		}
-
-		paths.emplace_back(std::move(it->second));
-	}
-
-	auto& newPacket = allPackets.emplace_back();
-	newPacket.SetMetadata(std::move(metadata));
-	newPacket.SetFilepaths(std::move(paths));
-
-	return Void{};
-}
+//inline Result<Void> LoadSpriteDirectory(const std::string& directoryPath,
+//								 SpriteSeriesResourcePackets& allPackets)
+//{
+//	auto dirPath = fs::path{ directoryPath };
+//	if (!fs::exists(dirPath))
+//	{
+//		return MAKE_ERROR_FMT("Directory path '{}' does not exist", directoryPath);
+//	}
+//
+//	SpriteSeriesMetadata metadata{ .seriesName = dirPath.stem().string() };
+//	std::map<size_t, std::string, std::less<>> spriteIdxToPaths;
+//
+//	for (const auto& entry : fs::directory_iterator(dirPath))
+//	{
+//		auto entryPath = entry.path();
+//
+//		if (entry.is_directory())
+//		{
+//			TRY(LoadSpriteDirectory(entryPath.string(), allPackets));
+//			continue;
+//		}
+//
+//		if (entry.is_regular_file())
+//		{
+//			std::string stem = entryPath.stem().string();
+//			auto stemView = std::string_view{ stem };
+//			
+//			size_t idxSepPos = stemView.find_last_of('_');
+//			if (idxSepPos == std::string_view::npos)
+//			{
+//				return MAKE_ERROR_FMT("Invalid sprite file stem format '{}'", stemView);
+//			}
+//
+//			auto idxStr = std::string{ stemView.substr(idxSepPos + 1) };
+//			int idx = -1;
+//			
+//			try {
+//				idx = std::stoi(idxStr);
+//			}
+//			catch (std::exception& ex) {
+//				return MAKE_ERROR(ex.what());
+//			}
+//			
+//			if (idx < 0)
+//			{
+//				return MAKE_ERROR_FMT("Invalid sprite index '{}'", idx);
+//			}
+//
+//			auto [_, inserted] = spriteIdxToPaths.try_emplace(idx, entry.path().string());
+//			if (!inserted)
+//			{
+//				return MAKE_ERROR_FMT("Duplicate sprite index in series '{}'", idx);
+//			}
+//		}
+//	}
+//
+//	if (spriteIdxToPaths.empty())
+//	{
+//		return Void{};
+//	}
+//	
+//	std::vector<std::string> paths;
+//	paths.reserve(spriteIdxToPaths.size());
+//
+//	for (size_t i = 0; i < spriteIdxToPaths.size(); i++)
+//	{
+//		auto it = spriteIdxToPaths.find(i);
+//		if (it == spriteIdxToPaths.end())
+//		{
+//			return MAKE_ERROR_FMT("Sprite series had missing index '{}'", i);
+//		}
+//
+//		paths.emplace_back(std::move(it->second));
+//	}
+//
+//	auto& newPacket = allPackets.emplace_back();
+//	newPacket.SetMetadata(std::move(metadata));
+//	newPacket.SetFilepaths(std::move(paths));
+//
+//	return Void{};
+//}
 
 //enum class AssetType
 //{

@@ -53,7 +53,7 @@ void Logger::StartSessionImpl(const std::string& logFile, bool enableConsole)
         }
     }
 
-    flags_ = (enableConsole) ? Flag::WriteToConsole : 0;
+    flags_ |= (enableConsole) ? Flag::WriteToConsole : 0;
     flags_ |= Flag::SessionStarted;
 }
 

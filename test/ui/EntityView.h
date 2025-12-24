@@ -3,26 +3,32 @@
 #include "../../systems/GuiSystem.h"
 #include "../../serial/Serialization.h"
 #include "../../systems/SerializationSystem.h"
-
+#include "../Fixtures.h"
+#include "TextureRepositoryContext.h"
+#include "EventContext.h"
+#include "PhysicsEditor.h"
+#include "ControllerMappingEditor.h"
+#include "MouseWorldNavigator.h"
 
 namespace ui {
 
 static constexpr std::string_view kComponentListJsonFilename = "component_list.json";
 
-//Result<Void> MakeComponentListJson()
-//{
-//	auto e = ECS::CreateEntity();
-//
-//	SerializableComponentTypeList::ForEachType([&e]<typename T> {
-//		e.AddComponent<T>();
-//	});
-//
-//	auto result = SerializationSystem{}.SerializeEntities(kComponentListJsonFilename);
-//
-//	e.Destroy();
-//
-//	return result;
-//}
+Result<Void> MakeComponentListJson()
+{
+	auto e = ECS::CreateEntity();
+
+	SerializableComponentTypeList::ForEachType([&e]<typename T> {
+		e.AddComponent<T>();
+	});
+
+    TextureRepository temp{};
+    auto result = SerializationSystem{}.SerializeState(kComponentListJsonFilename, temp);
+
+	e.Destroy();
+
+	return result;
+}
 
 struct ComponentEditContext
 {
@@ -30,7 +36,6 @@ struct ComponentEditContext
     nlohmann::ordered_json runningJson;
     std::string_view selectedComponentForEdit;
     std::string errorMessage = "Unknown error";
-    TextureRepository textureRepository;
 };
 
 //std::string DrawLabel(std::string_view sv)
@@ -111,8 +116,12 @@ void DrawPrimitiveEditField(nlohmann::ordered_json& j, bool& wasEdited,
         break;
     }
 
+    case json::value_t::null:
+        ImGui::Text("<null>");
+        break;
+    
     default:
-        ImGui::Text("%s: <unsupported>", label.c_str());
+        ImGui::Text("<unsupported>");
         break;
     }
 }
@@ -207,10 +216,67 @@ void DrawComponentEditor(Entity& e, nlohmann::ordered_json& runningJson)
         return;
     }
 
-    auto& componentJson = runningJson.at(componentName);
     bool wasEdited = false;
 
-    DrawJsonSuppliedEditField(componentJson, wasEdited, componentName.data());
+    auto& componentJson = runningJson.at(componentName);
+
+    //if constexpr (!(std::same_as<T, RigidBody> || std::same_as<T, Collider>))
+    //{
+        DrawJsonSuppliedEditField(componentJson, wasEdited, componentName.data());
+    //}
+
+    if constexpr (std::same_as<T, SpriteRenderableComponent>)
+    {
+        if (ImGui::Button("Browse Sprites"))
+        {    
+            ImGui::OpenPopup("SpriteBrowser");
+        }
+
+        if (ImGui::BeginPopup("SpriteBrowser"))
+        {
+            auto& sprite = e.GetComponent<SpriteRenderableComponent>().sprite;
+            if (RenderableEditor::DrawAvailableSprites(sprite))
+            {
+                wasEdited = true;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+    }
+    else if constexpr (std::same_as<T, RigidBody>)
+    {
+        wasEdited = false;
+
+        const auto& rigidBody = e.GetComponent<RigidBody>();
+        if (rigidBody.body.GetData().IsValid())
+        {
+            PhysicsEditor::DrawRigidBodyInfo(rigidBody);
+        }
+    }
+    else if constexpr (std::same_as<T, Collider>)
+    {
+        wasEdited = false;
+
+        const auto& collider = e.GetComponent<Collider>();
+        if (collider.shape.GetData().IsValid())
+        {
+            PhysicsEditor::DrawColliderInfo(collider);
+        }
+    }
+    else if constexpr (std::same_as<T, Transform>)
+    {
+        if (e.HasComponent<RigidBody>() && e.HasComponent<Collider>() &&
+            e.GetComponent<RigidBody>().body.GetData().IsValid() &&
+            e.GetComponent<Collider>().shape.GetData().IsValid())
+        {
+            // transform no longer editable except for scale
+            auto& tf = e.GetComponent<Transform>();
+            componentJson.at("scale").get_to(tf.scale);
+            to_json(componentJson, tf);
+    
+            wasEdited = false;
+        }
+    }
 
     if (wasEdited)
     {
@@ -246,11 +312,16 @@ void DrawExistingComponentList(Entity& e, ComponentEditContext& ctx)
             }
         }
     });
-}
+} 
 
 void DrawAddComponentList(Entity& e, ComponentEditContext& ctx)
 {
     SerializableComponentTypeList::ForEachType([&]<typename T>{
+        if constexpr (std::same_as<T, RigidBody> || std::same_as<T, Collider>)
+        {
+            return;
+        }
+
         if (e.HasComponent<T>())
         {
             return;
@@ -269,11 +340,27 @@ void DrawAddComponentList(Entity& e, ComponentEditContext& ctx)
 class EntityInspector
 {
 public:
+    static Result<Void> Init(std::shared_ptr<SceneFixture>& fixture)
+    {
+        assert(fixture);
+
+        EventContext::eventBus = &fixture->GetEventBus();
+
+        TRY(RenderableEditor::Init(fixture->GetTextureRepository()));
+        TRY(PhysicsEditor::Init(fixture->GetWorld()));
+
+        assert(fixture->IsSystemInitialized<SDLInputSystem>());
+        auto& inputSys = fixture->GetSystem<SDLInputSystem>();
+
+        TRY(ControllerMappingEditor::Init(inputSys->GetGameControllerEventHandler()));
+        TRY(MouseWorldNavigator::Init(inputSys->GetMouseEventHandler()));
+
+        return Void{};
+    }
+
     static bool Draw(Entity& e)
     {
         bool ret = true;
-
-        //ImGui::Begin("Entity Inspector");
 
         if (ImGui::BeginPopupModal("ErrorPopup", nullptr, 
                                     ImGuiWindowFlags_AlwaysAutoResize))
@@ -315,9 +402,9 @@ public:
 
         // Component editor
         if (!editContext_.selectedComponentForEdit.empty())
-        {
+        {          
             ImGui::Separator();
-            ImGui::Text("Editing: %s", editContext_.selectedComponentForEdit.data());
+            //ImGui::Text("Editing: %s", editContext_.selectedComponentForEdit.data());
 
             SerializableComponentTypeList::ForEachType([&]<typename T>{
                 if (!e.HasComponent<T>())
@@ -332,7 +419,47 @@ public:
             });
         }
 
-        //ImGui::End();
+        ImGui::Separator();
+
+        if (ImGui::Button("Physics Editor"))
+        {
+            ImGui::OpenPopup("PhysicsEditor");
+        }
+        if (ImGui::BeginPopup("PhysicsEditor"))
+        {
+            using PhysCtx = PhysicsEditorContext;
+            if (PhysicsEditor::DrawBuildEditor())
+            {
+                PhysicsEditor::BuildOnEntity(e);
+
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
+
+        bool canEditController = e.HasComponents<RigidBody, Collider>() &&
+            e.GetComponent<RigidBody>().body.GetData().IsValid() &&
+            e.GetComponent<Collider>().shape.GetData().IsValid();
+
+        ImGui::BeginDisabled(!canEditController);
+        if (ImGui::Button("Controller Mapping"))
+        {
+            ImGui::OpenPopup("ControllerMapping");
+        }
+        ImGui::EndDisabled();
+
+        if (ImGui::BeginPopup("ControllerMapping"))
+        {
+            assert(EventContext::eventBus != nullptr);
+
+            ControllerMappingEditor::DrawControllerMappingEditor(
+                e, *EventContext::eventBus);
+
+            ImGui::EndPopup();
+        }
+
+        MouseWorldNavigator::Update();
         
         return ret;
     }

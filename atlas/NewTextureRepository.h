@@ -239,6 +239,15 @@ public:
 		}
 	}
 
+	Result<Void> RebuildAtlasTextures(SDL_Renderer* renderer)
+	{
+		for (auto& spriteAtlas : GetAtlasVector<SpriteAtlas>())
+		{
+			TRY(spriteAtlas.RebuildSourceTexture(renderer));
+		}
+		return Void{};
+	}
+
 	template <SomeTextureAtlas T>
 	const std::vector<T>& GetAtlasVector() const
 	{

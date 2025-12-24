@@ -14,6 +14,8 @@ public:
 	void HandleMouseEvent(const SDL_Event& ev);
 	void Finalize(float delta, EventBus2& bus);
 
+	MouseState GetMouseState() const;
+
 private:
 	void UpdateMouseStateComponents();
 

@@ -75,7 +75,9 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 	auto glyphsFromAtlas = glyphAtlas.GetGlyphsForString(textRenderable.writer.text);
 
 	Transform transform{
-		.position = { SDLite::kFWindowCenter.x - 150, SDLite::kFWindowCenter.y }
+		//.position = { SDLite::kFWindowCenter.x - 150, SDLite::kFWindowCenter.y }
+		.position = { SDLite::Window().GetLocalCenter<SDL_FPoint>().x - 150.0f,
+					  SDLite::Window().GetLocalCenter<SDL_FPoint>().y }
 	};
 
 	TextRenderableGlyphCache glyphCache{};

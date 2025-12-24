@@ -328,6 +328,9 @@ template <typename T>
 static constexpr bool is_Void_v = std::is_same_v<std::remove_cvref_t<T>, Void>;
 
 template <typename T>
+concept IntOrFloat = std::same_as<T, int> || std::same_as<T, float>;
+
+template <typename T>
 concept HasBooleanNotOperator = requires(T t) {
 	{ !t } -> std::convertible_to<bool>;
 };

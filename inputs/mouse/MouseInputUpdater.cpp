@@ -171,7 +171,7 @@ void MouseInputUpdater::FinalizeAndPushEvents(float delta, EventBus2& bus)
 	tracker_.updated.reset();
 }
 
-MouseState MouseInputUpdater::ToMouseStateComponent()
+MouseState MouseInputUpdater::ToMouseStateComponent() const
 {
 	return MouseState{
 		.inputs = inputs_,

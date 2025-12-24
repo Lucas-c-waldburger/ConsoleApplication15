@@ -31,9 +31,9 @@ struct BodyLimits
         .min = 0.0f, 
         .max = std::numeric_limits<float>::max() 
     };
+    SDL_FPoint maxImpulse = { 0.0f, 0.0f };
 };
 
-//struct RigidBody : BaseComponent<RigidBody, 3>
 struct RigidBody : BaseComponent<RigidBody>
 {
     ReadOnly<B2Body> body;

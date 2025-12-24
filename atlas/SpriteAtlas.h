@@ -134,11 +134,22 @@ public:
 		return spriteInfo_.TryGetView(sprite.spriteIndex);
 	}
 
-	//SpriteInfo GetSpriteInfo(const Sprite& sprite) const;
+	auto GetSpriteInfo() const
+	{
+		return spriteInfo_.ForEach();
+	}
+
+	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+	auto GetSpriteInfo() const
+	{
+		return spriteInfo_.ForEach<MemberPtrs...>();
+	}
 
 	Result<Void> ValidateSprite(const Sprite& sprite) const;
 	bool IsSpriteValid(const Sprite& sprite) const;
 
+
+	Result<Void> RebuildSourceTexture(SDL_Renderer* renderer);
 	/*bool CanFitSprite(SDL_Renderer* renderer, const SpriteDescriptor& descriptor) const;*/
 
 private:

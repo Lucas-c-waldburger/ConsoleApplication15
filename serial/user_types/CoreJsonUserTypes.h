@@ -41,8 +41,8 @@ inline void to_json(BasicJson& j, const Range<T>& r)
 template <typename BasicJson, typename T>
 inline void from_json(const BasicJson& j, Range<T>& r)
 {
-	r.at("min").get_to(r.min);
-	r.at("max").get_to(r.max);
+	j.at("min").get_to(r.min);
+	j.at("max").get_to(r.max);
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(

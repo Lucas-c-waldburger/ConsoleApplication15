@@ -6,7 +6,7 @@
 namespace {
 
 template <typename T>
-std::unordered_set<T> GetShapesImpl(const Handle<B2Body>& bodyHandle)
+std::vector<T> GetShapesImpl(const Handle<B2Body>& bodyHandle)
 {
     if (!bodyHandle.IsValid())
     {
@@ -21,7 +21,7 @@ std::unordered_set<T> GetShapesImpl(const Handle<B2Body>& bodyHandle)
         return {};
     }
 
-    std::unordered_set<T> shapes;
+    std::vector<T> shapes;
     shapes.reserve(count);
 
     for (int i = 0; i < count; i++)
@@ -31,7 +31,7 @@ std::unordered_set<T> GetShapesImpl(const Handle<B2Body>& bodyHandle)
         if (handle.IsValid())
         {
             B2Shape shape{ handle };
-            shapes.emplace(std::move(shape));
+            shapes.emplace_back(std::move(shape));
         }
     }
 
@@ -95,12 +95,12 @@ Result<B2Shape> B2Body::AddShape(const B2ShapeDefinition& shapeDef)
     return B2Shape{ shapeHandle };
 }
 
-std::unordered_set<B2Shape> B2Body::GetShapes() 
+std::vector<B2Shape> B2Body::GetShapes() 
 {
     return GetShapesImpl<B2Shape>(bodyHandle_);
 }
 
-std::unordered_set<ReadOnly<B2Shape>> B2Body::GetShapes() const
+std::vector<ReadOnly<B2Shape>> B2Body::GetShapes() const
 {
     return GetShapesImpl<ReadOnly<B2Shape>>(bodyHandle_);
 }

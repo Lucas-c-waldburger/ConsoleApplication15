@@ -425,8 +425,10 @@ Result<Void> ui::TestButton()
     auto entity = ECS::CreateEntity();
 
     auto& tf = entity.AddComponent(Transform{
-        .position = { SDLite::kFWindowCenter.x - 100.0f,
-                      SDLite::kFWindowCenter.y - 100.0f }
+        //.position = { SDLite::kFWindowCenter.x - 100.0f,
+        //              SDLite::kFWindowCenter.y - 100.0f }
+        .position = { SDLite::Window().GetLocalCenter<SDL_FPoint>().x - 100.0f,
+                      SDLite::Window().GetLocalCenter<SDL_FPoint>().y - 100.0f }
         });
 
     auto& textRenderable = entity.AddComponent(TextRenderableComponent{

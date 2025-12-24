@@ -20,7 +20,7 @@ public:
 	};
 
 	Result<Void> SerializeState(std::string_view jsonFilename, 
-								   TextureRepository& textureRepo);
+								TextureRepository& textureRepo);
 	std::vector<Error> DeserializeState(std::string_view jsonFilename, 
-										   TextureRepository& textureRepo);
+										TextureRepository& textureRepo);
 };

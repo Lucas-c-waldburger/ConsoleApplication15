@@ -15,6 +15,11 @@ void MouseEventHandler::Finalize(float delta, EventBus2& bus)
 	UpdateMouseStateComponents();
 }
 
+MouseState MouseEventHandler::GetMouseState() const
+{
+	return inputUpdater_.ToMouseStateComponent();
+}
+
 void MouseEventHandler::UpdateMouseStateComponents()
 {
 	auto entities = ECS::GetAllEntitiesWith<MouseState>();

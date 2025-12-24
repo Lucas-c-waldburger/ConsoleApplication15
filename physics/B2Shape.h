@@ -74,6 +74,13 @@ public:
         ChainSegment = b2_chainSegmentShape
     };
 
+    struct EventsEnabled
+    {
+        bool contact = false;
+        bool sensor = false;
+        bool hit = false;
+    };
+
     B2Shape() = default;
     explicit B2Shape(const Handle<B2Shape>& handle) : shapeHandle_(handle) {}
 
@@ -150,6 +157,33 @@ public:
         };
 
         b2Shape_SetFilter(shapeHandle_, filter);
+    }
+
+    EventsEnabled GetEventsEnabled() const
+    {
+        return EventsEnabled{
+            .contact = b2Shape_AreContactEventsEnabled(shapeHandle_),
+            .sensor = b2Shape_AreSensorEventsEnabled(shapeHandle_),
+            .hit = b2Shape_AreHitEventsEnabled(shapeHandle_)
+        };
+    }
+    void EnableEvents(const EventsEnabled& enable)
+    {
+        b2Shape_EnableContactEvents(shapeHandle_, enable.contact);
+        b2Shape_EnableSensorEvents(shapeHandle_, enable.sensor);
+        b2Shape_EnableHitEvents(shapeHandle_, enable.hit);
+    }
+
+    bool IsCollisionEnabled() const
+    {
+        auto filter = b2Shape_GetFilter(shapeHandle_);
+
+        return filter.categoryBits != 0 && filter.maskBits != 0;
+    }
+
+    bool IsSensor() const
+    {
+        return b2Shape_IsSensor(shapeHandle_);
     }
 
     SDL_FRect GetBoundingBox() const
@@ -240,6 +274,13 @@ public:
         return (IsValid()) ? b2Shape_GetPolygon(shapeHandle_).count : 0;
     }
 
+    float GetRadius() const
+    {
+        return (IsValid()) 
+            ? ToPixels(b2Shape_GetPolygon(shapeHandle_).radius) 
+            : std::numeric_limits<float>::min();
+    }
+
     std::vector<SDL_FPoint> GetVertices() const
     {
         if (!IsValid())
@@ -276,14 +317,9 @@ public:
 
     float GetRadius() const
     {
-        if (!IsValid())
-        {
-            return std::numeric_limits<float>::min();
-        }
-
-        b2Circle circle = b2Shape_GetCircle(shapeHandle_);
-
-        return ToPixels(circle.radius);
+        return (IsValid())
+            ? ToPixels(b2Shape_GetCircle(shapeHandle_).radius)
+            : std::numeric_limits<float>::min();
     }
 
     SDL_FPoint GetCenter() const

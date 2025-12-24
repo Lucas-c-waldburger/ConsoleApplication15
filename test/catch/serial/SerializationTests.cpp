@@ -1,7 +1,9 @@
+#include <array>
 #include "../CatchUtils.h"
 #include "../../../systems/SerializationSystem.h"
 #include "../../../systems/util/SerializationSystemUtils.h"
 #include "../../../atlas/NewTextureRepository.h"
+#include "../../../ecs/Ecs.h"
 
 namespace {
 
@@ -18,6 +20,20 @@ std::string MakeJsonTestPath(std::string_view jsonFilename)
 
 	return path.string();
 }
+
+Result<std::vector<Sprite>> LoadTestSprites(SpriteAtlas& atlas)
+{
+	TRY(ResourcePath::Sprite("knight\\walk_anim\\knight_walk_0.png"), sprite1Path);
+	TRY(ResourcePath::Sprite("knight\\jump_anim\\knight_jump_0.png"), sprite2Path);
+	TRY(ResourcePath::Sprite("knight\\fall_anim\\knight_fall_0.png"), sprite3Path);
+
+	return atlas.LoadSprites(SDLite::Renderer(), { .data = {
+		{.filepath = sprite1Path },
+		{.filepath = sprite2Path },
+		{.filepath = sprite3Path }
+	} });
+}
+
 
 } // unnamed
 
@@ -36,21 +52,10 @@ TEST_CASE("Atlas Serialization", "[serial]")
 
 	auto& spriteAtlas = *spriteAtlasResult.GetValue();
 
-	auto sprite1PathResult = ResourcePath::Sprite("knight\\walk_anim\\knight_walk_0.png");
-	REQUIRE_RESULT(sprite1PathResult);
-	auto sprite2PathResult = ResourcePath::Sprite("knight\\jump_anim\\knight_jump_0.png");
-	REQUIRE_RESULT(sprite2PathResult);
-	auto sprite3PathResult = ResourcePath::Sprite("knight\\fall_anim\\knight_fall_0.png");
-	REQUIRE_RESULT(sprite3PathResult);
+	auto spritesResult = LoadTestSprites(spriteAtlas);
+	REQUIRE_RESULT(spritesResult);
 
-	auto spritesLoadResult = spriteAtlas.LoadSprites(SDLite::Renderer(), { .data = {
-		{ .filepath = sprite1PathResult.GetValue() },
-		{ .filepath = sprite2PathResult.GetValue() },
-		{ .filepath = sprite3PathResult.GetValue() }
-	} });
-	REQUIRE_RESULT(spritesLoadResult);
-
-	auto& sprites = spritesLoadResult.GetValue();
+	auto& sprites = spritesResult.GetValue();
 	CHECK(sprites.size() == 3);
 
 	// add glyph atlas to repo
@@ -220,3 +225,54 @@ TEST_CASE("Atlas Deserialization", "[serial]")
 	SDLite::Exit();
 }
 
+TEST_CASE("Serialization System Tests", "[serial][system]")
+{
+	Logger::StartSession();
+	SDLite::Start();
+	SDL_PumpEvents();
+
+	TextureRepository repo{};
+
+	auto spriteAtlasResult = repo.CreateAtlas<SpriteAtlas>(SDLite::Renderer());
+	REQUIRE_RESULT(spriteAtlasResult);
+	REQUIRE(spriteAtlasResult.GetValue());
+
+	auto& spriteAtlas = *spriteAtlasResult.GetValue();
+
+	auto spritesResult = LoadTestSprites(spriteAtlas);
+	REQUIRE_RESULT(spritesResult);
+
+	auto& sprites = spritesResult.GetValue();
+	CHECK(sprites.size() == 3);
+
+	SerializationSystem serialSystem;
+	
+	auto e1 = ECS::CreateEntity();
+	auto e2 = ECS::CreateEntity();
+	auto e3 = ECS::CreateEntity();
+
+	REQUIRE(e1.IsValid());
+	REQUIRE(e2.IsValid());
+	REQUIRE(e3.IsValid());
+
+	auto& spriteCmp1 = e1.AddComponent<SpriteRenderableComponent>();
+	spriteCmp1.sprite = sprites[0];
+	spriteCmp1.profile.anchor.scale = Anchor::TopRight;
+	spriteCmp1.profile.anchor.rotation = Anchor::BottomRight;
+
+	auto& spriteCmp2 = e2.AddComponent<SpriteRenderableComponent>();
+	spriteCmp2.sprite = sprites[1];
+	spriteCmp2.profile.flip = SDL_FLIP_HORIZONTAL;
+	spriteCmp2.profile.drawOrder = 2222;
+
+	auto& spriteCmp3 = e3.AddComponent<SpriteRenderableComponent>();
+	spriteCmp3.sprite = sprites[2];
+	spriteCmp3.profile.debugDraw.boundingBox.color = { 3, 3, 3, 3 };
+	spriteCmp3.profile.mods.blend = SDL_BLENDMODE_ADD;
+	spriteCmp3.profile.offset = { 3.3f, 333.3f };
+
+	//serialSystem.SerializeState
+
+	Logger::EndSession();
+	SDLite::Exit();
+}

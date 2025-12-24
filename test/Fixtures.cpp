@@ -163,7 +163,7 @@ Result<bool> SceneFixture::UpdateSDLInputs()
 	assert(systems_.IsSystemInitialized<GameLoopSystem>());
 	float delta = systems_.GetSystem<GameLoopSystem>()->GetDeltaTime();
 
-	return inputSys->Update(delta, eventBus_);
+	return inputSys->Update(delta, eventBus_, textureRepo_, GetRenderer());
 }
 
 Result<Void> SceneFixture::UpdatePhysics()
@@ -216,6 +216,11 @@ void SceneFixture::UpdateTimers()
 	float delta = systems_.GetSystem<GameLoopSystem>()->GetDeltaTime();
 
 	systems_.GetSystem<TimerSystem>()->Update(delta, eventBus_);
+}
+
+Result<Void> SceneFixture::UpdateUi()
+{
+	return Void{};
 }
 
 void SceneFixture::LoopEnd()
@@ -291,17 +296,11 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 	fixture->systems_.InitializeSystem<NewRenderSystem>();
 	fixture->systems_.InitializeSystem<SerializationSystem>();
 
-	Dimensions<float> cameraVp = { static_cast<float>(SDLite::kWindowWidth),
-								   static_cast<float>(SDLite::kWindowHeight) };
+	Dimensions<float> cameraVp = SDLite::Window().GetSize<float>();
 
 	auto& cameraSystem = fixture->systems_.InitializeSystem<CameraSystem>(cameraVp);
 
-	static constexpr SDL_FPoint screenCenter = {
-		static_cast<float>(SDLite::kWindowWidth) / 2.0f,
-		static_cast<float>(SDLite::kWindowHeight) / 2.0f
-	};
-
-	cameraSystem->GetCamera().SetPosition(screenCenter);
+	cameraSystem->GetCamera().SetPosition(SDLite::Window().GetLocalCenter<SDL_FPoint>());
 
 	return Result<std::shared_ptr<SceneFixture>>{ std::move(fixture) };
 }

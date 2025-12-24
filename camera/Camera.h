@@ -21,12 +21,22 @@ public:
 		SDL_FPoint GetCenter() const;
 
 		template <SDLRectType T>
-		bool IntersectsBoundingBox(T rect) const noexcept { return RectsIntersect(boundingBox_, rect); }
+		bool IntersectsBoundingBox(T rect, 
+			Dimensions<float> padding = { 0.0f, 0.0f }) const noexcept
+		{
+			return RectsIntersect(GetPaddedBoundingBox(padding), rect);
+		}
 
 		template <SDLPointType T>
-		bool PointInsideBoundingBox(T p) const noexcept { return PointInsideRect(boundingBox_, p); }
+		bool PointInsideBoundingBox(T p, 
+			Dimensions<float> padding = { 0.0f, 0.0f }) const noexcept
+		{ 
+			return PointInsideRect(GetPaddedBoundingBox(padding), p);
+		}
 
 	private:
+		SDL_FRect GetPaddedBoundingBox(Dimensions<float> padding) const noexcept;
+
 		Dimensions<float> size_;
 		std::array<SDL_FPoint, 4> corners_;
 		SDL_FRect boundingBox_;
@@ -73,12 +83,6 @@ public:
 		return Projection::WorldToScreen<T>(pointOrRect, worldPosition_, viewportSize_, 
 										    zoomScale_, rotationDegrees_);
 	}
-	//template <SDLRectType T = SDL_FRect, typename U = T>
-	//T WorldToScreen(U pointOrRect) const
-	//{
-	//	return Projection::WorldToScreen<T>(pointOrRect, worldPosition_, viewportSize_,
-	//		zoomScale_, rotationDegrees_);
-	//}
 
 	template <typename T, typename U = T>
 	T ScreenToWorld(U pointOrRect) const

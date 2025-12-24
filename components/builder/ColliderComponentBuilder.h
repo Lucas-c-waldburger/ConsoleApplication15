@@ -12,10 +12,14 @@ struct ColliderSettings
     float friction = 0.5f;
     float restitution = 0.0f;
 
-    struct {
+    struct EnableEvents {
         bool contact = false;
         bool sensor = false; 
         bool hit = false;
+        static constexpr EnableEvents FromEventsEnabled(const B2Shape::EventsEnabled& en)
+        {
+            return { .contact = en.contact, .sensor = en.sensor, .hit = en.hit };
+        }
     } enableEvents;
     
     bool enableCollision = true;
@@ -60,7 +64,7 @@ public:
 
         B2ShapeDefinition definition;
 
-        definition.shapeParams = std::move(shapeParams_);
+        definition.shapeParams = shapeParams_;
 
         definition.shapeDef.density = settings_.density;
         definition.shapeDef.material.friction = settings_.friction;

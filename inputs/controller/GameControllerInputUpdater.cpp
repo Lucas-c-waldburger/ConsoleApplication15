@@ -154,10 +154,6 @@ void GameControllerInputUpdater::FinalizeAndPushEvents(SDL_JoystickID ownerId, E
 				.joystickID = ownerId, 
 				.input = input 
 			});
-			//EventBus::PushEvent(events::GameControllerInput{
-			//	.joystickID = ownerId,
-			//	.input = input
-			//});
 		}
 	}
 

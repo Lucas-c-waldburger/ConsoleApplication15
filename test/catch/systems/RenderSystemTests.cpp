@@ -72,7 +72,8 @@ TEST_CASE("System handles single sprite", "[rendering][system]")
 		.profile = { .debugDraw = { .boundingBox = { .on = false }}}
 	});
 	entity.AddComponent(Transform{
-		.position = { SDLite::kFWindowCenter.x, SDLite::kFWindowCenter.y }
+		//.position = { SDLite::kFWindowCenter.x, SDLite::kFWindowCenter.y }
+		.position = SDLite::Window().GetLocalCenter<SDL_FPoint>()
 	});
 
 	SDL_PumpEvents();
@@ -135,8 +136,8 @@ TEST_CASE("System handles sprites and glyphs", "[rendering][system]")
 
 			entity.AddComponent(Transform{
 				.position = {
-					GetRandom(30.0f, static_cast<float>(SDLite::kWindowWidth - 30)),
-					GetRandom(30.0f, static_cast<float>(SDLite::kWindowHeight - 30))					
+					GetRandom(30.0f, static_cast<float>(SDLite::Window().GetSize().w - 30)),
+					GetRandom(30.0f, static_cast<float>(SDLite::Window().GetSize().h - 30))					
 				},
 				.rotation = GetRandom(0.0f, 360.0f),
 				.scale = {

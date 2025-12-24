@@ -72,7 +72,7 @@ TEST_CASE("Sprites rendered correctly", "[rendering]")
 		renderRect.w = plotRect.w;
 		renderRect.h = plotRect.h;
 
-		if ((renderRect.x + renderRect.w) > SDLite::kWindowWidth)
+		if ((renderRect.x + renderRect.w) > SDLite::Window().GetSize().w)
 		{
 			renderRect.x = 0;
 			renderRect.y += maxRowHeight;
@@ -139,7 +139,7 @@ TEST_CASE("Glyphs rendered correctly", "[rendering]")
 		renderRect.w = plotRect.w;
 		renderRect.h = plotRect.h;
 
-		if ((renderRect.x + renderRect.w) > SDLite::kWindowWidth)
+		if ((renderRect.x + renderRect.w) > SDLite::Window().GetSize().w)
 		{
 			renderRect.x = 0;
 			renderRect.y += glyphAtlas.GetFontDescriptor().fontHeight;

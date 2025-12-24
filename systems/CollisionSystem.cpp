@@ -194,41 +194,5 @@ Result<Void> DispatchCollisionEvents(const B2World* world, EventBus2& bus)
 		entities, bus, contactEvs.hitEvents, contactEvs.hitCount
 	);
 
-	//EventBus::DispatchEventGroup<events::CollisionEventGroup>();
 	return Void{};
 }
-
-//Result<Void> DispatchCollisionEvents(const B2World* world)
-//{
-//	assert(world);
-//	assert(world->IsValid());
-//
-//	auto entities = ECS::GetAllEntitiesWith<Collider>([](const Collider& collider) {
-//		return collider.shape.GetData().IsValid();
-//	});
-//
-//	auto contactEvs = b2World_GetContactEvents(world->GetID());
-//	auto sensorEvs = b2World_GetSensorEvents(world->GetID());
-//
-//	TRY(SendCollisionEvents<EntityCollision::ContactEnd>(
-//		entities, contactEvs.endEvents, contactEvs.endCount
-//	));
-//
-//	TRY(SendCollisionEvents<EntityCollision::SensorEnd>(
-//		entities, sensorEvs.endEvents, sensorEvs.endCount
-//	));
-//
-//	TRY(SendCollisionEvents<EntityCollision::ContactBegin>(
-//		entities, contactEvs.beginEvents, contactEvs.beginCount
-//	));
-//
-//	TRY(SendCollisionEvents<EntityCollision::SensorBegin>(
-//		entities, sensorEvs.beginEvents, sensorEvs.beginCount
-//	));
-//
-//	TRY(SendCollisionEvents<EntityCollision::Hit>(
-//		entities, contactEvs.hitEvents, contactEvs.hitCount
-//	));
-//	
-//	return Void{};
-//}

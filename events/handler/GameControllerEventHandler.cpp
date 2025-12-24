@@ -54,8 +54,9 @@ void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev, EventBus
 
 		activeControllers_[joystickId].first = std::move(newController);
 
-		bus.PushEvent(events::GameControllerConnected{ .joystickID = joystickId });
-		//EventBus::PushEvent(events::GameControllerConnected{ .joystickID = joystickId });
+		bus.PushEvent(events::GameControllerConnected{ 
+			.joystickID = joystickId 
+		});
 
 		break;
 	}
@@ -72,8 +73,9 @@ void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev, EventBus
 
 		activeControllers_.erase(ev.cdevice.which);
 
-		bus.PushEvent(events::GameControllerDisconnected{ .joystickID = deadJoystickId });
-		//EventBus::PushEvent(events::GameControllerDisconnected{ .joystickID = deadJoystickId });
+		bus.PushEvent(events::GameControllerDisconnected{ 
+			.joystickID = deadJoystickId 
+		});
 
 		break;
 	}
@@ -94,7 +96,7 @@ void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
 	auto it = activeControllers_.find(joystickId);
 	if (it == activeControllers_.end())
 	{
-		LOG_ERROR("Controller active but wasn't properly connected\n");
+		LOG_ERROR("Controller active but wasn't properly connected");
 		return;
 	}
 
@@ -113,6 +115,21 @@ void GameControllerEventHandler::Finalize(EventBus2& bus)
 	}
 
 	UpdateControllerStateComponents();
+}
+
+GameControllerState
+GameControllerEventHandler::GetControllerState(SDL_JoystickID joystickId) const
+{
+	auto it = activeControllers_.find(joystickId);
+	if (it == activeControllers_.end())
+	{
+		return { .joystickID = -1 };
+	}
+
+	return {
+		.joystickID = joystickId,
+		.inputs = it->second.second.GetInputMap()
+	};
 }
 
 void GameControllerEventHandler::UpdateControllerStateComponents()

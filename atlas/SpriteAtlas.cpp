@@ -540,6 +540,69 @@ bool SpriteAtlas::IsSpriteValid(const Sprite& sprite) const
            sprite.plot.rect.w > 0 && sprite.plot.rect.h > 0;
 }
 
+Result<Void> SpriteAtlas::RebuildSourceTexture(SDL_Renderer* renderer)
+{
+    if (!IsLoaded())
+    {
+        LOG_WARNING("Sprite Atlas not loaded, did not rebuild texture");
+        return Void{};
+    }
+
+    SDL_DestroyTexture(atlasTexture_.get());
+
+    atlasTexture_ = MakeUniqueTexturePtr(
+        renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 
+        GetTextureSize(), GetTextureSize()
+    );
+    if (!atlasTexture_)
+    {
+        return MAKE_ERROR(SDL_GetError());
+    }
+
+    SDL_SetTextureBlendMode(atlasTexture_.get(), SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer, atlasTexture_.get());
+
+    SDL_Surface* spriteSurface = nullptr;
+    SDL_Texture* spriteTexture = nullptr;
+
+    ScopedInvoker freeResources{ [&] {
+        SDL_FreeSurface(spriteSurface);
+        if (spriteTexture) { SDL_DestroyTexture(spriteTexture); }
+        SDL_SetRenderTarget(renderer, nullptr);
+    } };
+
+    for (const auto& [plot, path] : spriteInfo_.ForEach<&SpriteInfo::plot, 
+                                                        &SpriteInfo::filepath>())
+    {
+        spriteSurface = IMG_Load(path.c_str());
+        if (!spriteSurface)
+        {
+            return MAKE_ERROR(IMG_GetError());
+        }
+
+        if (spriteSurface->w <= 0 || spriteSurface->h <= 0)
+        {
+            return MAKE_ERROR_FMT("Invalid surface dimensions: ({}, {})",
+                spriteSurface->w, spriteSurface->h);
+        }
+
+        spriteTexture = SDL_CreateTextureFromSurface(renderer, spriteSurface);
+        if (!spriteTexture)
+        {
+            return MAKE_ERROR(SDL_GetError());
+        }
+        SDL_FreeSurface(spriteSurface);
+
+        if (SDL_RenderCopy(renderer, spriteTexture, nullptr, &plot.rect) != 0)
+        {
+            return MAKE_ERROR(SDL_GetError());
+        }
+        SDL_DestroyTexture(spriteTexture);
+    }
+
+    return Void{};
+}
+
 Sprite SpriteAtlas::GetSprite(std::string_view spriteName) const
 {
     auto it = spriteIndices_.find(spriteName);

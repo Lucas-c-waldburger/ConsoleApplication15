@@ -1,5 +1,5 @@
 #pragma once
-#include "../../inputs/controller/GameController.h"
+#include "../../inputs/controller/GameControllerHub.h"
 #include "../../inputs/controller/GameControllerInputUpdater.h"
 #include "../EventBus2.h"
 #include <unordered_map>
@@ -8,6 +8,11 @@
 class GameControllerEventHandler
 {
 public:
+	//static inline const GameControllerInputMap kInvalidInputMap{};
+
+	using ActiveControllerMap = std::unordered_map<SDL_JoystickID,
+		std::pair<GameController, GameControllerInputUpdater>>;
+
 	GameControllerEventHandler() = default;
 	~GameControllerEventHandler();
 
@@ -15,10 +20,18 @@ public:
 	void HandleInputEvent(const SDL_Event& ev);
 	void Finalize(EventBus2& bus);
 
+	GameControllerState GetControllerState(SDL_JoystickID joystickId) const;
+	//const GameControllerInputMap& GetControllerState(SDL_JoystickID joystickId) const;
+	const ActiveControllerMap& GetActiveControllers() const { return activeControllers_; }
+
+	//const GameControllerHub& GetGameControllers() const { return controllerHub_; }
+
 private:
 	void UpdateControllerStateComponents();
 
-	std::unordered_map<SDL_JoystickID, 
-					   std::pair<GameController, GameControllerInputUpdater>> activeControllers_;
+	ActiveControllerMap activeControllers_;
+
+	//GameControllerHub controllerHub_;
+	//std::vector<GameControllerInputUpdater> inputUpdaters_;
 };
 

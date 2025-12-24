@@ -1,10 +1,11 @@
 #pragma once
 #include "../../atlas/NewTextureRepository.h"
 #include "CoreJsonUserTypes.h"
+#include "../SerializationConcepts.h"
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AtlasPlot, rect, rotation)
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Sprite, sourceAtlas)
+DEF_SERIALIZABLE_EMPTY(Sprite)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpriteInfo, plot, spriteName, filepath,
 	seriesName, seriesIndex)
 

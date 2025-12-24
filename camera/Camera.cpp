@@ -2,13 +2,32 @@
 
 namespace {
 
-SDL_FPoint ClampToCameraBounds(SDL_FPoint pos, Range<SDL_FPoint> bounds, Dimensions<float> vpDimensions)
+//SDL_FPoint ClampToCameraBounds(SDL_FPoint pos, Range<SDL_FPoint> bounds, Dimensions<float> vpDimensions)
+//{
+//	return {
+//		std::clamp(pos.x, bounds.min.x + vpDimensions.w / 2.0f,
+//					bounds.max.x - vpDimensions.w / 2.0f),
+//		std::clamp(pos.y, bounds.min.y + vpDimensions.h / 2.0f,
+//					bounds.max.y - vpDimensions.h / 2.0f)
+//	};
+//}
+SDL_FPoint ClampToCameraBounds(
+	SDL_FPoint pos,
+	Range<SDL_FPoint> bounds,
+	Dimensions<float> worldViewportSize
+)
 {
 	return {
-		std::clamp(pos.x, bounds.min.x + vpDimensions.w / 2.0f,
-					bounds.max.x - vpDimensions.w / 2.0f),
-		std::clamp(pos.y, bounds.min.y + vpDimensions.h / 2.0f,
-					bounds.max.y - vpDimensions.h / 2.0f)
+		std::clamp(
+			pos.x,
+			bounds.min.x + worldViewportSize.w / 2.0f,
+			bounds.max.x - worldViewportSize.w / 2.0f
+		),
+		std::clamp(
+			pos.y,
+			bounds.min.y + worldViewportSize.h / 2.0f,
+			bounds.max.y - worldViewportSize.h / 2.0f
+		)
 	};
 }
 
@@ -35,18 +54,58 @@ SDL_FPoint Camera::Viewport::GetCenter() const
 	return GetCenterFromCorners(corners_);
 }
 
+SDL_FRect 
+Camera::Viewport::GetPaddedBoundingBox(Dimensions<float> padding) const noexcept
+{
+	return {
+		boundingBox_.x - (padding.w / 2.0f),
+		boundingBox_.y - (padding.h / 2.0f),
+		boundingBox_.w + padding.w,
+		boundingBox_.h + padding.h
+	};
+}
+
+
 // Camera
 void Camera::SetPosition(SDL_FPoint newPos, bool clamp)
 {
-	worldPosition_ = (clamp) ? ClampToCameraBounds(newPos, bounds_, viewportSize_) : newPos;
+	newPos.x = std::round(newPos.x);
+	newPos.y = std::round(newPos.y);
+
+	if (!clamp)
+	{
+		worldPosition_ = newPos;
+		return;
+	}
+
+	Dimensions<float> worldViewportSize{
+		viewportSize_.w / zoomScale_,
+		viewportSize_.h / zoomScale_
+	};
+
+	worldPosition_ = ClampToCameraBounds(
+		newPos,
+		bounds_,
+		worldViewportSize
+	);
 }
 
 Camera::Viewport Camera::GetViewport() const
 {
 	auto corners = GetViewportCorners();
+
+	Dimensions<float> worldViewportSize{
+		viewportSize_.w / zoomScale_,
+		viewportSize_.h / zoomScale_
+	};
+
 	auto bbox = GetBoundingBoxForCorners(corners);
 
-	return Viewport{ viewportSize_, std::move(corners), bbox };
+	return Viewport{
+		worldViewportSize,
+		std::move(corners),
+		bbox
+	};
 }
 
 

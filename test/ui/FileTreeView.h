@@ -17,65 +17,70 @@ public:
 		std::optional<fs::path> selectedFile;
 	};
 
-	bool Display(State& state)
-	{
-		assert(fs::exists(state.currentPath));
+    bool Display(State& state)
+    {
+        assert(fs::exists(state.currentPath));
 
-		bool complete = false;
+        bool complete = false;
 
-		if (ImGui::Selectable(".."))
-		{
-			if (state.currentPath != state.topLevelPath &&
-				state.currentPath.has_parent_path())
-			{
-				state.currentPath = state.currentPath.parent_path();
-			}
-		}
+        if (ImGui::Selectable(".."))
+        {
+            if (state.currentPath != state.topLevelPath &&
+                state.currentPath.has_parent_path())
+            {
+                state.currentPath = state.currentPath.parent_path();
+            }
+        }
 
-		for (auto& entry : fs::directory_iterator(state.currentPath))
-		{
-			const auto& path = entry.path();
-			const std::string name = entry.path().filename().string();
-			const bool isDir = entry.is_directory();
+        for (auto& entry : fs::directory_iterator(state.currentPath))
+        {
+            const fs::path path = entry.path();
+            const std::string name = path.filename().string();
+            const bool isDir = entry.is_directory();
 
-			if (isDir)
-			{
-				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.9f, 1.0f, 1.0f));
-			}
+            if (isDir)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.9f, 1.0f, 1.0f));
+            }
 
-			bool selected = (state.selectedFile.has_value() && 
-							 *state.selectedFile == path);
+            bool selected = (state.selectedFile.has_value() &&
+                             *state.selectedFile == path);
 
-			if (ImGui::Selectable(name.c_str(), selected))
-			{
-				if (isDir)
-				{
-					state.currentPath = path;
-					state.selectedFile.reset();
+            bool activated = ImGui::Selectable(name.c_str(), selected);
 
-				}
-				else
-				{
-					state.selectedFile = path;
-				}
-			}
+            bool doubleClicked = ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0);
 
-			//if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)
-			//	&& state.selectedFile.has_value();
+            if (activated || doubleClicked)
+            {
+                if (isDir) 
+                {
+                    // Enter folder
+                    state.currentPath = path;
+                    state.selectedFile.reset();
+                }
+                else 
+                {
+                    // Single click: select file
+                    state.selectedFile = path;
 
-			//if (isDir)
-			//{
-			//	ImGui::PopStyleColor();
-			//}
-		}
+                    // Double-click: confirm selection Å® return true
+                    complete = doubleClicked;
+                }
+            }
 
-		//if ((ImGui::Button("Open") || )
+            if (isDir)
+            {
+                ImGui::PopStyleColor();
+            }
+        }
 
-	}
+        if (!complete && state.selectedFile.has_value())
+        {
+            complete = (ImGui::Button("Open"));
+        }
 
-
-private:
-	State state_;
+        return complete;
+    }
 };
 
 

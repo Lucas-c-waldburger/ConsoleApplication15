@@ -17,7 +17,7 @@ public:
 	MouseInputMap& GetInputMap() { return inputs_; }
 	const MouseInputMap& GetInputMap() const { return inputs_; }
 
-	MouseState ToMouseStateComponent();
+	MouseState ToMouseStateComponent() const;
 
 private:
 	class Tracker

@@ -188,9 +188,9 @@ public:
 
     std::unordered_set<Handle<B2Shape>> GetShapeHandles() const;
 
-    std::unordered_set<B2Shape> GetShapes();
+    std::vector<B2Shape> GetShapes();
 
-    std::unordered_set<ReadOnly<B2Shape>> GetShapes() const;
+    std::vector<ReadOnly<B2Shape>> GetShapes() const;
 
     bool OwnsShape(const Handle<B2Shape>& shapeHandle) const;
 
