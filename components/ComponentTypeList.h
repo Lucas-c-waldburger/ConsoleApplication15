@@ -1,62 +1,8 @@
 #pragma once
-#include "../core/TypeUtils.h"
+#include "CoreComponentTypeList.h"
+#include "../user/UserComponentTypeList.h"
 
-struct ActiveState;
-struct MouseState;
-struct Transform;
-struct RigidBody;
-struct Parent;
-struct Children;
-struct Tags;
-struct Collider;
-struct GameControllerState;
-struct Script;
-struct EventCallbacks;
-struct CameraTarget;
-struct SpriteAnimations;
-struct EventProductionFlags;
-struct GameControllerInputCallbacks;
-struct Timer;
-struct NeedsUpdate;
-struct EntityStateComponent;
-struct EntityFlags;
-struct SignalTokenStorage;
-struct NewAudioRequest;
-struct AudioUpdateRequest;
-struct ActiveAudio;
-struct TextRenderableGlyphCache;
-struct TextRenderableComponent;
-struct SpriteRenderableComponent;
-struct MarkedDestroyed;
-
-using ComponentTypeList = TypeList<
-	ActiveState,
-	MouseState,
-	Transform,
-	RigidBody,
-	Parent,
-	Children,
-	Tags,
-	Collider,
-	GameControllerState,
-	Script,
-	EventCallbacks,
-	CameraTarget,
-	SpriteAnimations,
-	EventProductionFlags,
-	GameControllerInputCallbacks,
-	Timer,
-	NeedsUpdate,
-	EntityStateComponent,
-	EntityFlags,
-	SignalTokenStorage,
-	NewAudioRequest,
-	AudioUpdateRequest,
-	ActiveAudio,
-	TextRenderableGlyphCache,
-	TextRenderableComponent,
-	SpriteRenderableComponent,
-	MarkedDestroyed
->;
+using ComponentTypeList = 
+	concat_type_lists_t<CoreComponentTypeList, UserComponentTypeList>;
 
 static_assert(ComponentTypeList::size <= 64, "Component bits cannot exceed 64");

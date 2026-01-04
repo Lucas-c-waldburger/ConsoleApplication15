@@ -2,7 +2,6 @@
 #include <ranges>
 #include "../events/data/EventDataIncludes.h"
 #include "../file/FilePathUtility.h"
-#include "ui/Workspace.h"
 #include "Fixtures.h"
 
 
@@ -380,80 +379,80 @@ Result<Void> SwordHandler::LoadSprites(SDL_Renderer* renderer, TextureRepository
 
 }
 
-ui::PointDrawHandler::PointDrawHandler(EventBus2& bus)
-{ 
-    signalTokens_.push_back(bus.ConnectToInput(
-        MouseInputSource::LeftButton, GetLayPointCallback()));
-    signalTokens_.push_back(bus.ConnectToInput(
-        MouseInputSource::RightButton, GetErasePointCallback()));
-}
-
-void ui::PointDrawHandler::Draw(SDL_Renderer* renderer)
-{
-    if (points_.empty()) { return; }
-
-    auto [r, g, b, a] = SDL_Color{};
-    SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
-
-    SDL_SetRenderDrawColor(renderer, color_.r, color_.g, color_.b, color_.a);
-
-    if (points_.size() == 1)
-    {
-        SDL_RenderDrawPointF(renderer, points_.back().x, points_.back().y);
-    }
-    else
-    {
-        SDL_RenderDrawLinesF(renderer, points_.data(), points_.size());
-    }
-
-    SDL_SetRenderDrawColor(renderer, r, g, b, a);
-}
-
-Result<Void> ui::TestButton()
-{
-    auto fixResult = SceneFixture::GetInstance();
-    ASSERT_RESULT(fixResult);
-    auto& fixture = fixResult.GetValue();
-
-    auto& repo = fixture->GetTextureRepository();
-
-    auto atlasResult = fixture->LoadGlyphAtlas(
-        ResourcePath::Font("GoNotoKurrent-Bold.ttf"), 24);
-    ASSERT_RESULT(atlasResult);
-    auto& glyphAtlas = atlasResult.GetValue();
-
-    auto entity = ECS::CreateEntity();
-
-    auto& tf = entity.AddComponent(Transform{
-        //.position = { SDLite::kFWindowCenter.x - 100.0f,
-        //              SDLite::kFWindowCenter.y - 100.0f }
-        .position = { SDLite::Window().GetLocalCenter<SDL_FPoint>().x - 100.0f,
-                      SDLite::Window().GetLocalCenter<SDL_FPoint>().y - 100.0f }
-        });
-
-    auto& textRenderable = entity.AddComponent(TextRenderableComponent{
-        .writer = glyphAtlas->GetTextWriter(),
-        .formatting = {.bounds = { 100, 500 } }
-        });
-
-    static constexpr std::string_view kYouPressedIt = "Yay you pressed it!";
-
-    auto wsResult = ui::Workspace::Create(
-        fixture->GetRenderer(),
-        fixture->GetTextureRepository(),
-        fixture->GetEventBus()
-    );
-    ASSERT_RESULT(wsResult);
-
-    auto& workspace = wsResult.GetValue();
-
-    auto handleResult = workspace.PlaceButton({
-        .position = SDLite::kFWindowCenter,
-        .color = ui::Button::Color::Green,
-        .onClick = [entity]() mutable {
-            entity.GetComponent<TextRenderableComponent>().writer.text = kYouPressedIt;
-        }
-        });
-
-    ASSERT_RESULT(fixture->RunGameLoop());
-}
+//ui::PointDrawHandler::PointDrawHandler(EventBus2& bus)
+//{ 
+//    signalTokens_.push_back(bus.ConnectToInput(
+//        MouseInputSource::LeftButton, GetLayPointCallback()));
+//    signalTokens_.push_back(bus.ConnectToInput(
+//        MouseInputSource::RightButton, GetErasePointCallback()));
+//}
+//
+//void ui::PointDrawHandler::Draw(SDL_Renderer* renderer)
+//{
+//    if (points_.empty()) { return; }
+//
+//    auto [r, g, b, a] = SDL_Color{};
+//    SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
+//
+//    SDL_SetRenderDrawColor(renderer, color_.r, color_.g, color_.b, color_.a);
+//
+//    if (points_.size() == 1)
+//    {
+//        SDL_RenderDrawPointF(renderer, points_.back().x, points_.back().y);
+//    }
+//    else
+//    {
+//        SDL_RenderDrawLinesF(renderer, points_.data(), points_.size());
+//    }
+//
+//    SDL_SetRenderDrawColor(renderer, r, g, b, a);
+//}
+//
+//Result<Void> ui::TestButton()
+//{
+//    auto fixResult = SceneFixture::GetInstance();
+//    ASSERT_RESULT(fixResult);
+//    auto& fixture = fixResult.GetValue();
+//
+//    auto& repo = fixture->GetTextureRepository();
+//
+//    auto atlasResult = fixture->LoadGlyphAtlas(
+//        ResourcePath::Font("GoNotoKurrent-Bold.ttf"), 24);
+//    ASSERT_RESULT(atlasResult);
+//    auto& glyphAtlas = atlasResult.GetValue();
+//
+//    auto entity = ECS::CreateEntity();
+//
+//    auto& tf = entity.AddComponent(Transform{
+//        //.position = { SDLite::kFWindowCenter.x - 100.0f,
+//        //              SDLite::kFWindowCenter.y - 100.0f }
+//        .position = { SDLite::Window().GetLocalCenter<SDL_FPoint>().x - 100.0f,
+//                      SDLite::Window().GetLocalCenter<SDL_FPoint>().y - 100.0f }
+//        });
+//
+//    auto& textRenderable = entity.AddComponent(TextRenderableComponent{
+//        .writer = glyphAtlas->GetTextWriter(),
+//        .formatting = {.bounds = { 100, 500 } }
+//        });
+//
+//    static constexpr std::string_view kYouPressedIt = "Yay you pressed it!";
+//
+//    auto wsResult = ui::Workspace::Create(
+//        fixture->GetRenderer(),
+//        fixture->GetTextureRepository(),
+//        fixture->GetEventBus()
+//    );
+//    ASSERT_RESULT(wsResult);
+//
+//    auto& workspace = wsResult.GetValue();
+//
+//    auto handleResult = workspace.PlaceButton({
+//        .position = SDLite::kFWindowCenter,
+//        .color = ui::Button::Color::Green,
+//        .onClick = [entity]() mutable {
+//            entity.GetComponent<TextRenderableComponent>().writer.text = kYouPressedIt;
+//        }
+//        });
+//
+//    ASSERT_RESULT(fixture->RunGameLoop());
+//}

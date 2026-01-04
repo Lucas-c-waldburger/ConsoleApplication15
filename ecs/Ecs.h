@@ -6,6 +6,7 @@
 #include "EntityAccess.h"
 #include "../components/ComponentConcepts.h"
 #include "../core/Logger.h"
+#include "../user/UserComponentBridge.h"
 #include <cassert>
 #include <functional>
 
@@ -17,63 +18,64 @@ class Entity
 {
 public:
     // components that can't be mutated through Entity API (must use EntityPassKey)
-    template <SomeComponent T>
+    template <typename T>
     static constexpr bool public_mutable_component_v = (
         !(RelationalComponentType<T>    ||
           std::same_as<T, EntityFlags>  ||
           std::same_as<T, ActiveState>  ||
           std::same_as<T, ActiveAudio>  ||
           std::same_as<T, TextRenderableGlyphCache> ||
-          std::same_as<T, MarkedDestroyed>)
+          std::same_as<T, MarkedDestroyed> ||
+          std::same_as<T, NeedsAnimationUpdate>)
     );
 
     Entity() : id_(kInvalidEntity), ecs_(nullptr) {}
     Entity(Entity_t id, ECS& ecs) : id_(id), ecs_(&ecs) {}
 
-    template <SomeComponent T> requires Entity::public_mutable_component_v<T>
+    template <typename T> requires Entity::public_mutable_component_v<T>
     T& AddComponent(T&& cmp);
-    template <SomeComponent T> requires Entity::public_mutable_component_v<T>
+    template <typename T> requires Entity::public_mutable_component_v<T>
     T& AddComponent();
-    template <SomeComponent T> 
+    template <typename T>
     T& AddComponent(T&& cmp, EntityPassKey);
-    template <SomeComponent T>
+    template <typename T>
     T& AddComponent(EntityPassKey);
 
-    template <SomeComponent T> requires Entity::public_mutable_component_v<T>
+    template <typename T> requires Entity::public_mutable_component_v<T>
     void RemoveComponent();
-    template <SomeComponent T>
+    template <typename T>
     void RemoveComponent(EntityPassKey);
 
     void ClearComponents();
 
-    template <SomeComponent T> requires Entity::public_mutable_component_v<T>
+    template <typename T> requires Entity::public_mutable_component_v<T>
     T& GetComponent();
-    template <SomeComponent T>
+    template <typename T>
     T& GetComponent(EntityPassKey);
-    template <SomeComponent T> 
+    template <typename T>
     const T& GetComponent() const;
 
-    template <SomeComponent T> requires Entity::public_mutable_component_v<T>
+    template <typename T> requires Entity::public_mutable_component_v<T>
     Result<std::reference_wrapper<T>> TryGetComponent();
-    template <SomeComponent T>
+    template <typename T>
     Result<std::reference_wrapper<const T>> TryGetComponent() const;
 
-    template <SomeComponent...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
+    template <typename...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
     std::tuple<Ts&...> GetComponents();
-    template <SomeComponent...Ts>
+    template <typename...Ts>
     std::tuple<Ts&...> GetComponents(EntityPassKey);
-    template <SomeComponent...Ts>
+    template <typename...Ts>
     std::tuple<const Ts&...> GetComponents() const;
 
-    template <SomeComponent T> 
+    template <typename T>
     bool HasComponent() const;
-    template <SomeComponent...Ts> 
+    template <typename...Ts>
     bool HasComponents() const;
 
     // component visibility
-    template <SomeComponent T> 
+    template <typename T>
     bool GetComponentVisibility() const;
-    template <SomeComponent...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
+    template <typename...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
     void SetComponentVisibility(bool vis);
 
     // event production
@@ -128,7 +130,7 @@ public:
 
 // ECS //
 class ECS
-{
+{ 
 public:
     friend class Entity;
     friend class EntityRelations;
@@ -157,32 +159,29 @@ public:
         return entities;
     }
 
-    template <typename...Ts, typename Filter>
-    static std::vector<Entity> GetAllEntitiesWith(Filter&& filter)
+    template <typename...Ts, typename Fn>
+        requires (sizeof...(Ts) > 0 && std::invocable<Fn, Ts&...>)
+    static void ForAllEntitiesWith(Fn&& fn)
     {
         auto& ecs = ECS::Get();
+        auto entities = ecs.GetAllEntityTsWithImpl<Ts...>();
 
-        return ecs.GetAllEntitiesWithInternalFiltered<Ts...>(std::forward<Filter>(filter));
+        for (Entity_t e : entities)
+        {
+            auto componentTup = ecs.GetComponents<Ts...>(e);
+
+            std::apply([&](auto&...cmps) {
+                std::invoke(fn, cmps...);
+            }, componentTup);
+        }
     }
-
-    //// grabs all active entities with all of the desired components
-    //template <typename...Ts>
-    //static std::vector<Entity> GetAllEntitiesWith()
-    //{
-    //    auto& ecs = ECS::Get();
-
-    //    uint64_t withMask = (Ts::componentBit | ...);
-    //  
-    //    return ecs.GetAllEntitiesWithImpl(withMask, 
-    //        [](uint64_t sig, uint64_t mask) -> bool { return (sig & mask) == mask; });
-    //}
 
     template <typename...Ts> requires (sizeof...(Ts) > 0)
     static std::vector<Entity> GetAllEntitiesWith()
     {
         auto& ecs = ECS::Get();
 
-        return ecs.GetAllEntitiesWithInternal<Ts...>();
+        return ecs.GetAllEntitiesWithImpl<Ts...>();
     }
 
     // grabs all active entities with at least one of the desired components
@@ -191,7 +190,7 @@ public:
     {
         auto& ecs = ECS::Get();
 
-        uint64_t anyMask = (Ts::componentBit | ...);
+        uint64_t anyMask = (0ULL | ... | ecs.GetComponentBit<Ts>());
 
         return ecs.GetAllEntitiesWithImpl(anyMask, 
             [](uint64_t sig, uint64_t mask) -> bool { return sig & mask; });
@@ -204,103 +203,180 @@ public:
     {
         auto& ecs = ECS::Get();
 
-        uint64_t exactMask = (ActiveState::componentBit | ... | Ts::componentBit);
+        uint64_t exactMask = (ActiveState::componentBit | EntityFlags::componentBit);
+        exactMask |= (... | ecs.GetComponentBit<Ts>());
 
         return ecs.GetAllEntitiesWithImpl(exactMask, 
             [](uint64_t sig, uint64_t mask) -> bool { return sig == mask; });
     }
 
+    template <typename T>
+    static bool IsComponentRegistered()
+    {
+        if constexpr (SomeComponent<T>)
+        {
+            return true;
+        }
+        else
+        {
+            const auto& ecs = ECS::Get();
+
+            return ecs.userComponentBridge_.IsComponentDataRegistered<T>();
+        }
+    }
+
     static Entity GetEntityByID(Entity_t id);
 
 private:
+    template <typename T>
+    ComponentSignature GetComponentBit() const
+    {
+        if constexpr (SomeComponent<T>)
+        {
+            return T::componentBit;
+        }
+        else
+        {
+            return userComponentBridge_.GetComponentDataSignature<T>();
+        }
+    }
+
     Entity_t CreateEntity_t();
 
     void DestroyEntity(Entity_t entity);
 
-    template <SomeComponent T>
+    template <typename T>
+    void HandleUpdateTrigger(Entity_t entity)
+    {
+        if constexpr (SomeUpdateTriggeringComponent<T>)
+        {
+            componentManager_.AddComponent<typename T::UpdateType>(entity);
+        }
+    }
+
+    template <typename T>
     T& AddComponent(Entity_t entity, T&& cmp)
     {
-        return componentManager_.AddComponent<T>(entity, std::forward<T>(cmp));
+        if constexpr (SomeComponent<T>)
+        {
+            HandleUpdateTrigger<T>(entity);
+
+            return componentManager_.AddComponent<T>(entity, std::forward<T>(cmp));
+        }
+        else
+        {
+            return userComponentBridge_.AddComponentData<T>(
+                entity, componentManager_, std::forward<T>(cmp));
+        }
     }
 
-    template <SomeComponent T>
+    template <typename T>
     T& AddComponent(Entity_t entity)
     {
-        return componentManager_.AddComponent<T>(entity);
+        if constexpr (SomeComponent<T>)
+        {
+            HandleUpdateTrigger<T>(entity);
+
+            return componentManager_.AddComponent<T>(entity);
+        }
+        else
+        {
+            return userComponentBridge_.AddComponentData<T>(
+                entity, componentManager_);
+        }
     }
 
-    template <SomeComponent T>
+    template <typename T>
     void RemoveComponent(Entity_t entity)
     {
-        return componentManager_.RemoveComponent<T>(entity);
+        if constexpr (SomeComponent<T>)
+        {
+            return componentManager_.RemoveComponent<T>(entity);
+        }
+        else
+        {
+            return userComponentBridge_.RemoveComponentData<T>(
+                entity, componentManager_);
+        }
     }
 
-    template <SomeComponent T>
+    template <typename T>
     T& GetComponent(Entity_t entity)
     {
-        return componentManager_.GetComponent<T>(entity);
+        if constexpr (SomeComponent<T>)
+        {
+            HandleUpdateTrigger<T>(entity);
+
+            return componentManager_.GetComponent<T>(entity);
+        }
+        else
+        {
+            return userComponentBridge_.GetComponentData<T>(
+                entity, componentManager_);
+        }
     }
 
-    template <SomeComponent T>
+    template <typename T>
     const T& GetComponent(Entity_t entity) const 
     {
-        return componentManager_.GetComponent<T>(entity);
+        if constexpr (SomeComponent<T>)
+        {
+            return componentManager_.GetComponent<T>(entity);
+        }
+        else
+        {
+            return userComponentBridge_.GetComponentData<T>(entity, componentManager_);
+        }
     }
 
-    template <SomeComponent...Ts>
+    template <typename...Ts>
     std::tuple<Ts&...> GetComponents(Entity_t entity)
     {
-        return std::tie(componentManager_.GetComponent<Ts>(entity)...);
+        auto get = [this]<typename T>(Entity_t e) -> T& {
+            if constexpr (SomeComponent<T>)
+            {
+                return componentManager_.GetComponent<T>(e);
+            }
+            else
+            {
+                return userComponentBridge_.GetComponentData<T>(
+                    e, componentManager_);
+            }
+        };
+
+        return std::tie(get.template operator()<Ts>(entity)...);
     }
 
-    template <SomeComponent...Ts>
+    template <typename...Ts>
     std::tuple<const Ts&...> GetComponents(Entity_t entity) const
     {
-        return std::tie(componentManager_.GetComponent<Ts>(entity)...);
+        auto get = [this]<typename T>(Entity_t e) -> const T& {
+            if constexpr (SomeComponent<T>)
+            {
+                return componentManager_.GetComponent<T>(e);
+            }
+            else
+            {
+                return userComponentBridge_.GetComponentData<T>(
+                    e, componentManager_);
+            }
+        };
+
+        return std::tie(get.template operator()<Ts>(entity)...);
     }
 
-    template <SomeComponent T>
+    template <typename T>
     bool HasComponent(Entity_t entity) const
     {
-        return componentManager_.GetSignature(entity) & T::componentBit;
-    }
-
-    template <SomeComponent...Ts, typename Filter>
-    std::vector<Entity> GetAllEntitiesWithInternalFiltered(Filter&& filter)
-    {
-        std::vector<Entity> result;
-        const uint64_t mask = (Ts::componentBit | ...);
-
-        auto activeEntities = entityManager_.GetActiveEntities();
-
-        result.reserve(activeEntities.size());
-
-        for (const auto& ent : activeEntities)
+        if constexpr (SomeComponent<T>)
         {
-            const uint64_t entitySig = componentManager_.GetSignature(ent);
-
-            if ((entitySig & mask) != mask)
-            {
-                continue;
-            }
-
-            if constexpr (HasBooleanNotOperator<Filter>)
-            {
-                if (!filter)
-                {
-                    continue;
-                }
-            }
-
-            if (!std::invoke(filter, componentManager_.GetComponent<Ts>(ent)...))
-            {
-                continue;
-            }
-
-            result.emplace_back(ent, *this);
+            return componentManager_.GetSignature(entity) & T::componentBit;
         }
-
-        return result;
+        else
+        {
+            return userComponentBridge_.HasComponentData<T>(
+                entity, componentManager_);
+        }
     }
 
     std::vector<Entity> GetAllEntitiesWithImpl(uint64_t mask, bool(*testFn)(uint64_t, uint64_t))
@@ -331,10 +407,11 @@ private:
     }
 
     template <typename...Ts> requires (sizeof...(Ts) > 0)
-    std::vector<Entity> GetAllEntitiesWithInternal()
+    std::vector<Entity> GetAllEntitiesWithImpl()
     {
         // calculate and cache include/exclude/any masks
-        static constexpr auto componentMasks = ComponentMasks::template MakeMasks<Ts...>();
+        auto componentMasks = ComponentMasks::template MakeMasks<Ts...>(
+            userComponentBridge_);
 
         auto activeEntities = entityManager_.GetActiveEntities();
 
@@ -356,7 +433,8 @@ private:
             assert(componentManager_.HasComponent<EntityFlags>(entity));
 
             // remove invisible components
-            entitySig &= componentManager_.GetComponent<EntityFlags>(entity).componentVisibilityFlags;
+            entitySig &= componentManager_.GetComponent<EntityFlags>(entity).
+                componentVisibilityFlags;
           
             if (componentMasks.ShouldIncludeEntity(entitySig))
             {
@@ -367,68 +445,44 @@ private:
         return result;
     }
 
-    //template <typename...Ts>
-    //std::vector<Entity> GetAllEntitiesWithInternal()
-    //{
-    //    std::vector<Entity> result;
-    //    uint64_t excludeMask = 0;
+    template <typename...Ts> requires (sizeof...(Ts) > 0)
+    std::vector<Entity_t> GetAllEntityTsWithImpl()
+    {
+        // calculate and cache include/exclude/any masks
+        static constexpr auto componentMasks =
+            ComponentMasks::template MakeMasks<Ts...>(userComponentBridge_);
 
-    //    auto makeMasks = [&excludeMask]<typename T>() -> uint64_t {
-    //        if constexpr (is_exclude<T>::value)
-    //        {
-    //            excludeMask |= T::WrappedType::componentBit;
-    //            return 0;
-    //        }
-    //        else
-    //        {
-    //            return T::componentBit;
-    //        }
-    //    };
+        auto activeEntities = entityManager_.GetActiveEntities();
 
-    //    const uint64_t includeMask = (makeMasks.template operator()<Ts>() | ...);
+        std::vector<Entity_t> result;
+        result.reserve(activeEntities.size());
 
-    //    auto activeEntities = entityManager_.GetActiveEntities();
+        for (const auto& entity : activeEntities)
+        {
+            // get full list of components that entity has
+            uint64_t entitySig = componentManager_.GetSignature(entity);
 
-    //    result.reserve(activeEntities.size());
+            // unless the Get() call explicitly asks to include MarkDestroyed component, omit entity
+            if (componentManager_.HasComponent<MarkedDestroyed>(entity) &&
+                ((componentMasks.includeMask & MarkedDestroyed::componentBit) == 0))
+            {
+                continue;
+            }
 
-    //    for (const auto& ent : activeEntities)
-    //    {
-    //        const uint64_t entitySig = componentManager_.GetSignature(ent);
+            assert(componentManager_.HasComponent<EntityFlags>(entity));
 
-    //        const auto& visibilityFlags = 
-    //            componentManager_.GetComponent<EntityFlags>(ent).componentVisibilityFlags;
+            // remove invisible components
+            entitySig &= componentManager_.GetComponent<EntityFlags>(entity).
+                componentVisibilityFlags;
 
-    //        if (((entitySig & includeMask) != includeMask) || (entitySig & excludeMask))
-    //        { 
-    //            continue;
-    //        }
+            if (componentMasks.ShouldIncludeEntity(entitySig))
+            {
+                result.emplace_back(entity);
+            }
+        }
 
-    //        result.emplace_back(ent, *this);
-    //    }
-
-    //    return result;
-    //}
-
-    //template <typename...Ts>
-    //std::vector<Entity> GetAllEntitiesWithAnyInternal()
-    //{
-    //    uint64_t includeMask = (Ts::componentBit | ...);
-
-    //    auto activeEntities = entityManager_.GetActiveEntities();
-
-    //    std::vector<Entity> result;
-    //    result.reserve(activeEntities.size()); 
-
-    //    for (const auto& entity : activeEntities)
-    //    {
-    //        if (componentManager_.GetSignature(entity) & includeMask)
-    //        {
-    //            result.emplace_back(entity, *this);
-    //        }  
-    //    }
-
-    //    return result;
-    //}
+        return result;
+    }
 
     bool IsEntityActive(Entity_t entity) const;
     bool IsEntityValid(Entity_t entity) const;
@@ -445,10 +499,11 @@ private:
 
     EntityManager entityManager_;
     ComponentManager componentManager_;
+    UserComponentBridge userComponentBridge_;
 };
 
 // ENTITY DEFS //
-template <SomeComponent T> requires Entity::public_mutable_component_v<T>
+template <typename T> requires Entity::public_mutable_component_v<T>
 inline T& Entity::AddComponent(T&& cmp)
 {
     assert(ecs_);
@@ -457,7 +512,7 @@ inline T& Entity::AddComponent(T&& cmp)
     return ecs_->AddComponent<T>(id_, std::forward<T>(cmp));
 }
 
-template <SomeComponent T> requires Entity::public_mutable_component_v<T>
+template <typename T> requires Entity::public_mutable_component_v<T>
 inline T& Entity::AddComponent()
 {
     assert(ecs_);
@@ -466,7 +521,7 @@ inline T& Entity::AddComponent()
     return ecs_->AddComponent<T>(id_);
 }
 
-template<SomeComponent T>
+template <typename T>
 inline T& Entity::AddComponent(T&& cmp, EntityPassKey)
 {
     assert(ecs_);
@@ -475,7 +530,7 @@ inline T& Entity::AddComponent(T&& cmp, EntityPassKey)
     return ecs_->AddComponent<T>(id_, std::forward<T>(cmp));
 }
 
-template<SomeComponent T>
+template <typename T>
 inline T& Entity::AddComponent(EntityPassKey)
 {
     assert(ecs_);
@@ -484,7 +539,7 @@ inline T& Entity::AddComponent(EntityPassKey)
     return ecs_->AddComponent<T>(id_);
 }
 
-template <SomeComponent T> requires Entity::public_mutable_component_v<T>
+template <typename T> requires Entity::public_mutable_component_v<T>
 inline void Entity::RemoveComponent()
 {
     assert(ecs_);
@@ -493,7 +548,7 @@ inline void Entity::RemoveComponent()
     return ecs_->RemoveComponent<T>(id_);
 }
 
-template<SomeComponent T>
+template <typename T>
 inline void Entity::RemoveComponent(EntityPassKey)
 {
     assert(ecs_);
@@ -502,7 +557,7 @@ inline void Entity::RemoveComponent(EntityPassKey)
     return ecs_->RemoveComponent<T>(id_);
 }
 
-template <SomeComponent T> requires Entity::public_mutable_component_v<T>
+template <typename T> requires Entity::public_mutable_component_v<T>
 inline T& Entity::GetComponent()
 {
     assert(ecs_);
@@ -511,7 +566,7 @@ inline T& Entity::GetComponent()
     return ecs_->GetComponent<T>(id_);
 }
 
-template<SomeComponent T>
+template <typename T>
 inline T& Entity::GetComponent(EntityPassKey)
 {
     assert(ecs_);
@@ -520,7 +575,7 @@ inline T& Entity::GetComponent(EntityPassKey)
     return ecs_->GetComponent<T>(id_);
 }
 
-template <SomeComponent T>
+template <typename T>
 inline const T& Entity::GetComponent() const
 {
     assert(ecs_);
@@ -529,7 +584,7 @@ inline const T& Entity::GetComponent() const
     return ecs_->GetComponent<T>(id_);
 }
 
-template<SomeComponent T> requires Entity::public_mutable_component_v<T>
+template <typename T> requires Entity::public_mutable_component_v<T>
 inline Result<std::reference_wrapper<T>> Entity::TryGetComponent()
 {
     assert(ecs_);
@@ -543,7 +598,7 @@ inline Result<std::reference_wrapper<T>> Entity::TryGetComponent()
     return std::ref(ecs_->GetComponent<T>(id_));
 }
 
-template<SomeComponent T>
+template <typename T>
 inline Result<std::reference_wrapper<const T>> Entity::TryGetComponent() const
 {
     assert(ecs_);
@@ -557,7 +612,7 @@ inline Result<std::reference_wrapper<const T>> Entity::TryGetComponent() const
     return std::cref(ecs_->GetComponent<T>(id_));
 }
 
-template <SomeComponent...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
+template <typename...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
 inline std::tuple<Ts&...> Entity::GetComponents()
 {
     assert(ecs_);
@@ -566,7 +621,7 @@ inline std::tuple<Ts&...> Entity::GetComponents()
     return ecs_->GetComponents<Ts...>(id_);
 }
 
-template<SomeComponent ...Ts>
+template <typename ...Ts>
 inline std::tuple<Ts&...> Entity::GetComponents(EntityPassKey)
 {
     assert(ecs_);
@@ -575,7 +630,7 @@ inline std::tuple<Ts&...> Entity::GetComponents(EntityPassKey)
     return ecs_->GetComponents<Ts...>(id_);
 }
 
-template<SomeComponent ...Ts>
+template <typename ...Ts>
 inline std::tuple<const Ts&...> Entity::GetComponents() const
 {
     assert(ecs_);
@@ -584,7 +639,7 @@ inline std::tuple<const Ts&...> Entity::GetComponents() const
     return ecs_->GetComponents<Ts...>(id_);
 }
 
-template <SomeComponent T>
+template <typename T>
 inline bool Entity::HasComponent() const
 {
     assert(ecs_);
@@ -593,7 +648,7 @@ inline bool Entity::HasComponent() const
     return ecs_->HasComponent<T>(id_);
 }
 
-template <SomeComponent...Ts>
+template <typename...Ts>
 inline bool Entity::HasComponents() const
 {
     assert(ecs_);
@@ -602,7 +657,7 @@ inline bool Entity::HasComponents() const
     return (ecs_->HasComponent<Ts>(id_) && ...);
 }
 
-template <SomeComponent T>
+template <typename T>
 inline bool Entity::GetComponentVisibility() const
 {
     assert(HasComponent<EntityFlags>());
@@ -612,7 +667,7 @@ inline bool Entity::GetComponentVisibility() const
     return visibilityFlags.Test<T>();
 }
 
-template <SomeComponent...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
+template <typename...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
 inline void Entity::SetComponentVisibility(bool vis)
 {
     assert(HasComponent<EntityFlags>());

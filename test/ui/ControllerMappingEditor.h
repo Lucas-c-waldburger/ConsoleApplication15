@@ -1,4 +1,7 @@
 #pragma once
+
+#if IMGUI_ENABLED
+
 #include "../callbacks/GameControllerCallbacks.h"
 #include "../../events/handler/GameControllerEventHandler.h"
 #include "DataEditDisplayUtils.h"
@@ -42,3 +45,4 @@ private:
     ControllerMappingEditor() = default;
 };
 
+#endif

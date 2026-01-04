@@ -18,7 +18,7 @@
 #include "GuiSystem.h"
 #endif
 
-using SystemTypeList = TypeList<
+using CoreSystemTypeList = TypeList<
 	CameraSystem, 
 	PhysicsSystem, 
 	SDLInputSystem, 
@@ -29,12 +29,15 @@ using SystemTypeList = TypeList<
 	GameLoopSystem,
 	AudioSystem,
 	NewRenderSystem,
-	SerializationSystem,
+	SerializationSystem
+>;
 
 #if IMGUI_ENABLED
-	GuiSystem
+using GuiSystemTypeList = TypeList<GuiSystem>;
+#else
+using GuiSystemTypeList = TypeList<>;
 #endif
 
->;
+using SystemTypeList = concat_type_lists_t<CoreSystemTypeList, GuiSystemTypeList>;
 
 static_assert(unique_type_list_v<SystemTypeList>);

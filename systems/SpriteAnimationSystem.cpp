@@ -4,51 +4,49 @@
 
 void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 {
-	/*auto entities = ECS::GetAllEntitiesWith<NeedsUpdate, Renderable, SpriteAnimations>();
+	auto entities = ECS::GetAllEntitiesWith<SpriteRenderableComponent, 
+											SpriteAnimationComponent,
+											NeedsAnimationUpdate>();
 
-	for (auto& entity : entities)
+	for (auto& e : entities)
 	{
-		auto& update = entity.GetComponent<NeedsUpdate>();
+		auto [renderable, anim] = e.GetComponents<SpriteRenderableComponent,
+												  SpriteAnimationComponent>();
 
-		if ((update.components & SpriteAnimations::componentBit) == 0)
-		{
+		e.RemoveComponent<NeedsAnimationUpdate>(GetEntityPassKey());
+
+		auto* atlas = textureRepo.GetAtlas<SpriteAtlas>(anim.sourceAtlas);
+		if (!atlas)
+		{ 
 			continue;
 		}
 
-		update.components &= ~(SpriteAnimations::componentBit);
-		if (update.components == 0)
-		{
-			entity.RemoveComponent<NeedsUpdate>();
-		}
+		const size_t seriesSize = atlas->GetSpriteSeriesSize(anim.spriteSeriesName);
+		assert(seriesSize > 0);
 
-		auto& renderable = entity.GetComponent<Renderable>();
-		auto* spriteRenderable = std::get_if<SpriteRenderable>(&renderable.renderData);
-
-		if (!spriteRenderable)
+		if (seriesSize == std::numeric_limits<size_t>::max())
 		{
+			LOG_ERROR_FMT("Sprite series '{}' not found in atlas", 
+				anim.spriteSeriesName);
 			continue;
 		}
 
-		auto& animations = entity.GetComponent<SpriteAnimations>();
-
-		Handle<SpriteSeriesAtlas> newAtlas{};
-		AtlasPlot newPlot{};
-
-		auto it = animations.table.find(animations.current);
-		if (it == animations.table.end())
+		if (anim.currentIndex >= seriesSize)
 		{
-			renderable.renderData = std::monostate{};
+			LOG_ERROR_FMT("Sprite series '{}' size '{}' exceeds current animation "
+				"index. Defaulting to 0", anim.spriteSeriesName, seriesSize);
+
+			anim.currentIndex = 0;
+		}
+
+		auto newSprite = atlas->GetSpriteSeriesMember(anim.spriteSeriesName, 
+													  anim.currentIndex);
+		if (!atlas->IsSpriteValid(newSprite))
+		{
+			LOG_ERROR("Could not retrieve new sprite for animation series");
 			continue;
 		}
 
-		const auto& series = it->second;
-
-		assert(series.index < series.spritePlots.size());
-
-		newAtlas = series.sourceAtlas;
-		newPlot = series.spritePlots[series.index];
-			
-		spriteRenderable->sourceAtlas = newAtlas;
-		spriteRenderable->sourcePlot = newPlot;
-	}*/
+		renderable.sprite = newSprite;
+	}
 }

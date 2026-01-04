@@ -149,6 +149,6 @@ SDL_FPoint Camera::ClampToBounds(SDL_FPoint pos) const
 
 void Camera::Pan(SDL_FPoint delta)
 {
-	worldPosition_.x += delta.x;
-	worldPosition_.y += delta.y;
+	worldPosition_.x += std::round(delta.x);
+	worldPosition_.y += std::round(delta.y);
 }

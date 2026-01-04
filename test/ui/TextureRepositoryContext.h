@@ -1,4 +1,7 @@
 #pragma once
+
+#if IMGUI_ENABLED
+
 #include "../../atlas/NewTextureRepository.h"
 #include "../../gui/GuiContext.h"
 #include <filesystem>
@@ -157,37 +160,4 @@ public:
 private:
 };
 
-
-
-//bool DrawAvailableSprites(SpriteAtlas& atlas, Sprite& selectedSprite)
-//{
-//	bool complete = false;
-//	size_t spriteIdx = 0;
-//	for (auto& spriteName : atlas.GetSpriteInfo<&SpriteInfo::spriteName>())
-//	{
-//		ImGui::PushID(static_cast<int>(spriteIdx));
-//
-//		bool selected = selectedSprite.spriteIndex == spriteIdx;
-//		bool activated = ImGui::Selectable(spriteName.c_str(), selected);
-//		bool doubleClicked = ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0);
-//
-//		if (activated || doubleClicked)
-//		{
-//			selectedSprite = atlas.GetSprite(spriteName);
-//			assert(atlas.IsSpriteValid(selectedSprite));
-//
-//			complete = true;
-//		}
-//
-//		ImGui::PopID();
-//
-//		++spriteIdx;
-//	}
-//
-//	if (!complete && atlas.IsSpriteValid(selectedSprite))
-//	{
-//		complete = (ImGui::Button("Select"));
-//	}
-//
-//	return complete;
-//}
+#endif

@@ -3,6 +3,7 @@
 #include "RenderableJsonUserTypes.h"
 #include "PhysicsJsonUserTypes.h"
 #include "../../components/ComponentIncludes.h"
+#include "../../user/UserComponentIncludes.h"
 
 #define DEF_COMPONENT_NAME(cmpType)										\
 template <> struct ComponentName<cmpType> {								\

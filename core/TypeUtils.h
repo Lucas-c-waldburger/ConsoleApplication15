@@ -6,6 +6,8 @@
 
 template <typename...Ts> struct TypeList 
 {
+	using AsTuple = std::tuple<Ts...>;
+
 	static constexpr size_t size = sizeof...(Ts);
 
 	template <typename T>
@@ -155,30 +157,26 @@ inline constexpr size_t index_of_v = detail::index_of<T, TupLike>::value;
 
 /* CONCAT TYPE LISTS */
 namespace detail {
-template <typename TL1, typename TL2>
-struct concat;
 
-template <typename... Ts, typename... Us>
-struct concat<TypeList<Ts...>, TypeList<Us...>> {
-	using type = TypeList<Ts..., Us...>;
+template <typename...> 
+struct concat_type_lists;
+
+template <typename TList>
+struct concat_type_lists<TList>
+{
+	using type = TList;
 };
 
-template <typename... Lists>
-struct concat_type_lists_impl;
-
-template <typename List>
-struct concat_type_lists_impl<List> {
-	using type = List;
+template <typename...Ts, typename...Us, typename...Rest>
+struct concat_type_lists<TypeList<Ts...>, TypeList<Us...>, Rest...>
+{
+	using type = typename concat_type_lists<TypeList<Ts..., Us...>, Rest...>::type;
 };
 
-template <typename L1, typename L2, typename... Rest>
-struct concat_type_lists_impl<L1, L2, Rest...> {
-	using type = typename concat_type_lists_impl<typename concat<L1, L2>::type, Rest...>::type;
-};
 } // detail
 
 template <typename...TLists>
-using concat_type_lists_t = detail::concat_type_lists_impl<TLists...>::type;
+using concat_type_lists_t = detail::concat_type_lists<TLists...>::type;
 /**/
 
 /* TRANSFORM / FILTER TUPLE */

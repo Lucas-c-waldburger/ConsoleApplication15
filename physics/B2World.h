@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL.h>
 #include "B2RayCast.h"
+#include "B2Explosion.h"
 
 // TODO: have timestep/substepCount be member vars
 class B2World
@@ -31,6 +32,8 @@ public:
     B2RayCastResult CastRayClosest(const B2Body& bodyA, const B2Body& bodyB);
 
     B2RayCastResult CastRayToPoint(const B2Body& body, SDL_FPoint point);
+
+    void Explode(const B2ExplosionDefinition& expDef);
 
 private:
     b2WorldId worldId_ = b2_nullWorldId;

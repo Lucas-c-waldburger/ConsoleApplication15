@@ -1,4 +1,7 @@
 #pragma once
+
+#if IMGUI_ENABLED
+
 #include "../../core/commonObjects.h"
 #include "../../systems/GuiSystem.h"
 #include <SDL_rect.h>
@@ -704,3 +707,5 @@ inline bool DrawOptional<std::vector<SDL_FPoint>>(const char* label,
 
     return changed;
 }
+
+#endif

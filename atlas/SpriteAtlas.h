@@ -101,7 +101,9 @@ public:
 											SpriteDescriptors&& descriptors);
 
 	Sprite GetSprite(std::string_view spriteName) const;
-	std::vector<Sprite> GetSpriteSeries(std::string_view spriteSeriesName) const;
+	std::vector<Sprite> GetSpriteSeries(std::string_view seriesName) const;
+	Sprite GetSpriteSeriesMember(std::string_view seriesName, size_t idx) const;
+	size_t GetSpriteSeriesSize(std::string_view seriesName) const;
 
 	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
 	auto GetSpriteInfo(const Sprite& sprite) const
@@ -116,7 +118,8 @@ public:
 			return Ret{ std::nullopt };
 		}
 
-		return spriteInfo_.TryGetView<MemberPtrs...>(sprite.spriteIndex);
+		const auto& cInfo = spriteInfo_;
+		return cInfo.TryGetView<MemberPtrs...>(sprite.spriteIndex);
 	}
 
 	auto GetSpriteInfo(const Sprite& sprite) const
@@ -131,36 +134,36 @@ public:
 			return Ret{ std::nullopt };
 		}
 
-		return spriteInfo_.TryGetView(sprite.spriteIndex);
+		const auto& cInfo = spriteInfo_;
+		return cInfo.TryGetView(sprite.spriteIndex);
 	}
 
 	auto GetSpriteInfo() const
 	{
-		return spriteInfo_.ForEach();
+		const auto& cInfo = spriteInfo_;
+		return cInfo.ForEach();
 	}
 
 	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
 	auto GetSpriteInfo() const
 	{
-		return spriteInfo_.ForEach<MemberPtrs...>();
+		const auto& cInfo = spriteInfo_;
+		return cInfo.ForEach<MemberPtrs...>();
 	}
 
 	Result<Void> ValidateSprite(const Sprite& sprite) const;
 	bool IsSpriteValid(const Sprite& sprite) const;
 
+	bool HasSprite(std::string_view spriteName) const;
+	bool HasSpriteSeries(std::string_view seriesName) const;
 
 	Result<Void> RebuildSourceTexture(SDL_Renderer* renderer);
-	/*bool CanFitSprite(SDL_Renderer* renderer, const SpriteDescriptor& descriptor) const;*/
 
 private:
 	explicit SpriteAtlas(Handle<TextureAtlas>&& handle) : 
 		TextureAtlas(std::move(handle)) {}
 
 	Sprite MakeSprite(size_t spriteIndex) const;
-
-	//Result<Sprite> LoadSpriteImpl(SDL_Renderer* renderer, SpriteDescriptor&& descriptor);
-	//Result<std::vector<Sprite>>
-	//LoadSpritesImpl(SDL_Renderer* renderer, SpriteDescriptors&& package);
 
 	Result<Sprite> LoadSpriteImpl(SDL_Renderer* renderer, SpriteDescriptor&& descriptor);
 
@@ -172,21 +175,3 @@ private:
 	SeriesRangeMap seriesRanges_;
 };
 
-
-
-
-
-
-//template <auto...MemberPtrs>
-//auto BaseSpriteAtlas::ViewSpriteInfo(const Sprite& sprite) const
-//{
-//	auto validated = ValidateSprite(sprite);
-//	if (!validated.Success())
-//	{
-//		LOG_ERROR(validated.GetError());
-//
-//		return std::nullopt;
-//	}
-//
-//	return spriteInfo_.TryGetView<MemberPtrs...>(sprite.spriteIndex);
-//}

@@ -540,6 +540,16 @@ bool SpriteAtlas::IsSpriteValid(const Sprite& sprite) const
            sprite.plot.rect.w > 0 && sprite.plot.rect.h > 0;
 }
 
+bool SpriteAtlas::HasSprite(std::string_view spriteName) const
+{
+    return spriteIndices_.contains(spriteName);
+}
+
+bool SpriteAtlas::HasSpriteSeries(std::string_view seriesName) const
+{
+    return seriesRanges_.contains(seriesName);
+}
+
 Result<Void> SpriteAtlas::RebuildSourceTexture(SDL_Renderer* renderer)
 {
     if (!IsLoaded())
@@ -646,6 +656,48 @@ std::vector<Sprite> SpriteAtlas::GetSpriteSeries(std::string_view seriesName) co
     }
 
     return sprites;
+}
+
+Sprite SpriteAtlas::GetSpriteSeriesMember(std::string_view seriesName, 
+                                          size_t idx) const
+{
+    auto it = seriesRanges_.find(seriesName);
+    if (it == seriesRanges_.end())
+    {
+        return {};
+    }
+
+    const auto [start, end] = it->second;
+
+    assert(end > start);
+    assert(end < spriteInfo_.Size());
+
+    size_t adjustedIdx = idx + start;
+    if (adjustedIdx > end)
+    {
+        LOG_ERROR_FMT("Index '{}' for sprite series '{}' was out of range. "
+            "Defaulting to index 0", idx, seriesName);
+
+        adjustedIdx = start;
+    }
+
+    return MakeSprite(adjustedIdx);
+}
+
+size_t SpriteAtlas::GetSpriteSeriesSize(std::string_view seriesName) const
+{
+    auto it = seriesRanges_.find(seriesName);
+    if (it == seriesRanges_.end())
+    {
+        return std::numeric_limits<size_t>::max();
+    }
+
+    const auto [start, end] = it->second;
+
+    assert(end > start);
+    assert(end < spriteInfo_.Size());
+
+    return end - start;
 }
 
 Sprite SpriteAtlas::MakeSprite(size_t spriteIndex) const

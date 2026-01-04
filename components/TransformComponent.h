@@ -2,7 +2,6 @@
 #include "BaseComponent.h"
 #include <SDL.h>
 
-//struct Transform : BaseComponent<Transform, 2>
 struct Transform : BaseComponent<Transform>
 {
     SDL_FPoint position = { 0.0f, 0.0f };

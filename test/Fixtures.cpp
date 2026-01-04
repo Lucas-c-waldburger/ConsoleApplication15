@@ -200,11 +200,16 @@ Result<Void> SceneFixture::UpdateRender()
 {
 	assert(systems_.IsSystemInitialized<NewRenderSystem>());
 	assert(systems_.IsSystemInitialized<GameLoopSystem>());
+	assert(systems_.IsSystemInitialized<SpriteAnimationSystem>());
 
 	systems_.GetSystem<GameLoopSystem>()->UpdateLoopStepRender(eventBus_);
 
+	systems_.GetSystem<SpriteAnimationSystem>()->Update(textureRepo_);
+
 	auto& cam = systems_.GetSystem<CameraSystem>()->GetCamera();
-	systems_.GetSystem<NewRenderSystem>()->Update(SDLite::Renderer(), cam, textureRepo_);
+	systems_.GetSystem<NewRenderSystem>()->Update(
+		SDLite::Renderer(), cam, textureRepo_
+	);
 
 	return Void{};
 }
@@ -227,6 +232,12 @@ void SceneFixture::LoopEnd()
 {
 	assert(systems_.IsSystemInitialized<GameLoopSystem>());
 	systems_.GetSystem<GameLoopSystem>()->UpdateLoopStepRender(eventBus_);
+}
+
+Camera& SceneFixture::GetCamera()
+{
+	assert(systems_.IsSystemInitialized<CameraSystem>());
+	return systems_.GetSystem<CameraSystem>()->GetCamera();
 }
 
 Result<Void> SceneFixture::RenderScene(SDL_Color bgColor)
@@ -259,7 +270,10 @@ void SceneFixture::TearDown()
 	auto activeEntities = ECS::GetAllActiveEntities();
 	for (auto& entity : activeEntities)
 	{
-		entity.Destroy();
+		if (!entity.GetRelations().IsChild())
+		{
+			entity.Destroy();
+		}
 	}
 
 	world_.Destroy();
@@ -295,14 +309,19 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 	fixture->systems_.InitializeSystem<AudioSystem>();
 	fixture->systems_.InitializeSystem<NewRenderSystem>();
 	fixture->systems_.InitializeSystem<SerializationSystem>();
+	fixture->systems_.InitializeSystem<SpriteAnimationSystem>();
 
 	Dimensions<float> cameraVp = SDLite::Window().GetSize<float>();
+	fixture->systems_.InitializeSystem<CameraSystem>(cameraVp);
 
-	auto& cameraSystem = fixture->systems_.InitializeSystem<CameraSystem>(cameraVp);
-
-	cameraSystem->GetCamera().SetPosition(SDLite::Window().GetLocalCenter<SDL_FPoint>());
+	fixture->GetCamera().SetPosition(SDLite::Window().GetLocalCenter<SDL_FPoint>());
 
 	return Result<std::shared_ptr<SceneFixture>>{ std::move(fixture) };
 }
 
+Result<SpriteAtlas*> 
+SceneFixture::CreateSpriteAtlas(size_t txSize)
+{
+	return textureRepo_.CreateAtlas<SpriteAtlas>(GetRenderer(), txSize);
+}
 

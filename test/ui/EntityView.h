@@ -1,4 +1,7 @@
 #pragma once
+
+#if IMGUI_ENABLED
+
 #include "../../ecs/Ecs.h"
 #include "../../systems/GuiSystem.h"
 #include "../../serial/Serialization.h"
@@ -11,6 +14,15 @@
 #include "MouseWorldNavigator.h"
 
 namespace ui {
+
+class UiContext
+{
+public:
+    static inline const Counter* deltaProvider = nullptr;
+
+private:
+    UiContext() = default;
+};
 
 static constexpr std::string_view kComponentListJsonFilename = "component_list.json";
 
@@ -37,13 +49,6 @@ struct ComponentEditContext
     std::string_view selectedComponentForEdit;
     std::string errorMessage = "Unknown error";
 };
-
-//std::string DrawLabel(std::string_view sv)
-//{
-//    std::string id = std::format("{}##label", sv);
-//    ImGui::Text("%s", sv.data());
-//    ImGui::SameLine();
-//}
 
 void DrawPrimitiveEditField(nlohmann::ordered_json& j, bool& wasEdited,
                             const std::string& label, bool drawText = true)
@@ -220,10 +225,7 @@ void DrawComponentEditor(Entity& e, nlohmann::ordered_json& runningJson)
 
     auto& componentJson = runningJson.at(componentName);
 
-    //if constexpr (!(std::same_as<T, RigidBody> || std::same_as<T, Collider>))
-    //{
-        DrawJsonSuppliedEditField(componentJson, wasEdited, componentName.data());
-    //}
+    DrawJsonSuppliedEditField(componentJson, wasEdited, componentName.data());
 
     if constexpr (std::same_as<T, SpriteRenderableComponent>)
     {
@@ -344,6 +346,9 @@ public:
     {
         assert(fixture);
 
+        assert(fixture->IsSystemInitialized<GameLoopSystem>());
+        UiContext::deltaProvider = &fixture->GetSystem<GameLoopSystem>()->GetCounter();
+
         EventContext::eventBus = &fixture->GetEventBus();
 
         TRY(RenderableEditor::Init(fixture->GetTextureRepository()));
@@ -352,8 +357,13 @@ public:
         assert(fixture->IsSystemInitialized<SDLInputSystem>());
         auto& inputSys = fixture->GetSystem<SDLInputSystem>();
 
+        assert(fixture->IsSystemInitialized<CameraSystem>());
+        auto& cameraSys = fixture->GetSystem<CameraSystem>();
+
         TRY(ControllerMappingEditor::Init(inputSys->GetGameControllerEventHandler()));
-        TRY(MouseWorldNavigator::Init(inputSys->GetMouseEventHandler()));
+        TRY(MouseWorldNavigator::Init(
+            inputSys->GetMouseEventHandler(), cameraSys->GetCamera())
+        );
 
         return Void{};
     }
@@ -459,7 +469,8 @@ public:
             ImGui::EndPopup();
         }
 
-        MouseWorldNavigator::Update();
+        assert(UiContext::deltaProvider);
+        MouseWorldNavigator::Update(UiContext::deltaProvider->GetDelta());
         
         return ret;
     }
@@ -506,3 +517,5 @@ private:
 
 
 } // ui
+
+#endif

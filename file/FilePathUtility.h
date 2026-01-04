@@ -109,10 +109,13 @@ class ResourcePaths
 {
 public:
 	using Ret = Result<std::vector<std::string>>;
+	using DefaultSort = std::less<std::string>;
 
-	static Ret MusicDirectory(std::string_view dir)
+	static Ret MusicDirectory(std::string_view dir, bool defaultSort = true)
 	{
-		return GetDirPaths<std::string>(kAudioDirName, kMusicDirName, dir);
+		return (defaultSort)
+			? SortAndReturnPaths(DefaultSort{}, kAudioDirName, kMusicDirName, dir)
+			: GetDirPaths<std::string>(kAudioDirName, kMusicDirName, dir);
 	}
 
 	template <SomeResourcePathSorter Sorter>
@@ -122,9 +125,11 @@ public:
 								  kAudioDirName, kMusicDirName, dir);
 	}
 
-	static Ret SoundDirectory(std::string_view dir)
+	static Ret SoundDirectory(std::string_view dir, bool defaultSort = true)
 	{
-		return GetDirPaths<std::string>(kAudioDirName, kSoundsDirName, dir);
+		return (defaultSort)
+			? SortAndReturnPaths(DefaultSort{}, kAudioDirName, kSoundsDirName, dir)
+			: GetDirPaths<std::string>(kAudioDirName, kSoundsDirName, dir);
 	}
 
 	template <SomeStringSorter Sorter>
@@ -134,9 +139,11 @@ public:
 								  kAudioDirName, kSoundsDirName, dir);
 	}
 
-	static Ret SpriteDirectory(std::string_view dir)
+	static Ret SpriteDirectory(std::string_view dir, bool defaultSort = true)
 	{
-		return GetDirPaths<std::string>(kSpritesDirName, dir);
+		return (defaultSort)
+			? SortAndReturnPaths(DefaultSort{}, kSpritesDirName, dir)
+			: GetDirPaths<std::string>(kSpritesDirName, dir);		
 	}
 
 	template <SomeStringSorter Sorter>
@@ -145,9 +152,11 @@ public:
 		return SortAndReturnPaths(std::forward<Sorter>(sorter), kSpritesDirName, dir);
 	}
 
-	static Ret FontDirectory(std::string_view dir)
+	static Ret FontDirectory(std::string_view dir, bool defaultSort = true)
 	{
-		return GetDirPaths<std::string>(kFontsDirName, dir);
+		return (defaultSort)
+			? SortAndReturnPaths(DefaultSort{}, kFontsDirName, dir)
+			: GetDirPaths<std::string>(kFontsDirName, dir);
 	}
 
 	template <SomeStringSorter Sorter>
@@ -156,9 +165,11 @@ public:
 		return SortAndReturnPaths(std::forward<Sorter>(sorter), kFontsDirName, dir);
 	}
 
-	static Ret ScriptDirectory(std::string_view dir)
+	static Ret ScriptDirectory(std::string_view dir, bool defaultSort = true)
 	{
-		return GetDirPaths<std::string>(kScriptsDirName, dir);
+		return (defaultSort)
+			? SortAndReturnPaths(DefaultSort{}, kScriptsDirName, dir)
+			: GetDirPaths<std::string>(kScriptsDirName, dir);
 	}
 
 	template <SomeStringSorter Sorter>
@@ -204,8 +215,8 @@ private:
 	}
 
 	template <typename T, typename Sorter, typename...Args> 
-		requires (SomeSorter<T, Sorter> && std::same_as<T, std::string> || 
-										   std::same_as<T, fs::path>)
+		requires (SomeSorter<T, Sorter> && (std::same_as<T, std::string> || 
+										   std::same_as<T, fs::path>))
 	static Result<std::vector<std::string>> 
 	SortAndReturnPathsImpl(Sorter&& sorter, Args&&...args)
 	{
@@ -227,17 +238,23 @@ private:
 		}
 	}
 
-	template <SomeStringSorter Sorter, typename...Args>
-	static Result<std::vector<std::string>> SortAndReturnPaths(Sorter&& sorter, Args&&...args)
+	template <typename Sorter, typename...Args>
+		requires SomeResourcePathSorter<Sorter>
+	static Result<std::vector<std::string>> 
+	SortAndReturnPaths(Sorter&& sorter, Args&&...args)
 	{
-		return SortAndReturnPathsImpl<std::string>(std::forward<Sorter>(sorter), 
-												   std::forward<Args>(args)...);
-	}
-	template <SomeFsPathSorter Sorter, typename...Args>
-	static Result<std::vector<std::string>> SortAndReturnPaths(Sorter&& sorter, Args&&...args)
-	{
-		return SortAndReturnPathsImpl<fs::path>(std::forward<Sorter>(sorter),
-												std::forward<Args>(args)...);
+		if constexpr (SomeSorter<fs::path, Sorter>)
+		{
+			return SortAndReturnPathsImpl<fs::path>(
+				std::forward<Sorter>(sorter),
+				std::forward<Args>(args)...);
+		}
+		else
+		{
+			return SortAndReturnPathsImpl<std::string>(
+				std::forward<Sorter>(sorter),
+				std::forward<Args>(args)...);
+		}
 	}
 
 	ResourcePaths() = default;

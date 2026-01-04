@@ -5,7 +5,7 @@
 
 namespace {
 
-template <SomeComponent T>
+template <typename T>
 void ClearComponentImpl(Entity& e)
 {
 	if constexpr (Entity::public_mutable_component_v<T>) { e.RemoveComponent<T>(); }

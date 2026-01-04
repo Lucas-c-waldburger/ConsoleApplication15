@@ -1,3 +1,4 @@
+#include <ranges>
 #include "CollisionSystem.h"
 #include "../ecs/Ecs.h"
 #include "../physics/B2World.h"
@@ -166,9 +167,10 @@ Result<Void> DispatchCollisionEvents(const B2World* world, EventBus2& bus)
 	assert(world);
 	assert(world->IsValid());
 
-	auto entities = ECS::GetAllEntitiesWith<Collider>([](const Collider& collider) {
-		return collider.shape.GetData().IsValid();
-	});
+	auto entities = ECS::GetAllEntitiesWith<Collider>() |
+		std::views::filter([](const auto& e) {
+			return e.GetComponent<Collider>().shape.GetData().IsValid();
+	}) | std::ranges::to<std::vector>();
 
 	if (entities.empty())
 	{

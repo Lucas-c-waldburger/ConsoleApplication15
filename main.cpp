@@ -5,6 +5,7 @@
 #include "deps/catch/catch_amalgamated.hpp"
 #include "test/Fixtures.h"
 #include "test/ui/EntityView.h"
+#include "games/bullet_heaven/Systems.h"
 
 int main(int argc, char* argv[]) 
 {

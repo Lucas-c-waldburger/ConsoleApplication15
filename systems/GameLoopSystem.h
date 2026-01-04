@@ -10,6 +10,8 @@ public:
 	void UpdateLoopStepRender(EventBus2& bus);
 	void UpdateLoopStepEnd(EventBus2& bus);
 
+	const Counter& GetCounter() const { return counter_; }
+
 	float GetDeltaTime() const;
 
 private:

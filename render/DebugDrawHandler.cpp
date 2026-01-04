@@ -130,9 +130,7 @@ void DebugDrawHandler::AddColliderShape(const Camera& camera, const Collider& co
 		return;
 	}
 
-	bool visibleOnScreen = camera.GetViewport().IntersectsBoundingBox(
-						   camera.WorldToScreen<SDL_Rect>(shapeData.GetBoundingBox()));
-	if (!visibleOnScreen)
+	if (!camera.GetViewport().IntersectsBoundingBox(shapeData.GetBoundingBox()))
 	{
 		return;
 	}

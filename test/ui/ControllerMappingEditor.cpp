@@ -1,4 +1,7 @@
 #include "ControllerMappingEditor.h"
+
+#if IMGUI_ENABLED
+
 #include "../../ecs/Ecs.h"
 #include "../../events/EventBus2.h"
 #include "../callbacks/GameControllerCallbacks.h"
@@ -156,3 +159,5 @@ bool ControllerMappingEditor::IsEntityConnectedToController(const Entity& e)
 
 	return it != activeControllers.end() && it->second.first.IsConnected();
 }
+
+#endif

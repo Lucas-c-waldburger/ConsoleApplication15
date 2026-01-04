@@ -83,7 +83,6 @@ void MouseInputUpdater::Update(const SDL_Event& ev)
 	else
 	{
 		LOG_ERROR("MouseInputUpdater::Update was passed an SDL_Event with an unexpected type");
-
 	}
 
 	return;

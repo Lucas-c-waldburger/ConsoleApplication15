@@ -59,7 +59,10 @@ void Logger::StartSessionImpl(const std::string& logFile, bool enableConsole)
 
 void Logger::EndSessionImpl()
 {
-    CloseFilestream();
+    if (flags_ & Flag::SessionStarted)
+    {
+        CloseFilestream();
+    }
     flags_ = 0;
 }
 

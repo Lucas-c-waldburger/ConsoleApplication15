@@ -74,6 +74,7 @@ public:
 	Result<Void> RenderScene(SDL_Color bgColor = SDLite::kColorWhite);
 
 	EventBus2& GetEventBus() { return eventBus_; }
+	Camera& GetCamera();
 
 	void TearDown();
 	
@@ -98,6 +99,9 @@ public:
 
 		return textureRepo_.AttachAtlas(std::move(glyphAtlas));
 	}
+
+	Result<SpriteAtlas*> 
+	CreateSpriteAtlas(size_t txSize = TextureAtlas::kDefaultAtlasSize);
 
 private:
 	void UpdateTimers();

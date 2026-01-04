@@ -1,4 +1,7 @@
 #pragma once
+
+#if IMGUI_ENABLED
+
 #include "../../components/builder/RigidBodyComponentBuilder.h"
 #include "../../components/builder/ColliderComponentBuilder.h"
 #include "DataEditDisplayUtils.h"
@@ -37,6 +40,8 @@ public:
 	static bool DrawBuildEditor();
 	static void BuildOnEntity(Entity& e);
 
+	static void DrawWorldEditor();
+
 private:
 	static SimpleGuiTable& GetRigidBodyInfoTable();
 	static SimpleGuiTable& GetColliderInfoTable();
@@ -44,3 +49,4 @@ private:
 	static bool ReadyToBuild();
 };
 
+#endif

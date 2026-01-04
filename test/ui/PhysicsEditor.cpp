@@ -1,4 +1,7 @@
 #include "PhysicsEditor.h"
+
+#if IMGUI_ENABLED
+
 #include "../../ecs/Ecs.h"
 
 Result<Void> PhysicsEditor::Init(B2World& world)
@@ -327,3 +330,22 @@ void PhysicsEditor::BuildOnEntity(Entity& e)
 
 	assert(collider.shape.GetData().IsValid());
 }
+
+void PhysicsEditor::DrawWorldEditor()
+{
+	using CTX = PhysicsEditorContext;
+
+	assert(CTX::world);
+
+	bool changed = false;
+
+	auto gravity = CTX::world->GetGravity();
+	float g[2] = { gravity.x, gravity.y };
+	if (ImGui::DragFloat2("Gravity", g, 0.1f))
+	{
+		CTX::world->SetGravity(g[0], g[1]);
+		changed = true;
+	}
+}
+
+#endif

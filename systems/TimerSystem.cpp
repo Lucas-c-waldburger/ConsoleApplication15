@@ -4,6 +4,25 @@
 #include "../events/data/TimeEvents.h"
 #include "../core/CommonEntityMethods.h"
 
+namespace {
+
+void HandleTimerExpiry(Timer& timer, Entity& e)
+{
+	if (timer.numRepeats == 0)
+	{
+		if (timer.flags & Timer::Flag::RemoveOnExpiry)
+		{
+			e.RemoveComponent<Timer>();
+		}
+		else
+		{
+			timer.flags &= ~(Timer::Flag::Active);
+		}
+	}
+}
+
+} // unnamed
+
 void TimerSystem::Update(float delta, EventBus2& bus)
 {
 	auto entities = ECS::GetAllEntitiesWith<Timer>();
@@ -16,6 +35,8 @@ void TimerSystem::Update(float delta, EventBus2& bus)
 		{
 			continue;
 		}
+
+		HandleTimerExpiry(timer, entity);
 
 		timer.elapsed += delta;
 		if (timer.elapsed < timer.duration)
@@ -32,18 +53,11 @@ void TimerSystem::Update(float delta, EventBus2& bus)
 		}
 
 		timer.elapsed = 0.0f;
+		timer.numRepeats = (timer.numRepeats > 0)
+			? timer.numRepeats - 1
+			: timer.numRepeats;
 
-		if ((timer.flags & Timer::Flag::Repeating) == 0)
-		{
-			if (timer.flags & Timer::Flag::RemoveOnExpiry)
-			{
-				entity.RemoveComponent<Timer>();
-			}
-			else
-			{
-				timer.flags &= ~(Timer::Flag::Active);
-			}
-		}
+		HandleTimerExpiry(timer, entity);
 	}
 
 	bus.DispatchEvents();

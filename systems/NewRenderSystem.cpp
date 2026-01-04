@@ -209,16 +209,9 @@ void AddSpriteRenderCall(const Entity& entity, const Camera& camera,
 		return;
 	}
 
-	//SDL_Rect renderDestRect = camera.WorldToScreen<SDL_Rect>(transformedRect);
-
 	SDL_Rect renderDestRect = MakeScreenRenderRect(camera, transform, plot.rect.w, 
 										           plot.rect.h, renderable.profile);
 
-	//if (!camera.GetViewport().IntersectsBoundingBox(renderDestRect))
-	//{
-	//	return;
-	//}
-	 
 	renderBatchHandler.PushBack({
 		.srcRect = plot.rect,
 		.destRect = renderDestRect,

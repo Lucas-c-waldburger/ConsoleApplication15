@@ -1,4 +1,7 @@
 #pragma once
+
+#if IMGUI_ENABLED
+
 #include "../../systems/GuiSystem.h"
 #include "../../file/FilePathUtility.h"
 #include <format>
@@ -83,12 +86,6 @@ public:
     }
 };
 
-
-
-
-
-
-
-
-
 }
+
+#endif

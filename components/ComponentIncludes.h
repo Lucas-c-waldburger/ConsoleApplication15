@@ -11,7 +11,7 @@
 #include "RenderableComponent.h"
 #include "ScriptComponent.h"
 #include "MouseStateComponent.h"
-#include "TagsComponent.h"
+#include "TagsComponent.h"  
 #include "TransformComponent.h"
 #include "SpriteAnimationsComponent.h"
 #include "EventProductionFlagsComponent.h"
@@ -22,5 +22,6 @@
 #include "EntityFlagsComponent.h"
 #include "AudioComponents.h"
 #include "MarkedDestroyedComponent.h"
+#include "UserComponents.h"
 
 

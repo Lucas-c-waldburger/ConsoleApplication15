@@ -81,6 +81,23 @@ B2RayCastResult B2World::CastRayToPoint(const B2Body& body, SDL_FPoint point)
     return rayCaster_.CastRayClosest(worldId_, body.GetPosition(), point);
 }
 
+void B2World::Explode(const B2ExplosionDefinition& expDef)
+{
+    if (!IsValid())
+    {
+        return;
+    }
+
+    b2ExplosionDef b2Def = b2DefaultExplosionDef();
+    b2Def.maskBits = expDef.categoryBitMask;
+    b2Def.position = ToB2VecScaled(expDef.position);
+    b2Def.radius = expDef.radius;
+    b2Def.falloff = expDef.falloff;
+    b2Def.impulsePerLength = expDef.impulsePerLength;
+
+    b2World_Explode(worldId_, &b2Def);
+}
+
 Result<B2Body> B2World::AddBody(const B2BodyDefinition& bodyDef)
 {
     if (!IsValid())
