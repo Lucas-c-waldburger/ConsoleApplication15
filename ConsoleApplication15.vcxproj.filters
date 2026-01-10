@@ -372,6 +372,12 @@
     <ClCompile Include="test\catch\ecs\UserComponentBridgeTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="physics\B2Chain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="games\bullet_heaven\Terrain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1851,6 +1857,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\InlineStorage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\EventContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="games\bullet_heaven\Terrain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="physics\B2Chain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

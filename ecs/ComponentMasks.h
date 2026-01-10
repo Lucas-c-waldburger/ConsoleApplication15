@@ -46,7 +46,7 @@ struct Exclude {
 
 		return (ComponentSignature(0) | ... | getBit.template operator()<Ts>());
 	}
-};
+}; 
 
 namespace detail {
 template <typename...> struct is_any_masker : std::false_type {};

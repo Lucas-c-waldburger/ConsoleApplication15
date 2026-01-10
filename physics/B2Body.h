@@ -2,6 +2,7 @@
 #include <unordered_set>
 #include <cassert>
 #include "B2Shape.h"
+#include "B2Chain.h"
 #include "../sdl/SDLUtils.h"
 #include "../core/Result.h"
 #include "../core/HandleFactory.h"
@@ -185,6 +186,8 @@ public:
     }
 
     Result<B2Shape> AddShape(const B2ShapeDefinition& shapeDef);
+
+    Result<B2Chain> AddChain(const B2ChainDefinition& chainDef);
 
     std::unordered_set<Handle<B2Shape>> GetShapeHandles() const;
 

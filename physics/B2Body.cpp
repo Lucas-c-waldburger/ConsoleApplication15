@@ -2,6 +2,7 @@
 #include "../core/HandleFactory.h"
 #include "../core/TypeUtils.h"
 #include <cassert>
+#include <ranges>
 
 namespace {
 
@@ -93,6 +94,56 @@ Result<B2Shape> B2Body::AddShape(const B2ShapeDefinition& shapeDef)
     assert(shapeHandle.IsValid());
 
     return B2Shape{ shapeHandle };
+}
+
+Result<B2Chain> B2Body::AddChain(const B2ChainDefinition& chainDef)
+{
+    if (GetBodyType() != Type::Static)
+    {
+        return MAKE_ERROR("Chains should only be added to static bodies");
+    }
+
+    if (chainDef.points.size() < 4)
+    {
+        return MAKE_ERROR("Chains must be made with at least 4 points");
+    }
+
+    if (chainDef.materials.size() != 1)
+    {
+        if (chainDef.materials.size() != chainDef.points.size())
+        {
+            return MAKE_ERROR("Chain material count must either be 1 or "
+                "equal to point count");
+        }
+    }
+
+    auto points = chainDef.points | std::views::transform(ToB2VecScaled)
+        | std::ranges::to<std::vector>();
+
+    auto mats = chainDef.materials | std::views::transform([](const auto& mat) {
+        return static_cast<b2SurfaceMaterial>(mat);
+    }) | std::ranges::to<std::vector>();
+
+    b2ChainDef def = b2DefaultChainDef();
+    def.count = chainDef.points.size();
+    def.enableSensorEvents = chainDef.enableSensorEvents;
+    def.filter = {
+        .categoryBits = chainDef.collisionFilter.categories,
+        .maskBits = chainDef.collisionFilter.categoryMask,
+        .groupIndex = chainDef.collisionFilter.groupIndex
+    };
+    def.isLoop = chainDef.isLoop;
+    def.materialCount = mats.size();
+    def.materials = mats.data();
+    def.points = points.data();
+
+    b2ChainId chainId = b2CreateChain(bodyHandle_, &def);
+    if (!b2Chain_IsValid(chainId))
+    {
+        return MAKE_ERROR("Chain could not be created - returned null chain id");
+    }
+
+    return B2Chain{ Handle<B2Chain>::Create(chainId) };
 }
 
 std::vector<B2Shape> B2Body::GetShapes() 

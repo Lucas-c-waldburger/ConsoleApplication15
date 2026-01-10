@@ -63,3 +63,4 @@ inline SDL_FRect B2AABBToSDLFRect(const b2AABB& aabb)
         .h = extents.y * 2.0f
     };
 }
+

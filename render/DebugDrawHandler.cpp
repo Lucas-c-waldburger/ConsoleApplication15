@@ -2,6 +2,8 @@
 #include "../camera/Camera.h"
 #include "../components/ColliderComponent.h"
 #include "../components/RenderableComponent.h"
+#include "../physics/B2Chain.h"
+#include <ranges>
 
 namespace {
 
@@ -177,6 +179,38 @@ void DebugDrawHandler::AddColliderShape(const Camera& camera, const Collider& co
 
 		break;
 	}
+	case B2Shape::Type::ChainSegment:
+	{
+		auto chainSegmentShape = shapeData.GetAs<B2ChainSegmentShape>();
+		auto chain = chainSegmentShape.GetParentChain();
+		if (!chain.IsValid())
+		{
+			break;
+		}
+		if (handledChains_.contains(chain.GetHandle()))
+		{
+			break;
+		}
+		handledChains_.insert(chain.GetHandle());
+
+		auto segments = chain.GetSegments();
+
+		auto segPoints = segments
+		| std::views::filter([](const auto& seg) { return seg.IsValid(); })
+		| std::views::transform([](const auto& seg) { return seg.GetPoints().first; }) 
+		| std::views::transform(toScreen) | std::ranges::to<std::vector>();
+
+		if (segPoints.empty())
+		{
+			break;
+		}
+
+		segPoints.emplace_back(toScreen(segments.back().GetPoints().second));
+
+		debugDrawPoints_.insert(debugDrawPoints_.end(),
+			std::make_move_iterator(segPoints.begin()),
+			std::make_move_iterator(segPoints.end()));
+	}
 
 	case B2Shape::Type::Invalid: default:
 		LOG_ERROR("Unsupported B2ShapeType");
@@ -185,6 +219,8 @@ void DebugDrawHandler::AddColliderShape(const Camera& camera, const Collider& co
 
 void DebugDrawHandler::Draw(SDL_Renderer* renderer)
 {
+	handledChains_.clear();
+
 	if (debugDrawPoints_.empty() || shapes_.empty())
 	{
 		return;

@@ -174,9 +174,11 @@
     <ClCompile Include="file\FilePathUtility.cpp" />
     <ClCompile Include="games\bullet_heaven\Functions.cpp" />
     <ClCompile Include="games\bullet_heaven\Player.cpp" />
+    <ClCompile Include="games\bullet_heaven\Terrain.cpp" />
     <ClCompile Include="gui\GuiContext.cpp" />
     <ClCompile Include="inputs\controller\GameControllerHub.cpp" />
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp" />
+    <ClCompile Include="physics\B2Chain.cpp" />
     <ClCompile Include="physics\B2Explosion.cpp" />
     <ClCompile Include="render\DebugDrawHandler.cpp" />
     <ClCompile Include="render\GlyphCacheHandler.cpp" />
@@ -439,6 +441,7 @@
     <ClInclude Include="games\bullet_heaven\Item.h" />
     <ClInclude Include="games\bullet_heaven\Player.h" />
     <ClInclude Include="games\bullet_heaven\Systems.h" />
+    <ClInclude Include="games\bullet_heaven\Terrain.h" />
     <ClInclude Include="games\bullet_heaven\Updates.h" />
     <ClInclude Include="games\bullet_heaven\Weapon.h" />
     <ClInclude Include="gui\GuiContext.h" />
@@ -452,6 +455,7 @@
     <ClInclude Include="inputs\mouse\MouseInputMap.h" />
     <ClInclude Include="inputs\mouse\MouseInputSource.h" />
     <ClInclude Include="inputs\mouse\MouseInputUpdater.h" />
+    <ClInclude Include="physics\B2Chain.h" />
     <ClInclude Include="physics\B2Explosion.h" />
     <ClInclude Include="render\DebugDrawHandler.h" />
     <ClInclude Include="render\GlyphCacheHandler.h" />
@@ -747,6 +751,7 @@
     <ClInclude Include="test\ui\ControllerMappingEditor.h" />
     <ClInclude Include="test\ui\DataEditDisplayUtils.h" />
     <ClInclude Include="test\ui\EntityView.h" />
+    <ClInclude Include="test\ui\EventContext.h" />
     <ClInclude Include="test\ui\FileTreeView.h" />
     <ClInclude Include="test\ui\MouseWorldNavigator.h" />
     <ClInclude Include="test\ui\PhysicsEditor.h" />

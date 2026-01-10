@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <unordered_set>
 #include <SDL_pixels.h>
 #include <SDL_rect.h>
 
@@ -33,4 +34,5 @@ private:
 
 	std::vector<ShapeResource> shapes_;
 	std::vector<SDL_FPoint> debugDrawPoints_;
+	std::unordered_set<Handle<B2Chain>> handledChains_;
 };

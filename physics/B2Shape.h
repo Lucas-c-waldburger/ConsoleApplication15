@@ -341,6 +341,23 @@ public:
 private:
 };
 
+class B2Chain;
+
+class B2ChainSegmentShape : public B2Shape
+{
+public:
+    static constexpr B2Shape::Type shapeType = B2Shape::Type::ChainSegment;
+
+    B2ChainSegmentShape() = default;
+    explicit B2ChainSegmentShape(const Handle<B2Shape>& handle) : B2Shape(handle) {}
+
+    B2Chain GetParentChain();
+
+    std::pair<SDL_FPoint, SDL_FPoint> GetPoints() const;
+
+private:
+};
+
 template <typename T> 
 inline T B2Shape::GetAs() const
 {
