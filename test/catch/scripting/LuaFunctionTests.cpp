@@ -61,7 +61,7 @@ TEST_CASE("LuaScript Tests", "[scripting]")
     REQUIRE(pointsToLineFn != nullptr);
     
     TestPoint p1{ 1, 2 };
-    TestPoint p2{ 2, 5 };
+    TestPoint p2{ 2 , 5 };
 
     TestLine lineFnResult = pointsToLineFn(p1, p2);
 

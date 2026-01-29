@@ -28,7 +28,10 @@ Entity_t EntityManager::CreateEntity()
 
     indexWithFlatIdxToGetEntity_t_[nextFreeFlatIndex_] = entityOfNextGen;
 
-    ++nextFreeFlatIndex_;
+    if (nextFreeFlatIndex_ < kMaxEntities - 1)
+    {
+        ++nextFreeFlatIndex_;
+    }
 
     return entityOfNextGen;
 }

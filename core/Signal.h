@@ -137,6 +137,23 @@ public:
 		}
 	}
 
+	//template <typename Fn, typename...Ts> requires std::invocable<Fn, Ts...>
+	//void TransformAndEmit(Fn&& fn, Ts&&...ts)
+	//{
+	//	static_assert(std::invocable<SlotCallbackType, std::invoke_result_t<Fn, Ts...>>,
+	//		"Transform function does not return a type that can invoke signal callback");
+
+	//	for (auto& slot : slots_)
+	//	{
+	//		if (slot.callback)
+	//		{
+	//			assert(slot.id >= 0);
+
+	//			slot.callback(std::invoke(fn, std::forward<Ts>(ts)...);
+	//		}
+	//	}
+	//}
+
 	template <typename Fn> requires std::convertible_to<Fn, SlotCallbackType>
 	SignalToken Connect(Fn&& fn)
 	{

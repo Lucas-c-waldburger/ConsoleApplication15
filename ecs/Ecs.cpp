@@ -1,6 +1,7 @@
 #include "Ecs.h"
 #include "EntityDestructor.h"
 #include "EntityRelationsHelper.h"
+#include "EntityEvents.h"
 #include "../core/Algorithms.h"
 
 namespace {
@@ -49,6 +50,11 @@ EntityRelations Entity::GetRelations()
 	return EntityRelations{ *this };
 }
 
+EntityEvents Entity::GetEvents(EventBus2& bus)
+{
+	return EntityEvents{ *this, &bus };
+}
+
 // ENTITY RELATION DEFS //
 Entity EntityRelations::AddChild()
 {
@@ -61,8 +67,6 @@ Entity EntityRelations::AddChild()
 
 	auto newChild = EntityRelationsHelper::AddChild(ecs_->GetEntityManager(),
 													ecs_->GetComponentManager(), id_);
-
-	ecs_->AddComponent<EntityFlags>(newChild);
 
 	return Entity{ newChild, *ecs_ };
 }
@@ -98,8 +102,6 @@ Entity EntityRelations::AddChild(std::string_view childName)
 
 	auto newChild = EntityRelationsHelper::AddChild(ecs_->GetEntityManager(),
 												    ecs_->GetComponentManager(), id_);
-
-	ecs_->AddComponent<EntityFlags>(newChild);
 
 	auto& tags = ecs_->AddComponent<Tags>(newChild).tags;
 	tags.emplace(std::move(nameTag));

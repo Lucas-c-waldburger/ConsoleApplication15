@@ -210,6 +210,8 @@ void DebugDrawHandler::AddColliderShape(const Camera& camera, const Collider& co
 		debugDrawPoints_.insert(debugDrawPoints_.end(),
 			std::make_move_iterator(segPoints.begin()),
 			std::make_move_iterator(segPoints.end()));
+
+		break;
 	}
 
 	case B2Shape::Type::Invalid: default:

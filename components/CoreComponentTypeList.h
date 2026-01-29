@@ -11,7 +11,6 @@ struct Tags;
 struct Collider;
 struct GameControllerState;
 struct Script;
-struct EventCallbacks;
 struct CameraTarget;
 struct SpriteAnimations;
 struct EventProductionFlags;
@@ -42,7 +41,6 @@ using CoreComponentTypeList = TypeList<
 	Collider,
 	GameControllerState,
 	Script,
-	EventCallbacks,
 	CameraTarget,
 	SpriteAnimations,
 	EventProductionFlags,

@@ -209,10 +209,60 @@ void DrawJsonSuppliedEditField(nlohmann::ordered_json& j, bool& wasEdited,
     ImGui::PopID();    
 }
 
+void HandleRigidBodyComponentDraw(Entity& e)
+{
+    const auto& rigidBody = e.GetComponent<RigidBody>();
+    if (rigidBody.body.GetData().IsValid())
+    {
+        PhysicsEditor::DrawRigidBodyInfo(rigidBody);
+    }
+
+    EntityRelations rels = e.GetRelations();
+    size_t id = 0;
+
+    rels.ForAllChildrenWith<Collider>([&id](const Collider& col) {
+        if (col.shape.GetData().IsValid())
+        {
+            auto label = std::format("Child {}", id++);
+
+            ImGui::PushID(label.c_str());
+
+            if (ImGui::TreeNodeEx(label.c_str()))
+            {
+                PhysicsEditor::DrawColliderInfo(col);
+
+                ImGui::TreePop();
+            }
+
+            ImGui::PopID();
+        }
+    });
+}
+
+void HandleColliderComponentDraw(Entity& e)
+{
+    const auto& collider = e.GetComponent<Collider>();
+    if (collider.shape.GetData().IsValid())
+    {
+        PhysicsEditor::DrawColliderInfo(collider);
+    }
+}
+
 template <JsonSerializableComponent T>
 void DrawComponentEditor(Entity& e, nlohmann::ordered_json& runningJson)
 {
     assert(e.HasComponent<T>());
+
+    if constexpr (std::same_as<T, RigidBody>)
+    {
+        HandleRigidBodyComponentDraw(e);
+        return;
+    }
+    else if constexpr (std::same_as<T, Collider>)
+    {
+        HandleColliderComponentDraw(e);
+        return;
+    }
 
     constexpr std::string_view componentName = ComponentName<T>::value;
 
@@ -243,26 +293,6 @@ void DrawComponentEditor(Entity& e, nlohmann::ordered_json& runningJson)
                 ImGui::CloseCurrentPopup();
             }
             ImGui::EndPopup();
-        }
-    }
-    else if constexpr (std::same_as<T, RigidBody>)
-    {
-        wasEdited = false;
-
-        const auto& rigidBody = e.GetComponent<RigidBody>();
-        if (rigidBody.body.GetData().IsValid())
-        {
-            PhysicsEditor::DrawRigidBodyInfo(rigidBody);
-        }
-    }
-    else if constexpr (std::same_as<T, Collider>)
-    {
-        wasEdited = false;
-
-        const auto& collider = e.GetComponent<Collider>();
-        if (collider.shape.GetData().IsValid())
-        {
-            PhysicsEditor::DrawColliderInfo(collider);
         }
     }
     else if constexpr (std::same_as<T, Transform>)

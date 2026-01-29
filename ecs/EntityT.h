@@ -8,7 +8,7 @@ using EntityIndex_t = uint32_t;        // Low 32 bits
 using EntityGeneration_t = uint32_t;   // High 32 bits
 
 // CONSTANTS //
-inline constexpr Entity_t           kMaxEntities = 500;
+inline constexpr Entity_t           kMaxEntities = 1000;
 inline constexpr EntityIndex_t      kMaxEntityIndex = kMaxEntities - 1;
 
 inline constexpr EntityGeneration_t kMaxEntityGenerations = 0xFFFFFFFFu;

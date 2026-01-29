@@ -4,7 +4,6 @@
 #include "ActiveStateComponent.h"
 #include "CameraTargetComponent.h"
 #include "ColliderComponent.h"
-#include "EventCallbacksComponent.h"
 #include "GameControllerStateComponent.h"
 #include "RigidBodyComponent.h"
 #include "RelationComponents.h"
@@ -22,6 +21,7 @@
 #include "EntityFlagsComponent.h"
 #include "AudioComponents.h"
 #include "MarkedDestroyedComponent.h"
+#include "SignalTokenStorageComponent.h"
 #include "UserComponents.h"
 
 

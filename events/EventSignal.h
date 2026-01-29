@@ -2,6 +2,7 @@
 #include "../core/Signal.h"
 #include "EventSignalConcepts.h"
 #include "data/EventDataIncludes.h"
+#include "EventDataTypeList.h"
 
 template <SomeEventData T>
 using EventSignal = Signal<const T&>;
@@ -47,7 +48,9 @@ public:
 	template <ValidEventSignalFn Fn> 
 	SignalToken Connect(Fn&& fn)
 	{
-		using event_data_t = valid_signal_fn<Fn>::raw_event_data_type;
+		using event_data_t = std::remove_cvref_t<
+			typename func_traits<Fn>::template arg_at<0>
+		>;
 
 		return std::get<EventSignal<event_data_t>>(signals_).Connect(std::forward<Fn>(fn));
 	}
@@ -57,6 +60,17 @@ public:
 	{
 		return std::get<EventSignal<T>>(signals_).Emit(ev);
 	}
+
+	//template <typename Fn, typename...Ts> requires std::invocable<Fn, Ts...>
+	//void TransformAndEmit(Fn&& fn, Ts&&...ts)
+	//{
+	//	using EvT = std::remove_cvref_t<std::invoke_result_t<Fn, Ts...>>;
+	//	static_assert(SomeEventData<EvT>);
+
+	//	EvT ev = std::invoke(std::forward<Fn>(fn), std::forward<Ts>(ts)...);
+
+	//	return std::get<EventSignal<T>>(signals_).Emit(ev);
+	//}
 
 private:
 	event_signal_list_t signals_;

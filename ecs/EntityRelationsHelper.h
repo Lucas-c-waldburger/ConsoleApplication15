@@ -1,5 +1,6 @@
 #pragma once
 #include <unordered_set>
+#include <set>
 #include "EntityT.h"
 //#include "EntityManager.h"
 //#include "ComponentManager.h"
@@ -20,9 +21,9 @@ public:
 
     static Entity_t GetParent(EntityManager& entityManager, ComponentManager& componentManager,
                               Entity_t child);
-    static std::unordered_set<Entity_t>& GetChildren(EntityManager& entityManager, 
-                                                     ComponentManager& componentManager,
-                                                     Entity_t parent);
+    static std::set<Entity_t>& GetChildren(EntityManager& entityManager, 
+                                           ComponentManager& componentManager,
+                                           Entity_t parent);
 
     static Entity_t AddChild(EntityManager& entityManager, ComponentManager& componentManager,
                              Entity_t parent);

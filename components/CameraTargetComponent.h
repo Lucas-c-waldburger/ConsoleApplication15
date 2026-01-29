@@ -8,4 +8,5 @@ struct CameraTarget : public BaseComponent<CameraTarget>
 {
 	SDL_FPoint offset = { 0.0f, 0.0f };
 	float followSpeed = 5.0f;
+	float stopRadius = 0.0f;
 };

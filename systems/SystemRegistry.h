@@ -6,7 +6,6 @@
 #include "PhysicsSystem.h"
 #include "NewRenderSystem.h"
 #include "SDLInputSystem.h"
-#include "EventCallbackSystem.h"
 #include "TimerSystem.h"
 #include "SpriteAnimationSystem.h"
 #include "EntityStateSystem.h"
@@ -22,7 +21,6 @@ using CoreSystemTypeList = TypeList<
 	CameraSystem, 
 	PhysicsSystem, 
 	SDLInputSystem, 
-	EventCallbackSystem, 
 	TimerSystem,  
 	SpriteAnimationSystem, 
 	EntityStateSystem,

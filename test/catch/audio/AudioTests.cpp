@@ -1,6 +1,7 @@
 #include <cassert>
 #include "../CatchUtils.h"
 #include "../../Fixtures.h"
+#include "../../../ecs/Ecs.h"
 #include "../../../file/FilePathUtility.h"
 
 namespace {

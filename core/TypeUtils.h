@@ -294,13 +294,27 @@ namespace detail {
 template <typename T>
 struct is_const_reference
 {
-	static constexpr bool value = std::is_reference_v<T> && std::is_const_v<std::remove_reference_t<T>>;
+	static constexpr bool value = std::is_lvalue_reference_v<T> && 
+								  std::is_const_v<std::remove_reference_t<T>>;
 };
 } // detail
 
 template <typename T>
 inline constexpr bool is_const_reference_v = detail::is_const_reference<T>::value;
 /**/
+
+/* IS NON-CONST REFERENCE */
+namespace detail {
+template <typename T>
+struct is_non_const_reference
+{
+	static constexpr bool value = std::is_lvalue_reference_v<T> &&
+								 !std::is_const_v<std::remove_reference_t<T>>;
+};
+} // detail
+
+template <typename T>
+inline constexpr bool is_non_const_reference_v = detail::is_non_const_reference<T>::value;
 
 /* ADD CONST REFERENCE */
 namespace detail {
@@ -313,6 +327,33 @@ struct add_const_ref
 
 template <typename T>
 using add_const_ref_t = detail::add_const_ref<T>::type;
+
+/* INDEX SEQUENCE OFFSET */
+
+namespace detail {
+template <size_t Offset, typename Seq>
+struct index_sequence_offset;
+
+template <size_t Offset, size_t... Is>
+struct index_sequence_offset<Offset, std::index_sequence<Is...>> {
+	using type = std::index_sequence<(Is + Offset)...>;
+};
+} // detail
+
+template <size_t Offset, size_t N>
+using make_index_sequence_offset =
+	typename detail::index_sequence_offset<Offset, std::make_index_sequence<N>>::type;
+
+/* POP FRONT */
+namespace detail {
+template <typename Tup> struct pop_front;
+
+template <template <typename...> class Tup, typename T, typename...Ts>
+struct pop_front<Tup<T, Ts...>> { using type = Tup<Ts...>; };
+} // detail
+
+template <typename Tup>
+using pop_front_t = typename detail::pop_front<Tup>::type;
 
 template <typename T> concept ArithmeticType = std::is_arithmetic_v<T>;
 

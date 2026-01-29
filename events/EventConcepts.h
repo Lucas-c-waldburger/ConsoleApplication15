@@ -6,6 +6,9 @@ concept SomeEventData =					    // type T...
 	SomeTypeInList<T, EventDataTypeList> &&	// - was forward-declared and included in the master list
 	std::derived_from<T, IEventData<T>>;    // - did inherit from the interface, and passed itself in
 
+template <typename T>
+concept SomeUserEvent =
+	SomeTypeInList<T, UserEventTypeList>;
 
 template <SomeEventData...Ts>
 using EventGroup = TypeList<Ts...>; // bundle certain events together 

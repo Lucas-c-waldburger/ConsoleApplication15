@@ -3,6 +3,7 @@
 #include "../CatchUtils.h"
 #include "../../Fixtures.h"
 #include "../../../file/FilePathUtility.h"
+#include "../../../ecs/Ecs.h"
 
 
 TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system]")

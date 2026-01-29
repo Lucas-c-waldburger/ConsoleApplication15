@@ -17,6 +17,14 @@ public:
 		return signalLists_.eventSignals.Connect<T>(std::forward<Fn>(fn));
 	}
 
+	template <ValidUserEventSignalFn Fn> 
+		requires (!SomeEventData<std::remove_cvref_t<
+			typename func_traits<Fn>::template arg_at<0>>>)
+	SignalToken ConnectToEvent(Fn&& fn)
+	{
+		return signalLists_.userEventSignals.Connect(std::forward<Fn>(fn));
+	}
+
 	// connect to input events for a particular input source
 	template <SomeInputSourceEnum Source, ValidInputSignalFn<Source> Fn>
 	SignalToken ConnectToInput(Source src, Fn&& fn)
@@ -31,8 +39,11 @@ public:
 		return signalLists_.GetInputSignalList<Source>().Connect(src, std::forward<Fn>(fn));
 	}
 
-	template <SomeEventData T>
-	void PushEvent(T&& ev) { eventStorage_.Emplace(std::forward<T>(ev)); }
+	template <typename T>
+	void PushEvent(T&& ev) 
+	{ 
+		eventStorage_.Emplace(std::forward<T>(ev));
+	}
 
 	template <SomeEventData T>
 	void PushEvents(std::vector<T>&& evs) { eventStorage_.EmplaceRange(std::move(evs)); }
@@ -47,8 +58,9 @@ public:
 	template <SomeEventData T>
 	size_t NumEvents() const { return eventStorage_.NumEvents<T>(); }
 
+	EventStorage& GetEventStorage() { return eventStorage_; }
+
 private:
-	//EventSignalList eventSignalList_;
 	SignalListCollection signalLists_;
 	EventStorage eventStorage_;
 };

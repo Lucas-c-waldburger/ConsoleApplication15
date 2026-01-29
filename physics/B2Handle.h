@@ -31,19 +31,19 @@ template <> struct B2IdTypeForB2ApiType<B2Chain> { using type = b2ChainId; };
 template <B2IdType T>
 inline bool CheckB2IdValid(const T& id)
 {
-    if constexpr (std::same_as<T, B2Body>)
+    if constexpr (std::same_as<T, b2BodyId>)
     {
         return b2Body_IsValid(id);
     }
-    else if constexpr (std::same_as<T, B2Shape>)
+    else if constexpr (std::same_as<T, b2ShapeId>)
     {
         return b2Shape_IsValid(id);
     }
-    else if constexpr (std::same_as<T, B2Joint>)
+    else if constexpr (std::same_as<T, b2JointId>)
     {
         return b2Joint_IsValid(id);
     }
-    else if constexpr (std::same_as<T, B2Chain>)
+    else if constexpr (std::same_as<T, b2ChainId>)
     {
         return b2Chain_IsValid(id);
     }

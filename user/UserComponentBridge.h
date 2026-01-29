@@ -21,11 +21,6 @@ inline UserComponentTypeId GetUserComponentTypeId()
 	return id;
 }
 
-//template <typename Fn, typename T>
-//concept SomeUnaryTypePred = requires(Fn fn) {
-//	{ fn.template operator()<T>() } -> std::same_as<bool>;
-//};
-
 static constexpr bool kStopPackExpansion = false;
 static constexpr bool kContinuePackExpansion = true;
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "BaseComponent.h"
 #include "../ecs/EntityT.h"
+#include <set>
 #include <unordered_set>
 
 struct Parent : BaseComponent<Parent>
@@ -10,7 +11,7 @@ struct Parent : BaseComponent<Parent>
 
 struct Children : BaseComponent<Children>
 {
-    std::unordered_set<Entity_t> childEntityIds;
+    std::set<Entity_t> childEntityIds;
 };
 
 template <typename T>

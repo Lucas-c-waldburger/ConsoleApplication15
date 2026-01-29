@@ -4,6 +4,7 @@
 #include "../../../file/FilePathUtility.h"
 #include "../../Fixtures.h"
 #include "../../../atlas/NewTextureRepository.h"
+#include "../../../ecs/Ecs.h"
 #include <random>
 
 template <typename T>

@@ -1,5 +1,6 @@
 #pragma once
 #include <format>
+#include <array>
 #include "../ecs/Ecs.h"
 #include "../core/Conversions.h"
 #include "../components/RenderableComponent.h"
@@ -8,8 +9,6 @@
 #include "../sdl/SDLite.h"
 #include "../systems/PhysicsSystem.h"
 #include "../systems/CameraSystem.h"
-#include "../systems/PhysicsSystem.h"
-#include "../systems/EventCallbackSystem.h"
 #include "../components/builder/RigidBodyComponentBuilder.h"
 #include "../components/builder/ColliderComponentBuilder.h"
 #include "../events/EventBus2.h"

@@ -3,6 +3,13 @@
 
 namespace {
 
+constexpr bool CameraInStopRadius(SDL_FPoint a, SDL_FPoint b, float radius)
+{
+	float dx = a.x - b.x;
+	float dy = a.y - b.y;
+	return dx * dx + dy * dy <= radius * radius;
+}
+
 constexpr SDL_FPoint CalculateLerp(SDL_FPoint a, SDL_FPoint b, float t)
 {
 	return {
@@ -16,13 +23,16 @@ SDL_FPoint CalculateCameraPositionFromTransform(SDL_FPoint currentCameraPos,
 											    const CameraTarget& cameraTarget,
 											    float deltaTime)
 {
-	// Desired position = entity's position + offset
 	SDL_FPoint desired = {
 		targetTransform.position.x + cameraTarget.offset.x,
 		targetTransform.position.y + cameraTarget.offset.y
 	};
 
-	// Interpolate between current and desired position
+	if (CameraInStopRadius(currentCameraPos, desired, cameraTarget.stopRadius))
+	{
+		return currentCameraPos;
+	}
+
 	float t = 1.0f - std::exp(-cameraTarget.followSpeed * deltaTime); // smoothstep-like
 
 	return CalculateLerp(currentCameraPos, desired, t);

@@ -61,7 +61,7 @@ Entity_t EntityRelationsHelper::GetParent(EntityManager& entityManager,
     return componentManager.GetComponent<Parent>(child).entityId;
 }
 
-std::unordered_set<Entity_t>& EntityRelationsHelper::GetChildren(EntityManager& entityManager, 
+std::set<Entity_t>& EntityRelationsHelper::GetChildren(EntityManager& entityManager, 
                                                                  ComponentManager& componentManager, 
                                                                  Entity_t parent)
 {

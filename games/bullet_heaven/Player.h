@@ -4,17 +4,17 @@
 
 namespace game {
 
-class Player
-{
-public:
-	static Player Get();
-
-	Result<Void> Init(std::shared_ptr<SceneFixture>& fixture);
-
-private:
-	Player() = default;
-
-	static inline Entity entity_{};
-};
+//class Player
+//{
+//public:
+//	static Player Get();
+//
+//	Result<Void> Init(std::shared_ptr<SceneFixture>& fixture);
+//
+//private:
+//	Player() = default;
+//
+//	static inline Entity entity_{};
+//};
 
 } // game

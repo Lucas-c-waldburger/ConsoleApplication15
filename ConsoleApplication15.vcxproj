@@ -250,6 +250,7 @@
     <ClCompile Include="render\GlyphFormattingUtils.cpp" />
     <ClCompile Include="systems\util\SerializationSystemUtils.cpp" />
     <ClCompile Include="test\catch\core\StableSOATests.cpp" />
+    <ClCompile Include="test\catch\ecs\EntityEventTests.cpp" />
     <ClCompile Include="test\catch\ecs\UserComponentBridgeTests.cpp" />
     <ClCompile Include="test\catch\serial\SerializationTests.cpp" />
     <ClCompile Include="test\catch\systems\SpriteAnimationSystemTests.cpp" />
@@ -351,10 +352,12 @@
     <ClInclude Include="components\EntityFlagsComponent.h" />
     <ClInclude Include="components\driver\ControllerInputCallbackDriver.h" />
     <ClInclude Include="components\MarkedDestroyedComponent.h" />
+    <ClInclude Include="components\SignalTokenStorageComponent.h" />
     <ClInclude Include="components\UserComponents.h" />
     <ClInclude Include="components\util\PhysicsUtils.h" />
     <ClInclude Include="components\util\SpriteAnimationUtils.h" />
     <ClInclude Include="core\Anchor.h" />
+    <ClInclude Include="core\FixedString.h" />
     <ClInclude Include="core\InlineStorage.h" />
     <ClInclude Include="core\CatTypeID.h" />
     <ClInclude Include="core\DynamicSOA.h" />
@@ -424,11 +427,16 @@
     <ClInclude Include="core\UniqueVoidPtr.h" />
     <ClInclude Include="deps\catch\catch_amalgamated.hpp" />
     <ClInclude Include="ecs\EntityAccess.h" />
+    <ClInclude Include="ecs\EntityEvents.h" />
     <ClInclude Include="events\ControllerInputSignal.h" />
+    <ClInclude Include="events\data\CoreEventDataTypeList.h" />
+    <ClInclude Include="events\data\EntityEventConcept.h" />
     <ClInclude Include="events\data\GameLoopStepEvents.h" />
     <ClInclude Include="events\data\InputEventConcepts.h" />
     <ClInclude Include="events\data\MouseEvents.h" />
+    <ClInclude Include="events\data\UserEvents.h" />
     <ClInclude Include="events\EventBus2.h" />
+    <ClInclude Include="events\EventFilter.h" />
     <ClInclude Include="events\EventSignal.h" />
     <ClInclude Include="events\EventSignalConcepts.h" />
     <ClInclude Include="events\EventStorage.h" />
@@ -774,6 +782,9 @@
     <ClInclude Include="user\UserComponentIncludes.h" />
     <ClInclude Include="user\UserComponentBridge.h" />
     <ClInclude Include="user\UserComponentTypeList.h" />
+    <ClInclude Include="user\UserEventSignalList.h" />
+    <ClInclude Include="user\UserEventTypeList.h" />
+    <ClInclude Include="user\UserEventUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\Downloads\ezgif-split\knight_anim224.png" />

@@ -1,12 +1,13 @@
 #pragma once
+#include "../events/EventDataTypeList.h"
 #include "../events/data/EventDataIncludes.h"
 #include "InputSignalList.h"
+#include "../user/UserEventSignalList.h"
 
 using InputSignalLists = std::tuple<
 	InputSignalList<events::GameControllerInput>,
 	InputSignalList<events::MouseInput>
 >;
-
 
 namespace detail {
 template <SomeInputSourceEnum Source, typename InpSigLists>
@@ -38,6 +39,7 @@ struct SignalListCollection
 {
 	EventSignalList eventSignals;
 	InputSignalLists inputSignals;
+	UserEventSignalList userEventSignals;
 
 	template <SomeInputSourceEnum Source>
 	decltype(auto) GetInputSignalList()
@@ -51,11 +53,18 @@ struct SignalListCollection
 	template <SomeEventData T>
 	void Emit(const T& ev)
 	{
-		eventSignals.Emit(ev);
-
-		if constexpr (type_in_tuple_v<InputSignalList<T>, InputSignalLists>)
+		if constexpr (SomeUserEvent<T>)
 		{
-			std::get<InputSignalList<T>>(inputSignals).Emit(ev);
+			userEventSignals.Emit(ev);
+		}
+		else
+		{
+			eventSignals.Emit(ev);
+
+			if constexpr (type_in_tuple_v<InputSignalList<T>, InputSignalLists>)
+			{
+				std::get<InputSignalList<T>>(inputSignals).Emit(ev);
+			}
 		}
 	}
 };

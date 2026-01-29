@@ -12,6 +12,8 @@
 
 class ECS;
 class EntityRelations;
+class EventBus2;
+class EntityEvents;
 
 // ENTITY //
 class Entity
@@ -87,6 +89,9 @@ public:
     // relations
     EntityRelations GetRelations();
 
+    // events
+    EntityEvents GetEvents(EventBus2& bus);
+
     void Destroy();
     bool IsValid() const;
     Entity_t GetID() const { return id_; }
@@ -126,6 +131,17 @@ public:
     std::vector<Entity> GetChildren();
     Entity FindChild(Entity_t childId);
     Entity FindChild(std::string_view childName);
+
+    template <typename...Ts>
+    std::vector<Entity> GetAllChildrenWith();
+
+    template <typename...Ts, typename Fn>
+        requires (sizeof...(Ts) > 0 && std::invocable<Fn, Ts&...>)
+    void ForAllChildrenWith(Fn&& fn);
+
+    template <typename...Ts, typename Fn>
+        requires (sizeof...(Ts) > 0 && std::invocable<Fn, const Ts&...>)
+    void ForAllChildrenWith(Fn&& fn) const;
 };
 
 // ECS //
@@ -164,16 +180,41 @@ public:
     static void ForAllEntitiesWith(Fn&& fn)
     {
         auto& ecs = ECS::Get();
-        auto entities = ecs.GetAllEntityTsWithImpl<Ts...>();
 
-        for (Entity_t e : entities)
-        {
-            auto componentTup = ecs.GetComponents<Ts...>(e);
+        return ecs.ForAllEntitiesWithImpl<Ts...>(
+            ecs.GetAllActiveEntities(), std::forward<Fn>(fn)
+        );
+        //auto entities = ecs.GetAllEntityTsWithImpl<Ts...>();
 
-            std::apply([&](auto&...cmps) {
-                std::invoke(fn, cmps...);
-            }, componentTup);
-        }
+        //for (Entity_t e : entities)
+        //{
+        //    auto componentTup = ecs.GetComponents<Ts...>(e);
+
+        //    std::apply([&](auto&...cmps) {
+        //        std::invoke(fn, cmps...);
+        //    }, componentTup);
+        //}
+    }
+
+    template <typename...Ts, typename Fn>
+        requires (sizeof...(Ts) > 0 && std::invocable<Fn, const Ts&...>)
+    static void ForAllEntitiesWith(Fn&& fn)
+    {
+        const auto& ecs = ECS::Get();
+
+        return ecs.ForAllEntitiesWithImpl<Ts...>(
+            ecs.GetAllActiveEntities(), std::forward<Fn>(fn)
+        );
+        //auto entities = ecs.GetAllEntityTsWithImpl<Ts...>();
+
+        //for (Entity_t e : entities)
+        //{
+        //    auto componentTup = ecs.GetComponents<Ts...>(e);
+
+        //    std::apply([&](const auto&...cmps) {
+        //        std::invoke(fn, cmps...);
+        //    }, componentTup);
+        //}
     }
 
     template <typename...Ts> requires (sizeof...(Ts) > 0)
@@ -406,19 +447,17 @@ private:
         return result;
     }
 
-    template <typename...Ts> requires (sizeof...(Ts) > 0)
-    std::vector<Entity> GetAllEntitiesWithImpl()
+    template <typename...Ts, typename Container> requires (sizeof...(Ts) > 0)
+    std::vector<Entity> GetAllEntitiesWithImpl(Container&& entities)
     {
         // calculate and cache include/exclude/any masks
         auto componentMasks = ComponentMasks::template MakeMasks<Ts...>(
             userComponentBridge_);
 
-        auto activeEntities = entityManager_.GetActiveEntities();
-
         std::vector<Entity> result;
-        result.reserve(activeEntities.size());
+        result.reserve(entities.size());
 
-        for (const auto& entity : activeEntities)
+        for (const auto& entity : entities)
         {
             // get full list of components that entity has
             uint64_t entitySig = componentManager_.GetSignature(entity);
@@ -446,7 +485,13 @@ private:
     }
 
     template <typename...Ts> requires (sizeof...(Ts) > 0)
-    std::vector<Entity_t> GetAllEntityTsWithImpl()
+    std::vector<Entity> GetAllEntitiesWithImpl()
+    {
+        return GetAllEntitiesWithImpl<Ts...>(entityManager_.GetActiveEntities());
+    }
+
+    template <typename...Ts> requires (sizeof...(Ts) > 0)
+    std::vector<Entity_t> GetAllEntityTsWithImpl() const
     {
         // calculate and cache include/exclude/any masks
         static constexpr auto componentMasks =
@@ -482,6 +527,36 @@ private:
         }
 
         return result;
+    }
+
+    template <typename...Ts, typename Container, typename Fn>
+        requires (sizeof...(Ts) > 0 && std::invocable<Fn, Ts&...>)
+    void ForAllEntitiesWithImpl(Container&& entities, Fn&& fn)
+    {
+        for (Entity_t e : entities)
+        {
+            assert(HasComponent<Ts>(e) && ...);
+            auto componentTup = GetComponents<Ts...>(e);
+
+            std::apply([&](auto&...cmps) {
+                std::invoke(fn, cmps...);
+            }, componentTup);
+        }
+    }
+
+    template <typename...Ts, typename Container, typename Fn>
+        requires (sizeof...(Ts) > 0 && std::invocable<Fn, const Ts&...>)
+    void ForAllEntitiesWithImpl(Container&& entities, Fn&& fn) const
+    {
+        for (Entity_t e : entities)
+        {
+            assert(HasComponent<Ts>(e) && ...);
+            auto componentTup = GetComponents<Ts...>(e);
+
+            std::apply([&](const auto&...cmps) {
+                std::invoke(fn, cmps...);
+            }, componentTup);
+        }
     }
 
     bool IsEntityActive(Entity_t entity) const;
@@ -642,19 +717,13 @@ inline std::tuple<const Ts&...> Entity::GetComponents() const
 template <typename T>
 inline bool Entity::HasComponent() const
 {
-    assert(ecs_);
-    assert(id_ != kInvalidEntity);
-
-    return ecs_->HasComponent<T>(id_);
+    return IsValid() && ecs_->HasComponent<T>(id_);
 }
 
 template <typename...Ts>
 inline bool Entity::HasComponents() const
 {
-    assert(ecs_);
-    assert(id_ != kInvalidEntity);
-
-    return (ecs_->HasComponent<Ts>(id_) && ...);
+    return IsValid() && (ecs_->HasComponent<Ts>(id_) && ...);
 }
 
 template <typename T>
@@ -662,7 +731,8 @@ inline bool Entity::GetComponentVisibility() const
 {
     assert(HasComponent<EntityFlags>());
 
-    const auto& visibilityFlags = ecs_->GetComponent<EntityFlags>(id_).componentVisibilityFlags;
+    const auto& visibilityFlags = 
+        ecs_->GetComponent<EntityFlags>(id_).componentVisibilityFlags;
 
     return visibilityFlags.Test<T>();
 }
@@ -672,7 +742,8 @@ inline void Entity::SetComponentVisibility(bool vis)
 {
     assert(HasComponent<EntityFlags>());
 
-    auto& visibilityFlags = ecs_->GetComponent<EntityFlags>(id_).componentVisibilityFlags;
+    auto& visibilityFlags = 
+        ecs_->GetComponent<EntityFlags>(id_).componentVisibilityFlags;
 
     if constexpr (sizeof...(Ts) == 0) // set/unset all
     {
@@ -713,4 +784,67 @@ inline void Entity::SetEventProduction(bool tf)
     auto& eventProductionFlags = ecs_->GetComponent<EntityFlags>(id_).eventProductionFlags;
 
     eventProductionFlags.Set<T>(tf);
+}
+
+// ENTITY RELATIONS
+template <typename...Ts, typename Fn>
+    requires (sizeof...(Ts) > 0 && std::invocable<Fn, Ts&...>)
+void EntityRelations::ForAllChildrenWith(Fn&& fn)
+{
+    if (!(IsValid() && IsParent()))
+    {
+        return;
+    }
+  
+    const auto& children = EntityRelationsHelper::GetChildren(
+        ecs_->GetEntityManager(), ecs_->GetComponentManager(), id_);
+  
+    if (children.empty())
+    {
+        return;
+    }
+
+    return ecs_->ForAllEntitiesWithImpl<Ts...>(children, std::forward<Fn>(fn));
+}
+
+template <typename...Ts, typename Fn>
+    requires (sizeof...(Ts) > 0 && std::invocable<Fn, const Ts&...>)
+void EntityRelations::ForAllChildrenWith(Fn&& fn) const
+{
+    if (!(IsValid() && IsParent()))
+    {
+        return;
+    }
+
+    const auto& children = EntityRelationsHelper::GetChildren(
+        ecs_->GetEntityManager(), ecs_->GetComponentManager(), id_);
+
+    if (children.empty())
+    {
+        return;
+    }
+
+    const auto& cEcs = *ecs_;
+
+    return cEcs.ForAllEntitiesWithImpl<Ts...>(children, std::forward<Fn>(fn));
+}
+ 
+
+template <typename...Ts>
+std::vector<Entity> EntityRelations::GetAllChildrenWith()
+{
+    if (!(IsValid() && IsParent()))
+    {
+        return {};
+    }
+
+    const auto& children = EntityRelationsHelper::GetChildren(
+        ecs_->GetEntityManager(), ecs_->GetComponentManager(), id_);
+
+    if (children.empty())
+    {
+        return {};
+    }
+
+    return ecs_->GetAllEntitiesWithImpl<Ts...>(children);
 }

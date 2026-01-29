@@ -97,24 +97,6 @@ struct hash<std::pair<T1, T2>> {
 template<class... Ts> struct Overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> Overloaded(Ts...) -> Overloaded<Ts...>;
 
-// FIXED STRING
-template <std::size_t N>
-struct FixedString {
-    char value[N];
-
-    // Construct from string literal
-    consteval FixedString(char const (&str)[N]) {
-        for (std::size_t i = 0; i < N; ++i)
-            value[i] = str[i];
-    }
-
-    // Enable structural equality for NTTP
-    consteval bool operator==(FixedString const&) const = default;
-
-    constexpr std::size_t size() const { return N; }
-    constexpr operator const char*() const { return value; }
-};
-
 
 static constexpr int GetNextPowerOfTwo(int x)
 {

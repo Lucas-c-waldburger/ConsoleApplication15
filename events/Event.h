@@ -1,5 +1,5 @@
 #pragma once
-#include <numeric>
+#include <limits>
 
 inline constexpr uint32_t kInvalidEventType = std::numeric_limits<uint32_t>::max();
 

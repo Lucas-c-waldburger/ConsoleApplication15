@@ -5,7 +5,7 @@
 #include "deps/catch/catch_amalgamated.hpp"
 #include "test/Fixtures.h"
 #include "test/ui/EntityView.h"
-#include "games/bullet_heaven/Systems.h"
+#include "games/bullet_heaven/Terrain.h"
 
 int main(int argc, char* argv[]) 
 {
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
     assert(spriteResult.GetValue().sourceAtlas.IsValid());
     auto floorSprite = spriteResult.GetValue();
 
-    auto floor = ECS::CreateEntity();
+    /*auto floor = ECS::CreateEntity();
 
     floor.AddComponent(Transform{});
     auto& renderable = floor.AddComponent(SpriteRenderableComponent{});
@@ -80,7 +80,24 @@ int main(int argc, char* argv[])
         child.AddComponent<SpriteRenderableComponent>().sprite = floorSprite;
 
         xPos += 96.0f;
-    }
+    }*/
+
+    //game::TerrainDefinition terrainDef{};
+    //terrainDef.worldGroundY = SDLite::Window().GetSize().h - 200;
+    //terrainDef.worldSpan.max = SDLite::Window().GetSize().w;
+
+    //game::HillDefinition hillDef{};
+    //hillDef.push_back(200, 300, 100);
+    //hillDef.push_back(600, 300, 200);
+
+    auto terrainEntity = game::MakeTerrain(
+        game::testTerrain,
+        fixture->GetWorld(),
+        90.f,  
+        8.f,   
+        0.115f,
+        20.0f);
+    ASSERT_RESULT(terrainEntity);
 
     /*auto ent = ECS::CreateEntity();
 
@@ -119,7 +136,7 @@ int main(int argc, char* argv[])
 
     ASSERT_RESULT(fixture->RunGameLoop());*/
 
-    auto entity = ECS::CreateEntity();
+    //auto entity = ECS::CreateEntity();
 
     //auto& tf = 
         //entity.AddComponent(Transform{ .position = { 20.0f, 34.0f }, .rotation = 24.0f });
@@ -131,7 +148,7 @@ int main(int argc, char* argv[])
     //std::string label = "Transform";
 
     gui->AddWidget("Entity Inspector", [&] {
-        cont = ui::EntityInspector::Draw(entity);
+        cont = ui::EntityInspector::Draw(terrainEntity.GetValue());
         //DrawComponentEditor(tf);
     });
 

@@ -3,8 +3,10 @@
 #include <unordered_set>
 #include <SDL_pixels.h>
 #include <SDL_rect.h>
+#include "../core/Handle.h"
 
 class Camera;
+class B2Chain;
 struct RenderProfile;
 struct Collider;
 struct SDL_Renderer;

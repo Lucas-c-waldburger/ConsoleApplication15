@@ -1,37 +1,87 @@
 #pragma once
+#include "Event.h"
 #include "EventSignal.h"
 #include "ControllerInputSignal.h"
-#include "Event.h"
-#include "EventDataTypeList.h"
 #include "data/EventDataIncludes.h"
+#include "EventDataTypeList.h"
 #include "../inputs/SignalListCollection.h"
 
-template <typename TList>
+template <typename AllEventsTList, typename UserEventsTList>
 class EventStorageImpl;
 
-template <SomeEventData...Ts>
-class EventStorageImpl<TypeList<Ts...>>
+template <typename...Ts, typename...Us> requires (sizeof...(Us) > 0)
+class EventStorageImpl<TypeList<Ts...>, TypeList<Us...>>
 {
 public:
+	static_assert(sizeof...(Ts) > 0);
+	//static_assert(sizeof...(Us) > 0);
+
 	static constexpr size_t N = sizeof...(Ts);
+
+	//template <typename T>
+	//static void EmplaceUserEventImpl(InlineStorage<kUserEventStorageSize>& data,
+	//								 EventStorageImpl& self)
+	//{
+	//	auto& storageVec = std::get<std::vector<T>>(self.storage_);
+	//	if (storageVec.empty())
+	//	{
+	//		self.heldEventIndices_[self.heldEventHead_++] = T::eventType;
+	//	}
+
+	//	auto& newEv = storageVec.emplace_back();
+	//	newEv.data = std::move(data);
+	//}
+
+	template <typename T>
+	static InlineStorage<kUserEventStorageSize>& 
+	GetNewUserEventStorageImpl(EventStorageImpl& self)
+	{
+		auto& storageVec = std::get<std::vector<T>>(self.storage_);
+		if (storageVec.empty())
+		{
+			self.heldEventIndices_[self.heldEventHead_++] = T::eventType;
+		}
+
+		return storageVec.emplace_back().data;
+	}
 
 	EventStorageImpl() : heldEventIndices_(FillEventIndicesArray()), heldEventHead_(0) {}
 
-	template <SomeEventData T>
+	using GetNewUserEventStorageSig = InlineStorage<kUserEventStorageSize>&(*)
+									  (EventStorageImpl&);
+
+	static constexpr GetNewUserEventStorageSig
+	kGetNewUserEventStorageDispatchTable[] = { &GetNewUserEventStorageImpl<Us>... };
+
+	template <typename T>
 	void Emplace(T&& event)
 	{
-		auto& storageVec = std::get<std::vector<T>>(storage_);
-		if (storageVec.empty())
+		if constexpr (!SomeEventData<T>)
 		{
-			// need to mark that this event type has at least 1 event to be dispatched
-			heldEventIndices_[heldEventHead_++] = T::eventType;
+			// user event data
+			const auto typeId = static_cast<size_t>(GetUserEventTypeId<T>());
+			if (typeId >= sizeof...(Us))
+			{
+				LOG_ERROR("No more user events can be added");
+				return;
+			}
+
+			auto& newStorage = 
+				std::invoke(kGetNewUserEventStorageDispatchTable[typeId], *this);
+
+			newStorage.Emplace<T>(std::forward<T>(event));
 		}
+		else
+		{
+			auto& storageVec = std::get<std::vector<T>>(storage_);
+			if (storageVec.empty())
+			{
+				// need to mark that this event type has at least 1 event to be dispatched
+				heldEventIndices_[heldEventHead_++] = T::eventType;
+			}
 
-		storageVec.emplace_back(std::forward<T>(event));
-
-		//auto& storageVec = std::get<std::vector<T>>(storage_);
-		//storageVec.emplace_back(std::forward<T>(event));
-		//heldEventIndices_[heldEventHead_++] = T::eventType;
+			storageVec.emplace_back(std::forward<T>(event));
+		}
 	}
 
 	template <SomeEventData T>
@@ -128,5 +178,6 @@ private:
 	size_t heldEventHead_;
 };
 
+static_assert(UserEventTypeList::size > 0);
 
-using EventStorage = EventStorageImpl<EventDataTypeList>;
+using EventStorage = EventStorageImpl<EventDataTypeList, UserEventTypeList>;
