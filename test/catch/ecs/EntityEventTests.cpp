@@ -125,7 +125,7 @@ TEST_CASE("EntityEvents Tests", "[events]")
 		CHECK(tags.tags.contains("fired"));
 	}
 
-	SECTION("InputEvent")
+	SECTION("InputEvents")
 	{
 		std::string outputA;
 		std::string outputB;
@@ -138,6 +138,9 @@ TEST_CASE("EntityEvents Tests", "[events]")
 			outputB = "fired";
 		};
 
+		STATIC_CHECK(ev_callback_sig<decltype(lambA)>::with_event_data_only_v);
+		STATIC_CHECK(ev_callback_sig<decltype(lambB)>::with_const_entity_v);
+
 		evs.OnInput(GameControllerInputSource::A, std::move(lambA));
 		evs.OnInput(GameControllerInputSource::B, std::move(lambB));
 
@@ -149,7 +152,7 @@ TEST_CASE("EntityEvents Tests", "[events]")
 		CHECK(outputB.empty());
 	}
 
-	SECTION("UserEvent Tests")
+	SECTION("UserEvents")
 	{
 		struct TestEvent1 { std::string message; };
 

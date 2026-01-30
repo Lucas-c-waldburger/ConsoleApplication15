@@ -44,8 +44,7 @@ namespace detail {
 				return;
 			}
 
-			std::invoke(std::forward<Fn>(fn), 
-				ev, e.GetComponent<std::remove_cvref_t<ComponentTs>>()...);
+			std::invoke(fn, ev, e.GetComponent<std::remove_cvref_t<ComponentTs>>()...);
 		}
 		template <typename Ev, typename Fn>
 		static void call(Fn&& fn, const Ev& ev, const Entity& e)
@@ -55,8 +54,7 @@ namespace detail {
 				return;
 			}
 
-			std::invoke(std::forward<Fn>(fn), 
-				ev, e.GetComponent<std::remove_cvref_t<ComponentTs>>()...);
+			std::invoke(fn, ev, e.GetComponent<std::remove_cvref_t<ComponentTs>>()...);
 		}
 	};
 
@@ -200,7 +198,7 @@ static Result<Void> OnEventImpl(EventBus2& bus, Entity& e, Fn&& fn)
 					}
 				}
 
-				std::invoke(std::forward<Fn>(f), ev);
+				std::invoke(f, ev);
 			}));
 
 		return Void{};
@@ -222,7 +220,7 @@ static Result<Void> OnEventImpl(EventBus2& bus, Entity& e, Fn&& fn)
 					}
 				}
 
-				std::invoke(std::forward<Fn>(f), ev, e);
+				std::invoke(f, ev, e);
 			}));
 
 		return Void{};
@@ -287,7 +285,7 @@ static Result<Void> OnInputImpl(EventBus2& bus, Src src, Entity& e, Fn&& fn)
 					}
 				}
 
-				std::invoke(std::forward<Fn>(f), ev);
+				std::invoke(f, ev);
 			}));
 
 		return Void{};
@@ -309,7 +307,7 @@ static Result<Void> OnInputImpl(EventBus2& bus, Src src, Entity& e, Fn&& fn)
 					}
 				}
 
-				std::invoke(std::forward<Fn>(f), ev, e);
+				std::invoke(f, ev, e);
 			}));
 
 		return Void{};
@@ -370,7 +368,7 @@ public:
 			return MAKE_ERROR("Internal EventBus was null");
 		}
 
-		return OnInputImpl(*bus_, src, *this, std::forward<Fn>(fn));
+		return OnInputImpl(*bus_, src, entity_, std::forward<Fn>(fn));
 	}
 
 
