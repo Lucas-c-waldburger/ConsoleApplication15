@@ -384,6 +384,9 @@
     <ClCompile Include="test\catch\systems\UserSystemSchedulerTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="atlas\SpriteAtlasCollection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1908,6 +1911,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="systems\SystemManager2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\SpriteAtlasCollection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\data\SystemEvents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

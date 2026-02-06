@@ -26,9 +26,11 @@ namespace events {
 	struct GameLoopStepStart;
 	struct GameLoopStepEnd;
 	struct GameLoopStepRender;
+
+	struct RenderReset;
 }
 
-using CoreEventDataTypeList = TypeList<
+using CoreEventDataTypeList = TypeList <
 	events::EntityCreated,
 	events::EntityDestroyed,
 	events::EntityPositionChanged,
@@ -52,5 +54,7 @@ using CoreEventDataTypeList = TypeList<
 
 	events::GameLoopStepStart,
 	events::GameLoopStepEnd,
-	events::GameLoopStepRender
+	events::GameLoopStepRender,
+
+	events::RenderReset
 >;
