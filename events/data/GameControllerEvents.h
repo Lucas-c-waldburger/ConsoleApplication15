@@ -6,17 +6,23 @@
 
 namespace events {
 
-struct GameControllerConnected : IEventData<GameControllerConnected>
+template <typename Derived>
+struct GameControllerEvent : IEventData<Derived>
 {
 	SDL_JoystickID joystickID = -1;
 };
 
-struct GameControllerDisconnected : IEventData<GameControllerDisconnected>
+struct GameControllerConnected : GameControllerEvent<GameControllerConnected>
 {
 	SDL_JoystickID joystickID = -1;
 };
 
-struct GameControllerInput : IEventData<GameControllerInput>
+struct GameControllerDisconnected : GameControllerEvent<GameControllerDisconnected>
+{
+	SDL_JoystickID joystickID = -1;
+};
+
+struct GameControllerInput : GameControllerEvent<GameControllerInput>
 {
 	SDL_JoystickID joystickID = -1;
 	GameControllerInputField input;
@@ -31,3 +37,6 @@ using GameControllerEventGroup = EventGroup<
 >;
 
 } // events
+
+template <typename T>
+concept SomeGameControllerEvent = std::derived_from<T, events::GameControllerEvent<T>>;

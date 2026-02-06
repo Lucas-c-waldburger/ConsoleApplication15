@@ -9,7 +9,7 @@ inline UserEventTypeId NextUserEventTypeId()
 	return next++;
 }
 
-template <typename T>
+template <typename T> requires std::same_as<T, std::remove_cvref_t<T>>
 inline UserEventTypeId GetUserEventTypeId()
 {
 	static UserEventTypeId id = NextUserEventTypeId();

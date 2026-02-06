@@ -135,13 +135,16 @@ public:
     template <typename T>
     T& AddComponent(Entity_t entity, T&& component)
     {
+        using cmp_type_t = std::remove_cvref_t<T>;
+
         const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntityIndex);
 
-        indexWithEntityIdxToGetComponentSignature_[entityIndex] |= T::componentBit;
+        indexWithEntityIdxToGetComponentSignature_[entityIndex] 
+            |= cmp_type_t::componentBit;
 
-        auto& entry = GetEntry<T>();
+        auto& entry = GetEntry<cmp_type_t>();
 
         return entry.AddComponent(entity, std::forward<T>(component));
     }

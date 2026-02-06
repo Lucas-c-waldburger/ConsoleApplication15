@@ -2,6 +2,7 @@
 #include <optional>
 #include "../IEventData.h"
 #include "../../ecs/EntityT.h"
+#include "EntityEventConcept.h"
 #include <SDL_rect.h>
 
 namespace events {
@@ -18,9 +19,9 @@ struct EntityDestroyed : IEventData<EntityDestroyed>
 	std::optional<Entity_t> parent;
 };
 
-struct EntityPositionChanged : IEventData<EntityPositionChanged>
+struct EntityPositionChanged : IEventData<EntityPositionChanged>, 
+							   EntityParticipants<1>
 {
-	Entity_t entity = kInvalidEntity;
 	SDL_FPoint newPosition = { 0.0f, 0.0f };
 	SDL_FPoint oldPosition = { 0.0f, 0.0f };
 };

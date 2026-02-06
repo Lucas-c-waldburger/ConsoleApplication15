@@ -254,6 +254,7 @@
     <ClCompile Include="test\catch\ecs\UserComponentBridgeTests.cpp" />
     <ClCompile Include="test\catch\serial\SerializationTests.cpp" />
     <ClCompile Include="test\catch\systems\SpriteAnimationSystemTests.cpp" />
+    <ClCompile Include="test\catch\systems\UserSystemSchedulerTests.cpp" />
     <ClCompile Include="test\setups\TileSet.cpp" />
     <ClCompile Include="test\ui\ControllerMappingEditor.cpp" />
     <ClCompile Include="test\ui\FileTreeView.cpp" />
@@ -455,6 +456,7 @@
     <ClInclude Include="gui\GuiContext.h" />
     <ClInclude Include="gui\GuiUtils.h" />
     <ClInclude Include="inputs\controller\GameControllerHub.h" />
+    <ClInclude Include="inputs\controller\GameControllerUtils.h" />
     <ClInclude Include="inputs\InputField.h" />
     <ClInclude Include="inputs\SignalListCollection.h" />
     <ClInclude Include="inputs\InputSource.h" />
@@ -749,6 +751,7 @@
     <ClInclude Include="systems\SpriteAnimationSystem.h" />
     <ClInclude Include="systems\System.h" />
     <ClInclude Include="systems\SystemManager.h" />
+    <ClInclude Include="systems\SystemManager2.h" />
     <ClInclude Include="systems\SystemRegistry.h" />
     <ClInclude Include="systems\TimerSystem.h" />
     <ClInclude Include="systems\util\DebugDrawUtils.h" />
@@ -795,6 +798,21 @@
     <Image Include="..\..\..\Downloads\ezgif-split\knight_anim229.png" />
     <Image Include="..\..\..\Downloads\ezgif-split\knight_anim230.png" />
     <Image Include="..\..\..\Downloads\ezgif-split\knight_anim231.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_001.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_002.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_003.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_004.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_005.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_006.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_007.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_008.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_009.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_010.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_011.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_012.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_013.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_014.png" />
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_015.png" />
     <Image Include="resources\sprites\knight\airborne\0.png" />
     <Image Include="resources\sprites\knight\airborne\1.png" />
     <Image Include="resources\sprites\knight\airborne\10.png" />

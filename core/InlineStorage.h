@@ -83,13 +83,13 @@ public:
         ops.move = [](void* dst, void* src) {
             new(dst) T(std::move(*reinterpret_cast<T*>(src)));
             reinterpret_cast<T*>(src)->~T();
-            };
+        };
 
         if constexpr (std::is_copy_constructible_v<T>)
         {
             ops.copy = [](void* dst, const void* src) {
                 new(dst) T(*reinterpret_cast<const T*>(src));
-                };
+            };
         }
 
         return *reinterpret_cast<T*>(storage);

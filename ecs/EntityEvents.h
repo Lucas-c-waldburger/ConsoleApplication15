@@ -7,56 +7,56 @@
 
 namespace detail {
 
-	template <typename Tup>
-	struct no_args_are_entities;
+template <typename Tup>
+struct no_args_are_entities;
 
-	template <template <typename...> class Tup, typename...Ts>
-	struct no_args_are_entities<Tup<Ts...>> :
-		std::bool_constant<((!std::same_as<std::remove_cvref_t<Ts>, Entity>) && ...)> {
-	};
+template <template <typename...> class Tup, typename...Ts>
+struct no_args_are_entities<Tup<Ts...>> :
+	std::bool_constant<((!std::same_as<std::remove_cvref_t<Ts>, Entity>) && ...)> {
+};
 
-	template <typename Tup>
-	struct all_args_refs;
+template <typename Tup>
+struct all_args_refs;
 
-	template <template <typename...> class Tup, typename...Ts>
-	struct all_args_refs<Tup<Ts...>> :
-		std::bool_constant<(is_non_const_reference_v<Ts> && ...)> {
-	};
+template <template <typename...> class Tup, typename...Ts>
+struct all_args_refs<Tup<Ts...>> :
+	std::bool_constant<(is_non_const_reference_v<Ts> && ...)> {
+};
 
-	template <typename Tup>
-	struct all_args_const_refs;
+template <typename Tup>
+struct all_args_const_refs;
 
-	template <template <typename...> class Tup, typename...Ts>
-	struct all_args_const_refs<Tup<Ts...>> :
-		std::bool_constant<(is_const_reference_v<Ts> && ...)> {
-	};
+template <template <typename...> class Tup, typename...Ts>
+struct all_args_const_refs<Tup<Ts...>> :
+	std::bool_constant<(is_const_reference_v<Ts> && ...)> {
+};
 
-	template <typename Tup> struct get_components_helper;
+template <typename Tup> struct get_components_helper;
 
-	template <template <typename...> class Tup, typename...ComponentTs>
-	struct get_components_helper<Tup<ComponentTs...>>
+template <template <typename...> class Tup, typename...ComponentTs>
+struct get_components_helper<Tup<ComponentTs...>>
+{
+	template <typename Ev, typename Fn>
+	static void call(Fn&& fn, const Ev& ev, Entity& e)
 	{
-		template <typename Ev, typename Fn>
-		static void call(Fn&& fn, const Ev& ev, Entity& e)
+		if (!e.HasComponents<ComponentTs...>())
 		{
-			if (!e.HasComponents<std::remove_cvref_t<ComponentTs>...>())
-			{
-				return;
-			}
-
-			std::invoke(fn, ev, e.GetComponent<std::remove_cvref_t<ComponentTs>>()...);
+			return;
 		}
-		template <typename Ev, typename Fn>
-		static void call(Fn&& fn, const Ev& ev, const Entity& e)
+
+		std::invoke(fn, ev, e.GetComponent<ComponentTs>()...);
+	}
+	template <typename Ev, typename Fn>
+	static void call(Fn&& fn, const Ev& ev, const Entity& e)
+	{
+		if (!e.HasComponents<ComponentTs...>())
 		{
-			if (!e.HasComponents<std::remove_cvref_t<ComponentTs>...>())
-			{
-				return;
-			}
-
-			std::invoke(fn, ev, e.GetComponent<std::remove_cvref_t<ComponentTs>>()...);
+			return;
 		}
-	};
+
+		std::invoke(fn, ev, e.GetComponent<ComponentTs>()...);
+	}
+};
 
 } // detail
 
@@ -134,17 +134,6 @@ inline constexpr bool valid_event_callback_sig_v =
 	 ev_callback_sig<Fn>::with_const_components_v
 );
 
-//template <typename Fn>
-//inline constexpr bool valid_user_event_callback_sig_v =
-//(
-//	!arg_0_is_event_data_v<Fn> &&
-//	ev_callback_sig<Fn>::with_event_data_only_v ||
-//	ev_callback_sig<Fn>::with_entity_v ||
-//	ev_callback_sig<Fn>::with_const_entity_v ||
-//	ev_callback_sig<Fn>::with_components_v ||
-//	ev_callback_sig<Fn>::with_const_components_v
-//);
-	 
 template <typename Src, typename Fn>
 inline constexpr bool valid_input_callback_sig_v = (
 	valid_event_callback_sig_v<Fn> && 
@@ -153,30 +142,122 @@ inline constexpr bool valid_input_callback_sig_v = (
 		std::remove_cvref_t<typename func_traits<Fn>::template arg_at<0>>>, Src>
 );
 
-template <SomeEntityEvent Ev>
-inline bool IsEntityInvolvedInEvent(const Entity& entity, const Ev& event)
+class EntityEvents
+{
+public:
+	struct FilterDef
+	{
+		using AuxiliaryFilter = bool(*)(const Entity&);
+
+		Entity_t relevantEntity = kInvalidEntity;
+		SDL_JoystickID relevantJoystickId = -1;
+	};
+
+	EntityEvents() = default;
+	EntityEvents(const Entity& e, EventBus2* bus) : entity_(e), bus_(bus) {}
+
+	template <typename Fn> requires valid_event_callback_sig_v<Fn>
+	Result<Void> OnEvent(Fn&& fn, FilterDef filterDef = {});
+
+	template <typename Src, typename Fn> requires valid_input_callback_sig_v<Src, Fn>
+	Result<Void> OnInput(Src src, Fn&& fn, FilterDef filterDef = {});
+
+	//template <typename T>
+	//bool ShouldProduceEvent() const;
+
+private:
+	Entity entity_;
+	EventBus2* bus_ = nullptr;
+};
+
+template <HasEntityParticipants Ev>
+inline bool IsEntityParticipantInEvent(const Ev& event, 
+									const EntityEvents::FilterDef& filterDef)
 {
 	static constexpr auto entityMatchesOne =
-	[]<size_t I>(const Entity& e, const Ev& ev) {
-		return e.GetID() == ev.entity<I>();
+	[]<size_t I>(const EntityEvents::FilterDef& def, const Ev& ev) {
+		return def.relevantEntity == ev.entity<I>();
 	};
 
 	static constexpr auto entityMatchesAny =
-	[]<size_t...Is>(const Entity& e, const Ev& ev, std::index_sequence<Is...>) {
-		return (entityMatchesOne.template operator()<Is>(e, ev) || ...);
+	[]<size_t...Is>(const EntityEvents::FilterDef& def, const Ev& ev, 
+					std::index_sequence<Is...>) {
+		return (entityMatchesOne.template operator()<Is>(def, ev) || ...);
 	};
 
-	return entityMatchesAny(entity, event, std::make_index_sequence<Ev::entityCount>{});
+	return entityMatchesAny(filterDef, event, 
+							std::make_index_sequence<Ev::entityCount>{});
 }
 
-template <typename Fn> requires valid_event_callback_sig_v<Fn>
-static Result<Void> OnEventImpl(EventBus2& bus, Entity& e, Fn&& fn)
+template <SomeGameControllerEvent Ev>
+inline bool IsGameControllerInEvent(const Ev& ev,
+									const EntityEvents::FilterDef& filterDef)
+{
+	return filterDef.relevantJoystickId == -1 ||
+		   filterDef.relevantJoystickId == ev.joystickID;
+	//if (filterDef.relevantJoystickId == -1)
+	//{
+	//	// no particular controller specified
+	//	return true;
+	//}
+	//if (filterDef.relevantJoystickId == ev.joystickID)
+	//{
+	//	return true;
+	//}
+	//if (filterDef.relevantEntity == kInvalidEntity)
+	//{
+	//	// no entity to look at current joystick id of
+	//	return true;
+	//}
+
+	//// check whether mismatch of joystick id is due to relevant entity's id changing
+	//auto relevantEntity = ECS::GetEntityByID(filterDef.relevantEntity);
+	//if (!relevantEntity.IsValid())
+	//{
+	//	return false;
+	//}
+	//if (!relevantEntity.HasComponent<GameControllerState>())
+	//{
+	//	return false;
+	//}
+
+	//const auto entityJoystickId =
+	//	relevantEntity.GetComponent<GameControllerState>().joystickID;
+
+	//return entityJoystickId == ev.joystickID;
+}
+
+template <typename Ev>
+inline bool IsEventRelevant(const Entity& e, const Ev& ev, 
+						    const EntityEvents::FilterDef& filterDef)
 {
 	if (!e.IsValid())
 	{
-		return MAKE_ERROR("Entity was invalid");
+		return false;
 	}
 
+	if constexpr (HasEntityParticipants<Ev>)
+	{
+		if (!IsEntityParticipantInEvent(ev, filterDef))
+		{
+			return false;
+		}
+	}
+	if constexpr (SomeGameControllerEvent<Ev>)
+	{
+		if (!IsGameControllerInEvent(ev, filterDef))
+		{
+			return false;
+		}
+	}
+
+	return true;	
+}
+
+template <typename Fn> requires valid_event_callback_sig_v<Fn>
+inline void OnEventImpl(EventBus2& bus, Entity& e, Fn&& fn, 
+						const EntityEvents::FilterDef& filterDef)
+{
 	using event_data_t = 
 		std::remove_cvref_t<typename func_traits<Fn>::template arg_at<0>>;
 
@@ -185,194 +266,162 @@ static Result<Void> OnEventImpl(EventBus2& bus, Entity& e, Fn&& fn)
 	if constexpr (ev_callback_sig<Fn>::with_event_data_only_v)
 	{
 		tks.emplace_back(bus.ConnectToEvent(
-			[e, f = std::forward<Fn>(fn)](const event_data_t& ev) {
-				if (!e.IsValid())
-				{
-					return;
-				}
-				if constexpr (SomeEntityEvent<event_data_t>)
-				{
-					if (!IsEntityInvolvedInEvent(e, ev))
-					{
-						return;
-					}
-				}
-
+		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) {
+			if (IsEventRelevant(e, ev, def))
+			{
 				std::invoke(f, ev);
-			}));
-
-		return Void{};
+			}
+		}));
 	}
 	else if constexpr (ev_callback_sig<Fn>::with_entity_v || 
 					   ev_callback_sig<Fn>::with_const_entity_v)
 	{
 		tks.emplace_back(bus.ConnectToEvent(
-			[e, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
-				if (!e.IsValid())
-				{
-					return;
-				}
-				if constexpr (SomeEntityEvent<event_data_t>)
-				{
-					if (!IsEntityInvolvedInEvent(e, ev))
-					{
-						return;
-					}
-				}
-
+		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
+			if (IsEventRelevant(e, ev, def))
+			{
 				std::invoke(f, ev, e);
-			}));
-
-		return Void{};
+			}
+		}));
 	}
 	else if constexpr (ev_callback_sig<Fn>::with_components_v || 
 					   ev_callback_sig<Fn>::with_const_components_v)
 	{
-		using cmps = pop_front_t<typename func_traits<Fn>::arg_types>;
+		using cmps = pop_front_t<remove_cvrefs_t<typename func_traits<Fn>::arg_types>>;
 
 		tks.emplace_back(bus.ConnectToEvent(
-			[e, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
-				if (!e.IsValid())
-				{
-					return;
-				}
-				if constexpr (SomeEntityEvent<event_data_t>)
-				{
-					if (!IsEntityInvolvedInEvent(e, ev))
-					{
-						return;
-					}
-				}
-
+		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
+			if (IsEventRelevant(e, ev, def))
+			{
 				ForwardEventCallbackComponents<cmps>(std::forward<Fn>(f), ev, e);
-			}));
-
-		return Void{};
-	}
-	else
-	{
-		return MAKE_ERROR("Internal inconsistency - event callback signature "
-			"did not conform to any valid signatures");
+			}
+		}));
 	}
 }
 
 template <typename Src, typename Fn> requires valid_input_callback_sig_v<Src, Fn>
-static Result<Void> OnInputImpl(EventBus2& bus, Src src, Entity& e, Fn&& fn)
+inline void OnInputImpl(EventBus2& bus, Src src, Entity& e, Fn&& fn, 
+						const EntityEvents::FilterDef& filterDef)
 {
 	using event_data_t =
 		std::remove_cvref_t<typename func_traits<Fn>::template arg_at<0>>;
-
-	if (!e.IsValid())
-	{
-		return MAKE_ERROR("Entity was invalid");
-	}
 
 	auto& tks = e.AddComponent<SignalTokenStorage>().signalTokens;
 
 	if constexpr (ev_callback_sig<Fn>::with_event_data_only_v)
 	{
 		tks.emplace_back(bus.ConnectToInput(src,
-			[e, f = std::forward<Fn>(fn)](const event_data_t& ev) {
-				if (!e.IsValid())
-				{
-					return;
-				}
-				if constexpr (SomeEntityEvent<event_data_t>)
-				{
-					if (!IsEntityInvolvedInEvent(e, ev))
-					{
-						return;
-					}
-				}
-
+		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) {
+			if (IsEventRelevant(e, ev, def))
+			{
 				std::invoke(f, ev);
-			}));
-
-		return Void{};
+			}
+		}));
 	}
 	else if constexpr (ev_callback_sig<Fn>::with_entity_v ||
 					   ev_callback_sig<Fn>::with_const_entity_v)
 	{
 		tks.emplace_back(bus.ConnectToInput(src,
-			[e, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
-				if (!e.IsValid())
-				{
-					return;
-				}
-				if constexpr (SomeEntityEvent<event_data_t>)
-				{
-					if (!IsEntityInvolvedInEvent(e, ev))
-					{
-						return;
-					}
-				}
-
+		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
+			if (IsEventRelevant(e, ev, def))
+			{
 				std::invoke(f, ev, e);
-			}));
-
-		return Void{};
+			}
+		}));
 	}
 	else if constexpr (ev_callback_sig<Fn>::with_components_v ||
 					   ev_callback_sig<Fn>::with_const_components_v)
 	{
-		using cmps = pop_front_t<typename func_traits<Fn>::arg_types>;
+		using cmps = pop_front_t<remove_cvrefs_t<typename func_traits<Fn>::arg_types>>;
 
 		tks.emplace_back(bus.ConnectToInput(src,
-			[e, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
-				if (!e.IsValid())
-				{
-					return;
-				}
-				if constexpr (SomeEntityEvent<event_data_t>)
-				{
-					if (!IsEntityInvolvedInEvent(e, ev))
-					{
-						return;
-					}
-				}
-
+		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
+			if (IsEventRelevant(e, ev, def))
+			{
 				ForwardEventCallbackComponents<cmps>(std::forward<Fn>(f), ev, e);
-			}));
-
-		return Void{};
-	}
-	else
-	{
-		return MAKE_ERROR("Internal inconsistency - input callback signature "
-			"did not conform to any valid signatures");
+			}
+		}));
 	}
 }
 
-class EntityEvents
+template <typename Fn>
+inline void ResolveFilterDefinition(Entity& e, const Fn& fn, 
+									EntityEvents::FilterDef& filterDef)
 {
-public:
-	EntityEvents() = default;
-	EntityEvents(const Entity& e, EventBus2* bus) : entity_(e), bus_(bus) {}
+	using event_data_t =
+		std::remove_cvref_t<typename func_traits<Fn>::template arg_at<0>>;
 
-	template <typename Fn> requires valid_event_callback_sig_v<Fn>
-	Result<Void> OnEvent(Fn&& fn)
+	if constexpr (HasEntityParticipants<event_data_t>)
 	{
-		if (!bus_)
+		// try to match current entity if none specified
+		if (filterDef.relevantEntity == kInvalidEntity)
 		{
-			return MAKE_ERROR("Internal EventBus was null");
+			filterDef.relevantEntity = e.GetID();
 		}
+	}
+	if constexpr (SomeGameControllerEvent<event_data_t>)
+	{
+		if (filterDef.relevantEntity != kInvalidEntity &&
+			filterDef.relevantJoystickId == -1)
+		{
+			// entity specified, try to find its corresponding joystick id
+			auto relevantEntity = ECS::GetEntityByID(filterDef.relevantEntity);
 
-		return OnEventImpl(*bus_, entity_, std::forward<Fn>(fn));
+			if (relevantEntity.IsValid() &&
+				relevantEntity.HasComponent<GameControllerState>())
+			{
+				filterDef.relevantJoystickId =
+					relevantEntity.GetComponent<GameControllerState>().joystickID;
+			}
+		}
+	}
+}
+
+template <typename Fn> requires valid_event_callback_sig_v<Fn>
+Result<Void> EntityEvents::OnEvent(Fn&& fn, FilterDef filterDef)
+{
+	if (!entity_.IsValid())
+	{
+		return MAKE_ERROR("Internal Entity was invalid");
+	}
+	if (!bus_)
+	{
+		return MAKE_ERROR("Internal EventBus was null");
 	}
 
-	template <typename Src, typename Fn> requires valid_input_callback_sig_v<Src, Fn>
-	Result<Void> OnInput(Src src, Fn&& fn)
-	{
-		if (!bus_)
-		{
-			return MAKE_ERROR("Internal EventBus was null");
-		}
+	ResolveFilterDefinition(entity_, fn, filterDef);
 
-		return OnInputImpl(*bus_, src, entity_, std::forward<Fn>(fn));
+	OnEventImpl(*bus_, entity_, std::forward<Fn>(fn), filterDef);
+
+	return kVoid;
+}
+
+template <typename Src, typename Fn> requires valid_input_callback_sig_v<Src, Fn>
+Result<Void> EntityEvents::OnInput(Src src, Fn&& fn, FilterDef filterDef)
+{
+	if (!entity_.IsValid())
+	{
+		return MAKE_ERROR("Internal Entity was invalid");
+	}
+	if (!bus_)
+	{
+		return MAKE_ERROR("Internal EventBus was null");
 	}
 
+	ResolveFilterDefinition(entity_, fn, filterDef);
 
-private:
-	Entity entity_;
-	EventBus2* bus_ = nullptr;
-};
+	OnInputImpl(*bus_, src, entity_, std::forward<Fn>(fn), filterDef);
+
+	return kVoid;
+}
+
+//template <typename T>
+//bool EntityEvents::ShouldProduceEvent() const
+//{
+//	if (!(entity_.IsValid() && bus_))
+//	{
+//		return false;
+//	}
+//
+//
+//}

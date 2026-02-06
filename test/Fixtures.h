@@ -8,7 +8,7 @@
 #include "../core/Monitoring.h"
 #include "../core/Hooks.h"
 #include "../core/Counter.h"
-#include "../systems/SystemManager.h"
+#include "../systems/SystemManager2.h"
 #include "../atlas/NewTextureRepository.h"
 #include "../events/EventBus2.h"
 
@@ -103,6 +103,18 @@ public:
 	Result<SpriteAtlas*> 
 	CreateSpriteAtlas(size_t txSize = TextureAtlas::kDefaultAtlasSize);
 
+	// system scheduling
+	template <ImplementsSystemUpdate T, typename...Args>
+		requires std::constructible_from<T, Args...>
+	T& RegisterSystem(Phase phase, Args&&...args)
+	{
+		static_assert(std::same_as<T, std::remove_cvref_t<T>>,
+			"System type argument should have no cv-ref qualifiers");
+
+		return userSystemScheduler_.RegisterSystem(
+			phase, std::forward<Args>(args)...);
+	}
+
 private:
 	void UpdateTimers();
 
@@ -113,6 +125,7 @@ private:
 	ScriptManager scripts_;
 	TestScript testScript_;
 	EventBus2 eventBus_;
+	UserSystemScheduler userSystemScheduler_;
 };
 
 template<typename Fn> requires std::is_invocable_r_v<bool, Fn>

@@ -14,23 +14,9 @@ class EventStorageImpl<TypeList<Ts...>, TypeList<Us...>>
 {
 public:
 	static_assert(sizeof...(Ts) > 0);
-	//static_assert(sizeof...(Us) > 0);
+	static_assert(sizeof...(Us) > 0);
 
 	static constexpr size_t N = sizeof...(Ts);
-
-	//template <typename T>
-	//static void EmplaceUserEventImpl(InlineStorage<kUserEventStorageSize>& data,
-	//								 EventStorageImpl& self)
-	//{
-	//	auto& storageVec = std::get<std::vector<T>>(self.storage_);
-	//	if (storageVec.empty())
-	//	{
-	//		self.heldEventIndices_[self.heldEventHead_++] = T::eventType;
-	//	}
-
-	//	auto& newEv = storageVec.emplace_back();
-	//	newEv.data = std::move(data);
-	//}
 
 	template <typename T>
 	static InlineStorage<kUserEventStorageSize>& 
@@ -56,10 +42,12 @@ public:
 	template <typename T>
 	void Emplace(T&& event)
 	{
-		if constexpr (!SomeEventData<T>)
+		using event_data_t = std::remove_cvref_t<T>;
+
+		if constexpr (!SomeEventData<event_data_t>)
 		{
 			// user event data
-			const auto typeId = static_cast<size_t>(GetUserEventTypeId<T>());
+			const auto typeId = static_cast<size_t>(GetUserEventTypeId<event_data_t>());
 			if (typeId >= sizeof...(Us))
 			{
 				LOG_ERROR("No more user events can be added");
@@ -69,15 +57,15 @@ public:
 			auto& newStorage = 
 				std::invoke(kGetNewUserEventStorageDispatchTable[typeId], *this);
 
-			newStorage.Emplace<T>(std::forward<T>(event));
+			newStorage.Emplace<event_data_t>(std::forward<T>(event));
 		}
 		else
 		{
-			auto& storageVec = std::get<std::vector<T>>(storage_);
+			auto& storageVec = std::get<std::vector<event_data_t>>(storage_);
 			if (storageVec.empty())
 			{
 				// need to mark that this event type has at least 1 event to be dispatched
-				heldEventIndices_[heldEventHead_++] = T::eventType;
+				heldEventIndices_[heldEventHead_++] = event_data_t::eventType;
 			}
 
 			storageVec.emplace_back(std::forward<T>(event));

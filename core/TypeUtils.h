@@ -323,10 +323,25 @@ struct add_const_ref
 {
 	using type = std::add_const_t<std::add_lvalue_reference_t<T>>;
 };
-}
+} // detail
 
 template <typename T>
 using add_const_ref_t = detail::add_const_ref<T>::type;
+
+/* REMOVE CV-REFS */
+namespace detail {
+template <typename Tup>
+struct remove_cvrefs;
+
+template <template <typename...> class Tup, typename...Ts>
+struct remove_cvrefs<Tup<Ts...>> 
+{
+	using type = Tup<std::remove_cvref_t<Ts>...>;
+};
+} // detail
+
+template <typename Tup>
+using remove_cvrefs_t = detail::remove_cvrefs<Tup>::type;
 
 /* INDEX SEQUENCE OFFSET */
 
@@ -354,6 +369,34 @@ struct pop_front<Tup<T, Ts...>> { using type = Tup<Ts...>; };
 
 template <typename Tup>
 using pop_front_t = typename detail::pop_front<Tup>::type;
+
+/* TRANSFORM TYPE CVREF */
+namespace detail {
+template <typename Src, typename Dest>
+struct transform_type_with_cvref
+{
+	using DestRaw = std::remove_cvref_t<Dest>;
+	using SrcNoRef = std::remove_reference_t<Src>;
+
+	static constexpr bool is_lval_ref = std::is_lvalue_reference_v<Src>;
+	static constexpr bool is_rval_ref = std::is_rvalue_reference_v<Src>;
+	static constexpr bool is_const = std::is_const_v<SrcNoRef>;
+	static constexpr bool is_ptr = std::is_pointer_v<SrcNoRef>;
+
+	using base =
+		std::conditional_t<is_ptr, DestRaw*, DestRaw>;
+
+	using cv =
+		std::conditional_t<is_const, std::add_const_t<base>, base>;
+
+	using type =
+		std::conditional_t<is_lval_ref, cv&,
+		std::conditional_t<is_rval_ref, cv&&, cv>>;
+};
+} // detail 
+
+template <typename Src, typename Dest>
+using transform_type_with_cvref_t = detail::transform_type_with_cvref<Src, Dest>::type;
 
 template <typename T> concept ArithmeticType = std::is_arithmetic_v<T>;
 

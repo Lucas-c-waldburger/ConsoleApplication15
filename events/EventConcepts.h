@@ -23,4 +23,3 @@ struct is_event_group<EventGroup<Ts...>> : std::true_type {};
 
 template <typename T>
 concept SomeEventGroup = detail::is_event_group<T>::value;
-

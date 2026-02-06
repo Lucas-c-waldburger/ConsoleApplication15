@@ -111,11 +111,13 @@ void UpdateTransformComponents(EventBus2& bus)
 		if (newPosition != transform.position && 
 			EntityShouldProduceEvent<events::EntityPositionChanged>(entity))
 		{
-			bus.PushEvent(events::EntityPositionChanged{
-				.entity = entity.GetID(),
+			events::EntityPositionChanged ev{
 				.newPosition = newPosition,
 				.oldPosition = transform.position
-			});
+			};
+			ev.entity<0>() = entity.GetID();
+
+			bus.PushEvent(std::move(ev));
 		}
 
 		transform.position = newPosition;

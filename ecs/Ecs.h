@@ -34,7 +34,8 @@ public:
     Entity() : id_(kInvalidEntity), ecs_(nullptr) {}
     Entity(Entity_t id, ECS& ecs) : id_(id), ecs_(&ecs) {}
 
-    template <typename T> requires Entity::public_mutable_component_v<T>
+    template <typename T> 
+        requires Entity::public_mutable_component_v<std::remove_cvref_t<T>>
     T& AddComponent(T&& cmp);
     template <typename T> requires Entity::public_mutable_component_v<T>
     T& AddComponent();
@@ -298,15 +299,18 @@ private:
     template <typename T>
     T& AddComponent(Entity_t entity, T&& cmp)
     {
-        if constexpr (SomeComponent<T>)
-        {
-            HandleUpdateTrigger<T>(entity);
+        using cmp_type_t = std::remove_cvref_t<T>;
 
-            return componentManager_.AddComponent<T>(entity, std::forward<T>(cmp));
+        if constexpr (SomeComponent<cmp_type_t>)
+        {
+            HandleUpdateTrigger<cmp_type_t>(entity);
+
+            return componentManager_.AddComponent<cmp_type_t>(
+                entity, std::forward<T>(cmp));
         }
         else
         {
-            return userComponentBridge_.AddComponentData<T>(
+            return userComponentBridge_.AddComponentData<cmp_type_t>(
                 entity, componentManager_, std::forward<T>(cmp));
         }
     }
@@ -578,13 +582,14 @@ private:
 };
 
 // ENTITY DEFS //
-template <typename T> requires Entity::public_mutable_component_v<T>
+template <typename T> 
+    requires Entity::public_mutable_component_v<std::remove_cvref_t<T>>
 inline T& Entity::AddComponent(T&& cmp)
 {
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
-    return ecs_->AddComponent<T>(id_, std::forward<T>(cmp));
+    return ecs_->AddComponent<std::remove_cvref_t<T>>(id_, std::forward<T>(cmp));
 }
 
 template <typename T> requires Entity::public_mutable_component_v<T>
@@ -602,7 +607,7 @@ inline T& Entity::AddComponent(T&& cmp, EntityPassKey)
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
-    return ecs_->AddComponent<T>(id_, std::forward<T>(cmp));
+    return ecs_->AddComponent<std::remove_cvref_t<T>>(id_, std::forward<T>(cmp));
 }
 
 template <typename T>

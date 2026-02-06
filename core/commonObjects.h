@@ -10,6 +10,7 @@
 
 
 struct Void {};
+inline constexpr Void kVoid{};
 
 template <typename Tup, typename Fn, size_t... Is>
 static void ForEachInTupleImpl(Tup&& tup, Fn&& fn, std::index_sequence<Is...>)

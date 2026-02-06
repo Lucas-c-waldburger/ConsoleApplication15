@@ -381,6 +381,9 @@
     <ClCompile Include="test\catch\ecs\EntityEventTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\catch\systems\UserSystemSchedulerTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1901,6 +1904,12 @@
     <ClInclude Include="user\UserEventUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inputs\controller\GameControllerUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\SystemManager2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -2339,6 +2348,51 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="resources\sprites\sword_slash\sword_slash_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_006.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_007.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_008.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_009.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_010.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_011.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_012.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_013.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_014.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\crosshairs\Sight_64x64_015.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

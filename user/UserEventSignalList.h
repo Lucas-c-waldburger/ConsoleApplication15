@@ -23,6 +23,7 @@ public:
 		const auto typeId = static_cast<size_t>(GetUserEventTypeId<UserData>());
 		if (typeId >= signals_.size())
 		{
+			LOG_ERROR("No more user events can be registered");
 			return {};
 		}
 
