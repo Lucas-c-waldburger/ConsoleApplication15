@@ -15,13 +15,9 @@ void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 
 		e.RemoveComponent<NeedsAnimationUpdate>(GetEntityPassKey());
 
-		auto* atlas = textureRepo.GetAtlas<SpriteAtlas>(anim.sourceAtlas);
-		if (!atlas)
-		{ 
-			continue;
-		}
+		const auto& spriteAtlas = textureRepo.GetSpriteAtlas();
 
-		const size_t seriesSize = atlas->GetSpriteSeriesSize(anim.spriteSeriesName);
+		const size_t seriesSize = spriteAtlas.GetSpriteSeriesSize(anim.spriteSeriesName);
 		assert(seriesSize > 0);
 
 		if (seriesSize == std::numeric_limits<size_t>::max())
@@ -39,9 +35,9 @@ void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 			anim.currentIndex = 0;
 		}
 
-		auto newSprite = atlas->GetSpriteSeriesMember(anim.spriteSeriesName, 
-													  anim.currentIndex);
-		if (!atlas->IsSpriteValid(newSprite))
+		auto newSprite = spriteAtlas.GetSpriteSeriesMember(anim.spriteSeriesName, 
+														   anim.currentIndex);
+		if (!newSprite.resourceHandle.IsValid())
 		{
 			LOG_ERROR("Could not retrieve new sprite for animation series");
 			continue;

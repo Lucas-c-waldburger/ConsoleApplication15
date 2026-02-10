@@ -25,7 +25,8 @@ bool SDLInputSystem::Update(float delta, EventBus2& bus,
 			return false;
 
 		case SDL_RENDER_TARGETS_RESET:
-			LOG_IF_ERROR(repo.RebuildAtlasTextures(renderer));
+		case SDL_RENDER_DEVICE_RESET:
+			bus.PushEvent(events::RenderReset{});
 			break;
 
 		case SDL_CONTROLLERDEVICEADDED:
@@ -55,6 +56,8 @@ bool SDLInputSystem::Update(float delta, EventBus2& bus,
 	mouseHandler_.Finalize(delta, bus);
 
 	bus.DispatchEvents();
+
+	SDL_zero(sdlEvent_);
 
 	return true;
 }

@@ -318,10 +318,3 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 
 	return Result<std::shared_ptr<SceneFixture>>{ std::move(fixture) };
 }
-
-Result<SpriteAtlas*> 
-SceneFixture::CreateSpriteAtlas(size_t txSize)
-{
-	return textureRepo_.CreateAtlas<SpriteAtlas>(GetRenderer(), txSize);
-}
-

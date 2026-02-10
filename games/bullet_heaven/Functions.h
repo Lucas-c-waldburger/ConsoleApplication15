@@ -80,7 +80,7 @@ struct CrosshairComponent
 
 
 
-static Result<Entity> SetUpCrosshairEntity(Entity& parent, SpriteAtlas& atlas, 
+static Result<Entity> SetUpCrosshairEntity(Entity& parent, SpriteAtlasTexture& atlas, 
 										   EventBus2& bus, B2World& world)
 {
 	assert(parent.IsValid());
@@ -93,8 +93,8 @@ static Result<Entity> SetUpCrosshairEntity(Entity& parent, SpriteAtlas& atlas,
 	assert(atlas.IsLoaded());
 	auto& rend = e.AddComponent<SpriteRenderableComponent>();
 
-	TRY_ASSIGN(rend.sprite, atlas.LoadSprite(SDLite::Renderer(),
-		{ .filepath = GetCrosshairSpritePath() }));
+	//TRY_ASSIGN(rend.sprite, atlas.LoadSprite(SDLite::Renderer(),
+	//	{ .filepath = GetCrosshairSpritePath() }));
 
 	e.AddComponent<CrosshairComponent>();
 
@@ -134,21 +134,21 @@ static Result<Entity> SetUpCrosshairEntity(Entity& parent, SpriteAtlas& atlas,
 	return e;
 }
 
-static Result<Entity> SetUpPlayerEntity(Entity& parent, SpriteAtlas& atlas,
+static Result<Entity> SetUpPlayerEntity(Entity& parent, SpriteAtlasTexture& atlas,
 										EventBus2& bus, B2World& world)
 {
-	auto e = ECS::CreateEntity();
-	assert(e.IsValid());
+	//auto e = ECS::CreateEntity();
+	//assert(e.IsValid());
 
-	e.AddComponent<Transform>().position = SDLite::Window().GetLocalCenter<SDL_FPoint>();
+	//e.AddComponent<Transform>().position = SDLite::Window().GetLocalCenter<SDL_FPoint>();
 
-	auto& rend = e.AddComponent<SpriteRenderableComponent>();
-	TRY_ASSIGN(rend.sprite, atlas.LoadSprite(SDLite::Renderer(),
-		{ .filepath = GetKnightSpritePath() }));
+	//auto& rend = e.AddComponent<SpriteRenderableComponent>();
+	//TRY_ASSIGN(rend.sprite, atlas.LoadSprite(SDLite::Renderer(),
+	//	{ .filepath = GetKnightSpritePath() }));
 
 
 
-	TRY(SetUpCrosshairEntity(e, atlas, bus, world), crosshairEnt);
+	//TRY(SetUpCrosshairEntity(e, atlas, bus, world), crosshairEnt);
 }
 
 

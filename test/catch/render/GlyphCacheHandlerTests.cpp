@@ -8,7 +8,8 @@
 
 namespace {
 
-void RenderTextGlyphs(std::string_view fileName, const TextRenderableGlyphCache& glyphCache, 
+void RenderTextGlyphs(std::string_view fileName, 
+					  const TextRenderableGlyphCache& glyphCache, 
 					  const TextRenderableComponent& textRenderable, 
 					  const Transform& tf, SDL_Texture* srcTexture)
 {
@@ -21,7 +22,7 @@ void RenderTextGlyphs(std::string_view fileName, const TextRenderableGlyphCache&
 
 	for (const auto& [glyph, destRect, rotCenter] : glyphCache.cache)
 	{
-		if (glyph == GlyphAtlas::kNewlineGlyph)
+		if (glyph == FontAtlasTexture::kNewlineGlyph)
 		{
 			continue;
 		}
@@ -54,25 +55,26 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 		.fontSize = 24
 	};
 
-	auto glyphAtlasResult = GlyphAtlas::Create(SDLite::Renderer(), std::move(fontDesc));
-	REQUIRE_RESULT(glyphAtlasResult);
-	CHECK(glyphAtlasResult.GetValue().IsLoaded());
-
-	auto& glyphAtlas = glyphAtlasResult.GetValue();
-	CHECK(glyphAtlas.GetHandle().IsValid());
+	FontAtlas fontAtlas{};
+	auto fontLoadResult = fontAtlas.LoadFont(SDLite::Renderer(), std::move(fontDesc));
+	REQUIRE_RESULT(fontLoadResult);
+	
+	CHECK(fontAtlas.HasFont("GoNotoCurrent-Bold"));
+	const auto& font = fontAtlas.GetFont("GoNotoCurrent-Bold");
+	CHECK(font.IsLoaded());
 
 	TextRenderableComponent textRenderable{
-		.writer = glyphAtlas.GetTextWriter(),
+		.writer = fontAtlas.GetTextWriter("GoNotoCurrent-Bold"),
 		.formatting = {
 			.bounds = { 500, 200 },
 			.scaleToBounds = false
 		}
 	};
-	CHECK(textRenderable.writer.sourceAtlas == glyphAtlas.GetHandle());
+	CHECK(textRenderable.writer.resourceHandle.IsValid());
 
 	textRenderable.writer.text = "Rusty shackleford";
 
-	auto glyphsFromAtlas = glyphAtlas.GetGlyphsForString(textRenderable.writer.text);
+	auto glyphsFromAtlas = font.GetGlyphsForString(textRenderable.writer.text);
 
 	Transform transform{
 		//.position = { SDLite::kFWindowCenter.x - 150, SDLite::kFWindowCenter.y }
@@ -82,13 +84,13 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 
 	TextRenderableGlyphCache glyphCache{};
 
-	GlyphCacheHandler::UpdateGlyphCache(glyphAtlas, textRenderable, 
+	GlyphCacheHandler::UpdateGlyphCache(font, textRenderable, 
 										glyphCache, transform);
 
 	auto& [glyphs, ctx] = glyphCache;
 
 	// Context updated correctly
-	CHECK(ctx.sourceAtlas == textRenderable.writer.sourceAtlas);
+	CHECK(ctx.resourceHandle == textRenderable.writer.resourceHandle);
 	CHECK(ctx.transform == transform);
 	CHECK(ctx.formatting == textRenderable.formatting);
 
@@ -104,7 +106,7 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 	}
 
 	auto renderOriginalTransparent = 
-		[srcTexture = glyphAtlas.GetSourceTexture(), cacheCopy = glyphCache,
+		[srcTexture = font.GetSourceTexture(), cacheCopy = glyphCache,
 		 color = textRenderable.profile.mods.color, 
 		tfRot = transform.rotation, flip = textRenderable.profile.flip] {
 
@@ -119,7 +121,7 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 
 		for (const auto& [glyph, destRect, rotCenter] : cacheCopy.cache)
 		{
-			if (glyph == GlyphAtlas::kNewlineGlyph)
+			if (glyph == FontAtlasTexture::kNewlineGlyph)
 			{
 				continue;
 			}
@@ -134,8 +136,8 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 
 		SDLite::Renderer().Clear(SDLite::kColorWhite);
 
-		RenderTextGlyphs("GlyphCacheHandler_no_changes.png",
-			glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
+		RenderTextGlyphs("GlyphCacheHandler_no_changes_NEW.png",
+			glyphCache, textRenderable, transform, font.GetSourceTexture());
 
 		SDLite::Exit();
 	}
@@ -147,13 +149,13 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 
 		auto [oldGlyphs, oldCtx] = glyphCache;
 
-		GlyphCacheHandler::UpdateGlyphCache(glyphAtlas, textRenderable, 
+		GlyphCacheHandler::UpdateGlyphCache(font, textRenderable, 
 											glyphCache, transform);
 
 		auto& [newGlyphs, newCtx] = glyphCache;
 		CHECK(newCtx.transform == transform);
 		CHECK(newCtx.formatting == textRenderable.formatting);
-		CHECK(newCtx.sourceAtlas == textRenderable.writer.sourceAtlas);
+		CHECK(newCtx.resourceHandle == textRenderable.writer.resourceHandle);
 		CHECK(newCtx.offset == textRenderable.profile.offset);
 
 		REQUIRE(newGlyphs.size() == oldGlyphs.size());
@@ -170,8 +172,8 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 		}
 
 		renderOriginalTransparent();
-		RenderTextGlyphs("GlyphCacheHandler_change_transform_pos.png",
-			glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
+		RenderTextGlyphs("GlyphCacheHandler_change_transform_pos_NEW.png",
+			glyphCache, textRenderable, transform, font.GetSourceTexture());
 
 		SDLite::Exit();
 	}
@@ -183,13 +185,13 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 
 		auto [oldGlyphs, oldCtx] = glyphCache;
 
-		GlyphCacheHandler::UpdateGlyphCache(glyphAtlas, textRenderable,
+		GlyphCacheHandler::UpdateGlyphCache(font, textRenderable,
 											glyphCache, transform);
 
 		auto& [newGlyphs, newCtx] = glyphCache;
 		CHECK(newCtx.transform == transform);
 		CHECK(newCtx.formatting == textRenderable.formatting);
-		CHECK(newCtx.sourceAtlas == textRenderable.writer.sourceAtlas);
+		CHECK(newCtx.resourceHandle == textRenderable.writer.resourceHandle);
 		CHECK(newCtx.offset == textRenderable.profile.offset);
 
 		REQUIRE(newGlyphs.size() == oldGlyphs.size());
@@ -206,8 +208,8 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 		}
 
 		renderOriginalTransparent();
-		RenderTextGlyphs("GlyphCacheHandler_change_offset_pos.png",
-			glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
+		RenderTextGlyphs("GlyphCacheHandler_change_offset_pos_NEW.png",
+			glyphCache, textRenderable, transform, font.GetSourceTexture());
 
 		SDLite::Exit();
 	}
@@ -219,13 +221,13 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 
 		auto [oldGlyphs, oldCtx] = glyphCache;
 
-		GlyphCacheHandler::UpdateGlyphCache(glyphAtlas, textRenderable,
-			glyphCache, transform);
+		GlyphCacheHandler::UpdateGlyphCache(font, textRenderable,
+										    glyphCache, transform);
 
 		auto& [newGlyphs, newCtx] = glyphCache;
 		CHECK(newCtx.transform == transform);
 		CHECK(newCtx.formatting == textRenderable.formatting);
-		CHECK(newCtx.sourceAtlas == textRenderable.writer.sourceAtlas);
+		CHECK(newCtx.resourceHandle == textRenderable.writer.resourceHandle);
 		CHECK(newCtx.offset == textRenderable.profile.offset);
 
 		REQUIRE(newGlyphs.size() == oldGlyphs.size());
@@ -242,8 +244,8 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 		}
 
 		renderOriginalTransparent();
-		RenderTextGlyphs("GlyphCacheHandler_change_scale.png",
-			glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
+		RenderTextGlyphs("GlyphCacheHandler_change_scale_NEW.png",
+			glyphCache, textRenderable, transform, font.GetSourceTexture());
 
 		SDLite::Exit();
 	}
@@ -254,13 +256,13 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 
 		auto [oldGlyphs, oldCtx] = glyphCache;
 
-		GlyphCacheHandler::UpdateGlyphCache(glyphAtlas, textRenderable,
+		GlyphCacheHandler::UpdateGlyphCache(font, textRenderable,
 											glyphCache, transform);
 
 		auto& [newGlyphs, newCtx] = glyphCache;
 		CHECK(newCtx.transform == transform);
 		CHECK(newCtx.formatting == textRenderable.formatting);
-		CHECK(newCtx.sourceAtlas == textRenderable.writer.sourceAtlas);
+		CHECK(newCtx.resourceHandle == textRenderable.writer.resourceHandle);
 		CHECK(newCtx.offset == textRenderable.profile.offset);
 
 		REQUIRE(newGlyphs.size() == oldGlyphs.size());
@@ -277,8 +279,8 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 		}
 
 		renderOriginalTransparent();
-		RenderTextGlyphs("GlyphCacheHandler_change_rotation.png",
-			glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
+		RenderTextGlyphs("GlyphCacheHandler_change_rotation_NEW.png",
+			glyphCache, textRenderable, transform, font.GetSourceTexture());
 
 		SDLite::Exit();
 	}
@@ -290,16 +292,16 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 
 		auto [oldGlyphs, oldCtx] = glyphCache;
 
-		GlyphCacheHandler::UpdateGlyphCache(glyphAtlas, textRenderable,
-			glyphCache, transform);
+		GlyphCacheHandler::UpdateGlyphCache(font, textRenderable,
+											glyphCache, transform);
 
 		auto& [newGlyphs, newCtx] = glyphCache;
 		CHECK(newCtx.transform == transform);
 		CHECK(newCtx.formatting == textRenderable.formatting);
-		CHECK(newCtx.sourceAtlas == textRenderable.writer.sourceAtlas);
+		CHECK(newCtx.resourceHandle == textRenderable.writer.resourceHandle);
 		CHECK(newCtx.offset == textRenderable.profile.offset);
 
-		auto newGlyphsFromAtlas = glyphAtlas.GetGlyphsForString(textRenderable.writer.text);
+		auto newGlyphsFromAtlas = font.GetGlyphsForString(textRenderable.writer.text);
 
 		REQUIRE(newGlyphs.size() != oldGlyphs.size());
 		REQUIRE(newGlyphs.size() == newGlyphsFromAtlas.size());
@@ -309,7 +311,7 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 			CHECK(newGlyphs[i].glyph == newGlyphsFromAtlas[i]);
 			CHECK(newGlyphs[i].glyph.character == textRenderable.writer.text[i]);
 
-			if (newGlyphs[i].glyph != GlyphAtlas::kNewlineGlyph)
+			if (newGlyphs[i].glyph != FontAtlasTexture::kNewlineGlyph)
 			{
 				CHECK(newGlyphs[i].destRect.w > 0);
 				CHECK(newGlyphs[i].destRect.h > 0);
@@ -317,8 +319,8 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 		}
 
 		renderOriginalTransparent();
-		RenderTextGlyphs("GlyphCacheHandler_change_text.png",
-			glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
+		RenderTextGlyphs("GlyphCacheHandler_change_text_NEW.png",
+			glyphCache, textRenderable, transform, font.GetSourceTexture());
 
 		SDLite::Exit();
 	}
@@ -336,13 +338,13 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 
 			auto [oldGlyphs, oldCtx] = glyphCache;
 
-			GlyphCacheHandler::UpdateGlyphCache(glyphAtlas, textRenderable,
-				glyphCache, transform);
+			GlyphCacheHandler::UpdateGlyphCache(font, textRenderable,
+												glyphCache, transform);
 
 			auto& [newGlyphs, newCtx] = glyphCache;
 			CHECK(newCtx.transform == transform);
 			CHECK(newCtx.formatting == textRenderable.formatting);
-			CHECK(newCtx.sourceAtlas == textRenderable.writer.sourceAtlas);
+			CHECK(newCtx.resourceHandle == textRenderable.writer.resourceHandle);
 			CHECK(newCtx.offset == textRenderable.profile.offset);
 
 			REQUIRE(newGlyphs.size() == oldGlyphs.size());
@@ -358,8 +360,8 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 			}
 
 			renderOriginalTransparent();
-			RenderTextGlyphs(std::format("GlyphCacheHandler_change_text_align_{}.png", alignStr),
-				glyphCache, textRenderable, transform, glyphAtlas.GetSourceTexture());
+			RenderTextGlyphs(std::format("GlyphCacheHandler_change_text_align_NEW{}.png", 
+				alignStr), glyphCache, textRenderable, transform, font.GetSourceTexture());
 		}
 
 		SDLite::Exit();

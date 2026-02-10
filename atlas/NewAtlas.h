@@ -1,14 +1,16 @@
 #pragma once
 #include <memory>
 #include "../sdl/SDLUtils.h"
-#include "../core/Handle.h"
+#include "TextureResourceHandle.h"
+#include "../core/Signal.h"
 #include "PackingTools.h"
 
-using UniqueTexturePtr = std::unique_ptr < SDL_Texture,
+using UniqueTexturePtr = std::unique_ptr<SDL_Texture,
 	decltype([](SDL_Texture* t) { SDL_DestroyTexture(t); }) > ;
 
-inline UniqueTexturePtr MakeUniqueTexturePtr(SDL_Renderer* renderer, SDL_PixelFormatEnum fmt,
-	SDL_TextureAccess access, int w, int h)
+inline UniqueTexturePtr 
+MakeUniqueTexturePtr(SDL_Renderer* renderer, SDL_PixelFormatEnum fmt,
+					 SDL_TextureAccess access, int w, int h)
 {
 	return UniqueTexturePtr{ SDL_CreateTexture(renderer, fmt, access, w, h) };
 }
@@ -38,6 +40,57 @@ struct AtlasPlot
 
 static constexpr size_t kSizeMax = std::numeric_limits<size_t>::max();
 
+//class TextureAtlas
+//{
+//public:
+//	static constexpr size_t kDefaultAtlasSize = 1024;
+//	static constexpr size_t kMaxAtlasSize = 4096;
+//
+//	TextureAtlas() = default;
+//	~TextureAtlas() = default;
+//
+//	TextureAtlas(const TextureAtlas&) = delete;
+//	TextureAtlas& operator=(const TextureAtlas&) = delete;
+//
+//	TextureAtlas(TextureAtlas&& other) noexcept : 
+//		atlasTexture_(std::move(other.atlasTexture_)),
+//		binPack_(std::move(other.binPack_)),
+//		textureSize_(other.textureSize_),
+//		handle_(std::move(other.handle_)) 
+//	{}
+//
+//	TextureAtlas& operator=(TextureAtlas&& other) noexcept
+//	{
+//		if (this != &other)
+//		{
+//			atlasTexture_ = std::move(other.atlasTexture_);
+//			binPack_ = std::move(other.binPack_);
+//			textureSize_ = other.textureSize_;
+//			handle_ = std::move(other.handle_);
+//		}
+//		return *this;
+//	}
+//
+//	SDL_Texture* GetSourceTexture() const { return atlasTexture_.get(); }
+//
+//	const Handle<TextureAtlas>& GetHandle() const { return handle_; }
+//
+//	bool IsLoaded() const { return handle_.IsValid() && atlasTexture_; }
+//
+//	size_t GetTextureSize() const noexcept { return textureSize_; }
+//
+//protected:
+//	explicit TextureAtlas(Handle<TextureAtlas>&& handle) : 
+//		handle_(std::move(handle)) {}
+//
+//	UniqueTexturePtr atlasTexture_;
+//	rbp::MaxRectsBinPack binPack_;
+//	size_t textureSize_ = 0;
+//
+//private:
+//	Handle<TextureAtlas> handle_;
+//};
+
 class TextureAtlas
 {
 public:
@@ -50,11 +103,11 @@ public:
 	TextureAtlas(const TextureAtlas&) = delete;
 	TextureAtlas& operator=(const TextureAtlas&) = delete;
 
-	TextureAtlas(TextureAtlas&& other) noexcept : 
+	TextureAtlas(TextureAtlas&& other) noexcept :
 		atlasTexture_(std::move(other.atlasTexture_)),
 		binPack_(std::move(other.binPack_)),
 		textureSize_(other.textureSize_),
-		handle_(std::move(other.handle_)) 
+		atlasId_(other.atlasId_)
 	{}
 
 	TextureAtlas& operator=(TextureAtlas&& other) noexcept
@@ -64,44 +117,30 @@ public:
 			atlasTexture_ = std::move(other.atlasTexture_);
 			binPack_ = std::move(other.binPack_);
 			textureSize_ = other.textureSize_;
-			handle_ = std::move(other.handle_);
+			atlasId_ = other.atlasId_;
 		}
 		return *this;
 	}
 
 	SDL_Texture* GetSourceTexture() const { return atlasTexture_.get(); }
 
-	const Handle<TextureAtlas>& GetHandle() const { return handle_; }
+	TextureAtlasID GetAtlasID() const { return atlasId_; }
 
-	bool IsLoaded() const { return handle_.IsValid() && atlasTexture_; }
+	bool IsLoaded() const { return atlasId_ < atlasIdCounter && atlasTexture_; }
 
 	size_t GetTextureSize() const noexcept { return textureSize_; }
 
 protected:
-	explicit TextureAtlas(Handle<TextureAtlas>&& handle) : 
-		handle_(std::move(handle)) {}
+	static constexpr TextureAtlasID GetNextAtlasID() { return atlasIdCounter++; }
+
+	explicit TextureAtlas(TextureAtlasID id) : atlasId_(id) {}
 
 	UniqueTexturePtr atlasTexture_;
 	rbp::MaxRectsBinPack binPack_;
 	size_t textureSize_ = 0;
 
 private:
-	Handle<TextureAtlas> handle_;
+	static inline TextureAtlasID atlasIdCounter = 0;
+
+	TextureAtlasID atlasId_ = kInvalidTextureAtlasID;
 };
-
-
-//template <typename DerivedAtlas> 
-//class AtlasContract : public TextureAtlas
-//{
-//public:
-//	AtlasContract() = default;
-//	~AtlasContract() = default;
-//
-//	template <typename...Args>
-//	static Result<DerivedAtlas> Create(SDL_Renderer* renderer, Args&&...args)
-//	{
-//		return DerivedAtlas::CreateImpl(renderer, std::forward<Args>(args)...);
-//	}
-//
-//private:
-//};

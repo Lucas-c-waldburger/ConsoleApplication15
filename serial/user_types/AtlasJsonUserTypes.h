@@ -17,6 +17,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FontDescriptor, fontName, filepath,
 
 
 /* SPRITE INFO SOA*/
+inline constexpr std::string_view kAtlasIdKey = "atlasId";
 inline constexpr std::string_view kPlotKey = "plot";
 inline constexpr std::string_view kSpriteNameKey = "spriteName";
 inline constexpr std::string_view kFilepathKey = "filepath";
@@ -28,13 +29,13 @@ inline void to_json(BasicJson& j, const SpriteInfoSOA& spriteInfoSoa)
 {
 	auto& obj = BasicJson::object();
 
-	auto& plots  = obj[kPlotKey]	   = BasicJson::array();
-	auto& names  = obj[kSpriteNameKey] = BasicJson::array();
-	auto& paths  = obj[kFilepathKey]   = BasicJson::array();
-	auto& series = obj[kSeriesName]    = BasicJson::array();
-	auto& idxs   = obj[kSeriesIndex]   = BasicJson::array();
+	auto& plots     = obj[kPlotKey]	      = BasicJson::array();
+	auto& names     = obj[kSpriteNameKey] = BasicJson::array();
+	auto& paths     = obj[kFilepathKey]   = BasicJson::array();
+	auto& series    = obj[kSeriesName]    = BasicJson::array();
+	auto& idxs      = obj[kSeriesIndex]   = BasicJson::array();
 
-	for (const auto& [plot, name, path, series, idx] : spriteInfoSoa.ForEach())
+	for (const auto& [_, plot, name, path, series, idx] : spriteInfoSoa.ForEach())
 	{
 		plots.push_back(plot);
 		names.push_back(name);
@@ -76,40 +77,73 @@ inline constexpr std::string_view kSpriteDescriptorsKey = "spriteDescriptors";
 inline constexpr std::string_view kTextureSizeKey = "textureSize";
 inline constexpr std::string_view kFontDescriptorKey = "fontDescriptor";
 
-//inline constexpr std::string_view kBinPackKey = "binPack_";
-
-//inline constexpr std::string_view kSpriteInfoKey = "spriteInfo_";
-//inline constexpr std::string_view kSpriteIndicesKey = "spriteIndices_";
-//inline constexpr std::string_view kSeriesRangesKey = "seriesRanges_";
-
 /* SPRITE ATLAS */
+template <typename BasicJson>
 inline void to_json(nlohmann::json& j, const SpriteAtlas& atlas)
 {
-	if (!atlas.IsLoaded())   
+	auto& obj = BasicJson::object();
+
+	auto& atlasIds  = obj[kAtlasIdKey]	  = BasicJson::array();
+	auto& plots     = obj[kPlotKey]	      = BasicJson::array();
+	auto& names     = obj[kSpriteNameKey] = BasicJson::array();
+	auto& paths     = obj[kFilepathKey]   = BasicJson::array();
+	auto& series    = obj[kSeriesName]    = BasicJson::array();
+	auto& idxs      = obj[kSeriesIndex]   = BasicJson::array();
+
+	for (const auto& [id, plot, name, path, series, idx] : atlas.IterSpriteInfo())
 	{
-		return;
+		atlasIds.push_back(id);
+		plots.push_back(plot);
+		names.push_back(name);
+		paths.push_back(path);
+		series.push_back(series);
+		idxs.push_back(idx);
 	}
 
-	j = {
-		{ kHashKey, atlas.GetHandle().GetHash() },
-		{ kTextureSizeKey, atlas.GetTextureSize() },
-		{ kSpriteDescriptorsKey, atlas.ExportSpriteDescriptors() }
-	};
+	//auto atlases = j.array();
+
+	//j = {
+	//	{ kHashKey, std::hash<uint32_t>{}(atlas.GetAtlasID()) },
+	//	{ kTextureSizeKey, atlas.GetTextureSize() },
+	//	{ kSpriteDescriptorsKey, atlas.ExportSpriteDescriptors() }
+	//};
 }
 
-/* GLYPH ATLAS */
-inline void to_json(nlohmann::json& j, const GlyphAtlas& atlas)
+/* FONT ATLAS */
+inline constexpr std::string_view kFontNameKey = "fontName";
+inline constexpr std::string_view kFontSizeKey = "fontSize";
+inline constexpr std::string_view kFontHeightKey = "fontHeight";
+
+template <typename BasicJson>
+inline void to_json(nlohmann::json& j, const FontAtlas& atlas)
 {
-	if (!atlas.IsLoaded())
+	auto& obj = BasicJson::object();
+
+	auto& atlasIds  = obj[kAtlasIdKey]    = BasicJson::array();
+	auto& names     = obj[kFontNameKey]   = BasicJson::array();
+	auto& paths     = obj[kFilepathKey]   = BasicJson::array();
+	auto& sizes     = obj[kFontSizeKey]   = BasicJson::array();
+	auto& heights   = obj[kFontHeightKey] = BasicJson::array();
+
+	for (const auto& [id, name, path, size, height] : atlas.IterFontInfo())
 	{
-		return;
+		atlasIds.push_back(id);
+		names.push_back(name);
+		paths.push_back(path);
+		sizes.push_back(size);
+		heights.push_back(height);
 	}
 
-	j = {
-		{ kHashKey, atlas.GetHandle().GetHash() },
-		{ kTextureSizeKey, atlas.GetTextureSize() },
-		{ kFontDescriptorKey, atlas.GetFontDescriptor() }
-	};
+	//if (!atlas.IsLoaded())
+	//{
+	//	return;
+	//}
+
+	//j = {
+	//	{ kHashKey, atlas.GetHandle().GetHash() },
+	//	{ kTextureSizeKey, atlas.GetTextureSize() },
+	//	{ kFontDescriptorKey, atlas.GetFontDescriptor() }
+	//};
 }
 
 //inline void from_json(const nlohmann::json& j, SpriteAtlas& atlas)

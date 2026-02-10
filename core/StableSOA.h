@@ -184,7 +184,8 @@ public:
 
         return OptionalType{
             TupleType{
-                std::get<index_of_member_ptr<PtrArgs, 0, MemberPtrs...>::value>(memberValues_)[index]...
+                std::get<index_of_member_ptr<PtrArgs, 0, MemberPtrs...>::value>(
+                    memberValues_)[index]...
             }
         };
     }
@@ -204,7 +205,8 @@ public:
 
         return OptionalType{
             TupleType{
-                std::get<index_of_member_ptr<PtrArgs, 0, MemberPtrs...>::value>(memberValues_)[index]...
+                std::get<index_of_member_ptr<PtrArgs, 0, MemberPtrs...>::value>(
+                    memberValues_)[index]...
             }
         };
     }

@@ -155,10 +155,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="atlas\GlyphAtlasCollection.cpp" />
     <ClCompile Include="atlas\NewAtlas.cpp" />
     <ClCompile Include="atlas\NewGlyphAtlas.cpp" />
+    <ClCompile Include="atlas\NewTextureRepository.cpp" />
     <ClCompile Include="atlas\SpriteAtlas.cpp" />
     <ClCompile Include="atlas\SpriteAtlasCollection.cpp" />
+    <ClCompile Include="atlas\TextureObserverSignal.cpp" />
     <ClCompile Include="audio\AudioBank.cpp" />
     <ClCompile Include="audio\AudioManager.cpp" />
     <ClCompile Include="callbacks\StateTransitionCallback.cpp" />
@@ -188,7 +191,6 @@
     <ClCompile Include="state\EntityState.cpp" />
     <ClCompile Include="state\EntityStateBuilder.cpp" />
     <ClCompile Include="components\driver\EntityStateDriver.cpp" />
-    <ClCompile Include="components\driver\SpriteAnimationDriver.cpp" />
     <ClCompile Include="components\util\TagsComponentUtils.cpp" />
     <ClCompile Include="core\WeightGenerator.cpp" />
     <ClCompile Include="deps\RectangleBinPack\GuillotineBinPack.cpp" />
@@ -200,7 +202,6 @@
     <ClCompile Include="ecs\EntityDestructor.cpp" />
     <ClCompile Include="inputs\controller\GameControllerInputUpdater.cpp" />
     <ClCompile Include="inputs\controller\GameControllerInputMap.cpp" />
-    <ClCompile Include="sprite\SpriteAnimationSeriesMap.cpp" />
     <ClCompile Include="systems\AudioSystem.cpp" />
     <ClCompile Include="systems\EntityDestructionSystem.cpp" />
     <ClCompile Include="systems\EntityStateSystem.cpp" />
@@ -275,19 +276,20 @@
     <ClCompile Include="test\catch\render\RendererTests.cpp" />
     <ClCompile Include="test\catch\scripting\LuaFunctionTests.cpp" />
     <ClCompile Include="test\catch\test_utils\ImageUtilities.cpp" />
-    <ClCompile Include="test\catch\test_utils\RenderingTestUtils.cpp" />
-    <ClCompile Include="test\ComponentTests.cpp" />
     <ClCompile Include="test\Fixtures.cpp" />
     <ClCompile Include="test\Premades.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="atlas\AtlasConcepts.h" />
+    <ClInclude Include="atlas\GlyphAtlasCollection.h" />
     <ClInclude Include="atlas\NewAtlas.h" />
     <ClInclude Include="atlas\NewGlyphAtlas.h" />
     <ClInclude Include="atlas\NewTextureRepository.h" />
     <ClInclude Include="atlas\PackingTools.h" />
     <ClInclude Include="atlas\SpriteAtlas.h" />
     <ClInclude Include="atlas\SpriteAtlasCollection.h" />
+    <ClInclude Include="atlas\TextureResourceHandle.h" />
+    <ClInclude Include="atlas\TextureObserverSignal.h" />
     <ClInclude Include="audio\AudioBank.h" />
     <ClInclude Include="audio\AudioHandle.h" />
     <ClInclude Include="audio\AudioCommon.h" />
@@ -357,8 +359,6 @@
     <ClInclude Include="components\MarkedDestroyedComponent.h" />
     <ClInclude Include="components\SignalTokenStorageComponent.h" />
     <ClInclude Include="components\UserComponents.h" />
-    <ClInclude Include="components\util\PhysicsUtils.h" />
-    <ClInclude Include="components\util\SpriteAnimationUtils.h" />
     <ClInclude Include="core\Anchor.h" />
     <ClInclude Include="core\FixedString.h" />
     <ClInclude Include="core\InlineStorage.h" />
@@ -481,8 +481,6 @@
     <ClInclude Include="scripting\user_types\EntityUserType.h" />
     <ClInclude Include="scripting\user_types\SDLUsertypes.h" />
     <ClInclude Include="sdl\SDLContext.h" />
-    <ClInclude Include="serial\DeserializationReport.h" />
-    <ClInclude Include="serial\MaxRectsBinPackSerializationHelper.h" />
     <ClInclude Include="serial\Serialization.h" />
     <ClInclude Include="serial\SerializationConcepts.h" />
     <ClInclude Include="serial\SerializationUtils.h" />
@@ -503,7 +501,6 @@
     <ClInclude Include="components\driver\BaseDriver.h" />
     <ClInclude Include="components\driver\EntityStateDriver.h" />
     <ClInclude Include="components\driver\EventCallbackDriver.h" />
-    <ClInclude Include="components\driver\SpriteAnimationDriver.h" />
     <ClInclude Include="components\EntityStateComponent.h" />
     <ClInclude Include="components\EventProductionFlagsComponent.h" />
     <ClInclude Include="components\GameControllerInputCallbacksComponent.h" />
@@ -548,8 +545,6 @@
     <ClInclude Include="scripting\user_types\RenderableLuaUserTypes.h" />
     <ClInclude Include="scripting\user_types\SpriteAnimationLuaUserTypes.h" />
     <ClInclude Include="scripting\user_types\TransformLuaUserTypes.h" />
-    <ClInclude Include="sprite\SpriteAnimationSeries.h" />
-    <ClInclude Include="sprite\SpriteAnimationSeriesMap.h" />
     <ClInclude Include="systems\AudioSystem.h" />
     <ClInclude Include="systems\EntityDestructionSystem.h" />
     <ClInclude Include="systems\EntityStateSystem.h" />
@@ -770,21 +765,15 @@
     <ClInclude Include="test\ui\MouseWorldNavigator.h" />
     <ClInclude Include="test\ui\PhysicsEditor.h" />
     <ClInclude Include="test\ui\TextureRepositoryContext.h" />
-    <ClInclude Include="test\callbacks\AnimationCallbacks.h" />
     <ClInclude Include="test\callbacks\GameControllerCallbacks.h" />
     <ClInclude Include="test\catch\CatchUtils.h" />
     <ClInclude Include="test\catch\test_utils\AtlasTestUtils.h" />
     <ClInclude Include="test\catch\Config.h" />
     <ClInclude Include="test\catch\test_utils\ImageUtilities.h" />
-    <ClInclude Include="test\catch\test_utils\RenderingTestUtils.h" />
-    <ClInclude Include="test\ComponentTests.h" />
     <ClInclude Include="test\Fixtures.h" />
     <ClInclude Include="test\OnControllerInput.h" />
     <ClInclude Include="test\Premades.h" />
     <ClInclude Include="test\Resources.h" />
-    <ClInclude Include="test\setups\SetupsUtil.h" />
-    <ClInclude Include="test\setups\KnightSetups.h" />
-    <ClInclude Include="test\stateTransitions\Transitions.h" />
     <ClInclude Include="user\UserComponentIncludes.h" />
     <ClInclude Include="user\UserComponentBridge.h" />
     <ClInclude Include="user\UserComponentTypeList.h" />

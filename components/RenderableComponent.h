@@ -1,8 +1,8 @@
 #pragma once
 #include "BaseComponent.h"
 #include "../core/Handle.h"
-#include "../atlas/SpriteAtlas.h"
-#include "../atlas/NewGlyphAtlas.h"
+#include "../atlas/SpriteAtlasCollection.h"
+#include "../atlas/GlyphAtlasCollection.h"
 #include "../sdl/SDLite.h"
 #include "../sdl/SDLUtils.h"
 #include "../render/TextureMods.h"
@@ -73,7 +73,7 @@ struct TextRenderableGlyphCache : BaseComponent<TextRenderableGlyphCache>
         Transform transform;
         TextFormatting formatting;
         SDL_FPoint offset = { 0.0f, 0.0f };
-        Handle<TextureAtlas> sourceAtlas;
+        Handle<TextureResource> resourceHandle;
     };
 
     std::vector<GlyphCacheData> cache;

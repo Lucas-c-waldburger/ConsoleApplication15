@@ -12,7 +12,6 @@ struct Collider;
 struct GameControllerState;
 struct Script;
 struct CameraTarget;
-struct SpriteAnimations;
 struct EventProductionFlags;
 struct GameControllerInputCallbacks;
 struct Timer;
@@ -42,7 +41,6 @@ using CoreComponentTypeList = TypeList<
 	GameControllerState,
 	Script,
 	CameraTarget,
-	SpriteAnimations,
 	EventProductionFlags,
 	GameControllerInputCallbacks,
 	Timer,

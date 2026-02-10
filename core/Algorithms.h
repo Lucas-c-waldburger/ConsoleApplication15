@@ -53,4 +53,16 @@ inline auto AllOf(Container& c, Pred&& pred)
     return std::all_of(std::begin(c), std::end(c), std::forward<Pred>(pred));
 }
 
+template <typename Container, typename Object>
+inline bool Contains(Container& c, Object&& obj)
+{
+    return Find(c, std::forward<Object>(obj)) != c.end();
+}
+
+template <typename Container, typename Pred>
+inline bool ContainsIf(Container& c, Pred&& pred)
+{
+    return FindIf(c, std::forward<Pred>(pred)) != c.end();
+}
+
 }

@@ -69,9 +69,6 @@
     <ClCompile Include="test\Fixtures.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\ComponentTests.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="test\Premades.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -144,9 +141,6 @@
     <ClCompile Include="systems\SpriteAnimationSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="sprite\SpriteAnimationSeriesMap.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="deps\RectangleBinPack\GuillotineBinPack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -172,9 +166,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="systems\TimerSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="components\driver\SpriteAnimationDriver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="systems\EntityStateSystem.cpp">
@@ -274,9 +265,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="render\GlyphFormattingUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="test\catch\test_utils\RenderingTestUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="systems\NewRenderSystem.cpp">
@@ -385,6 +373,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="atlas\SpriteAtlasCollection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="atlas\GlyphAtlasCollection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="atlas\TextureObserverSignal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="atlas\NewTextureRepository.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -869,9 +866,6 @@
     <ClInclude Include="core\Conversions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\ComponentTests.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="test\Premades.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1055,12 +1049,6 @@
     <ClInclude Include="systems\SpriteAnimationSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sprite\SpriteAnimationSeriesMap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sprite\SpriteAnimationSeries.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="components\SpriteAnimationsComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1142,16 +1130,10 @@
     <ClInclude Include="test\callbacks\GameControllerCallbacks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\callbacks\AnimationCallbacks.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="events\data\SpriteAnimationEvents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\NeedsUpdateComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="components\driver\SpriteAnimationDriver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\driver\BaseDriver.h">
@@ -1187,9 +1169,6 @@
     <ClInclude Include="components\driver\EntityStateDriver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\stateTransitions\Transitions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="state\EntityStateBuilder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1214,22 +1193,13 @@
     <ClInclude Include="systems\GameLoopSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\setups\KnightSetups.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="test\Resources.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="test\setups\SetupsUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="callbacks\EventCallbackHandle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="callbacks\EventCallbackMasterTable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="components\util\PhysicsUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\Signal.h">
@@ -1239,9 +1209,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\CatTypeID.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="components\util\SpriteAnimationUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="events\EventSignal.h">
@@ -1400,9 +1367,6 @@
     <ClInclude Include="render\GlyphFormattingUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\catch\test_utils\RenderingTestUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="systems\util\DebugDrawUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1503,9 +1467,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="systems\SerializationSystem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="serial\DeserializationReport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="serial\SerializationConcepts.h">
@@ -1793,9 +1754,6 @@
     <ClInclude Include="deps\rapidhash\rapidhash.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="serial\MaxRectsBinPackSerializationHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="serial\SerializationUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1917,6 +1875,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="events\data\SystemEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\GlyphAtlasCollection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\TextureObserverSignal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlas\TextureResourceHandle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

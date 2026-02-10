@@ -11,8 +11,8 @@ class Signal;
 class SignalToken
 {
 public:
-	template <typename...Args>
-	friend class Signal;
+	template <typename...Args> friend class Signal;
+	template <typename PassKey, typename...Args> friend class PrivateSignal;
 
 	friend struct std::hash<SignalToken>;
 
@@ -137,23 +137,6 @@ public:
 		}
 	}
 
-	//template <typename Fn, typename...Ts> requires std::invocable<Fn, Ts...>
-	//void TransformAndEmit(Fn&& fn, Ts&&...ts)
-	//{
-	//	static_assert(std::invocable<SlotCallbackType, std::invoke_result_t<Fn, Ts...>>,
-	//		"Transform function does not return a type that can invoke signal callback");
-
-	//	for (auto& slot : slots_)
-	//	{
-	//		if (slot.callback)
-	//		{
-	//			assert(slot.id >= 0);
-
-	//			slot.callback(std::invoke(fn, std::forward<Ts>(ts)...);
-	//		}
-	//	}
-	//}
-
 	template <typename Fn> requires std::convertible_to<Fn, SlotCallbackType>
 	SignalToken Connect(Fn&& fn)
 	{
@@ -185,4 +168,72 @@ private:
 	fu2::unique_function<void(SignalToken&)> disconnectFn_;
 };
 
+template <typename PassKey, typename...Args>
+class PrivateSignal
+{
+public:
+	using Slot = fu2::unique_function<void(Args...)>;
 
+	PrivateSignal() : slot_(nullptr), disconnectFn_(GetDisconnectLambda()) {}
+	~PrivateSignal() = default;
+
+	PrivateSignal(const PrivateSignal&) = delete;
+	PrivateSignal& operator=(const PrivateSignal&) = delete;
+
+	PrivateSignal(PrivateSignal&& other) noexcept :
+		slot_(std::move(other.slot_)), disconnectFn_(GetDisconnectLambda())
+	{
+		other.disconnectFn_ = nullptr;
+	}
+	PrivateSignal& operator=(PrivateSignal&& other) noexcept
+	{
+		if (this != &other)
+		{
+			slot_ = std::move(other.slot_);
+			disconnectFn_ = GetDisconnectLambda();
+			other.disconnectFn_ = nullptr;
+		}
+	}
+
+	template <typename...Ts> requires (std::convertible_to<Ts, Args> && ...)
+	void Emit(Ts&&...ts)
+	{
+		if (slot_)
+		{
+			std::invoke(slot_, std::decay_t<Ts>(ts)...);
+		}
+	}
+
+	template <typename Fn> requires std::convertible_to<Fn, Slot>
+	SignalToken Connect(PassKey, Fn&& fn)
+	{
+		if (slot_)
+		{
+			return {};
+		}
+
+		slot_ = std::forward<Fn>(fn);
+
+		return SignalToken{ 0, fu2::function_view<void(SignalToken&)>{disconnectFn_} };
+	}
+
+	bool IsOccupied() const { return slot_ != nullptr; }
+
+private:
+	auto GetDisconnectLambda()
+	{
+		return [this](SignalToken& token) -> void {
+			if (token.id_ == -1)
+			{
+				return;
+			}
+
+			assert(token.id_ == 0);
+
+			slot_ = nullptr;
+		};
+	}
+
+	Slot slot_;
+	fu2::unique_function<void(SignalToken&)> disconnectFn_;
+};

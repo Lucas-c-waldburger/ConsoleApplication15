@@ -84,25 +84,6 @@ public:
 	// creation
 	static Result<std::shared_ptr<SceneFixture>> GetInstance();
 
-	Result<GlyphAtlas*> LoadGlyphAtlas(const Result<std::string>& fpResult, int fontSize) {
-		if (!fpResult.Success())
-		{
-			return fpResult.GetError();
-		}
-
-		TRY(GlyphAtlas::Create(SDLite::Renderer(), {
-			.filepath = fpResult.GetValue(),
-			.fontSize = fontSize
-		}), glyphAtlas);
-
-		auto handle = glyphAtlas.GetHandle();
-
-		return textureRepo_.AttachAtlas(std::move(glyphAtlas));
-	}
-
-	Result<SpriteAtlas*> 
-	CreateSpriteAtlas(size_t txSize = TextureAtlas::kDefaultAtlasSize);
-
 	// system scheduling
 	template <ImplementsSystemUpdate T, typename...Args>
 		requires std::constructible_from<T, Args...>

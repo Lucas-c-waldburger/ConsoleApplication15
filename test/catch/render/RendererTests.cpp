@@ -29,13 +29,8 @@ TEST_CASE("Sprites rendered correctly", "[rendering]")
 	auto status = SDLite::Start();
 	REQUIRE(status.Good());
 
-	auto spriteAtlasResult = SpriteAtlas::Create(SDLite::Renderer(), 2048);
-	REQUIRE_RESULT(spriteAtlasResult);
-
-	auto& spriteAtlas = spriteAtlasResult.GetValue();
-	CHECK(spriteAtlas.IsLoaded());
-
-	REQUIRE(spriteAtlas.GetSourceTexture() != nullptr);
+	TextureRepository textureRepo{};
+	auto& spriteAtlas = textureRepo.GetSpriteAtlas();
 
 	auto airbornePathsResult =
 		ResourcePaths::SpriteDirectory("knight_new/airborne", std::less<std::string>{});
@@ -52,6 +47,7 @@ TEST_CASE("Sprites rendered correctly", "[rendering]")
 	REQUIRE_RESULT(loadResult);
 
 	auto& sprites = loadResult.GetValue();
+	REQUIRE_FALSE(sprites.empty());
 
 	SDL_Rect renderRect = { 0, 0, 0, 0 };
 
@@ -78,7 +74,10 @@ TEST_CASE("Sprites rendered correctly", "[rendering]")
 			renderRect.y += maxRowHeight;
 		}
 
-		SDL_RenderCopy(SDLite::Renderer(), spriteAtlas.GetSourceTexture(), 
+		auto* srcTexture = textureRepo.GetSourceTexture(sprite.resourceHandle);
+		REQUIRE(srcTexture);
+
+		SDL_RenderCopy(SDLite::Renderer(), srcTexture, 
 					   &plotRect, &renderRect);
 
 		renderRect.x += plotRect.w;
@@ -87,7 +86,7 @@ TEST_CASE("Sprites rendered correctly", "[rendering]")
 	SDLite::Renderer().Show();
 
 	auto imgWriteResult = test::WriteFrameBufferToPNG(SDLite::Renderer(), 
-		"airborne_series_sprites.png");
+		"airborne_series_sprites_NEW.png");
 	REQUIRE_RESULT(imgWriteResult);
 	
 	SDLite::Exit();
@@ -100,6 +99,9 @@ TEST_CASE("Glyphs rendered correctly", "[rendering]")
 	auto status = SDLite::Start();
 	REQUIRE(status.Good());
 
+	TextureRepository textureRepo{};
+	auto& fontAtlas = textureRepo.GetFontAtlas();
+
 	auto pathResult = ResourcePath::Font("GoNotoKurrent-Regular.ttf");
 	REQUIRE_RESULT(pathResult);
 
@@ -109,14 +111,20 @@ TEST_CASE("Glyphs rendered correctly", "[rendering]")
 		.fontSize = 48
 	};
 
-	auto loadResult = GlyphAtlas::Create(SDLite::Renderer(), std::move(descriptorReg));
+	auto loadResult = fontAtlas.LoadFont(SDLite::Renderer(), std::move(descriptorReg));
 	REQUIRE_RESULT(loadResult);
 
-	auto& glyphAtlas = loadResult.GetValue();
-	CHECK(glyphAtlas.IsLoaded());
-	CHECK(glyphAtlas.GetHandle().IsValid());
-	CHECK(glyphAtlas.GetSourceTexture() != nullptr);
-	REQUIRE(glyphAtlas.GetFontDescriptor().fontHeight > 0);
+	const auto& font = fontAtlas.GetFont("GoNotoCurrent-Regular");
+	CHECK(font.IsLoaded());
+	CHECK(font.GetAtlasID() != kInvalidTextureAtlasID);
+	CHECK(font.GetSourceTexture() != nullptr);
+
+	const auto fontHeightOp = fontAtlas.GetFontInfo<&FontInfo::fontHeight>(
+		"GoNotoCurrent - Regular"
+	);
+	REQUIRE(fontHeightOp.has_value());
+	const auto [fontHeight] = *fontHeightOp;
+	REQUIRE(fontHeight > 0);
 
 	SDL_Rect renderRect = { 0, 0, 0, 0 };
 
@@ -127,7 +135,7 @@ TEST_CASE("Glyphs rendered correctly", "[rendering]")
 	size_t i = 0;
 	for (char c = 'a'; c <= 'z'; c++)
 	{
-		const auto& glyph = glyphAtlas.GetGlyph(c);
+		const auto& glyph = font.GetGlyph(c);
 		CHECK(glyph.character == c);
 		CHECK(glyph.advance > 0);
 
@@ -142,15 +150,15 @@ TEST_CASE("Glyphs rendered correctly", "[rendering]")
 		if ((renderRect.x + renderRect.w) > SDLite::Window().GetSize().w)
 		{
 			renderRect.x = 0;
-			renderRect.y += glyphAtlas.GetFontDescriptor().fontHeight;
+			renderRect.y += fontHeight;
 		}
 
 		float t = static_cast<float>(i++) / 26;
 		SDL_Color clr = GetRainbowColor(t);
 
-		SDL_SetTextureColorMod(glyphAtlas.GetSourceTexture(), clr.r, clr.g, clr.b);
+		SDL_SetTextureColorMod(font.GetSourceTexture(), clr.r, clr.g, clr.b);
 
-		SDL_RenderCopy(SDLite::Renderer(), glyphAtlas.GetSourceTexture(),
+		SDL_RenderCopy(SDLite::Renderer(), font.GetSourceTexture(),
 					   &plotRect, &renderRect);
 
 		renderRect.x += plotRect.w;

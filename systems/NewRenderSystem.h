@@ -9,27 +9,13 @@ class Camera;
 class TextureRepository;
 struct SDL_Renderer;
 
-//class NewRenderSystem : public System
-//{
-//public:
-//	NewRenderSystem() = default;
-//
-//	void Update(SDL_Renderer* renderer, const Camera& camera, 
-//		        const NewTextureRepository& textureRepo);
-//
-//private:
-//	RenderablePreProcessor renderablePreProcessor_;
-//	RenderBatchHandler renderBatchHandler_;
-//	DebugDrawHandler debugDrawHandler_;
-//};
-
 class NewRenderSystem : public System
 {
 public:
 	NewRenderSystem() = default;
 
 	void Update(SDL_Renderer* renderer, const Camera& camera,
-		const TextureRepository& textureRepo);
+				const TextureRepository& textureRepo);
 
 private:
 	RenderablePreProcessor renderablePreProcessor_;

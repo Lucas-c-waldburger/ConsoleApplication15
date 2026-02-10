@@ -40,7 +40,7 @@ uint8_t MakeChangeLog(const TextRenderableComponent& textRenderable,
 {
 	const auto& [glyphs, ctx] = glyphCache;
 
-	return BitIf(textRenderable.writer.sourceAtlas != ctx.sourceAtlas, 
+	return BitIf(textRenderable.writer.resourceHandle != ctx.resourceHandle, 
 				 AtlasChanged) |
 		   BitIf(textRenderable.writer.text != glyphs, 
 			     TextChanged) |

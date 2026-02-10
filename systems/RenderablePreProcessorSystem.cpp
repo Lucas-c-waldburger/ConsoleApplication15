@@ -58,16 +58,9 @@ void RenderablePreProcessor::Update(const TextureRepository& textureRepo)
 			auto& spriteRenderable = entity.GetComponent<SpriteRenderableComponent>();
 			auto& [sprite, profile] = spriteRenderable;
 
-			const auto* spriteAtlas = textureRepo.GetAtlas<SpriteAtlas>(sprite.sourceAtlas);
-			if (!spriteAtlas)
+			if (!textureRepo.GetSpriteAtlas().IsSpriteValid(sprite))
 			{
-				sprite.sourceAtlas = {};
-				continue;
-			}
-
-			if (!spriteAtlas->IsSpriteValid(sprite))
-			{
-				sprite.sourceAtlas = {};
+				sprite.resourceHandle = {};
 				continue;
 			}
 
@@ -85,17 +78,18 @@ void RenderablePreProcessor::Update(const TextureRepository& textureRepo)
 				continue;
 			}
 
-			const auto* glyphAtlas = textureRepo.GetAtlas<GlyphAtlas>(writer.sourceAtlas);
-			if (!glyphAtlas)
+			const auto& font = textureRepo.GetFontAtlas().GetFont(writer.resourceHandle);
+			if (!font.IsLoaded())
 			{
-				writer.sourceAtlas = {};
+				writer.resourceHandle = {};
 				ClearGlyphCache(entity);
 				continue;
 			}
 
-			auto& glyphCache = entity.AddComponent<TextRenderableGlyphCache>(GetEntityPassKey());
+			auto& glyphCache = 
+				entity.AddComponent<TextRenderableGlyphCache>(GetEntityPassKey());
 
-			GlyphCacheHandler::UpdateGlyphCache(*glyphAtlas, textRenderable, 
+			GlyphCacheHandler::UpdateGlyphCache(font, textRenderable, 
 												glyphCache, transform);
 
 			renderCallCount_ += glyphCache.cache.size();

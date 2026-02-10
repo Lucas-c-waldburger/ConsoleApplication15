@@ -31,7 +31,7 @@ void FillGlyphRectsLeftAlign(std::vector<GlyphCacheData>& cache,
 	{
 		assert(glyph.character != Glyph::kInvalidChar);
 
-		if (glyph == GlyphAtlas::kNewlineGlyph)
+		if (glyph == FontAtlasTexture::kNewlineGlyph)
 		{
 			xPos = format.start.x;
 			yPos += static_cast<int>(format.fontHeight * format.layoutScale.y);
@@ -114,7 +114,7 @@ void FillGlyphRectsCenterAlign(std::string_view text, std::vector<GlyphCacheData
 } // unnamed
 
 void GlyphCacheHandler::RepopulateGlyphCacheGlyphs(std::string_view text,
-	std::vector<GlyphCacheData>& cache, const GlyphAtlas& glyphAtlas)
+	std::vector<GlyphCacheData>& cache, const FontAtlasTexture& glyphAtlas)
 {
 	cache.resize(text.size());
 
@@ -127,14 +127,10 @@ void GlyphCacheHandler::RepopulateGlyphCacheGlyphs(std::string_view text,
 
 void GlyphCacheHandler::ReprojectGlyphCacheGeometry(TextRenderableGlyphCache& cacheComponent, 
 													const TextRenderableComponent& textRenderable,
-													const GlyphAtlas& glyphAtlas)
+													const FontAtlasTexture& glyphAtlas)
 {
-	//auto format = MakeFormatArgs(textRenderable.writer.text, cache,
-	//							 textRenderable.formatting.bounds,
-	//							 textRenderable.formatting.scaleToBounds,
-	//							 glyphAtlas.GetFontDescriptor().fontHeight);
 	auto formatArgs = MakeFormatArgs(textRenderable, cacheComponent,
-									 glyphAtlas.GetFontDescriptor().fontHeight);
+									 glyphAtlas.GetFontHeight());
 
 	switch (textRenderable.formatting.align)
 	{
@@ -264,7 +260,7 @@ void GlyphCacheHandler::RepositionGlyphCache(TextRenderableGlyphCache& cacheComp
 	}
 }
 
-void GlyphCacheHandler::UpdateGlyphCache(const GlyphAtlas& glyphAtlas,
+void GlyphCacheHandler::UpdateGlyphCache(const FontAtlasTexture& glyphAtlas,
 										 TextRenderableComponent& textRenderable,
 										 TextRenderableGlyphCache& glyphCache,
 										 const Transform& transform)
@@ -319,7 +315,7 @@ void GlyphCacheHandler::UpdateGlyphCache(const GlyphAtlas& glyphAtlas,
 	ctx.transform = transform;
 	ctx.formatting = textRenderable.formatting;
 	ctx.offset = textRenderable.profile.offset;
-	ctx.sourceAtlas = textRenderable.writer.sourceAtlas;
+	ctx.resourceHandle = textRenderable.writer.resourceHandle;
 }
 
 

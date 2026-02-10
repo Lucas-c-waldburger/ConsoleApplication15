@@ -13,10 +13,6 @@ TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system
 	REQUIRE_RESULT(fixtureResult);
 	auto& fixture = fixtureResult.GetValue();
 
-	auto spriteAtlasResult = fixture->CreateSpriteAtlas();
-	REQUIRE_RESULT(spriteAtlasResult);
-	auto& spriteAtlas = spriteAtlasResult.GetValue();
-
 	auto seriesPathsResult = ResourcePaths::SpriteDirectory(
 		"slash_effect/Slash 1/color1/Frames"
 	);
@@ -29,7 +25,8 @@ TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system
 
 	REQUIRE(descriptors.size() == 9);
 
-	auto spritesResult = spriteAtlas->LoadSprites(fixture->GetRenderer(), { 
+	auto& spriteAtlas = fixture->GetTextureRepository().GetSpriteAtlas();
+	auto spritesResult = spriteAtlas.LoadSprites(fixture->GetRenderer(), { 
 		.data = std::move(descriptors), 
 		.seriesName = "sword_slash" 
 	});
@@ -44,11 +41,11 @@ TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system
 	{
 		const auto& sprite = sprites[i - 1];
 
-		REQUIRE(spriteAtlas->IsSpriteValid(sprite));
+		REQUIRE(spriteAtlas.IsSpriteValid(sprite));
 
-		auto info = spriteAtlas->GetSpriteInfo<&SpriteInfo::spriteName,
-											   &SpriteInfo::seriesName,
-											   &SpriteInfo::seriesIndex>(sprite);
+		auto info = spriteAtlas.GetSpriteInfo<&SpriteInfo::spriteName,
+											  &SpriteInfo::seriesName,
+											  &SpriteInfo::seriesIndex>(sprite);
 		REQUIRE(info.has_value());
 
 		const auto& [spriteName, seriesName, seriesIdx] = *info;
@@ -80,10 +77,9 @@ TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system
 	{
 		REQUIRE(entity.HasComponent<SpriteRenderableComponent>());
 		CHECK_FALSE(entity.GetComponent<SpriteRenderableComponent>()
-			.sprite.sourceAtlas.IsValid());
+			.sprite.resourceHandle.IsValid());
 
 		entity.AddComponent(SpriteAnimationComponent{
-			.sourceAtlas = spriteAtlas->GetHandle(),
 			.spriteSeriesName = "sword_slash",
 			.currentIndex = 0
 		});
@@ -96,7 +92,7 @@ TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system
 		const auto& renderableSprite = 
 			entity.GetComponent<SpriteRenderableComponent>().sprite;
 
-		CHECK(spriteAtlas->IsSpriteValid(renderableSprite));
+		CHECK(spriteAtlas.IsSpriteValid(renderableSprite));
 		CHECK(renderableSprite == sprites[0]);
 
 		CHECK_FALSE(entity.HasComponent<NeedsAnimationUpdate>());
@@ -115,7 +111,7 @@ TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system
 		const auto& nextRenderableSprite =
 			entity.GetComponent<SpriteRenderableComponent>().sprite;
 
-		CHECK(spriteAtlas->IsSpriteValid(nextRenderableSprite));
+		CHECK(spriteAtlas.IsSpriteValid(nextRenderableSprite));
 		CHECK(nextRenderableSprite == sprites[1]);
 
 		CHECK_FALSE(entity.HasComponent<NeedsAnimationUpdate>());
@@ -125,10 +121,9 @@ TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system
 	{
 		REQUIRE(entity.HasComponent<SpriteRenderableComponent>());
 		CHECK_FALSE(entity.GetComponent<SpriteRenderableComponent>()
-			.sprite.sourceAtlas.IsValid());
+			.sprite.resourceHandle.IsValid());
 
 		entity.AddComponent(SpriteAnimationComponent{
-			.sourceAtlas = spriteAtlas->GetHandle(),
 			.spriteSeriesName = "sword_slash",
 			.currentIndex = 999
 		});
@@ -141,7 +136,7 @@ TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system
 		const auto& renderableSprite =
 			entity.GetComponent<SpriteRenderableComponent>().sprite;
 
-		CHECK(spriteAtlas->IsSpriteValid(renderableSprite));
+		CHECK(spriteAtlas.IsSpriteValid(renderableSprite));
 		CHECK(renderableSprite == sprites[0]);
 
 		CHECK_FALSE(entity.HasComponent<NeedsAnimationUpdate>());

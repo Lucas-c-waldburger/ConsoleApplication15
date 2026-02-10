@@ -114,15 +114,15 @@ template <> inline void RegisterLuaUserType<GlyphCacheData>(sol::state& lua)
 	}
 }
 
-template <> inline void RegisterLuaUserType<Handle<GlyphAtlas>>(sol::state& lua)
+template <> inline void RegisterLuaUserType<Handle<FontAtlasTexture>>(sol::state& lua)
 {
 	if (!lua["Handle<GlyphAtlas>"].valid())
 	{
-		lua.new_usertype<Handle<GlyphAtlas>>("Handle<GlyphAtlas>",
-			sol::meta_function::equal_to, &Handle<GlyphAtlas>::operator==);
+		lua.new_usertype<Handle<FontAtlasTexture>>("Handle<GlyphAtlas>",
+			sol::meta_function::equal_to, &Handle<FontAtlasTexture>::operator==);
 
 		lua["Handle<GlyphAtlas>"]["__ne"] = 
-			[](const Handle<GlyphAtlas>& lhs, const Handle<GlyphAtlas>& rhs) {
+			[](const Handle<FontAtlasTexture>& lhs, const Handle<FontAtlasTexture>& rhs) {
 				return lhs != rhs;
 		};
 	}
@@ -139,7 +139,7 @@ template <> inline void RegisterLuaUserType<TextRenderable>(sol::state& lua)
 	if (!lua["TextRenderable"].valid())
 	{
 		lua.new_usertype<TextRenderable>("TextRenderable",
-			"sourceAtlas", &TextRenderable::sourceAtlas,
+			"sourceAtlas", &TextRenderable::resourceHandle,
 			"text", &TextRenderable::text,
 			"dimensions", &TextRenderable::dimensions,
 			"align", &TextRenderable::align,
@@ -168,7 +168,7 @@ template <> inline void RegisterLuaUserType<SpriteRenderable>(sol::state& lua)
 	if (!lua["SpriteRenderable"].valid())
 	{
 		lua.new_usertype<SpriteRenderable>("SpriteRenderable",
-			"sourceAtlas", &SpriteRenderable::sourceAtlas,
+			"sourceAtlas", &SpriteRenderable::resourceHandle,
 			"sourcePlot", &SpriteRenderable::sourcePlot);
 	}
 }

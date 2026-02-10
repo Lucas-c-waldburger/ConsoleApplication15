@@ -27,8 +27,8 @@ Result<Void>
 TextureRepositorySerializationHelper::SerializeAtlases(const TextureRepository& repo,
 													   nlohmann::json& j)
 {
-	j[kSpriteAtlasesKey] = repo.GetAtlasVector<SpriteAtlas>();
-	j[kGlyphAtlasesKey] = repo.GetAtlasVector<GlyphAtlas>();
+	//j[kSpriteAtlasesKey] = repo.GetAtlasVector<SpriteAtlasTexture>();
+	//j[kGlyphAtlasesKey] = repo.GetAtlasVector<GlyphAtlas>();
 
 	return Void{};
 }
@@ -73,17 +73,18 @@ TextureRepositorySerializationHelper::DeserializeSpriteAtlases(SDL_Renderer* ren
 			return MAKE_ERROR("Duplicate hash value for sprite atlas");
 		}
 
-		TRY(repo.CreateAtlas<SpriteAtlas>(renderer, textureSize), atlas);
-		assert(atlas);
+		//TRY(repo.CreateAtlas<SpriteAtlasTexture>(renderer, textureSize), atlas);
+		//assert(atlas);
 
-		handleHashMap[hash] = atlas->GetHandle();
+		auto& spriteAtlas = repo.GetSpriteAtlas();
+		//handleHashMap[hash] = atlas->GetHandle();
 
 		package.clear();
 		atlasJson.at(kSpriteDescriptorsKey).get_to(package);
 		
 		for (auto&& descriptors : package)
 		{
-			TRY(atlas->LoadSprites(renderer, std::move(descriptors)));
+			TRY(spriteAtlas.LoadSprites(renderer, std::move(descriptors)));
 		}
 	}
 
@@ -109,11 +110,11 @@ TextureRepositorySerializationHelper::DeserializeGlyphAtlases(SDL_Renderer* rend
 			return MAKE_ERROR("Duplicate hash value for glyph atlas");
 		}
 
-		TRY(repo.CreateAtlas<GlyphAtlas>(renderer,
-			atlasJson.at(kFontDescriptorKey).get<FontDescriptor>()), atlas);
-		assert(atlas);
+		//TRY(repo.CreateAtlas<GlyphAtlas>(renderer,
+		//	atlasJson.at(kFontDescriptorKey).get<FontDescriptor>()), atlas);
+		//assert(atlas);
 
-		handleHashMap[hash] = atlas->GetHandle();
+		//handleHashMap[hash] = atlas->GetHandle();
 	}
 
 	return Void{};
@@ -122,27 +123,29 @@ TextureRepositorySerializationHelper::DeserializeGlyphAtlases(SDL_Renderer* rend
 Result<Void> RenderableSerializationHelper::SerializeSprite(const Sprite& sprite, 
 	const TextureRepository& repo, nlohmann::json& spriteComponentJson)
 {
-	if (!sprite.sourceAtlas.IsValid())
+	if (!sprite.resourceHandle.IsValid())
 	{
 		LOG_ERROR("Sprite source atlas handle was marked invalid");
 
 		return Void{};
 	}
 
-	const auto* spriteAtlas = repo.GetAtlas<SpriteAtlas>(sprite.sourceAtlas);
-	if (!spriteAtlas)
-	{
-		return MAKE_ERROR("Sprite source atlas not found in Texture Repository");
-	}
+	//const auto* spriteAtlas = repo.GetAtlas<SpriteAtlasTexture>(sprite.resourceHandle);
+	//if (!spriteAtlas)
+	//{
+	//	return MAKE_ERROR("Sprite source atlas not found in Texture Repository");
+	//}
 
-	auto spriteName = spriteAtlas->GetSpriteInfo<&SpriteInfo::spriteName>(sprite);
+	const auto& spriteAtlas = repo.GetSpriteAtlas();
+
+	auto spriteName = spriteAtlas.GetSpriteInfo<&SpriteInfo::spriteName>(sprite);
 	if (!spriteName.has_value())
 	{
 		return MAKE_ERROR("Sprite not found in sprite atlas");
 	}
 
 	spriteComponentJson[kSpriteKey] = {
-		{ kSourceAtlasHashKey, sprite.sourceAtlas.GetHash() },
+		{ kSourceAtlasHashKey, sprite.resourceHandle.GetHash() },
 		{ kSpriteNameKey, *spriteName }
 	};
 
@@ -165,14 +168,15 @@ Result<Sprite> RenderableSerializationHelper::DeserializeSprite(
 		return MAKE_ERROR("Sprite serialized with unrecognized source atlas hash");
 	}
 
-	const auto* spriteAtlas = repo.GetAtlas<SpriteAtlas>(it->second);
-	if (!spriteAtlas)
-	{
-		return MAKE_ERROR("Handle not found in texture repository");
-	}
+	//const auto* spriteAtlas = repo.GetAtlas<SpriteAtlasTexture>(it->second);
+	//if (!spriteAtlas)
+	//{
+	//	return MAKE_ERROR("Handle not found in texture repository");
+	//}
+	const auto& spriteAtlas = repo.GetSpriteAtlas();
 
-	auto sprite = spriteAtlas->GetSprite(spriteName);
-	if (sprite.sourceAtlas != spriteAtlas->GetHandle())
+	auto sprite = spriteAtlas.GetSprite(spriteName);
+	if (!sprite.resourceHandle.IsValid())
 	{
 		return MAKE_ERROR("Sprite not found in sprite atlas");
 	}
@@ -184,20 +188,21 @@ Result<Void> RenderableSerializationHelper::SerializeGlyphTextWriter(
 	const GlyphTextWriter& writer, const TextureRepository& repo, 
 	nlohmann::json& textComponentJson)
 {
-	if (!writer.sourceAtlas.IsValid())
+	if (!writer.resourceHandle.IsValid())
 	{
 		LOG_ERROR("Glyph text writer source atlas handle was marked invalid");
 
 		return Void{};
 	}
 
-	if (!repo.HasAtlas(writer.sourceAtlas))
+	//if (!repo.HasAtlas(writer.resourceHandle))
+	if (!repo.GetFontAtlas().HasFont(writer.resourceHandle))
 	{
 		return MAKE_ERROR("Glyph text writer source atlas not found in Texture Repository");
 	}
 
 	textComponentJson[kWriterKey] = {
-		{ kSourceAtlasHashKey, writer.sourceAtlas.GetHash() },
+		{ kSourceAtlasHashKey, writer.resourceHandle.GetHash() },
 		{ kTextKey, writer.text }
 	};
 
@@ -220,16 +225,18 @@ Result<GlyphTextWriter> RenderableSerializationHelper::DeserializeGlyphTextWrite
 		return MAKE_ERROR("Text writer serialized with unrecognized source atlas hash");
 	}
 
-	const auto* glyphAtlas = repo.GetAtlas<GlyphAtlas>(it->second);
-	if (!glyphAtlas)
-	{
-		return MAKE_ERROR("Handle not found in texture repository");
-	}
+	//const auto* glyphAtlas = repo.GetAtlas<GlyphAtlas>(it->second);
+	//if (!glyphAtlas)
+	//{
+	//	return MAKE_ERROR("Handle not found in texture repository");
+	//}
+	//const auto& fontAtlas = repo.GetFontAtlas();
+	return GlyphTextWriter{};
 
-	auto writer = glyphAtlas->GetTextWriter();
-	writer.text = std::move(writerText);
+	//auto writer = fontAtlas.GetTextWriter();
+	//writer.text = std::move(writerText);
 
-	return writer;
+	//return writer;
 }
 
 Result<Void> ComponentSerializationResolver::Serialize(

@@ -32,13 +32,8 @@ TEST_CASE("System handles single sprite", "[rendering][system]")
 	REQUIRE_RESULT(fixtureResult);
 	auto& fixture = fixtureResult.GetValue();
 
-	auto spriteAtlasResult = SpriteAtlas::Create(SDLite::Renderer(), 2048);
-	REQUIRE_RESULT(spriteAtlasResult);
-
-	auto& spriteAtlas = spriteAtlasResult.GetValue();
-	CHECK(spriteAtlas.IsLoaded());
-
-	REQUIRE(spriteAtlas.GetSourceTexture() != nullptr);
+	auto& textureRepo = fixture->GetTextureRepository();
+	auto& spriteAtlas = textureRepo.GetSpriteAtlas();
 
 	auto spritePathResult = ResourcePath::Sprite("knight_new/idle/Idle_000.png");
 	REQUIRE_RESULT(spritePathResult);
@@ -47,23 +42,19 @@ TEST_CASE("System handles single sprite", "[rendering][system]")
 		.filepath = spritePathResult.GetValue(),
 	};
 
-	auto loadResult = spriteAtlas.LoadSprite(SDLite::Renderer(), std::move(desc));
-	REQUIRE_RESULT(loadResult);
+	auto spriteLoadResult = spriteAtlas.LoadSprite(SDLite::Renderer(), std::move(desc));
+	REQUIRE_RESULT(spriteLoadResult);
 
-	auto sprite = loadResult.GetValue();
+	auto sprite = spriteLoadResult.GetValue();
 
-	CHECK(sprite.spriteIndex == 0);
 	CHECK(sprite.plot.rect.w > 0);
 	CHECK(sprite.plot.rect.h > 0);
-	CHECK(sprite.sourceAtlas.IsValid());
+	CHECK(sprite.resourceHandle.IsValid());
+	CHECK(textureRepo.GetSourceTexture(sprite.resourceHandle) != nullptr);
 
 	const auto spriteName = spriteAtlas.GetSpriteInfo<&SpriteInfo::spriteName>(sprite);
 	CHECK(spriteName.has_value());
 	CHECK(std::get<0>(*spriteName) == "Idle_000");
-
-	TextureRepository textureRepo{};
-	auto attachResult = textureRepo.AttachAtlas(std::move(spriteAtlas));
-	REQUIRE_RESULT(attachResult);
 
 	auto entity = ECS::CreateEntity();
 	REQUIRE(entity.IsValid());
@@ -73,7 +64,6 @@ TEST_CASE("System handles single sprite", "[rendering][system]")
 		.profile = { .debugDraw = { .boundingBox = { .on = false }}}
 	});
 	entity.AddComponent(Transform{
-		//.position = { SDLite::kFWindowCenter.x, SDLite::kFWindowCenter.y }
 		.position = SDLite::Window().GetLocalCenter<SDL_FPoint>()
 	});
 
@@ -87,7 +77,7 @@ TEST_CASE("System handles single sprite", "[rendering][system]")
 	SDLite::Renderer().Show();
 
 	auto imgWriteResult = test::WriteFrameBufferToPNG(SDLite::Renderer(), 
-		"render_system_single_sprite.png");
+		"render_system_single_sprite_NEW.png");
 
 	REQUIRE_RESULT(imgWriteResult);
 }
@@ -98,7 +88,8 @@ TEST_CASE("System handles sprites and glyphs", "[rendering][system]")
 	REQUIRE_RESULT(fixtureResult);
 	auto& fixture = fixtureResult.GetValue();
 
-	TextureRepository textureRepo{};
+	auto& textureRepo = fixture->GetTextureRepository();
+	auto& spriteAtlas = textureRepo.GetSpriteAtlas();
 
 	auto airbornePathsResult =
 		ResourcePaths::SpriteDirectory("knight_new/airborne", std::less<std::string>{});
@@ -114,20 +105,9 @@ TEST_CASE("System handles sprites and glyphs", "[rendering][system]")
 	std::vector<Entity> entities;
 	for (size_t i = 0; i < package.data.size(); i++)
 	{
-		auto spriteAtlasResult = SpriteAtlas::Create(SDLite::Renderer(), 2048);
-		REQUIRE_RESULT(spriteAtlasResult);
-
-		auto& spriteAtlas = spriteAtlasResult.GetValue();
-		CHECK(spriteAtlas.IsLoaded());
-		REQUIRE(spriteAtlas.GetSourceTexture() != nullptr);
-		
-		//atlasHandles.push_back(spriteAtlas.GetHandle());
 		auto spriteResult = spriteAtlas.LoadSprite(
 			SDLite::Renderer(), std::move(package.data[i]));
 		REQUIRE_RESULT(spriteResult);
-
-		auto attachResult = textureRepo.AttachAtlas(std::move(spriteAtlas));
-		REQUIRE_RESULT(attachResult);
 
 		size_t nEntites = GetRandom(1, 4);
 		for (size_t i = 0; i < nEntites; i++)
@@ -164,7 +144,7 @@ TEST_CASE("System handles sprites and glyphs", "[rendering][system]")
 	SDLite::Renderer().Show();
 
 	auto imgWriteResult = test::WriteFrameBufferToPNG(SDLite::Renderer(),
-		"render_system_many_sprites_different_atlases.png");
+		"render_system_many_sprites_different_atlases_NEW.png");
 
 	REQUIRE_RESULT(imgWriteResult);
 }

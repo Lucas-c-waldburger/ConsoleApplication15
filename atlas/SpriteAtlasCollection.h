@@ -1,73 +1,73 @@
 #pragma once
 #include "SpriteAtlas.h"
-#include "../core/Signal.h"
+#include "TextureObserverSignal.h"
 
 class EventBus2;
 
-struct NewSpriteInfo
+struct SpriteInfo
 {
-	Handle<TextureAtlas> textureHandle;
+	TextureAtlasID atlasId;
 	AtlasPlot plot;
 	std::string spriteName;
 	std::string filepath;
 	std::string seriesName;
-	size_t seriesIndex = kSizeMax;
+	size_t seriesIndex = std::numeric_limits<size_t>::max();
 
-	bool operator==(const NewSpriteInfo&) const = default;
+	bool operator==(const SpriteInfo&) const = default;
 };
 
-using NewSpriteInfoSOA = StableSOA<
-	NewSpriteInfo,
-	&NewSpriteInfo::textureHandle,
-	&NewSpriteInfo::plot,
-	&NewSpriteInfo::spriteName,
-	&NewSpriteInfo::filepath,
-	&NewSpriteInfo::seriesName,
-	&NewSpriteInfo::seriesIndex
+using SpriteInfoSOA = StableSOA<
+	SpriteInfo,
+	&SpriteInfo::atlasId,
+	&SpriteInfo::plot,
+	&SpriteInfo::spriteName,
+	&SpriteInfo::filepath,
+	&SpriteInfo::seriesName,
+	&SpriteInfo::seriesIndex
 >;
 
-class NewSpriteAtlas : public TextureAtlas
+class SpriteAtlasTexture : public TextureAtlas
 {
 public:
-	NewSpriteAtlas() = default;
-	~NewSpriteAtlas() = default;
+	SpriteAtlasTexture() = default;
+	~SpriteAtlasTexture() = default;
 
-	NewSpriteAtlas(const SpriteAtlas&) = delete;
-	NewSpriteAtlas& operator=(const SpriteAtlas&) = delete;
+	SpriteAtlasTexture(const SpriteAtlasTexture&) = delete;
+	SpriteAtlasTexture& operator=(const SpriteAtlasTexture&) = delete;
 
-	NewSpriteAtlas(NewSpriteAtlas&& other) noexcept;
-	NewSpriteAtlas& operator=(NewSpriteAtlas&& other) noexcept;
+	SpriteAtlasTexture(SpriteAtlasTexture&& other) noexcept;
+	SpriteAtlasTexture& operator=(SpriteAtlasTexture&& other) noexcept;
 
-	static Result<NewSpriteAtlas>
+	static Result<SpriteAtlasTexture>
 	Create(SDL_Renderer* renderer, size_t size = kDefaultAtlasSize);
 
-	Result<NewSpriteInfo> 
+	Result<SpriteInfo> 
 	LoadSprite(SDL_Renderer* renderer, const SpriteDescriptor& descriptor,
 			   bool& atlasFull);
 
 	Result<Void> RebuildSourceTexture(SDL_Renderer* renderer, 
-									  const NewSpriteInfoSOA& spriteInfo,
+									  const SpriteInfoSOA& spriteInfo,
 									  size_t& runningIdxCounter);
 
 private:
-	explicit NewSpriteAtlas(Handle<TextureAtlas>&& handle) :
-		TextureAtlas(std::move(handle)) {}
+	explicit SpriteAtlasTexture(TextureAtlasID atlasId) : TextureAtlas(atlasId) {}
 };
 
-class SpriteAtlasCollection
+class SpriteAtlas : public TextureCreationNotifier
 {
 public:
 	using SpriteIndexMap = RapidHashUnorderedMap<size_t>;
 	using SeriesRangeMap = RapidHashUnorderedMap<Range<size_t>>;
 
-	SpriteAtlasCollection() = default;
-	~SpriteAtlasCollection() = default;
+	SpriteAtlas() = default;
+	SpriteAtlas(size_t txSize) : textureSize_(txSize) {}
+	~SpriteAtlas() = default;
 
-	SpriteAtlasCollection(const SpriteAtlasCollection&) = delete;
-	SpriteAtlasCollection& operator=(const SpriteAtlasCollection&) = delete;
+	SpriteAtlas(const SpriteAtlas&) = delete;
+	SpriteAtlas& operator=(const SpriteAtlas&) = delete;
 
-	SpriteAtlasCollection(SpriteAtlasCollection&& other) noexcept = default;
-	SpriteAtlasCollection& operator=(SpriteAtlasCollection&& other) noexcept = default;
+	SpriteAtlas(SpriteAtlas&& other) noexcept = default;
+	SpriteAtlas& operator=(SpriteAtlas&& other) noexcept = default;
 
 	Result<Sprite> LoadSprite(SDL_Renderer* renderer, 
 							  SpriteDescriptor&& descriptor);
@@ -75,9 +75,10 @@ public:
 	Result<std::vector<Sprite>> LoadSprites(SDL_Renderer* renderer,
 											SpriteDescriptors&& descriptors);
 
-	Sprite GetSprite(std::string_view spriteName);
-	std::vector<Sprite> GetSpriteSeries(std::string_view seriesName);
-	Sprite GetSpriteSeriesMember(std::string_view seriesName, size_t seriesIdx);
+	Sprite GetSprite(std::string_view spriteName) const;
+	Sprite GetSprite(const Handle<TextureResource>& handle) const;
+	std::vector<Sprite> GetSpriteSeries(std::string_view seriesName) const;
+	Sprite GetSpriteSeriesMember(std::string_view seriesName, size_t seriesIdx) const;
 	size_t GetSpriteSeriesSize(std::string_view seriesName) const;
 
 	bool HasSprite(std::string_view spriteName) const;
@@ -87,12 +88,67 @@ public:
 
 	Result<Void> RebuildSourceTextures(SDL_Renderer* renderer);
 
-	auto GetSpriteInfo(const Sprite& sprite) const;
+	auto GetSpriteInfo(const Handle<TextureResource>& handle) const
+	{
+		using Ret = decltype(spriteInfo_.TryGetView(0));
+
+		const size_t spriteIdx = static_cast<size_t>(handle.GetResourceIndex());
+		if (spriteIdx >= spriteInfo_.Size())
+		{
+			return Ret{ std::nullopt };
+		}
+		if (handle.GetAtlasID() != 
+			spriteInfo_.GetView<&SpriteInfo::atlasId>(spriteIdx))
+		{
+			return Ret{ std::nullopt };
+		}
+
+		const auto& cInfo = spriteInfo_;
+		return cInfo.TryGetView(spriteIdx);
+	}
+	auto GetSpriteInfo(const Sprite& sprite) const
+	{
+		return GetSpriteInfo(sprite.resourceHandle);
+	}
 
 	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
-	auto GetSpriteInfo(const Sprite& sprite) const;
+	auto GetSpriteInfo(const Handle<TextureResource>& handle) const
+	{
+		using Ret = decltype(spriteInfo_.TryGetView<MemberPtrs...>(0));
 
-	void ConnectTextureRebuildSignal(SDL_Renderer* renderer, EventBus2& bus);
+		const size_t spriteIdx = static_cast<size_t>(handle.GetResourceIndex());
+		if (spriteIdx >= spriteInfo_.Size())
+		{
+			return Ret{ std::nullopt };
+		}
+		if (handle.GetAtlasID() !=
+			spriteInfo_.GetView<&SpriteInfo::atlasId>(spriteIdx))
+		{
+			return Ret{ std::nullopt };
+		}
+
+		const auto& cInfo = spriteInfo_;
+		return cInfo.TryGetView<MemberPtrs...>(spriteIdx);
+	}
+	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+	auto GetSpriteInfo(const Sprite& sprite) const
+	{
+		return GetSpriteInfo<MemberPtrs...>(sprite.resourceHandle);
+	}
+
+	auto IterSpriteInfo() const
+	{
+		return spriteInfo_.ForEach();
+	}
+	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+	auto IterSpriteInfo() const
+	{
+		return spriteInfo_.ForEach<MemberPtrs...>();
+	}
+
+	size_t GetTextureCount() const;
+
+	SpriteDescriptorPackage ExportSpriteDescriptors() const;
 
 private:
 	Result<Sprite> LoadSpriteImpl(SDL_Renderer* renderer,
@@ -103,26 +159,11 @@ private:
 
 	Sprite MakeSprite(size_t spriteIndex) const;
 
-	std::vector<NewSpriteAtlas> spriteAtlases_;
-	NewSpriteInfoSOA spriteInfo_;
+	std::vector<SpriteAtlasTexture> spriteAtlasTextures_;
+	SpriteInfoSOA spriteInfo_;
 	SpriteIndexMap spriteNameIndices_;
 	SeriesRangeMap seriesNameRanges_;
 	SignalToken rebuildTexturesSignalToken_;
 
 	size_t textureSize_ = TextureAtlas::kDefaultAtlasSize;
 };
-
-
-template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
-auto SpriteAtlasCollection::GetSpriteInfo(const Sprite& sprite) const
-{
-	using Ret = decltype(spriteInfo_.TryGetView<MemberPtrs...>(0));
-
-	if (!IsSpriteValid(sprite))
-	{
-		return Ret{ std::nullopt };
-	}
-
-	const auto& cInfo = spriteInfo_;
-	return cInfo.TryGetView<MemberPtrs...>(sprite.spriteIndex);
-}

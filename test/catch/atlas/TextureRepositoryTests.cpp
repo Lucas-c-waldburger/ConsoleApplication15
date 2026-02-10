@@ -6,7 +6,9 @@
 
 namespace {
 
+constexpr std::string_view kFontReg = "GoNotoKurrent-Regular.ttf";
 constexpr std::string_view kFontBold = "GoNotoKurrent-Bold.ttf";
+constexpr std::string_view kSpriteFall = "knight/fall_anim/knight_fall_0.png";
 
 } // unnamed
 
@@ -18,115 +20,114 @@ TEST_CASE("Texture Repository tests", "[atlas]")
 	REQUIRE(status.Good());
 
 	TextureRepository textureRepo{};
+	auto& spriteAtlas = textureRepo.GetSpriteAtlas();
+	auto& fontAtlas = textureRepo.GetFontAtlas();
 
-	// make a sprite atlas
-	auto spriteAtlasResult = SpriteAtlas::Create(SDLite::Renderer());
-	REQUIRE_RESULT(spriteAtlasResult);
-	CHECK(spriteAtlasResult.GetValue().IsLoaded());
+	// load a sprite
+	auto spritePathResult = ResourcePath::Sprite(kSpriteFall);
+	REQUIRE_RESULT(spritePathResult);
 
-	const auto spriteAtlasHandle = spriteAtlasResult.GetValue().GetHandle();
-	CHECK(spriteAtlasHandle.IsValid());
+	auto spriteLoadResult = spriteAtlas.LoadSprite(SDLite::Renderer(),
+		{ .filepath = spritePathResult.GetValue() });
+	REQUIRE_RESULT(spriteLoadResult);
 
-	// attach sprite atlas
-	auto spriteAttachResult = textureRepo.AttachAtlas(std::move(spriteAtlasResult.GetValue()));
-	CHECK_RESULT(spriteAttachResult);
+	const auto& sprite = spriteLoadResult.GetValue();
+	REQUIRE(spriteAtlas.IsSpriteValid(sprite));
 
-	// make a glyph atlas 
-	auto pathResult = ResourcePath::Font(kFontBold);
-	REQUIRE_RESULT(pathResult);
+	// load a font
+	auto fontPathResult = ResourcePath::Font(kFontBold);
+	REQUIRE_RESULT(fontPathResult);
 
-	FontDescriptor fontDesc{
+	auto fontLoadResult = fontAtlas.LoadFont(SDLite::Renderer(), {
 		.fontName = "GoNotoCurrent-Bold",
-		.filepath = pathResult.GetValue(),
+		.filepath = fontPathResult.GetValue(),
 		.fontSize = 24
-	};
+	});
+	REQUIRE_RESULT(fontLoadResult);
+	REQUIRE(textureRepo.GetFontAtlas().HasFont("GoNotoCurrent-Bold"));
 
-	auto glyphAtlasResult = GlyphAtlas::Create(SDLite::Renderer(), std::move(fontDesc));
-	REQUIRE_RESULT(glyphAtlasResult);
-	CHECK(glyphAtlasResult.GetValue().IsLoaded());
+	const auto& font = textureRepo.GetFontAtlas().GetFont("GoNotoCurrent-Bold");
+	REQUIRE(font.IsLoaded());
 
-	const auto glyphAtlasHandle = glyphAtlasResult.GetValue().GetHandle();
-	CHECK(glyphAtlasHandle.IsValid());
+	// retrieve sprite atlas texture info
+	auto spriteAtlasIdOp = spriteAtlas.GetSpriteInfo<&SpriteInfo::atlasId>(sprite);
+	REQUIRE(spriteAtlasIdOp.has_value());
 
-	// attach glyph atlas
-	auto glyphAttachResult = textureRepo.AttachAtlas(std::move(glyphAtlasResult.GetValue()));
-	CHECK_RESULT(glyphAttachResult);
+	const auto [spriteAtlasId] = *spriteAtlasIdOp;
+	CHECK(spriteAtlasId == sprite.resourceHandle.GetAtlasID());
 
-	// retrieve sprite atlas
-	auto* retrievedSpriteAtlas = textureRepo.GetAtlas<SpriteAtlas>(spriteAtlasHandle);
-	CHECK(retrievedSpriteAtlas != nullptr);
-
-	// retrieve glyph atlas
-	auto* retrievedGlyphAtlas = textureRepo.GetAtlas<GlyphAtlas>(glyphAtlasHandle);
-	CHECK(retrievedGlyphAtlas != nullptr);
+	// retrieve font text writer info
+	const auto writer = fontAtlas.GetTextWriter("GoNotoCurrent-Bold");
+	CHECK(writer.resourceHandle.IsValid());
+	CHECK(writer.resourceHandle.GetAtlasID() == font.GetAtlasID());
 
 	// retrieve sprite atlas src texture
-	const auto* retrievedSpriteTexture = textureRepo.GetSourceTexture(spriteAtlasHandle);
+	const auto* retrievedSpriteTexture = 
+		textureRepo.GetSourceTexture(sprite.resourceHandle);
 	CHECK(retrievedSpriteTexture != nullptr);
 
 	// retrieve glyph atlas src texture
-	const auto* retrievedGlyphTexture = textureRepo.GetSourceTexture(glyphAtlasHandle);
-	CHECK(retrievedGlyphTexture != nullptr);
-
-	// destroy sprite atlas
-	bool spriteAtlasDestroyed = textureRepo.DestroyAtlas(spriteAtlasHandle);
-	CHECK(spriteAtlasDestroyed);
-
-	// destroy glyph atlas
-	bool glyphAtlasDestroyed = textureRepo.DestroyAtlas(glyphAtlasHandle);
-	CHECK(glyphAtlasDestroyed);
+	const auto* retrievedFontTexture = textureRepo.GetSourceTexture(writer.resourceHandle);
+	CHECK(retrievedFontTexture != nullptr);
 
 	SDLite::Exit();
 }
 
-TEST_CASE("Texture Repository can hold multiple atlases of same type", "[atlas]")
+TEST_CASE("TextureRepository reacts to texture creation", "[atlas]")
 {
 	Logger::StartSession();
 	auto status = SDLite::Start();
 	REQUIRE(status.Good());
 
-	TextureRepository textureRepo{};
+	TextureRepository repo{};
+	auto& spriteAtlas = repo.GetSpriteAtlas();
+	auto& fontAtlas = repo.GetFontAtlas();
 
-	std::array<Handle<TextureAtlas>, 11> spriteAtlasHandles;
+	CHECK(repo.GetSpriteAtlas().GetTextureCount() == 0);
+	CHECK(repo.GetFontAtlas().GetTextureCount() == 0);
 
-	// make and attach sprite atlases
-	for (size_t i = 0; i < spriteAtlasHandles.size(); i++)
-	{
-		auto createResult = SpriteAtlas::Create(SDLite::Renderer());
-		REQUIRE_RESULT(createResult);
-		CHECK(createResult.GetValue().IsLoaded());
+	// load a sprite
+	auto spritePathResult = ResourcePath::Sprite(kSpriteFall);
+	REQUIRE_RESULT(spritePathResult);
 
-		spriteAtlasHandles[i] = createResult.GetValue().GetHandle();
-		CHECK(spriteAtlasHandles[i].IsValid());
+	auto spriteLoadResult = spriteAtlas.LoadSprite(SDLite::Renderer(),
+		{ .filepath = spritePathResult.GetValue() });
+	REQUIRE_RESULT(spriteLoadResult);
 
-		auto attachResult = textureRepo.AttachAtlas(std::move(createResult.GetValue()));
-		CHECK_RESULT(attachResult);
-	}
+	const auto& sprite = spriteLoadResult.GetValue();
+	REQUIRE(spriteAtlas.IsSpriteValid(sprite));
 
-	auto airbornePathsResult =
-		ResourcePaths::SpriteDirectory("knight_new/airborne", std::less<std::string>{});
-	REQUIRE_RESULT(airbornePathsResult);
+	// check that the sprite texture was updated & stored in repo
+	CHECK(repo.GetSpriteAtlas().GetTextureCount() == 1);
 
-	auto& airbornePaths = airbornePathsResult.GetValue();
-	CHECK(airbornePaths.size() == 12);
+	const auto* spriteSrcTexture = repo.GetSourceTexture(sprite.resourceHandle);
+	CHECK(spriteSrcTexture != nullptr);
 
-	auto airbornePathsCopy = airbornePaths;
-	auto package = test::MakeSpriteTestPackage(std::move(airbornePathsCopy), "airborne_series");
-	CHECK(package.data.size() == 12);
-	CHECK(package.seriesName == "airborne_series");
+	// load a font
+	auto fontPathResult = ResourcePath::Font(kFontBold);
+	REQUIRE_RESULT(fontPathResult);
 
-	// load a sprite on each atlas
-	for (size_t i = 0; i < spriteAtlasHandles.size(); i++)
-	{
-		auto* retrieved = textureRepo.GetAtlas<SpriteAtlas>(spriteAtlasHandles[i]);
-		REQUIRE(retrieved != nullptr);
-		CHECK(retrieved->GetSourceTexture() != nullptr);
+	auto fontLoadResult = fontAtlas.LoadFont(SDLite::Renderer(), {
+		.fontName = "GoNotoCurrent-Bold",
+		.filepath = fontPathResult.GetValue(),
+		.fontSize = 24
+		});
+	REQUIRE_RESULT(fontLoadResult);
+	REQUIRE(fontAtlas.HasFont("GoNotoCurrent-Bold"));
 
-		auto descriptorCopy = package.data[i];
-		auto loadResult = retrieved->LoadSprite(SDLite::Renderer(), std::move(descriptorCopy));
-		REQUIRE_RESULT(loadResult);
-	}
+	const auto& font = fontAtlas.GetFont("GoNotoCurrent-Bold");
+	REQUIRE(font.IsLoaded());
+
+	// get writer to get resource handle
+	auto writer = fontAtlas.GetTextWriter("GoNotoCurrent-Bold");
+	CHECK(writer.resourceHandle.IsValid());
+	CHECK(writer.resourceHandle.GetAtlasID() == font.GetAtlasID());
+
+	// check that the font texture was updated & stored in repo
+	CHECK(repo.GetFontAtlas().GetTextureCount() == 1);
+
+	const auto* fontSrcTexture = repo.GetSourceTexture(writer.resourceHandle);
+	CHECK(fontSrcTexture != nullptr);
 
 	SDLite::Exit();
 }
-

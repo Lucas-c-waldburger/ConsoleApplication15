@@ -352,7 +352,7 @@ SwordHandler::SwordHandler(Entity& parent, EventBus2& bus, SDL_Renderer* rendere
 
 Result<Void> SwordHandler::LoadSprites(SDL_Renderer* renderer, TextureRepository& textureRepo)
 {
-    SpriteDescriptors package{
+    /*SpriteDescriptors package{
         .seriesName = "sword_swing"
     };
     package.data = kSwordSpritePaths
@@ -364,7 +364,7 @@ Result<Void> SwordHandler::LoadSprites(SDL_Renderer* renderer, TextureRepository
 
     assert(package.data.size() == swordFrames_.size());
 
-    TRY(SpriteAtlas::Create(renderer), temp);
+    TRY(SpriteAtlasTexture::Create(renderer), temp);
     TRY(temp.LoadSprites(renderer, std::move(package)), spriteSeries);
     TRY(textureRepo.AttachAtlas(std::move(temp)));
 
@@ -375,8 +375,9 @@ Result<Void> SwordHandler::LoadSprites(SDL_Renderer* renderer, TextureRepository
         ent.AddComponent(SpriteRenderableComponent{
             .sprite = spriteSeries[i]
         });
-    }
+    }*/
 
+    return Void{};
 }
 
 //ui::PointDrawHandler::PointDrawHandler(EventBus2& bus)

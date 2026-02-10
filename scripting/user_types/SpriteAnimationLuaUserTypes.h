@@ -39,7 +39,7 @@ template <> inline void RegisterLuaUserType<SpriteAnimationSeries>(sol::state& l
 	if (!lua["SpriteAnimationSeries"].valid())
 	{
 		lua.new_usertype<SpriteAnimationSeries>("SpriteAnimationSeries",
-			"sourceAtlas", &SpriteAnimationSeries::sourceAtlas,
+			"sourceAtlas", &SpriteAnimationSeries::resourceHandle,
 			"spritePlots", &SpriteAnimationSeries::spritePlots,
 			"index", &SpriteAnimationSeries::index,
 			"spriteRange", &SpriteAnimationSeries::spriteRange,

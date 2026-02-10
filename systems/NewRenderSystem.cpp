@@ -90,11 +90,11 @@ constexpr T BitIf(bool condition, T flag) noexcept
 	return static_cast<T>(-static_cast<int>(condition) & static_cast<int>(flag));
 }
 
-const Handle<TextureAtlas>& GetAtlasHandle(const Entity& e)
+const Handle<TextureResource>& GetTextureResourceHandle(const Entity& e)
 {
 	return (e.HasComponent<SpriteRenderableComponent>())
-		? e.GetComponent<SpriteRenderableComponent>().sprite.sourceAtlas
-		: e.GetComponent<TextRenderableComponent>().writer.sourceAtlas;
+		? e.GetComponent<SpriteRenderableComponent>().sprite.resourceHandle
+		: e.GetComponent<TextRenderableComponent>().writer.resourceHandle;
 }
 
 enum : uint8_t 
@@ -105,16 +105,16 @@ enum : uint8_t
 	LhsLess = 1 << 3
 };
 
-uint8_t EvaluateAtlasHandles(const Entity& lhs, const Entity& rhs)
+uint8_t EvaluateTextureResourceHandles(const Entity& lhs, const Entity& rhs)
 {
-	const auto& lhsHandle = GetAtlasHandle(lhs);
-	const auto& rhsHandle = GetAtlasHandle(rhs);
+	const auto& lhsHandle = GetTextureResourceHandle(lhs);
+	const auto& rhsHandle = GetTextureResourceHandle(rhs);
 
 	return (
 		BitIf(lhsHandle.IsValid(), LhsValid)     |
 		BitIf(rhsHandle.IsValid(), RhsValid)     |
-		BitIf(lhsHandle == rhsHandle, HandlesEq) |
-		BitIf(lhsHandle < rhsHandle, LhsLess)
+		BitIf(lhsHandle.GetAtlasID() == rhsHandle.GetAtlasID(), HandlesEq) |
+		BitIf(lhsHandle.GetAtlasID() < rhsHandle.GetAtlasID(), LhsLess)
 	);
 }
 
@@ -142,7 +142,7 @@ void SortRenderableEntities(std::vector<Entity>& entities)
 {
 	std::sort(entities.begin(), entities.end(), [](const Entity& lhs, const Entity& rhs)
 	{
-		const uint8_t handleEval = EvaluateAtlasHandles(lhs, rhs);
+		const uint8_t handleEval = EvaluateTextureResourceHandles(lhs, rhs);
 		const uint8_t validTest = handleEval & (LhsValid | RhsValid);
 
 		// If lhs invalid Å® goes before rhs if rhs valid
@@ -161,17 +161,18 @@ void SortRenderableEntities(std::vector<Entity>& entities)
 	});
 }
 
-bool SameAtlasHandle(const Entity& lhs, const Entity& rhs)
+bool SameAtlasID(const Entity& lhs, const Entity& rhs)
 {
-	return GetAtlasHandle(lhs) == GetAtlasHandle(rhs);
+	return GetTextureResourceHandle(lhs).GetAtlasID() == 
+		   GetTextureResourceHandle(rhs).GetAtlasID();
 }
 
 auto ChunkEntitiesByAtlas(const std::vector<Entity>& entities)
 {
 	return entities 
-		| std::views::chunk_by(SameAtlasHandle)
+		| std::views::chunk_by(SameAtlasID)
 		| std::views::drop_while([](auto group) {
-			return !GetAtlasHandle(group.front()).IsValid();
+			return !GetTextureResourceHandle(group.front()).IsValid();
 		});
 }
 
@@ -183,7 +184,7 @@ size_t ComputeRenderCallCount(const std::vector<Entity>& entities)
 			return sum + 
 			e.HasComponent<SpriteRenderableComponent>() 
 				? static_cast<int>(e.GetComponent<SpriteRenderableComponent>(
-					).sprite.sourceAtlas.IsValid()
+					).sprite.resourceHandle.IsValid()
 				)
 			: e.HasComponent<TextRenderableGlyphCache>() 
 				? static_cast<int>(e.GetComponent<TextRenderableGlyphCache>().cache.size()) 
@@ -247,7 +248,7 @@ void AddGlyphRenderCalls(const Entity& entity, const Camera& camera,
 
 	for (const auto& [glyph, destRect, rotationCenter] : glyphCache.cache)
 	{
-		if (glyph == GlyphAtlas::kNewlineGlyph)
+		if (glyph == FontAtlasTexture::kNewlineGlyph)
 		{
 			continue;
 		}
@@ -344,20 +345,20 @@ void NewRenderSystem::Update(SDL_Renderer* renderer, const Camera& camera,
 
 	SortRenderableEntities(entities);
 
-	auto chunked = entities | std::views::chunk_by(SameAtlasHandle);
+	auto chunked = entities | std::views::chunk_by(SameAtlasID);
 
 	for (auto group : chunked)
 	{
-		const auto& srcAtlasHandle = GetAtlasHandle(group.front());
+		const auto& resourceHandle = GetTextureResourceHandle(group.front());
 
-		if (!srcAtlasHandle.IsValid())
+		if (!resourceHandle.IsValid())
 		{
 			// still draw debug collider if relevant
 			DrawDebugColliderShapeForInvalids(group, camera, debugDrawHandler_);
 			continue;
 		}
 
-		auto* srcTexture = textureRepo.GetSourceTexture(srcAtlasHandle);
+		auto* srcTexture = textureRepo.GetSourceTexture(resourceHandle);
 		assert(srcTexture);
 
 		renderBatchHandler_.StartRenderBatch(srcTexture);

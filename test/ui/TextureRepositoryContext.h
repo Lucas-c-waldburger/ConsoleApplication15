@@ -1,5 +1,6 @@
 #pragma once
 
+// TODO : Fix since new texture repo
 #if IMGUI_ENABLED
 
 #include "../../atlas/NewTextureRepository.h"
@@ -96,7 +97,7 @@ public:
 		{
 			return MAKE_ERROR("TextureRepositoryContext's repo has not been set");
 		}
-		TRY(CTX::repo->CreateAtlas<SpriteAtlas>(SDLite::Renderer(), 
+		TRY(CTX::repo->CreateAtlas<SpriteAtlasTexture>(SDLite::Renderer(), 
 			TextureAtlas::kMaxAtlasSize), spriteAtlas);
 		assert(spriteAtlas);
 
