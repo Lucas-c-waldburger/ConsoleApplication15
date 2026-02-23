@@ -376,24 +376,23 @@ public:
     {
         assert(fixture);
 
-        assert(fixture->IsSystemInitialized<GameLoopSystem>());
-        UiContext::deltaProvider = &fixture->GetSystem<GameLoopSystem>()->GetCounter();
+        assert(fixture->IsSystemRegistered<GameLoopSystem>());
+        UiContext::deltaProvider = &fixture->GetSystem<GameLoopSystem>().GetCounter();
 
         EventContext::eventBus = &fixture->GetEventBus();
 
         TRY(RenderableEditor::Init(fixture->GetTextureRepository()));
         TRY(PhysicsEditor::Init(fixture->GetWorld()));
 
-        assert(fixture->IsSystemInitialized<SDLInputSystem>());
+        assert(fixture->IsSystemRegistered<SDLInputSystem>());
         auto& inputSys = fixture->GetSystem<SDLInputSystem>();
 
-        assert(fixture->IsSystemInitialized<CameraSystem>());
+        assert(fixture->IsSystemRegistered<CameraSystem>());
         auto& cameraSys = fixture->GetSystem<CameraSystem>();
 
-        TRY(ControllerMappingEditor::Init(inputSys->GetGameControllerEventHandler()));
-        TRY(MouseWorldNavigator::Init(
-            inputSys->GetMouseEventHandler(), cameraSys->GetCamera())
-        );
+        TRY(ControllerMappingEditor::Init(inputSys.GetGameControllerEventHandler()));
+        TRY(MouseWorldNavigator::Init(inputSys.GetMouseEventHandler(), 
+                                      cameraSys.GetCamera()));
 
         return Void{};
     }

@@ -13,31 +13,36 @@ struct CollisionData
 
 namespace events {
 
-struct ContactCollisionBegin : IEventData<ContactCollisionBegin>
+struct ContactCollisionBegin : IEventData<ContactCollisionBegin>,
+                               EntityParticipants<2>
 {
     CollisionData a;
     CollisionData b;
 };
 
-struct ContactCollisionEnd : IEventData<ContactCollisionEnd>
+struct ContactCollisionEnd : IEventData<ContactCollisionEnd>,
+                             EntityParticipants<2>
 {
     CollisionData a;
     CollisionData b;
 };
 
-struct SensorCollisionBegin : IEventData<SensorCollisionBegin>
+struct SensorCollisionBegin : IEventData<SensorCollisionBegin>,
+                              EntityParticipants<2>
 {
     CollisionData a;
     CollisionData b;
 };
 
-struct SensorCollisionEnd : IEventData<SensorCollisionEnd>
+struct SensorCollisionEnd : IEventData<SensorCollisionEnd>,
+                            EntityParticipants<2>
 {
     CollisionData a;
     CollisionData b;
 };
 
-struct HitCollision : IEventData<HitCollision>
+struct HitCollision : IEventData<HitCollision>,
+                      EntityParticipants<2>
 {
     CollisionData a;
     CollisionData b;

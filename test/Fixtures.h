@@ -8,7 +8,7 @@
 #include "../core/Monitoring.h"
 #include "../core/Hooks.h"
 #include "../core/Counter.h"
-#include "../systems/SystemManager2.h"
+#include "../systems/SystemManager.h"
 #include "../atlas/NewTextureRepository.h"
 #include "../events/EventBus2.h"
 
@@ -55,11 +55,16 @@ public:
 	void LoopEnd();
 
 	// getters
-	template <typename T> 
-	std::unique_ptr<T>& GetSystem() { return systems_.GetSystem<T>(); }
+	SystemManager& GetSystemManager() { return systems_; }
+	const SystemManager& GetSystemManager() const { return systems_; }
 
 	template <typename T>
-	bool IsSystemInitialized() { return systems_.IsSystemInitialized<T>(); }
+	T& GetSystem() { return systems_.GetSystem<T>(); }
+	template <typename T> 
+	const T& GetSystem() const { return systems_.GetSystem<T>(); }
+
+	template <typename T>
+	bool IsSystemRegistered() { return systems_.IsSystemRegistered<T>(); }
 
 	HookManager& GetHooks() { return hooks_; }
 	TextureRepository& GetTextureRepository() { return textureRepo_; }
@@ -68,7 +73,7 @@ public:
 	SDL_Renderer* GetRenderer() { return SDLite::Renderer(); }
 	SDL_Window* GetWindow() { return SDLite::Window(); }
 	
-	float GetDeltaTime() const { return systems_.GetSystem<GameLoopSystem>()->GetDeltaTime(); }
+	float GetDeltaTime() const { return systems_.GetSystem<GameLoopSystem>().GetDeltaTime(); }
 
 	// bundled processes
 	Result<Void> RenderScene(SDL_Color bgColor = SDLite::kColorWhite);
@@ -85,16 +90,22 @@ public:
 	static Result<std::shared_ptr<SceneFixture>> GetInstance();
 
 	// system scheduling
-	template <ImplementsSystemUpdate T, typename...Args>
-		requires std::constructible_from<T, Args...>
-	T& RegisterSystem(Phase phase, Args&&...args)
+	template <typename T, typename...Args>
+	T& RegisterSystem(Args&&...args)
 	{
-		static_assert(std::same_as<T, std::remove_cvref_t<T>>,
-			"System type argument should have no cv-ref qualifiers");
-
-		return userSystemScheduler_.RegisterSystem(
-			phase, std::forward<Args>(args)...);
+		return systems_.RegisterSystem<T>(std::forward<Args>(args)...);
 	}
+
+	//template <ImplementsSystemUpdate T, typename...Args>
+	//	requires std::constructible_from<T, Args...>
+	//T& RegisterSystem(Phase phase, Args&&...args)
+	//{
+	//	static_assert(std::same_as<T, std::remove_cvref_t<T>>,
+	//		"System type argument should have no cv-ref qualifiers");
+
+	//	return userSystemScheduler_.RegisterSystem<T>(
+	//		phase, std::forward<Args>(args)...);
+	//}
 
 private:
 	void UpdateTimers();
@@ -106,7 +117,6 @@ private:
 	ScriptManager scripts_;
 	TestScript testScript_;
 	EventBus2 eventBus_;
-	UserSystemScheduler userSystemScheduler_;
 };
 
 template<typename Fn> requires std::is_invocable_r_v<bool, Fn>

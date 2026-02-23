@@ -1,4 +1,5 @@
 #pragma once
+#include "EntityConcepts.h"
 #include "EntityManager.h"
 #include "ComponentManager.h"
 #include "ComponentMasks.h"
@@ -18,67 +19,87 @@ class EntityEvents;
 // ENTITY //
 class Entity
 {
-public:
-    // components that can't be mutated through Entity API (must use EntityPassKey)
-    template <typename T>
-    static constexpr bool public_mutable_component_v = (
-        !(RelationalComponentType<T>    ||
-          std::same_as<T, EntityFlags>  ||
-          std::same_as<T, ActiveState>  ||
-          std::same_as<T, ActiveAudio>  ||
-          std::same_as<T, TextRenderableGlyphCache> ||
-          std::same_as<T, MarkedDestroyed> ||
-          std::same_as<T, NeedsAnimationUpdate>)
-    );
+private:
+    template <typename TupLike>
+    struct get_components_from_tuplike;
 
+    template <template <typename...> class TupLike, typename...Ts>
+    struct get_components_from_tuplike<TupLike<Ts...>>
+    {
+        using Ret = std::tuple<Ts&...>;
+        using ConstRet = std::tuple<const Ts&...>;
+
+        static Ret call(Entity&)
+            requires (public_mutable_component_v<std::remove_cvref_t<Ts>> && ...);
+        static ConstRet call_const(const Entity&);
+        static Ret call_with_key(Entity&, EntityPassKey);
+    };
+
+public:
     Entity() : id_(kInvalidEntity), ecs_(nullptr) {}
     Entity(Entity_t id, ECS& ecs) : id_(id), ecs_(&ecs) {}
 
     template <typename T> 
-        requires Entity::public_mutable_component_v<std::remove_cvref_t<T>>
+        requires public_mutable_component_v<std::remove_cvref_t<T>>
     T& AddComponent(T&& cmp);
-    template <typename T> requires Entity::public_mutable_component_v<T>
+    template <typename T> requires public_mutable_component_v<T>
     T& AddComponent();
     template <typename T>
     T& AddComponent(T&& cmp, EntityPassKey);
     template <typename T>
     T& AddComponent(EntityPassKey);
 
-    template <typename T> requires Entity::public_mutable_component_v<T>
+    template <typename T> requires public_mutable_component_v<T>
     void RemoveComponent();
     template <typename T>
     void RemoveComponent(EntityPassKey);
 
     void ClearComponents();
 
-    template <typename T> requires Entity::public_mutable_component_v<T>
+    // component getters
+    template <typename T> requires public_mutable_component_v<T>
     T& GetComponent();
     template <typename T>
     T& GetComponent(EntityPassKey);
     template <typename T>
     const T& GetComponent() const;
 
-    template <typename T> requires Entity::public_mutable_component_v<T>
+    template <typename T> requires public_mutable_component_v<T>
     Result<std::reference_wrapper<T>> TryGetComponent();
     template <typename T>
     Result<std::reference_wrapper<const T>> TryGetComponent() const;
 
-    template <typename...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
+    template <typename...Ts> requires (!(is_tuple_or_typelist_v<Ts> && ...) &&
+                                        (public_mutable_component_v<Ts> && ...))
     std::tuple<Ts&...> GetComponents();
-    template <typename...Ts>
+    template <typename...Ts> requires (!(is_tuple_or_typelist_v<Ts> && ...))
     std::tuple<Ts&...> GetComponents(EntityPassKey);
-    template <typename...Ts>
+    template <typename...Ts> requires (!(is_tuple_or_typelist_v<Ts> && ...))
     std::tuple<const Ts&...> GetComponents() const;
 
+    // getters from tuplike
+    template <typename TupLike> requires (is_tuple_or_typelist_v<TupLike> && 
+                                          all_public_mutable_components_v<TupLike>)
+    typename get_components_from_tuplike<TupLike>::Ret GetComponents();
+    template <typename TupLike> requires is_tuple_or_typelist_v<TupLike>
+    typename get_components_from_tuplike<TupLike>::ConstRet GetComponents() const;
+    template <typename TupLike> requires is_tuple_or_typelist_v<TupLike>
+    typename get_components_from_tuplike<TupLike>::Ret GetComponents(EntityPassKey);
+
+    // component testing
     template <typename T>
     bool HasComponent() const;
     template <typename...Ts>
     bool HasComponents() const;
+    template <typename T, typename Fn> requires FnReturningBool<Fn, const T&>
+    bool HasComponentAnd(Fn&& fn) const;
+    template <typename...Ts, typename Fn> requires FnReturningBool<Fn, const Ts&...>
+    bool HasComponentsAnd(Fn&& fn) const;
 
     // component visibility
     template <typename T>
     bool GetComponentVisibility() const;
-    template <typename...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
+    template <typename...Ts> requires (public_mutable_component_v<Ts> && ...)
     void SetComponentVisibility(bool vis);
 
     // event production
@@ -582,8 +603,7 @@ private:
 };
 
 // ENTITY DEFS //
-template <typename T> 
-    requires Entity::public_mutable_component_v<std::remove_cvref_t<T>>
+template <typename T> requires public_mutable_component_v<std::remove_cvref_t<T>>
 inline T& Entity::AddComponent(T&& cmp)
 {
     assert(ecs_);
@@ -592,7 +612,7 @@ inline T& Entity::AddComponent(T&& cmp)
     return ecs_->AddComponent<std::remove_cvref_t<T>>(id_, std::forward<T>(cmp));
 }
 
-template <typename T> requires Entity::public_mutable_component_v<T>
+template <typename T> requires public_mutable_component_v<T>
 inline T& Entity::AddComponent()
 {
     assert(ecs_);
@@ -619,7 +639,7 @@ inline T& Entity::AddComponent(EntityPassKey)
     return ecs_->AddComponent<T>(id_);
 }
 
-template <typename T> requires Entity::public_mutable_component_v<T>
+template <typename T> requires public_mutable_component_v<T>
 inline void Entity::RemoveComponent()
 {
     assert(ecs_);
@@ -637,7 +657,7 @@ inline void Entity::RemoveComponent(EntityPassKey)
     return ecs_->RemoveComponent<T>(id_);
 }
 
-template <typename T> requires Entity::public_mutable_component_v<T>
+template <typename T> requires public_mutable_component_v<T>
 inline T& Entity::GetComponent()
 {
     assert(ecs_);
@@ -664,7 +684,7 @@ inline const T& Entity::GetComponent() const
     return ecs_->GetComponent<T>(id_);
 }
 
-template <typename T> requires Entity::public_mutable_component_v<T>
+template <typename T> requires public_mutable_component_v<T>
 inline Result<std::reference_wrapper<T>> Entity::TryGetComponent()
 {
     assert(ecs_);
@@ -692,7 +712,8 @@ inline Result<std::reference_wrapper<const T>> Entity::TryGetComponent() const
     return std::cref(ecs_->GetComponent<T>(id_));
 }
 
-template <typename...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
+template <typename...Ts> requires (!(is_tuple_or_typelist_v<Ts> && ...) &&
+                                    (public_mutable_component_v<Ts> && ...))
 inline std::tuple<Ts&...> Entity::GetComponents()
 {
     assert(ecs_);
@@ -701,7 +722,7 @@ inline std::tuple<Ts&...> Entity::GetComponents()
     return ecs_->GetComponents<Ts...>(id_);
 }
 
-template <typename ...Ts>
+template <typename...Ts> requires (!(is_tuple_or_typelist_v<Ts> && ...))
 inline std::tuple<Ts&...> Entity::GetComponents(EntityPassKey)
 {
     assert(ecs_);
@@ -710,7 +731,7 @@ inline std::tuple<Ts&...> Entity::GetComponents(EntityPassKey)
     return ecs_->GetComponents<Ts...>(id_);
 }
 
-template <typename ...Ts>
+template <typename...Ts> requires (!(is_tuple_or_typelist_v<Ts> && ...))
 inline std::tuple<const Ts&...> Entity::GetComponents() const
 {
     assert(ecs_);
@@ -718,6 +739,30 @@ inline std::tuple<const Ts&...> Entity::GetComponents() const
 
     return ecs_->GetComponents<Ts...>(id_);
 }
+
+/* Get components via tup-like */
+template <typename TupLike>
+    requires (is_tuple_or_typelist_v<TupLike> && all_public_mutable_components_v<TupLike>)
+typename Entity::get_components_from_tuplike<TupLike>::Ret 
+Entity::GetComponents()
+{
+    return Entity::get_components_from_tuplike<TupLike>::call(*this);
+}
+
+template <typename TupLike> requires is_tuple_or_typelist_v<TupLike>
+typename Entity::get_components_from_tuplike<TupLike>::ConstRet 
+Entity::GetComponents() const
+{
+    return Entity::get_components_from_tuplike<TupLike>::call_const(*this);
+}
+
+template <typename TupLike> requires is_tuple_or_typelist_v<TupLike>
+typename Entity::get_components_from_tuplike<TupLike>::Ret 
+Entity::GetComponents(EntityPassKey k)
+{
+    return Entity::get_components_from_tuplike<TupLike>::call_with_key(*this, k);
+}
+/**/
 
 template <typename T>
 inline bool Entity::HasComponent() const
@@ -731,6 +776,20 @@ inline bool Entity::HasComponents() const
     return IsValid() && (ecs_->HasComponent<Ts>(id_) && ...);
 }
 
+template <typename T, typename Fn> requires FnReturningBool<Fn, const T&>
+bool Entity::HasComponentAnd(Fn&& fn) const
+{
+    return HasComponent<T>() &&
+           std::invoke(std::forward<Fn>(fn), GetComponent<T>());
+}
+
+template <typename...Ts, typename Fn> requires FnReturningBool<Fn, const Ts&...>
+bool Entity::HasComponentsAnd(Fn&& fn) const
+{
+    return HasComponents<Ts...>() &&
+           std::invoke(std::forward<Fn>(fn), GetComponent<Ts>()...);
+}
+
 template <typename T>
 inline bool Entity::GetComponentVisibility() const
 {
@@ -742,7 +801,7 @@ inline bool Entity::GetComponentVisibility() const
     return visibilityFlags.Test<T>();
 }
 
-template <typename...Ts> requires (Entity::public_mutable_component_v<Ts> && ...)
+template <typename...Ts> requires (public_mutable_component_v<Ts> && ...)
 inline void Entity::SetComponentVisibility(bool vis)
 {
     assert(HasComponent<EntityFlags>());
@@ -789,6 +848,30 @@ inline void Entity::SetEventProduction(bool tf)
     auto& eventProductionFlags = ecs_->GetComponent<EntityFlags>(id_).eventProductionFlags;
 
     eventProductionFlags.Set<T>(tf);
+}
+
+// GET COMPONENTS FROM TUPLIKE
+template <template <typename...> class TupLike, typename...Ts>
+std::tuple<Ts&...>
+Entity::get_components_from_tuplike<TupLike<Ts...>>::call(Entity& e)
+    requires (public_mutable_component_v<std::remove_cvref_t<Ts>> && ...)
+{
+    return e.GetComponents<Ts...>();
+}
+
+template <template <typename...> class TupLike, typename...Ts>
+std::tuple<const Ts&...>
+Entity::get_components_from_tuplike<TupLike<Ts...>>::call_const(const Entity& e)
+{
+    return e.GetComponents<Ts...>();
+}
+
+template <template <typename...> class TupLike, typename...Ts>
+std::tuple<Ts&...>
+Entity::get_components_from_tuplike<TupLike<Ts...>>::call_with_key(Entity& e, 
+                                                                   EntityPassKey k)
+{
+    return e.GetComponents<Ts...>(k);
 }
 
 // ENTITY RELATIONS

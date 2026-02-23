@@ -2,89 +2,89 @@
 #include <format>
 #include <array>
 #include "../ecs/Ecs.h"
-#include "../core/Conversions.h"
-#include "../components/RenderableComponent.h"
-#include "../scripting/ScriptManager.h"
-#include "../sdl/SDLUtils.h"
-#include "../sdl/SDLite.h"
-#include "../systems/PhysicsSystem.h"
-#include "../systems/CameraSystem.h"
-#include "../components/builder/RigidBodyComponentBuilder.h"
-#include "../components/builder/ColliderComponentBuilder.h"
-#include "../events/EventBus2.h"
-#include "../core/EvaluationProperty.h"
-#include "../atlas/NewTextureRepository.h"
-#include "../serial/Serialization.h"
+//#include "../core/Conversions.h"
+//#include "../components/RenderableComponent.h"
+//#include "../scripting/ScriptManager.h"
+//#include "../sdl/SDLUtils.h"
+//#include "../sdl/SDLite.h"
+//#include "../systems/PhysicsSystem.h"
+//#include "../systems/CameraSystem.h"
+//#include "../components/builder/RigidBodyComponentBuilder.h"
+//#include "../components/builder/ColliderComponentBuilder.h"
+//#include "../events/EventBus2.h"
+//#include "../core/EvaluationProperty.h"
+//#include "../atlas/NewTextureRepository.h"
+//#include "../serial/Serialization.h"
 
-struct HitboxInfo
-{
-    Dimensions<float> dimensions;
-    SDL_FPoint spriteLocalPos = { 0.0f, 0.0f };
-};
-
-inline constexpr std::array kSwordHitboxInfo = {
-    HitboxInfo{ .dimensions = { 14.0f, 37.0f }, .spriteLocalPos = { 24.0f, 5.0f } },
-    HitboxInfo{ .dimensions = { 42.0f, 42.0f }, .spriteLocalPos = { 52.0f, 12.0f } },
-    HitboxInfo{ .dimensions = { 38.0f, 66.0f }, .spriteLocalPos = { 79.0f, 26.0f } },
-    HitboxInfo{ .dimensions = { 37.0f, 31.0f }, .spriteLocalPos = { 79.0f, 60.0f } },
-    HitboxInfo{ .dimensions = { 37.0f, 31.0f }, .spriteLocalPos = { 79.0f, 60.0f } },
-    HitboxInfo{ .dimensions = { 37.0f, 14.0f }, .spriteLocalPos = { 79.0f, 77.0f } }
-};
-
-inline constexpr std::array kSwordSpritePaths = {
-    "sword_slash/sword_slash_000.png",
-    "sword_slash/sword_slash_001.png",
-    "sword_slash/sword_slash_002.png",
-    "sword_slash/sword_slash_003.png",
-    "sword_slash/sword_slash_004.png"
-};
-
-class SwordHandler
-{
-public:
-    static constexpr int8_t kInactive = -1;
-
-    SwordHandler(Entity& parent, EventBus2& bus, SDL_Renderer* renderer, 
-                 TextureRepository& textureRepo);
-
-private:
-    auto MakeSwordSwingCallback();
-    auto MakeTimerCallback();
-
-    SDL_FRect GetParentBodyBoundingBox();
-    static SDL_FRect GetSpriteEntityBoundingBox(const Entity& e);
-
-    static Transform TranslateBoundingBoxToTransform(const SDL_FRect& bbox);
-    //static SDL_FPoint GetTransformPositionForSword(const Entity& parentEnt, Entity& swordEnt);
-
-    Result<Void> LoadSprites(SDL_Renderer* renderer, TextureRepository& textureRepo);
-
-    Entity coordinator_;
-    std::array<Entity, 6> swordFrames_;
-    Entity_t bodyParentId_ = kInvalidEntity;
-    int8_t activeFrame_ = kInactive;
-};
-
-namespace ui {
-
-Result<Void> TestButton();
-
-class PointDrawHandler
-{
-public:
-    PointDrawHandler(EventBus2& bus);
-
-    const std::vector<SDL_FPoint>& GetPoints() { return points_; }
-    void Draw(SDL_Renderer* renderer);
-
-private:
-    auto GetLayPointCallback();
-    auto GetErasePointCallback();
-
-    std::vector<SignalToken> signalTokens_;
-    std::vector<SDL_FPoint> points_;
-    SDL_Color color_ = SDLite::kColorRed;
-};
+//struct HitboxInfo
+//{
+//    Dimensions<float> dimensions;
+//    SDL_FPoint spriteLocalPos = { 0.0f, 0.0f };
+//};
+//
+//inline constexpr std::array kSwordHitboxInfo = {
+//    HitboxInfo{ .dimensions = { 14.0f, 37.0f }, .spriteLocalPos = { 24.0f, 5.0f } },
+//    HitboxInfo{ .dimensions = { 42.0f, 42.0f }, .spriteLocalPos = { 52.0f, 12.0f } },
+//    HitboxInfo{ .dimensions = { 38.0f, 66.0f }, .spriteLocalPos = { 79.0f, 26.0f } },
+//    HitboxInfo{ .dimensions = { 37.0f, 31.0f }, .spriteLocalPos = { 79.0f, 60.0f } },
+//    HitboxInfo{ .dimensions = { 37.0f, 31.0f }, .spriteLocalPos = { 79.0f, 60.0f } },
+//    HitboxInfo{ .dimensions = { 37.0f, 14.0f }, .spriteLocalPos = { 79.0f, 77.0f } }
+//};
+//
+//inline constexpr std::array kSwordSpritePaths = {
+//    "sword_slash/sword_slash_000.png",
+//    "sword_slash/sword_slash_001.png",
+//    "sword_slash/sword_slash_002.png",
+//    "sword_slash/sword_slash_003.png",
+//    "sword_slash/sword_slash_004.png"
+//};
+//
+//class SwordHandler
+//{
+//public:
+//    static constexpr int8_t kInactive = -1;
+//
+//    SwordHandler(Entity& parent, EventBus2& bus, SDL_Renderer* renderer, 
+//                 TextureRepository& textureRepo);
+//
+//private:
+//    auto MakeSwordSwingCallback();
+//    auto MakeTimerCallback();
+//
+//    SDL_FRect GetParentBodyBoundingBox();
+//    static SDL_FRect GetSpriteEntityBoundingBox(const Entity& e);
+//
+//    static Transform TranslateBoundingBoxToTransform(const SDL_FRect& bbox);
+//    //static SDL_FPoint GetTransformPositionForSword(const Entity& parentEnt, Entity& swordEnt);
+//
+//    Result<Void> LoadSprites(SDL_Renderer* renderer, TextureRepository& textureRepo);
+//
+//    Entity coordinator_;
+//    std::array<Entity, 6> swordFrames_;
+//    Entity_t bodyParentId_ = kInvalidEntity;
+//    int8_t activeFrame_ = kInactive;
+//};
+//
+//namespace ui {
+//
+//Result<Void> TestButton();
+//
+//class PointDrawHandler
+//{
+//public:
+//    PointDrawHandler(EventBus2& bus);
+//
+//    const std::vector<SDL_FPoint>& GetPoints() { return points_; }
+//    void Draw(SDL_Renderer* renderer);
+//
+//private:
+//    auto GetLayPointCallback();
+//    auto GetErasePointCallback();
+//
+//    std::vector<SignalToken> signalTokens_;
+//    std::vector<SDL_FPoint> points_;
+//    SDL_Color color_ = SDLite::kColorRed;
+//};
 
 //class ColliderBoxMaker
 //{
@@ -106,7 +106,7 @@ private:
 //    SDL_Color color_ = SDLite::kColorRed;
 //};
 //
-} // ui
+//} // ui
 
 
 //static Result<Entity> MakeColliderBoxEntity(B2World& world, SDL_FPoint position, Dimensions<float> dimensions, 
@@ -453,3 +453,79 @@ private:
 
 
 //} // test
+
+namespace test {
+
+class FPSReporter
+{
+public:
+    explicit FPSReporter(GlyphTextWriter&& textWriter,
+        SDL_Color textColor = SDLite::kColorBlack,
+        Dimensions<int> dimensions = { 100, 100 },
+        std::optional<SDL_FPoint> location = {})
+    {
+        auto e = ECS::CreateEntity();      
+        assert(e.IsValid());
+
+        if (!location.has_value())
+        {
+            assert(dimensions.w > 0 && dimensions.h > 0);
+            location = SDL_FPoint{
+                .x = static_cast<float>(dimensions.w / 2),
+                .y = static_cast<float>(dimensions.h / 2)
+            };
+        }
+
+        assert(location.has_value());
+        e.AddComponent(Transform{ .position = *location });
+
+        textWriter.text = "";
+        e.AddComponent(TextRenderableComponent{
+            .writer = std::move(textWriter),
+            .formatting = {
+                .bounds = dimensions
+            },
+            .profile = {
+                .mods = {
+                    .color = { textColor.r, textColor.g, textColor.b }
+                }
+            }
+        });
+
+        entityId_ = e.GetID();
+    }
+
+    void Update(float dt)
+    {
+        auto e = ECS::GetEntityByID(entityId_);
+        if (!e.IsValid())
+        {
+            return;
+        }
+        assert(e.HasComponent<TextRenderableComponent>());
+
+        frameCount_++;
+
+        Uint32 currentTime = SDL_GetTicks();
+        if (currentTime - lastTime_ < 1000)  // Update every 1000 ms = 1 secon
+        {
+            return;
+        }
+
+        float fps = frameCount_ * 1000.0f / (currentTime - lastTime_);
+        frameCount_ = 0;
+        lastTime_ = currentTime;
+
+        
+        auto& writer = e.GetComponent<TextRenderableComponent>().writer;
+        writer.text = "FPS: " + std::to_string(fps);
+    }
+
+private:
+    Entity_t entityId_ = kInvalidEntity;
+    uint32_t lastTime_ = SDL_GetTicks();
+    int frameCount_ = 0;
+};
+
+
+} // test

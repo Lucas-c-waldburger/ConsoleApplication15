@@ -137,6 +137,11 @@ public:
         return (IsValid()) ? b2Body_GetGravityScale(bodyHandle_) : 0.0f;
     }
 
+    void SetGravityScale(float newScale)
+    {
+        b2Body_SetGravityScale(bodyHandle_, newScale);
+    }
+
     SDL_FPoint GetEffectiveGravity() const
     {
         if (!IsValid())
@@ -195,7 +200,12 @@ public:
 
     std::vector<ReadOnly<B2Shape>> GetShapes() const;
 
+    bool OwnsShape(b2ShapeId shapeId) const;
     bool OwnsShape(const Handle<B2Shape>& shapeHandle) const;
+
+    std::vector<B2ContactData> GetContactData() const;
+    std::vector<B2ContactData> GetContactDataWith(const Handle<B2Body>& query) const;
+    std::vector<B2ContactData> GetContactDataWith(const Handle<B2Shape>& query) const;
 
 private:
     static Result<b2ShapeId> AddCircle(b2BodyId bodyId, const B2ShapeDefinition& shapeDef);

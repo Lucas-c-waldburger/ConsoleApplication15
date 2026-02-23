@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <vector>
+#include "TypeUtils.h"
 
 namespace core {
 
@@ -65,4 +66,11 @@ inline bool ContainsIf(Container& c, Pred&& pred)
     return FindIf(c, std::forward<Pred>(pred)) != c.end();
 }
 
+template <typename T, typename...Us> 
+    requires (sizeof...(Us) > 0 && (EqualityComparableTo<T, Us> && ...))
+inline constexpr bool EqualsAny(const T& val, const Us&...rest)
+{
+    return ((val == rest) || ...);
 }
+
+} // core

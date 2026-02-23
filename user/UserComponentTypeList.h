@@ -6,6 +6,10 @@ struct UserComponent2;
 struct UserComponent3;
 struct UserComponent4;
 struct UserComponent5;
+struct UserComponent6;
+struct UserComponent7;
+struct UserComponent8;
+struct UserComponent9;
 
 using UserComponentTypeList = TypeList<
 	UserComponent0,
@@ -13,5 +17,9 @@ using UserComponentTypeList = TypeList<
 	UserComponent2,
 	UserComponent3,
 	UserComponent4,
-	UserComponent5
+	UserComponent5,
+	UserComponent6,
+	UserComponent7,
+	UserComponent8,
+	UserComponent9
 >;

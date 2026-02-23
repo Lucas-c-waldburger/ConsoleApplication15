@@ -1,5 +1,22 @@
 #include "B2Shape.h"
 #include "B2Chain.h"
+#include "B2Common.h"
+
+std::vector<B2ContactData> B2Shape::GetContactData() const
+{
+    return GetContactDataImpl(shapeHandle_, Handle<B2Shape>{});
+}
+
+std::vector<B2ContactData> 
+B2Shape::GetContactDataWith(const Handle<B2Shape>& query) const
+{
+    if (!query.IsValid() || query == shapeHandle_)
+    {
+        return {};
+    }
+
+    return GetContactDataImpl(shapeHandle_, query);
+}
 
 B2Chain B2ChainSegmentShape::GetParentChain()
 {
@@ -29,3 +46,4 @@ std::pair<SDL_FPoint, SDL_FPoint> B2ChainSegmentShape::GetPoints() const
     return std::make_pair(ToSDLFPointScaled(worldPoint1), 
                           ToSDLFPointScaled(worldPoint2));
 }
+

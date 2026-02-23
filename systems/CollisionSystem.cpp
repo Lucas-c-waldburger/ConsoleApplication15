@@ -115,15 +115,43 @@ std::pair<Handle<B2Shape>, Handle<B2Shape>> GetShapeHandles(T* b2Ev)
 //	return Void{};
 //}
 
-Entity_t FindShapeEntity(const std::vector<Entity>& entities, const Handle<B2Shape>& handle)
+Entity FindShapeEntity(const std::vector<Entity>& entities, const Handle<B2Shape>& handle)
 {
 	auto it = core::FindIf(entities, [&handle](const auto& entity) {
 		assert(entity.HasComponent<Collider>());
 		return entity.GetComponent<Collider>().shape.GetData().GetHandle() == handle;
 	});
 
-	return (it != entities.end()) ? it->GetID() : kInvalidEntity;
+	return (it != entities.end()) ? *it : Entity{};
 };
+
+Entity_t FindOwningBodyEntity(Entity& shapeEnt, const Handle<B2Shape>& handle)
+{
+	assert(shapeEnt.IsValid());
+	assert(shapeEnt.HasComponent<Collider>());
+
+	if (shapeEnt.HasComponent<RigidBody>())
+	{
+		assert(shapeEnt.GetComponent<RigidBody>().body.GetData().OwnsShape(handle));
+
+		return shapeEnt.GetID();
+	}
+
+	auto& colliderShape = shapeEnt.GetComponent<Collider>().shape;
+	auto parentBodyHandle = colliderShape.GetData().GetParentBodyHandle();
+
+	auto rels = shapeEnt.GetRelations();
+	assert(rels.IsChild());
+
+	auto parent = rels.GetParent();
+
+	assert(parent.IsValid());
+	assert(parent.HasComponent<RigidBody>());
+	assert(parent.GetComponent<RigidBody>().body.GetData().GetHandle() == 
+		   parentBodyHandle);
+
+	return parent.GetID();
+}
 
 template <SomeCustomCollisionEvent T, SomeB2CollisionEvent U>
 void BufferCollisionEventsImpl(std::vector<Entity>& entities, EventBus2& bus, 
@@ -143,20 +171,23 @@ void BufferCollisionEventsImpl(std::vector<Entity>& entities, EventBus2& bus,
 		auto entityA = FindShapeEntity(entities, shapeHandleA);
 		auto entityB = FindShapeEntity(entities, shapeHandleB);
 
-		if (entityA == kInvalidEntity || entityB == kInvalidEntity)
+		if (!(entityA.IsValid() && entityB.IsValid()))
 		{
 			continue;
 		}
 
-		bus.PushEvent(T{
-			.a = {.entity = entityA, .shapeHandle = shapeHandleA },
-			.b = {.entity = entityB, .shapeHandle = shapeHandleB }
-		});
+		auto owningBodyA = FindOwningBodyEntity(entityA, shapeHandleA);
+		auto owningBodyB = FindOwningBodyEntity(entityB, shapeHandleB);
 
-		//EventBus::PushEvent(T{
-		//	.a = { .entity = entityA, .shapeHandle = shapeHandleA },
-		//	.b = { .entity = entityB, .shapeHandle = shapeHandleB }
-		//});
+		T ev{
+			.a = { .entity = entityA.GetID(), .shapeHandle = shapeHandleA },
+			.b = { .entity = entityB.GetID(), .shapeHandle = shapeHandleB }
+		};
+
+		ev.entity<0>() = owningBodyA;
+		ev.entity<1>() = owningBodyB;
+
+		bus.PushEvent(std::move(ev));
 	}
 }
 

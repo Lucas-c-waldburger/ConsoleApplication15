@@ -190,41 +190,45 @@ inline bool IsEntityParticipantInEvent(const Ev& event,
 }
 
 template <SomeGameControllerEvent Ev>
-inline bool IsGameControllerInEvent(const Ev& ev,
+inline bool IsGameControllerInEvent(const Entity& e, const Ev& ev,
 									const EntityEvents::FilterDef& filterDef)
 {
-	return filterDef.relevantJoystickId == -1 ||
-		   filterDef.relevantJoystickId == ev.joystickID;
-	//if (filterDef.relevantJoystickId == -1)
-	//{
-	//	// no particular controller specified
-	//	return true;
-	//}
-	//if (filterDef.relevantJoystickId == ev.joystickID)
-	//{
-	//	return true;
-	//}
-	//if (filterDef.relevantEntity == kInvalidEntity)
-	//{
-	//	// no entity to look at current joystick id of
-	//	return true;
-	//}
+	//return true;
+	
+	assert(ev.joystickID > -1);
 
-	//// check whether mismatch of joystick id is due to relevant entity's id changing
-	//auto relevantEntity = ECS::GetEntityByID(filterDef.relevantEntity);
-	//if (!relevantEntity.IsValid())
-	//{
-	//	return false;
-	//}
-	//if (!relevantEntity.HasComponent<GameControllerState>())
-	//{
-	//	return false;
-	//}
+	if (e.GetID() == filterDef.relevantEntity)
+	{
+		if (!e.HasComponent<GameControllerState>())
+		{
+			return false;
+		}
 
-	//const auto entityJoystickId =
-	//	relevantEntity.GetComponent<GameControllerState>().joystickID;
+		if constexpr (std::same_as<Ev, events::GameControllerConnected>)
+		{
+			// we're trying to get a valid joystick id
+			return true;
+		}
 
-	//return entityJoystickId == ev.joystickID;
+		const auto& gc = e.GetComponent<GameControllerState>();
+
+		if (gc.joystickID == ev.joystickID)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	auto relevantE = ECS::GetEntityByID(filterDef.relevantEntity);
+	if (!relevantE.IsValid())
+	{
+		return false;
+	}
+
+	return relevantE.HasComponent<GameControllerState>() &&
+		   relevantE.GetComponent<GameControllerState>()
+			.joystickID == ev.joystickID;
 }
 
 template <typename Ev>
@@ -245,10 +249,7 @@ inline bool IsEventRelevant(const Entity& e, const Ev& ev,
 	}
 	if constexpr (SomeGameControllerEvent<Ev>)
 	{
-		if (!IsGameControllerInEvent(ev, filterDef))
-		{
-			return false;
-		}
+		return IsGameControllerInEvent(e, ev, filterDef);
 	}
 
 	return true;	
@@ -351,30 +352,28 @@ inline void ResolveFilterDefinition(Entity& e, const Fn& fn,
 	using event_data_t =
 		std::remove_cvref_t<typename func_traits<Fn>::template arg_at<0>>;
 
-	if constexpr (HasEntityParticipants<event_data_t>)
+	// try to match current entity if none specified
+	if (filterDef.relevantEntity == kInvalidEntity)
 	{
-		// try to match current entity if none specified
-		if (filterDef.relevantEntity == kInvalidEntity)
-		{
-			filterDef.relevantEntity = e.GetID();
-		}
+		filterDef.relevantEntity = e.GetID();
 	}
-	if constexpr (SomeGameControllerEvent<event_data_t>)
-	{
-		if (filterDef.relevantEntity != kInvalidEntity &&
-			filterDef.relevantJoystickId == -1)
-		{
-			// entity specified, try to find its corresponding joystick id
-			auto relevantEntity = ECS::GetEntityByID(filterDef.relevantEntity);
 
-			if (relevantEntity.IsValid() &&
-				relevantEntity.HasComponent<GameControllerState>())
-			{
-				filterDef.relevantJoystickId =
-					relevantEntity.GetComponent<GameControllerState>().joystickID;
-			}
-		}
-	}
+	//if constexpr (SomeGameControllerEvent<event_data_t>)
+	//{
+	//	if (filterDef.relevantEntity != kInvalidEntity &&
+	//		filterDef.relevantJoystickId == -1)
+	//	{
+	//		// entity specified, try to find its corresponding joystick id
+	//		auto relevantEntity = ECS::GetEntityByID(filterDef.relevantEntity);
+
+	//		if (relevantEntity.IsValid() &&
+	//			relevantEntity.HasComponent<GameControllerState>())
+	//		{
+	//			filterDef.relevantJoystickId =
+	//				relevantEntity.GetComponent<GameControllerState>().joystickID;
+	//		}
+	//	}
+	//}
 }
 
 template <typename Fn> requires valid_event_callback_sig_v<Fn>

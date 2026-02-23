@@ -92,22 +92,6 @@ void UpdateTransformComponents(EventBus2& bus)
 		SDL_FPoint newPosition = rigidBody.body.GetData().GetPosition();
 		float newRotation = rigidBody.body.GetData().GetAngle();
 
-		if (rigidBody.body.GetData().GetBodyType() != B2Body::Type::Static)
-		{
-			if (entity.HasComponent<Collider>())
-			{
-				const auto& shape = entity.GetComponent<Collider>().shape.GetData();
-				if (shape.IsValid() && shape.GetParentBodyHandle() ==
-					rigidBody.body.GetData().GetHandle())
-				{
-					LOG_INFO_FMT("Density: {}", shape.GetDensity());
-					LOG_INFO_FMT("Position: {}, {}", newPosition.x, newPosition.y);
-					LOG_INFO_FMT("Angle: {}", newRotation);
-					
-				}
-			}
-		}
-
 		if (newPosition != transform.position && 
 			EntityShouldProduceEvent<events::EntityPositionChanged>(entity))
 		{

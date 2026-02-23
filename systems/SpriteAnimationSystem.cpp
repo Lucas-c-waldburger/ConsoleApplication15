@@ -17,7 +17,9 @@ void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 
 		const auto& spriteAtlas = textureRepo.GetSpriteAtlas();
 
-		const size_t seriesSize = spriteAtlas.GetSpriteSeriesSize(anim.spriteSeriesName);
+		const size_t seriesSize = 
+			spriteAtlas.GetSpriteSeriesSize(anim.spriteSeriesName);
+
 		assert(seriesSize > 0);
 
 		if (seriesSize == std::numeric_limits<size_t>::max())
@@ -27,16 +29,19 @@ void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 			continue;
 		}
 
-		if (anim.currentIndex >= seriesSize)
-		{
-			LOG_ERROR_FMT("Sprite series '{}' size '{}' exceeds current animation "
-				"index. Defaulting to 0", anim.spriteSeriesName, seriesSize);
+		anim.index.max = seriesSize - 1;
 
-			anim.currentIndex = 0;
+		if (anim.index.current > seriesSize)
+		{
+			LOG_ERROR_FMT("Sprite series '{}' max index '{}' exceeds current "
+				"animation index. Defaulting to 0", 
+				anim.spriteSeriesName, seriesSize);
+
+			anim.index.current = 0;
 		}
 
 		auto newSprite = spriteAtlas.GetSpriteSeriesMember(anim.spriteSeriesName, 
-														   anim.currentIndex);
+														   anim.index.current);
 		if (!newSprite.resourceHandle.IsValid())
 		{
 			LOG_ERROR("Could not retrieve new sprite for animation series");

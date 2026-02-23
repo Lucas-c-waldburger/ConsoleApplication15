@@ -4,8 +4,6 @@
 #include <numbers>
 #include <algorithm>
 
-//inline constexpr float kPI = 3.14159265358979323846f;
-
 inline constexpr float kPixelsPerMeter = 30.0f;
 
 inline constexpr float ToMeters(float pixels) { return pixels / kPixelsPerMeter; }
@@ -27,6 +25,24 @@ inline constexpr SDL_FPoint ToSDLFPointScaled(const b2Vec2 vec)
 inline constexpr b2Vec2 ToB2VecScaled(const SDL_FPoint p)
 {
     return { ToMeters(p.x), ToMeters(p.y) };
+}
+
+inline constexpr SDL_FPoint ToSDLFPointFlipY(const b2Vec2 vec)
+{
+    return { vec.x, -vec.y };
+}
+inline constexpr b2Vec2 ToB2VecFlipY(const SDL_FPoint p)
+{
+    return { p.x, -p.y };
+}
+
+inline constexpr SDL_FPoint ToSDLFPointScaledFlipY(const b2Vec2 vec)
+{
+    return { ToPixels(vec.x), -ToPixels(vec.y) };
+}
+inline constexpr b2Vec2 ToB2VecScaledFlipY(const SDL_FPoint p)
+{
+    return { ToMeters(p.x), -ToMeters(p.y) };
 }
 
 inline b2Rot AngleToB2Rot(float angleDeg)
@@ -63,4 +79,3 @@ inline SDL_FRect B2AABBToSDLFRect(const b2AABB& aabb)
         .h = extents.y * 2.0f
     };
 }
-

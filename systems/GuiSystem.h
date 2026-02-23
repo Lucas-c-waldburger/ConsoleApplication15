@@ -64,7 +64,8 @@ private:
 		}
 		widgetStates_[widgetName] = true;
 
-		return [this, flags, f = std::forward<Fn>(fn), name = std::string{ widgetName }]
+		return [this, flags, f = std::forward<Fn>(fn), 
+			    name = std::string{ widgetName }] mutable
 		{
 			auto it = widgetStates_.find(name);
 			if (it != widgetStates_.end() && it->second)

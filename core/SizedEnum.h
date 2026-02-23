@@ -22,3 +22,6 @@ inline constexpr bool SizedEnumValueInRange(Enum e)
 
 	return ul >= start && ul < size;
 }
+
+template <SomeSizedEnum Enum>
+using SizedEnumIndexSequence = std::index_sequence<enum_size_v<Enum>>;

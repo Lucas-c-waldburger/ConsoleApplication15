@@ -106,7 +106,7 @@ TEST_CASE("Glyphs rendered correctly", "[rendering]")
 	REQUIRE_RESULT(pathResult);
 
 	FontDescriptor descriptorReg{
-		.fontName = "GoNotoCurrent-Regular",
+		.fontName = "GoNotoKurrent-Regular",
 		.filepath = pathResult.GetValue(),
 		.fontSize = 48
 	};
@@ -114,13 +114,13 @@ TEST_CASE("Glyphs rendered correctly", "[rendering]")
 	auto loadResult = fontAtlas.LoadFont(SDLite::Renderer(), std::move(descriptorReg));
 	REQUIRE_RESULT(loadResult);
 
-	const auto& font = fontAtlas.GetFont("GoNotoCurrent-Regular");
+	const auto& font = fontAtlas.GetFont("GoNotoKurrent-Regular");
 	CHECK(font.IsLoaded());
 	CHECK(font.GetAtlasID() != kInvalidTextureAtlasID);
 	CHECK(font.GetSourceTexture() != nullptr);
 
 	const auto fontHeightOp = fontAtlas.GetFontInfo<&FontInfo::fontHeight>(
-		"GoNotoCurrent - Regular"
+		"GoNotoKurrent-Regular"
 	);
 	REQUIRE(fontHeightOp.has_value());
 	const auto [fontHeight] = *fontHeightOp;
@@ -167,7 +167,7 @@ TEST_CASE("Glyphs rendered correctly", "[rendering]")
 	SDLite::Renderer().Show();
 
 	auto imgWriteResult = test::WriteFrameBufferToPNG(SDLite::Renderer(),
-		"GoNotoCurrent_Regular_font_glyphs_color_mod.png");
+		"GoNotoKurrent_Regular_font_glyphs_color_mod_NEW.png");
 	REQUIRE_RESULT(imgWriteResult);
 
 	SDLite::Exit();

@@ -11,7 +11,7 @@ struct EntityStateTable
 
 	TransitionProcess onEnter = nullptr;
 	TransitionProcess onExit = nullptr;
-	UpdateProcess onUpdate = nullptr;
+	UpdateProcess evaluateState = nullptr;
 };
 /**/
 
@@ -83,7 +83,7 @@ public:
 		}
 		if constexpr (ImplementsOnUpdate<State>)
 		{
-			stateTable.onUpdate = &State::OnUpdate;
+			stateTable.evaluateState = &State::OnUpdate;
 		}
 
 		return stateTable;

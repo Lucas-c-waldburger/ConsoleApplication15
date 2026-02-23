@@ -298,13 +298,15 @@ namespace SDLite
 			return winStatus;
 		}
 
+		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+
 		const auto& rendStatus = App::app_->renderer_.Init(App::app_->window_);
 		if (!rendStatus.Good())
 		{
 			return rendStatus;
 		}
 
-		SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "best", SDL_HINT_OVERRIDE);
+		//SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "best", SDL_HINT_OVERRIDE);
 
 		return {};
 	}

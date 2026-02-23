@@ -6,7 +6,8 @@
 
 template <typename...Ts> struct TypeList 
 {
-	using AsTuple = std::tuple<Ts...>;
+	template <template <typename, typename...> class Wrap, typename...Args>
+	using AsTuple = std::tuple<Wrap<Ts, Args...>...>;
 
 	static constexpr size_t size = sizeof...(Ts);
 
@@ -140,15 +141,6 @@ struct index_of<T, TupLike<U, Ts...>>
 	: std::integral_constant<size_t, 1 + index_of<T, TupLike<Ts...>>::value> {
 };
 
-//template <typename T, typename TList>
-//struct index_of;
-//
-//template <typename T, typename...Ts>
-//struct index_of<T, TypeList<T, Ts...>> : std::integral_constant<size_t, 0> {};
-//
-//template <typename T, typename U, typename...Ts>
-//struct index_of<T, TypeList<U, Ts...>>
-//	: std::integral_constant<size_t, 1 + index_of<T, TypeList<Ts...>>::value> {};
 } // detail
 
 template <typename T, typename TupLike>
@@ -158,20 +150,36 @@ inline constexpr size_t index_of_v = detail::index_of<T, TupLike>::value;
 /* CONCAT TYPE LISTS */
 namespace detail {
 
-template <typename...> 
+template <typename...Lists>
 struct concat_type_lists;
 
-template <typename TList>
-struct concat_type_lists<TList>
+template <>
+struct concat_type_lists<> { using type = TypeList<>; };
+
+template <typename...Ts>
+struct concat_type_lists<TypeList<Ts...>> { using type = TypeList<Ts...>; };
+
+template <typename...A, typename...B, typename...Rest>
+struct concat_type_lists<TypeList<A...>, TypeList<B...>, Rest...>
 {
-	using type = TList;
+	using type = 
+		typename concat_type_lists<TypeList<A..., B...>, Rest...>::type;
 };
 
-template <typename...Ts, typename...Us, typename...Rest>
-struct concat_type_lists<TypeList<Ts...>, TypeList<Us...>, Rest...>
-{
-	using type = typename concat_type_lists<TypeList<Ts..., Us...>, Rest...>::type;
-};
+//template <typename...> 
+//struct concat_type_lists;
+//
+//template <typename TList>
+//struct concat_type_lists<TList>
+//{
+//	using type = TList;
+//};
+//
+//template <typename...Ts, typename...Us, typename...Rest>
+//struct concat_type_lists<TypeList<Ts...>, TypeList<Us...>, Rest...>
+//{
+//	using type = typename concat_type_lists<TypeList<Ts..., Us...>, Rest...>::type;
+//};
 
 } // detail
 
@@ -397,6 +405,48 @@ struct transform_type_with_cvref
 
 template <typename Src, typename Dest>
 using transform_type_with_cvref_t = detail::transform_type_with_cvref<Src, Dest>::type;
+
+// IS TUPLIKE
+namespace detail {
+template <typename TupLike> 
+struct is_tuplike : std::false_type {};
+
+template <template <typename...> class TupLike, typename...Ts>
+struct is_tuplike<TupLike<Ts...>> : std::true_type {};
+
+} // detail
+
+template <typename TupLike>
+inline constexpr bool is_tuplike_v = detail::is_tuplike<TupLike>::value;
+
+// IS TUPLE OR TYPELIST
+namespace detail {
+template <typename TupLike>
+struct is_tuple_or_typelist : std::false_type {};
+
+template <template <typename...> class TupLike, typename...Ts>
+struct is_tuple_or_typelist<TupLike<Ts...>>
+{
+	static constexpr bool value = (std::same_as<TupLike<Ts...>, std::tuple<Ts...>> ||
+								   std::same_as<TupLike<Ts...>, TypeList<Ts...>>);
+};
+
+} // detail
+
+template <typename TupLike>
+inline constexpr bool is_tuple_or_typelist_v = 
+	detail::is_tuple_or_typelist<TupLike>::value;
+
+// FN RETURNING BOOL
+template <typename Fn, typename...Args>
+concept FnReturningBool = std::is_invocable_r_v<bool, Fn, Args...>;
+
+// EQUALITY COMPARABLE TO
+template <typename T, typename U>
+concept EqualityComparableTo = requires(const T& t, const U& u)
+{
+	{ t == u } -> std::convertible_to<bool>;
+};
 
 template <typename T> concept ArithmeticType = std::is_arithmetic_v<T>;
 

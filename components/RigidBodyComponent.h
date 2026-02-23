@@ -25,7 +25,10 @@ struct BodyLimits
 {
     Range<SDL_FPoint> linearVelocity = {
         .min = { 0.0f, 0.0f },
-        .max = { std::numeric_limits<float>::max(), std::numeric_limits<float>::max() }
+        .max = { 
+            std::numeric_limits<float>::max(), 
+            std::numeric_limits<float>::max() 
+        }
     };
     Range<float> angularVelocity = { 
         .min = 0.0f, 

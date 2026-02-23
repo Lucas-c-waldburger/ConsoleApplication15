@@ -28,7 +28,7 @@ public:
 		}
 
 		return signals_[typeId].Connect([f = std::forward<Fn>(fn)]
-			(const InlineStorage<kUserEventStorageSize>& data) {
+			(const InlineStorage<kUserEventStorageSize>& data) mutable {
 				std::invoke(f, data.Get<UserData>());
 			});
 	}

@@ -2,15 +2,6 @@
 #include <concepts>
 #include "../ecs/EntityAccess.h"
 
-class Entity;
-
-//class ISystem : public EntityFullAccessPrivelage
-//{
-//public:
-//	virtual ~ISystem() = default;
-//	virtual void Update(float delta) = 0;
-//};
-
 struct ISystem {};
 
 template <typename T>

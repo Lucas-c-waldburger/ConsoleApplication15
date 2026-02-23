@@ -12,10 +12,20 @@ struct ColliderSettings
     float friction = 0.5f;
     float restitution = 0.0f;
 
-    struct EnableEvents {
+    struct EnableEvents 
+    {
+        constexpr EnableEvents& operator=(bool b)
+        {
+            contact = b;
+            sensor = b;
+            hit = b;
+            return *this;
+        }
+
         bool contact = false;
         bool sensor = false; 
         bool hit = false;
+
         static constexpr EnableEvents FromEventsEnabled(const B2Shape::EventsEnabled& en)
         {
             return { .contact = en.contact, .sensor = en.sensor, .hit = en.hit };

@@ -81,7 +81,7 @@ TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system
 
 		entity.AddComponent(SpriteAnimationComponent{
 			.spriteSeriesName = "sword_slash",
-			.currentIndex = 0
+			.index = { .current = 0 }
 		});
 
 		CHECK(entity.HasComponent<NeedsAnimationUpdate>());
@@ -102,10 +102,12 @@ TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system
 		auto& animComponent = entity.GetComponent<SpriteAnimationComponent>();
 		CHECK(entity.HasComponent<NeedsAnimationUpdate>());
 
-		CHECK(animComponent.currentIndex == 0);
-		++animComponent.currentIndex;
+		CHECK(animComponent.index.current == 0);
+		++animComponent.index;
 
 		fixture->StepGameLoop(1);
+		// max index for this series should have been updated
+		CHECK(animComponent.index.max == 8);
 
 		REQUIRE(entity.HasComponent<SpriteRenderableComponent>());
 		const auto& nextRenderableSprite =
@@ -125,7 +127,7 @@ TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system
 
 		entity.AddComponent(SpriteAnimationComponent{
 			.spriteSeriesName = "sword_slash",
-			.currentIndex = 999
+			.index = { .current = 999 }
 		});
 
 		CHECK(entity.HasComponent<NeedsAnimationUpdate>());
@@ -142,6 +144,7 @@ TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system
 		CHECK_FALSE(entity.HasComponent<NeedsAnimationUpdate>());
 
 		REQUIRE(entity.HasComponent<SpriteAnimationComponent>());
-		CHECK(entity.GetComponent<SpriteAnimationComponent>().currentIndex == 0);
+		CHECK(entity.GetComponent<SpriteAnimationComponent>().index.current == 0);
+		CHECK(entity.GetComponent<SpriteAnimationComponent>().index.max == 8);
 	}
 }

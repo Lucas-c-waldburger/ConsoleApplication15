@@ -1,6 +1,7 @@
 #pragma once
 #include "System.h"
 
+class Entity;
 class TextureRepository;
 
 class RenderablePreProcessor : public System

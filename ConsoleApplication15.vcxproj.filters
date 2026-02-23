@@ -57,9 +57,6 @@
     <ClCompile Include="systems\PhysicsSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="inputs\InputDataCache.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="scripting\Lua.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -100,9 +97,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="inputs\mouse\MouseCursor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="inputs\InputData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="systems\CameraSystem.cpp">
@@ -382,6 +376,24 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="atlas\NewTextureRepository.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="user\UserSystemScheduler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\platformer\GirlStateFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\platformer\GirlStateCoordinator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\platformer\Setup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\platformer\Common.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\platformer\GirlPhysicsEditor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -809,9 +821,6 @@
     <ClInclude Include="scripting\ScriptInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inputs\InputDataCache.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ecs\EntityT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -924,9 +933,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inputs\InputState.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inputs\InputData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="events\handler\MouseEventHandler.h">
@@ -1886,6 +1892,51 @@
     <ClInclude Include="atlas\TextureResourceHandle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="test\demo\SandDemo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="user\UserSystemScheduler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\Phase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="systems\CoreSystemManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\PlatformerDemo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\EntityStateMachine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\GirlStateFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\GirlStateCoordinator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\EntityStateNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\Setup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ecs\EntityConcepts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\GirlPhysicsEditor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="physics\B2ContactData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="physics\B2Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -2369,6 +2420,96 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="resources\sprites\crosshairs\Sight_64x64_015.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\environment\caverns\background.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\environment\caverns\back-walls.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\environment\caverns\tiles.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\attack\girl_attack_A_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\attack\girl_attack_A_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\attack\girl_attack_A_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\attack\girl_attack_A_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\attack\girl_attack_A_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\attack\girl_attack_A_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\idle\girl_idle_0.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\idle\girl_idle_1.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\idle\girl_idle_2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\idle\girl_idle_3.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\jump\girl_jump_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\jump\girl_jump_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\jump\girl_jump_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\jump\girl_jump_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\jump\girl_jump_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\jump\girl_jump_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\land\girl_land_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\land\girl_land_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\land\girl_land_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\land\girl_land_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walk\girl_walk_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walk\girl_walk_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walk\girl_walk_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walk\girl_walk_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walk\girl_walk_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walk\girl_walk_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walk\girl_walk_006.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

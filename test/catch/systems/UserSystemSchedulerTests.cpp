@@ -1,5 +1,5 @@
 #include "../CatchUtils.h"
-#include "../../../systems/SystemManager2.h"
+#include "../../../user/UserSystemScheduler.h"
 
 namespace {
 
@@ -139,7 +139,7 @@ TEST_CASE("UserSystemScheduler Tests", "[user][system]")
 		STATIC_CHECK(ImplementsSystemUpdate<UserSystemE>);
 
 		auto& sysC = 
-			sysScheduler.RegisterSystem<UserSystemC>(Phase::RenderPrep, 
+			sysScheduler.RegisterSystem<UserSystemC>(Phase::Presentation, 
 				&output, &order);
 		CHECK(sysScheduler.IsSystemRegistered<UserSystemC>());
 		REQUIRE(sysC.sharedStr == &output);
@@ -147,7 +147,7 @@ TEST_CASE("UserSystemScheduler Tests", "[user][system]")
 		REQUIRE(sysC.updatedOrder == 0);
 
 		auto& sysD =
-			sysScheduler.RegisterSystem<UserSystemD>(Phase::RenderPrep,
+			sysScheduler.RegisterSystem<UserSystemD>(Phase::Presentation,
 				&output, &order);
 		CHECK(sysScheduler.IsSystemRegistered<UserSystemD>());
 		REQUIRE(sysD.sharedStr == &output);
@@ -155,14 +155,14 @@ TEST_CASE("UserSystemScheduler Tests", "[user][system]")
 		REQUIRE(sysD.updatedOrder == 0);
 
 		auto& sysE =
-			sysScheduler.RegisterSystem<UserSystemE>(Phase::RenderPrep,
+			sysScheduler.RegisterSystem<UserSystemE>(Phase::Presentation,
 				&output, &order);
 		CHECK(sysScheduler.IsSystemRegistered<UserSystemE>());
 		REQUIRE(sysE.sharedStr == &output);
 		REQUIRE(sysE.sharedSizeT == &order);
 		REQUIRE(sysE.updatedOrder == 0);
 
-		sysScheduler.UpdateSystems(Phase::RenderPrep, 0.0f);
+		sysScheduler.UpdateSystems(Phase::Presentation, 0.0f);
 		CHECK(output == UserSystemE::kOutputMsg);
 		CHECK(order == 3);
 

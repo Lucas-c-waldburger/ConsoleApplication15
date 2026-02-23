@@ -41,9 +41,9 @@ void EntityStateSystem::Update(float delta)
 			}
 
 			auto curIt = stateTables_.find(currentState);
-			if (curIt != stateTables_.end() && curIt->second.onUpdate)
+			if (curIt != stateTables_.end() && curIt->second.evaluateState)
 			{
-				curIt->second.onUpdate(entity, delta);
+				curIt->second.evaluateState(entity, delta);
 			}
 
 		//} while (StateNeedsProcessing(stateComponent)); // did onUpdate change state?

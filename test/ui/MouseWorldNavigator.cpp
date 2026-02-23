@@ -177,7 +177,7 @@ void MouseWorldNavigator::HandleFreeScrollMode(const MouseState& mouseState,
 {
 	using CTX = MouseWorldNavigatorContext;
 
-	*CTX::scrollOffset += mouseState.cursorValue.position.relative;
+	*CTX::scrollOffset += mouseState.values.cursor.relativePos;
 
 	auto dir = *CTX::scrollOffset;
 	float dist = std::sqrt(dir.x * dir.x + dir.y * dir.y);

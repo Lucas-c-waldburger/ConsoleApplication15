@@ -1,0 +1,844 @@
+#pragma once
+#include <optional>
+#include "Common.h"
+#include "GirlStateCoordinator.h"
+#include "../../../ecs/Ecs.h"
+#include "../../../file/FilePathUtility.h"
+#include "../../Fixtures.h"
+#include "../../../ecs/EntityEvents.h"
+#include "../../../components/builder/RigidBodyComponentBuilder.h"
+#include "../../../components/builder/ColliderComponentBuilder.h"
+#include "../../../events/data/EventDataIncludes.h"
+#include "../../../sdl/SDLUtils.h"
+#include "../../../core/SizedEnum.h"
+#include "../SandDemo.h"
+
+namespace test {
+
+static Result<SpriteDescriptorPackage> GetGirlSpriteDescriptorPackage()
+{
+	TRY(ResourcePaths::SpriteDirectory("girl/idle"), idlePaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/walk"), walkPaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/jump"), jumpPaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/land"), landPaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/attack"), attackPaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/fall"), fallPaths);
+
+	static constexpr auto toDescriptors = []
+	(std::string_view seriesName, std::vector<std::string>&& paths) {
+		return SpriteDescriptors{
+			.data = paths | std::views::transform([](auto&& path) {
+				return SpriteDescriptor{.filepath = std::move(path) };
+			}) | std::ranges::to<std::vector>(),
+			.seriesName = std::string{seriesName}
+		};
+	};
+
+	return SpriteDescriptorPackage{
+		toDescriptors("girl_idle", std::move(idlePaths)),
+		toDescriptors("girl_walk", std::move(walkPaths)),
+		toDescriptors("girl_jump", std::move(jumpPaths)),
+		toDescriptors("girl_land", std::move(landPaths)),
+		toDescriptors("girl_attack", std::move(attackPaths)),
+		toDescriptors("girl_fall", std::move(fallPaths))
+	};
+}
+
+static Result<Void> LoadFonts(FontAtlas& atlas, SDL_Renderer* renderer)
+{
+	TRY(ResourcePaths::FontDirectory(""), fontPaths);
+
+	static constexpr auto toFontDescriptors = [](auto&& paths) {
+		return paths | std::views::transform([](auto&& path) {
+			return FontDescriptor{
+				.filepath = std::move(path),
+				.fontSize = 28
+			};
+		}) | std::ranges::to<std::vector>();
+	};
+
+	return atlas.LoadFonts(renderer, toFontDescriptors(std::move(fontPaths)));
+}
+
+static Result<Void> LoadGirlSprites(SpriteAtlas& atlas, SDL_Renderer* renderer)
+{
+	TRY(GetGirlSpriteDescriptorPackage(), spriteDescriptors);
+
+	for (auto&& descriptor : spriteDescriptors)
+	{
+		TRY(atlas.LoadSprites(renderer, std::move(descriptor)));
+	}
+
+	return kVoid;
+}
+
+class GirlStateReporter
+{
+public:
+	static constexpr std::string_view kIdleStateStr = "Idle";
+	static constexpr std::string_view kWalkStateStr = "Walking";
+	static constexpr std::string_view kJumpStateStr = "Jumping";
+	static constexpr std::string_view kLandStateStr = "Landing";
+	static constexpr std::string_view kFallStateStr = "Falling";
+	static constexpr std::string_view kAttackStateStr = "Attacking";
+
+	static constexpr std::string_view kTextDrawFmt =
+		"Current State: {}\n---------------\n"
+		"Velocity: x:{:.2f}, y:{:.2f}\n---------------\n"
+		"Jump Flag: {}\n---------------\n"
+		"Ground: {}\nWall: {}\nCeiling: {}\nEnemy: {}";
+
+	explicit GirlStateReporter(Entity& target,
+		GlyphTextWriter&& textWriter,
+		SDL_Color textColor = SDLite::kColorBlack,
+		Dimensions<int> dimensions = { 200, 300 },
+		std::optional<SDL_FPoint> location = {})
+	{
+		assert(target.IsValid());
+		assert(target.HasComponent<GirlState>());
+
+		lastState_ = target.GetComponent<GirlState>();
+
+		auto e = ECS::CreateEntity();
+		assert(e.IsValid());
+
+		if (!location.has_value())
+		{
+			location = { 40.0f, 40.0f };
+		}
+
+		e.AddComponent<Transform>().position = *location;
+
+		e.AddComponent(TextRenderableComponent{
+			.writer = std::move(textWriter),
+			.formatting = {
+				.bounds = dimensions,
+				.align = TextAlign::Left,
+				.scaleToBounds = false
+			},
+			.profile = {
+				.drawOrder = 1000,
+				.mods = {
+					.color = { textColor.r, textColor.g, textColor.b }
+				}
+			}
+			});
+
+		selfId_ = e.GetID();
+		targetId_ = target.GetID();
+	}
+
+	void Update(float)
+	{
+		auto self = ECS::GetEntityByID(selfId_);
+		if (!(self.IsValid() && self.HasComponent<TextRenderableComponent>()))
+		{
+			return;
+		}
+		auto target = ECS::GetEntityByID(targetId_);
+		if (!(target.IsValid() && target.HasComponents<GirlState, RigidBody>()))
+		{
+			return;
+		}
+
+		auto [state, rigid] = target.GetComponents<GirlState, RigidBody>();
+
+		const auto& cats = state.collidingCategories;
+
+		auto& writer = self.GetComponent<TextRenderableComponent>().writer;
+
+		using Cat = ObjectCategory;
+		const auto vel = rigid.body.GetData().GetLinearVelocity();
+
+		writer.text = std::format(kTextDrawFmt,
+			GetAnimStateString(state.animation),
+			vel.x, vel.y,
+			(state.jumpInitiated ? "true" : "false"),
+			cats[Cat::Ground], cats[Cat::Wall],
+			cats[Cat::Ceiling], cats[Cat::Enemy]);
+
+		lastState_ = state;
+	}
+
+	static constexpr std::string_view GetAnimStateString(GirlState::Animation anim)
+	{
+		using enum GirlState::Animation;
+		static constexpr std::string_view kUnknown = "<Unknown>";
+		switch (anim)
+		{
+		case Idle:		return kIdleStateStr;
+		case Walking:	return kWalkStateStr;
+		case Jumping:	return kJumpStateStr;
+		case Landing:	return kLandStateStr;
+		case Attacking: return kAttackStateStr;
+		case Falling:	return kFallStateStr;
+		default:		return kUnknown;
+		}
+	}
+
+private:
+	Entity_t selfId_ = kInvalidEntity;
+	Entity_t targetId_ = kInvalidEntity;
+	GirlState lastState_;
+};
+
+static Result<Void>
+SetUpGirlStateReporter(Entity& target, SceneFixture::SharedPtr& fixture)
+{
+	auto& atlas = fixture->GetTextureRepository().GetFontAtlas();
+
+	TRY(LoadFonts(atlas, fixture->GetRenderer()));
+
+	auto writer = atlas.GetTextWriter("GoNotoKurrent-Bold");
+	if (!writer.resourceHandle.IsValid())
+	{
+		return MAKE_ERROR("Font not found");
+	}
+
+	fixture->RegisterSystem<GirlStateReporter>(
+		Phase::Input, target, std::move(writer), SDLite::kColorWhite
+	);
+
+	return kVoid;
+}
+
+static Entity MakeStaticBox(B2World& world, SDL_Color color,
+							Dimensions<float> dims,
+							SDL_FPoint posOffset = { 0.0f, 0.0f })
+{
+	auto e = ECS::CreateEntity();
+	assert(e.IsValid());
+
+	auto [winW, winH] = SDLite::Window().GetSize<float>();
+	auto winCenter = SDLite::Window().GetLocalCenter<SDL_FPoint>();
+
+	e.AddComponent<Transform>();
+
+	auto& rigid = e.AddComponent(ComponentBuilder<RigidBody>{}
+	.WithBodyParameters({
+		.bodyType = B2Body::Type::Static,
+		.position = winCenter + posOffset,
+		}).Build(world));
+
+	e.AddComponent(ComponentBuilder<Collider>{}
+	.WithColliderSettings({
+		.enableEvents = true
+		})
+		.WithShapeParameters({
+			.shapeType = B2Shape::Type::Polygon,
+			.dimensions = dims,
+			}).Build(rigid.body));
+
+	e.AddComponent(SpriteRenderableComponent{
+		.profile = {.debugDraw = {.collider = {
+			.on = true,
+			.color = color
+		}}}
+		});
+
+	return e;
+}
+
+static Result<Void> SetUpEnvironment(SceneFixture::SharedPtr& fixture)
+{
+	TRY(ResourcePath::Sprite("environment/caverns/background.png"), backgroundPath);
+	TRY(ResourcePath::Sprite("environment/caverns/back-walls.png"), backWallsPath);
+	TRY(ResourcePath::Sprite("environment/caverns/tiles.png"), tilesPath);
+
+	auto& atlas = fixture->GetTextureRepository().GetSpriteAtlas();
+	auto* renderer = fixture->GetRenderer();
+
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(backgroundPath) }),
+		backgroundSprite);
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(backWallsPath) }),
+		backWallSprite);
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(tilesPath) }),
+		tilesSprite);
+
+	auto winCenter = SDLite::Window().GetLocalCenter<SDL_FPoint>();
+	auto [winW, winH] = SDLite::Window().GetSize();
+
+	// background
+	auto backgroundSpriteW = backgroundSprite.plot.rect.w;
+	auto backgroundSpriteH = backgroundSprite.plot.rect.h;
+
+	float uniformScale = static_cast<float>(winH) /
+		static_cast<float>(backgroundSpriteH);
+	float newW = backgroundSpriteW * uniformScale;
+	float halfW = newW / 2.0f;
+	float x = halfW;
+
+	while (x + halfW < static_cast<float>(winW))
+	{
+		auto backgroundEnt = ECS::CreateEntity();
+
+		backgroundEnt.AddComponent(Transform{
+			.position = { x, winCenter.y },
+			.scale = { uniformScale, uniformScale }
+			});
+
+		backgroundEnt.AddComponent(SpriteRenderableComponent{
+			.sprite = backgroundSprite,
+			.profile = {.drawOrder = 50 }
+			});
+
+		x += newW;
+	}
+
+	// backwalls
+	auto backWallEnt = ECS::CreateEntity();
+
+	auto backWallSpriteW = backWallSprite.plot.rect.w;
+	auto backWallSpriteH = backWallSprite.plot.rect.h;
+
+	SDL_FPoint backWallScale = {
+		static_cast<float>(winW) / static_cast<float>(backWallSpriteW),
+		static_cast<float>(winH) / static_cast<float>(backWallSpriteH)
+	};
+
+	backWallEnt.AddComponent(Transform{
+		.position = winCenter,
+		.scale = backWallScale
+		});
+
+	backWallEnt.AddComponent(SpriteRenderableComponent{
+		.sprite = backWallSprite,
+		.profile = {.drawOrder = 100 }
+		});
+
+	// terrain tiles
+	auto terrainTilesEnt = ECS::CreateEntity();
+
+	auto terrainTilesSpriteW = tilesSprite.plot.rect.w;
+	auto terrainTilesSpriteH = tilesSprite.plot.rect.h;
+
+	SDL_FPoint terrainTilesScale = {
+		static_cast<float>(winW) / static_cast<float>(terrainTilesSpriteW),
+		static_cast<float>(winH) / static_cast<float>(terrainTilesSpriteH)
+	};
+
+	terrainTilesEnt.AddComponent(Transform{
+		.position = winCenter,
+		.scale = terrainTilesScale
+		});
+
+	terrainTilesEnt.AddComponent(SpriteRenderableComponent{
+		.sprite = tilesSprite,
+		.profile = {.drawOrder = 150 }
+		});
+
+	// floor
+	auto floorEnt = MakeFloor(fixture->GetWorld(),
+		SDLite::kColorGreen, 50.0, 169.0);
+	assert(floorEnt.IsValid());
+
+	floorEnt.AddComponent(ObjectCategory{ .value = ObjectCategory::Ground });
+
+	const Dimensions<float> wallDims = {
+		40.0f,
+		96.0f * terrainTilesScale.y
+	};
+	const SDL_FPoint wall1PosOffset = {
+		-139.0f * terrainTilesScale.x,
+		172.0f
+	};
+	const SDL_FPoint wall2PosOffset = {
+		122.2f * terrainTilesScale.x,
+		172.0f
+	};
+
+	auto wallEnt1 = MakeStaticBox(fixture->GetWorld(), SDLite::kColorOrange,
+		wallDims, wall1PosOffset);
+	assert(wallEnt1.IsValid());
+	wallEnt1.AddComponent(ObjectCategory{ .value = ObjectCategory::Wall });
+
+	auto wallEnt2 = MakeStaticBox(fixture->GetWorld(), SDLite::kColorOrange,
+		wallDims, wall2PosOffset);
+	assert(wallEnt2.IsValid());
+	wallEnt2.AddComponent(ObjectCategory{ .value = ObjectCategory::Wall });
+
+	const Dimensions<float> platformDims = {
+		996.5f,
+		40.0f
+	};
+	const SDL_FPoint platform1PosOffset = {
+		-30.8f, 20.0f
+	};
+
+	auto platformEnt1 = MakeStaticBox(fixture->GetWorld(), SDLite::kColorGreen,
+		platformDims, platform1PosOffset);
+	assert(platformEnt1.IsValid());
+	platformEnt1.AddComponent(ObjectCategory{ .value = ObjectCategory::Ground });
+
+	return kVoid;
+}
+
+struct ResolvedCollisionData
+{
+	CollisionData self;
+	CollisionData other;
+};
+
+template <typename T> requires type_in_list_v<T, events::CollisionEventGroup>
+static std::optional<ResolvedCollisionData>
+ResolveCollisionData(const Collider& selfCollider, const T& ev)
+{
+	const auto& selfHandle = selfCollider.shape.GetData().GetHandle();
+	if (ev.a.shapeHandle == selfHandle)
+	{
+		return ResolvedCollisionData{ .self = ev.a, .other = ev.b };
+	}
+	if (ev.b.shapeHandle == selfHandle)
+	{
+		return ResolvedCollisionData{ .self = ev.b, .other = ev.a };
+	}
+
+	return std::nullopt;
+}
+
+//struct CollisionOwners
+//{
+//	Entity colliderEntity;
+//	Entity bodyEntity;
+//
+//	bool Valid() const 
+//	{ 
+//		return colliderEntity.IsValid() && 
+//			   bodyEntity.IsValid() &&
+//			   colliderEntity.HasComponent<Collider>() &&
+//			   bodyEntity.HasComponent<RigidBody>();
+//	}
+//};
+
+static Entity FindOwningBodyEntity(const CollisionData& collisionData)
+{
+	auto shapeEnt = ECS::GetEntityByID(collisionData.entity);
+	if (!shapeEnt.IsValid())
+	{
+		return {};
+	}
+
+	assert(shapeEnt.HasComponent<Collider>());
+
+	if (shapeEnt.HasComponent<RigidBody>())
+	{
+		assert(shapeEnt.GetComponent<RigidBody>().body.GetData().OwnsShape(
+			   collisionData.shapeHandle));
+
+		return shapeEnt;
+	}
+
+	auto& colliderShape = shapeEnt.GetComponent<Collider>().shape;
+	auto parentBodyHandle = colliderShape.GetData().GetParentBodyHandle();
+
+	auto rels = shapeEnt.GetRelations();
+	assert(rels.IsChild());
+
+	auto parent = rels.GetParent();
+
+	assert(parent.IsValid());
+	assert(parent.HasComponent<RigidBody>());
+	assert(parent.GetComponent<RigidBody>().body.GetData().GetHandle() ==
+		   parentBodyHandle);
+
+	return parent;
+}
+
+//static CollisionOwners FindCollisionOwners(const CollisionData& collisionData)
+//{
+//	auto shapeEnt = ECS::GetEntityByID(collisionData.entity);
+//	if (!shapeEnt.IsValid())
+//	{
+//		return {};
+//	}
+//
+//	assert(shapeEnt.HasComponent<Collider>());
+//
+//	if (shapeEnt.HasComponent<RigidBody>())
+//	{
+//		assert(shapeEnt.GetComponent<RigidBody>().body.GetData().OwnsShape(
+//			collisionData.shapeHandle));
+//
+//		return { .colliderEntity = shapeEnt, .bodyEntity = shapeEnt };
+//	}
+//
+//	auto& colliderShape = shapeEnt.GetComponent<Collider>().shape;
+//	auto parentBodyHandle = colliderShape.GetData().GetParentBodyHandle();
+//
+//	auto rels = shapeEnt.GetRelations();
+//	assert(rels.IsChild());
+//
+//	auto parent = rels.GetParent();
+//
+//	assert(parent.IsValid());
+//	assert(parent.HasComponent<RigidBody>());
+//	assert(parent.GetComponent<RigidBody>().body.GetData().GetHandle() ==
+//		parentBodyHandle);
+//
+//	return { .colliderEntity = shapeEnt, .bodyEntity = parent };
+//}
+
+//static std::vector<B2ContactData> 
+//GetShapeContactData(const Collider& lhs, const Collider& rhs)
+//{
+//	return lhs.shape.GetData().GetContactDataWith(rhs.shape.GetData().GetHandle());
+//}
+
+static ObjectCategory::Type GetEntityObjectCategory(Entity_t entityId)
+{
+	auto e = ECS::GetEntityByID(entityId);
+	if (!e.IsValid())
+	{
+		return ObjectCategory::Unknown;
+	}
+
+	return e.HasComponent<ObjectCategory>()
+		? e.GetComponent<ObjectCategory>().value
+		: ObjectCategory::Unknown;
+}
+
+static bool ShouldTriggerNewJump(const events::GameControllerInput& ev, 
+								 const GirlState& state)
+{
+	return ev.input.state == InputState::Pressed &&
+		  !state.jumpInitiated && !state.attackInitiated &&
+		   state.collidingCategories[ObjectCategory::Ground] > 0 &&
+		   state.animation != GirlState::Animation::Attacking &&
+		   state.animation != GirlState::Animation::Jumping &&
+		   state.animation != GirlState::Animation::Falling;
+}
+
+//static bool ShouldTriggerNewAttack(const events::GameControllerInput& ev, 
+//								   const GirlState& state)
+//{
+//	return ev.input.state == InputState::Pressed &&
+//		  !state.jumpInitiated && !state.attackInitiated &&
+//		   state.animation != GirlState::Animation::Attacking &&
+//		   state.animation != GirlState::Animation::Jumping;
+//}
+static SDL_FPoint ComputeSwordHitImpulse(SDL_FPoint normal, const RigidBody& otherRigid)
+{
+	const auto& otherBody = otherRigid.body.GetData();
+
+	return normal * (otherBody.GetMass() * kSwordHitImpulse);
+}
+
+static constexpr bool IsSwordActive(const SpriteRenderableComponent& rend)
+{
+	return rend.profile.debugDraw.collider.on == true;
+}
+
+static void SetUpSwordEntityCallbacks(Entity& sword, Entity& girl, EventBus2& bus)
+{
+	auto evs = sword.GetEvents(bus);
+
+	evs.OnEvent([](const GirlStateChangeEvent& ev, SpriteRenderableComponent& rend) 
+	{
+		assert(ev.lastState != ev.newState);
+
+		if (ev.lastState == GirlState::Animation::Attacking)
+		{
+			rend.profile.debugDraw.collider.on = false;
+		}
+		else if (ev.newState == GirlState::Animation::Attacking)
+		{
+			rend.profile.debugDraw.collider.on = true;
+		}
+	});
+
+	evs.OnEvent([](const events::ContactCollisionBegin& ev, 
+				   SpriteRenderableComponent& rend, Collider& collider)
+	{
+		if (!IsSwordActive(rend))
+		{
+			return;
+		}
+
+		auto resolvedData = ResolveCollisionData(collider, ev);
+		if (!resolvedData.has_value())
+		{
+			return;
+		}
+
+		auto otherEnt = ECS::GetEntityByID(resolvedData->other.entity);
+		if (!otherEnt.IsValid())
+		{
+			return;
+		}
+		assert(otherEnt.HasComponent<Collider>());
+
+		auto bodyEnt = FindOwningBodyEntity(resolvedData->other);
+		if (!bodyEnt.IsValid())
+		{
+			return;
+		}
+
+		auto& otherRigid = bodyEnt.GetComponent<RigidBody>();
+
+		const auto& shape = collider.shape.GetData();
+
+		auto contactData = shape.GetContactDataWith(resolvedData->other.shapeHandle);
+		assert(!contactData.empty());
+
+		for (const auto& contact : contactData)
+		{
+			SDL_FPoint normal = (shape.GetHandle() == contact.shapeHandleA)
+				?  contact.manifold.normal
+				: -contact.manifold.normal;
+
+			const auto hitImpulse = ComputeSwordHitImpulse(normal, otherRigid);
+
+			otherRigid.forceRequests.impulses.emplace_back(
+				Force{ .value = hitImpulse }
+			);
+		}	
+	});
+}
+
+static void SetUpGirlEntityCallbacks(Entity& e, EventBus2& bus)
+{
+	auto evs = e.GetEvents(bus);
+
+	evs.OnEvent([](const events::ContactCollisionBegin& ev,
+		Collider& collider, GirlState& state)
+		{
+			auto resolvedData = ResolveCollisionData(collider, ev);
+			if (!resolvedData.has_value())
+			{
+				return;
+			}
+
+			auto objCat = GetEntityObjectCategory(resolvedData->other.entity);
+
+			state.collidingCategories.Increment(objCat);
+		});
+
+	evs.OnEvent([](const events::ContactCollisionEnd& ev,
+		Collider& collider, GirlState& state)
+		{
+			auto resolvedData = ResolveCollisionData(collider, ev);
+			if (!resolvedData.has_value())
+			{
+				return;
+			}
+
+			auto objCat = GetEntityObjectCategory(resolvedData->other.entity);
+
+			state.collidingCategories.Decrement(objCat);
+
+			if (state.collidingCategories[ObjectCategory::Ground] == 0)
+			{
+				state.jumpInitiated = false;
+			}
+		});
+
+	evs.OnEvent([](const events::GameControllerConnected& ev,
+		GameControllerState& gcState)
+		{
+			if (gcState.joystickID == GameController::kInvalidJoystickID)
+			{
+				gcState.joystickID = ev.joystickID;
+			}
+		});
+	evs.OnEvent([](const events::GameControllerDisconnected& ev,
+		GameControllerState& gcState)
+		{
+			if (gcState.joystickID == ev.joystickID)
+			{
+				gcState.joystickID = GameController::kInvalidJoystickID;
+			}
+		});
+
+	evs.OnInput(GameControllerInputSource::LeftStickAxis,
+		[](const events::GameControllerInput& ev, GirlState& state)
+		{
+			if (state.axisMoveIntentX.has_value())
+			{
+				return;
+			}
+
+			const int axisValX = ev.input.value.axis.x;
+			if (std::abs(axisValX) < kGirlControllerAxisDeadzone)
+			{
+				return;
+			}
+
+			state.axisMoveIntentX = axisValX;
+		});
+
+	//evs.OnInput(GameControllerInputSource::LeftStickAxis,
+	//	[](const events::GameControllerInput& ev, GirlIntent& intent)
+	//	{
+	//		const int axisValX = ev.input.value.axis.x;
+	//		if (std::abs(axisValX) < GameController::kAxisDeadzone)
+	//		{
+	//			return;
+	//		}
+
+	//		intent.moveIntent = SDL_FPoint{ static_cast<float>(axisValX), 0.0f };
+	//	});
+
+	/*evs.OnInput(GameControllerInputSource::LeftStickAxis,
+	[](const events::GameControllerInput& ev, RigidBody& rigid,
+		GirlState& state, MoveTargets& targets)
+	{
+		if (state.animation == GirlState::Animation::Attacking)
+		{
+			return;
+		}
+
+		const int axisValX = ev.input.value.axis.x;
+		if (std::abs(axisValX) < kGirlControllerAxisDeadzone)
+		{
+			return;
+		}
+	
+		const float normedX = static_cast<float>(axisValX) /
+							  static_cast<float>(GameController::kAxisMax);
+	
+		targets.targetVelX = normedX * targets.maxSpeed;
+	
+		float moveImpulseX = ComputeMoveImpulseX(rigid, state, targets);
+		if (state.animation == GirlState::Animation::Landing)
+		{
+			moveImpulseX /= 3.0f;
+		}
+	
+		rigid.forceRequests.impulses.emplace_back(
+			Force{ .value = { moveImpulseX, 0.0f } });
+	});*/
+
+	//evs.OnInput(GameControllerInputSource::A,
+	//	[](const events::GameControllerInput& ev, GirlIntent& intent)
+	//	{
+	//		assert(ev.input.state != InputState::None);
+
+	//		intent.jumpIntent = ev.input.state;
+	//	});
+
+	evs.OnInput(GameControllerInputSource::A,
+				[](const events::GameControllerInput& ev, GirlState& state)
+	{
+		if (ShouldTriggerNewJump(ev, state))
+		{
+			//const float jumpImpulseY = ComputeJumpImpulseY(rigid, targets);
+
+			//rigid.forceRequests.impulses.emplace_back(
+			//	Force{ .value = { 0.0f, -jumpImpulseY } });
+
+			state.jumpInitiated = true;
+		}
+	});
+
+	evs.OnInput(GameControllerInputSource::X,
+		[](const events::GameControllerInput& ev, GirlState& state)
+		{
+			if (ev.input.state == InputState::Pressed)
+			{
+				state.attackInitiated = true;
+			}
+		});
+}
+
+
+static Result<Entity> MakeGirlEntity(SceneFixture::SharedPtr& fixture,
+									 SDL_FPoint startingPos)
+{
+	TRY(LoadGirlSprites(fixture->GetTextureRepository().GetSpriteAtlas(),
+		fixture->GetRenderer()));
+
+	auto e = ECS::CreateEntity();
+	assert(e.IsValid());
+
+	e.AddComponent(Transform{ .scale = kGirlSpriteScale });
+
+	e.AddComponent(SpriteRenderableComponent{
+		.profile = {.drawOrder = 500 }
+	});
+	e.AddComponent<SpriteAnimationComponent>().spriteSeriesName = "girl_idle";
+
+	auto& rigid = e.AddComponent(ComponentBuilder<RigidBody>{}
+	.WithBodyParameters({
+		.bodyType = B2Body::Type::Dynamic,
+		.position = startingPos,
+		.fixedRotation = true
+		}).Build(fixture->GetWorld()));
+
+	B2CollisionFilter filter{};
+	filter.categories = ObjectCategory::Player;
+	filter.categoryMask &= ~(ObjectCategory::PlayerSword);
+
+	e.AddComponent(ComponentBuilder<Collider>{}
+	.WithShapeParameters({
+		.shapeType = B2Shape::Type::Polygon,
+		.dimensions = Dimensions<float>{
+			kGirlIdleHitboxDimensions.w * kGirlSpriteScale.x,
+			kGirlIdleHitboxDimensions.h * kGirlSpriteScale.y
+		}
+	}).WithColliderSettings({
+		.friction = kGirlColliderFriction,
+		.enableEvents = true
+	})
+	.WithFilter(filter).Build(rigid.body));
+
+	e.AddComponent<GameControllerState>();
+	e.AddComponent<MoveTargets>() = kGirlBaseMoveTargets;
+	e.AddComponent<AnimationDeltas>() = kGirlBaseAnimationDeltas;
+	e.AddComponent(GirlState{ .animation = GirlState::Animation::Idle });
+
+	SetUpGirlEntityCallbacks(e, fixture->GetEventBus());
+
+	return e;
+}
+
+static Result<Entity> AddGirlSwordChild(SceneFixture::SharedPtr& fixture, Entity& e)
+{
+	assert(e.HasComponent<RigidBody>());
+	assert(e.HasComponent<Collider>());
+
+	auto [eTf, eRigid, eCollider] = e.GetComponents<Transform, RigidBody, Collider>();
+	auto& eBody = WriteAccessor<B2Body>{}(eRigid.body);
+	auto& eShape = WriteAccessor<B2Shape>{}(eCollider.shape);
+
+	auto rels = e.GetRelations();
+	assert(!rels.IsChild());
+	
+	auto ch = rels.AddChild();
+
+	ch.AddComponent(Transform{ .scale = eTf.scale });
+
+	auto& chBody = ch.AddComponent(ComponentBuilder<RigidBody>{}
+	.WithBodyParameters({
+		.bodyType = B2Body::Type::Static,
+		.position = eBody.GetPosition()
+	}).Build(fixture->GetWorld()));
+
+	ch.AddComponent(ComponentBuilder<Collider>{}
+	.WithFilter({
+		.categories = ObjectCategory::PlayerSword,
+		.categoryMask = ObjectCategory::Enemy
+	})
+	.WithShapeParameters({
+		.shapeType = B2Shape::Type::Polygon,
+		.dimensions = Dimensions<float>{
+			kGirlSwordHitboxDimensions.w * eTf.scale.x,
+			kGirlSwordHitboxDimensions.h * eTf.scale.y
+		}
+	})
+	.WithColliderSettings({
+		.enableEvents = { .sensor = true },
+		.isSensor = true
+	}).Build(chBody.body));
+
+	ch.AddComponent<SpriteRenderableComponent>();
+
+	//ch.AddComponent(SpriteRenderableComponent{ 
+	//	.profile = {.debugDraw = {.collider = {
+	//		.on = true, .color = SDLite::kColorBlue
+	//	}}}
+	//});
+
+	return ch;
+}
+
+} // test

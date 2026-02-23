@@ -206,7 +206,6 @@ void AddSpriteRenderCall(const Entity& entity, const Camera& camera,
 
 	if (!camera.GetViewport().IntersectsBoundingBox(transformedRect))
 	{
-		LOG_DEBUG_FMT("Culled sprite '{}'", entity.GetID());
 		return;
 	}
 

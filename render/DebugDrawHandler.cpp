@@ -143,9 +143,11 @@ void DebugDrawHandler::AddColliderShape(const Camera& camera, const Collider& co
 		shapes_.back().shapeEndIndex = debugDrawPoints_.size();
 	}
 
-	shapes_.emplace_back(profile.debugDraw.boundingBox.color, 0);
+	shapes_.emplace_back(profile.debugDraw.collider.color, 0);
 
-	auto toScreen = [&camera](const auto& p) { return camera.WorldToScreen<SDL_FPoint>(p); };
+	auto toScreen = [&camera](const auto& p) { 
+		return camera.WorldToScreen<SDL_FPoint>(p); 
+	};
 	const size_t sizeBeforeAdding = debugDrawPoints_.size();
 
 	switch (shapeData.GetShapeType())

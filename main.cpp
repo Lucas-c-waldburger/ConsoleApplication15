@@ -5,7 +5,10 @@
 #include "deps/catch/catch_amalgamated.hpp"
 #include "test/Fixtures.h"
 #include "test/ui/EntityView.h"
+#include "test/Premades.h"
 #include "games/bullet_heaven/Terrain.h"
+#include "test/demo/SandDemo.h"
+#include "test/demo/PlatformerDemo.h"
 
 int main(int argc, char* argv[]) 
 {
@@ -203,16 +206,12 @@ int main(int argc, char* argv[])
     //fixture->RunGameLoop();
 
 #else
-    auto sceneFixture = SceneFixture::GetInstance();
-    ASSERT_RESULT(sceneFixture);
+    auto fixtureResult = SceneFixture::GetInstance();
+    ASSERT_RESULT(fixtureResult);
 
-    //ASSERT_RESULT(ChainScene::Run(sceneFixture.GetValue()));
-    //ASSERT_RESULT(TextScene::Run(sceneFixture.GetValue()));
-    //ASSERT_RESULT(SpriteScene::Run(sceneFixture.GetValue()));
-    //ASSERT_RESULT(MouseScene::Run(sceneFixture.GetValue()));
-    //ASSERT_RESULT(ParticleScene::Run(sceneFixture.GetValue()));
-    ASSERT_RESULT(AudioScene::Run(sceneFixture.GetValue()));
-
+    //auto runResult = test::RunSandDemo(fixtureResult.GetValue());
+    auto runResult = test::RunPlatformerDemo(fixtureResult.GetValue());
+    ASSERT_RESULT(runResult);
 
 #endif
     return 0;

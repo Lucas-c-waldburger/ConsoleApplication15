@@ -14,6 +14,16 @@ struct InputField
 	FieldValueType value;
 };
 
+template <SomeInputSourceEnum T>
+struct InputField<T, void>
+{
+	using SourceType = T;
+
+	SourceType source = static_cast<SourceType>(-1);
+	InputState state = InputState::None;
+	uint32_t stateDuration = 0;
+};
+
 namespace detail {
 
 template <typename T>

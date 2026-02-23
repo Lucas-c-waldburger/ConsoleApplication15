@@ -108,7 +108,7 @@ LoadTestAudioDescriptors(SceneFixture& scene,
 		assert(it->second.IsValid());
 	}
 
-	scene.GetSystem<AudioSystem>()->SetAudioBank(std::move(bank));
+	scene.GetSystem<AudioSystem>().SetAudioBank(std::move(bank));
 
 	return audioHandleMap;
 }

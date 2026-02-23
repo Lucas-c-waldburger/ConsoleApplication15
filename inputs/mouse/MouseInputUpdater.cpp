@@ -39,11 +39,11 @@ void MouseInputUpdater::Update(const SDL_Event& ev)
 
 	if (ev.type == SDL_MOUSEMOTION)
 	{
-		cursorValue_.position.absolute = {
+		values_.cursor.absolutePos = {
 			static_cast<float>(ev.motion.x),
 			static_cast<float>(ev.motion.y)
 		};
-		cursorValue_.position.relative = {
+		values_.cursor.relativePos = {
 			static_cast<float>(ev.motion.xrel),
 			static_cast<float>(ev.motion.yrel)
 		};
@@ -53,11 +53,12 @@ void MouseInputUpdater::Update(const SDL_Event& ev)
 		tracker_.timestamps[idx] = ev.motion.timestamp;
 	}
 	else if (ev.type == SDL_MOUSEWHEEL)
-	{
-		wheelValue_.scroll = SDL_FPoint{
+	{	
+		values_.wheel.scroll = SDL_FPoint{
 			ev.wheel.preciseX, ev.wheel.preciseY
-		};	
-		wheelValue_.direction = static_cast<SDL_MouseWheelDirection>(ev.wheel.direction);
+		};
+		values_.wheel.direction = 
+			static_cast<SDL_MouseWheelDirection>(ev.wheel.direction);
 
 		size_t idx = static_cast<size_t>(Source::Wheel);
 		tracker_.updated.set(idx);
@@ -82,7 +83,8 @@ void MouseInputUpdater::Update(const SDL_Event& ev)
 	}
 	else
 	{
-		LOG_ERROR("MouseInputUpdater::Update was passed an SDL_Event with an unexpected type");
+		LOG_ERROR("MouseInputUpdater::Update was passed an "
+			"SDL_Event with an unexpected type");
 	}
 
 	return;
@@ -114,12 +116,12 @@ void MouseInputUpdater::FinalizeAndPushEvents(float delta, EventBus2& bus)
 			// no cursor movement, mouse relative movement 0
 			if (input.source == Source::Cursor)
 			{
-				cursorValue_.position.relative = { 0.0f, 0.0f };
+				values_.cursor.relativePos = { 0.0f, 0.0f };
 			}
 			// no wheel movement, scroll 0
 			else if (input.source == Source::Wheel)
 			{
-				wheelValue_.scroll = { 0.0f, 0.0f };
+				values_.wheel.scroll = { 0.0f, 0.0f };
 			}
 
 			input.state = (lastState == InputState::Pressed || lastState == InputState::Held)
@@ -138,8 +140,8 @@ void MouseInputUpdater::FinalizeAndPushEvents(float delta, EventBus2& bus)
 				const auto lastState = input.state;
 
 				input.state = (input.source == Source::Cursor) ?
-					GetNextCursorOrWheelState(lastState, cursorValue_.position.relative) :
-					GetNextCursorOrWheelState(lastState, wheelValue_.scroll);
+					GetNextCursorOrWheelState(lastState, values_.cursor.relativePos) :
+					GetNextCursorOrWheelState(lastState, values_.wheel.scroll);
 
 				assert(input.state != InputState::None);
 
@@ -151,19 +153,10 @@ void MouseInputUpdater::FinalizeAndPushEvents(float delta, EventBus2& bus)
 
 		if (input.state != InputState::None)
 		{
-			events::MouseInput mouseInputEvent{ .input = input };
-
-			if (IsInputSourceButton(input.source) || 
-				input.source == Source::Cursor)
-			{
-				mouseInputEvent.input.value.cursor = cursorValue_;
-			}
-			else if (input.source == Source::Wheel)
-			{
-				mouseInputEvent.input.value.wheel = wheelValue_;
-			}
-
-			bus.PushEvent(std::move(mouseInputEvent));
+			bus.PushEvent(events::MouseInput{
+				.input = input,
+				.values = values_
+			});
 		}
 	}
 
@@ -174,7 +167,6 @@ MouseState MouseInputUpdater::ToMouseStateComponent() const
 {
 	return MouseState{
 		.inputs = inputs_,
-		.cursorValue = cursorValue_,
-		.wheelValue = wheelValue_
+		.values = values_
 	};
 }

@@ -10,7 +10,6 @@
 struct TextureRepositoryContext
 {
 	static inline TextureRepository* repo = nullptr;
-	static inline Handle<TextureAtlas> loadedSpriteAtlasHandle{};
 	static inline std::vector<Sprite> loadedSprites{};
 };
 
@@ -97,19 +96,18 @@ public:
 		{
 			return MAKE_ERROR("TextureRepositoryContext's repo has not been set");
 		}
-		TRY(CTX::repo->CreateAtlas<SpriteAtlasTexture>(SDLite::Renderer(), 
-			TextureAtlas::kMaxAtlasSize), spriteAtlas);
-		assert(spriteAtlas);
+		//TRY(CTX::repo->CreateAtlas<SpriteAtlasTexture>(SDLite::Renderer(), 
+		//	TextureAtlas::kMaxAtlasSize), spriteAtlas);
+		//assert(spriteAtlas);
+		auto& spriteAtlas = CTX::repo->GetSpriteAtlas();
 
-		TRY(spriteAtlas->LoadSprites(SDLite::Renderer(), std::move(descriptors)),
+		TRY(spriteAtlas.LoadSprites(SDLite::Renderer(), std::move(descriptors)),
 			loadedSprites);
 
 		if (loadedSprites.empty())
 		{
 			return MAKE_ERROR("SpriteAtlas::LoadSprites result sprites were empty");
 		}
-
-		CTX::loadedSpriteAtlasHandle = spriteAtlas->GetHandle();
 
 		return Void{};
 	}
@@ -126,28 +124,27 @@ public:
 
 		bool complete = false;
 
-		if (!CTX::repo->HasAtlas(CTX::loadedSpriteAtlasHandle))
-		{
-			ImGui::Text("No sprites loaded!");
-			return false;
-		}
+		//if (!CTX::repo->HasAtlas(CTX::loadedSpriteAtlasHandle))
+		//{
+		//	ImGui::Text("No sprites loaded!");
+		//	return false;
+		//}
 
-		auto spriteAtlas = CTX::repo->GetAtlas<SpriteAtlas>(CTX::loadedSpriteAtlasHandle);
-		assert(spriteAtlas);
+		const auto& spriteAtlas = CTX::repo->GetSpriteAtlas();
 
 		size_t spriteIdx = 0;
-		for (auto& spriteName : spriteAtlas->GetSpriteInfo<&SpriteInfo::spriteName>())
+		for (auto& spriteName : spriteAtlas.IterSpriteInfo<&SpriteInfo::spriteName>())
 		{
 			ImGui::PushID(static_cast<int>(spriteIdx));
 
-			bool selected = selectedSprite.spriteIndex = spriteIdx;
+			bool selected = false;
 			bool activated = ImGui::Selectable(spriteName.c_str(), selected);
 			bool doubleClicked = ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0);
 
 			if (activated || doubleClicked)
 			{
-				selectedSprite = spriteAtlas->GetSprite(spriteName);
-				assert(spriteAtlas->IsSpriteValid(selectedSprite));
+				selectedSprite = spriteAtlas.GetSprite(spriteName);
+				assert(spriteAtlas.IsSpriteValid(selectedSprite));
 				 
 				complete = true;
 			}

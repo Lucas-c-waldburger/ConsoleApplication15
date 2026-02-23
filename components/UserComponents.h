@@ -23,3 +23,7 @@ struct UserComponent2 : UserComponentBase<UserComponent2> {};
 struct UserComponent3 : UserComponentBase<UserComponent3> {};
 struct UserComponent4 : UserComponentBase<UserComponent4> {};
 struct UserComponent5 : UserComponentBase<UserComponent5> {};
+struct UserComponent6 : UserComponentBase<UserComponent6> {};
+struct UserComponent7 : UserComponentBase<UserComponent7> {};
+struct UserComponent8 : UserComponentBase<UserComponent8> {};
+struct UserComponent9 : UserComponentBase<UserComponent9> {};

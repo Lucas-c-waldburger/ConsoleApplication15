@@ -308,7 +308,7 @@ Result<Handle<TextureResource>> FontAtlas::LoadFont(SDL_Renderer* renderer,
 }
 
 Result<Void> FontAtlas::LoadFonts(SDL_Renderer* renderer, 
-                                             FontDescriptors&& fontDescriptors)
+                                  FontDescriptors&& fontDescriptors)
 {
     if (fontDescriptors.empty())
     {

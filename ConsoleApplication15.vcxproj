@@ -207,7 +207,6 @@
     <ClCompile Include="systems\EntityStateSystem.cpp" />
     <ClCompile Include="systems\EventCallbackSystem.cpp" />
     <ClCompile Include="events\EventDispatchListener.cpp" />
-    <ClCompile Include="inputs\InputData.cpp" />
     <ClCompile Include="inputs\mouse\Mouse.cpp" />
     <ClCompile Include="inputs\mouse\MouseCursor.cpp" />
     <ClCompile Include="events\handler\MouseEventHandler.cpp" />
@@ -225,7 +224,6 @@
     <ClCompile Include="systems\CameraSystem.cpp" />
     <ClCompile Include="inputs\controller\GameController.cpp" />
     <ClCompile Include="events\handler\GameControllerEventHandler.cpp" />
-    <ClCompile Include="inputs\InputDataCache.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="scripting\Lua.cpp" />
     <ClCompile Include="main.cpp" />
@@ -257,6 +255,11 @@
     <ClCompile Include="test\catch\serial\SerializationTests.cpp" />
     <ClCompile Include="test\catch\systems\SpriteAnimationSystemTests.cpp" />
     <ClCompile Include="test\catch\systems\UserSystemSchedulerTests.cpp" />
+    <ClCompile Include="test\demo\platformer\Common.cpp" />
+    <ClCompile Include="test\demo\platformer\GirlPhysicsEditor.cpp" />
+    <ClCompile Include="test\demo\platformer\GirlStateCoordinator.cpp" />
+    <ClCompile Include="test\demo\platformer\GirlStateFunctions.cpp" />
+    <ClCompile Include="test\demo\platformer\Setup.cpp" />
     <ClCompile Include="test\setups\TileSet.cpp" />
     <ClCompile Include="test\ui\ControllerMappingEditor.cpp" />
     <ClCompile Include="test\ui\FileTreeView.cpp" />
@@ -278,6 +281,7 @@
     <ClCompile Include="test\catch\test_utils\ImageUtilities.cpp" />
     <ClCompile Include="test\Fixtures.cpp" />
     <ClCompile Include="test\Premades.cpp" />
+    <ClCompile Include="user\UserSystemScheduler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="atlas\AtlasConcepts.h" />
@@ -430,6 +434,7 @@
     <ClInclude Include="core\UniqueVoidPtr.h" />
     <ClInclude Include="deps\catch\catch_amalgamated.hpp" />
     <ClInclude Include="ecs\EntityAccess.h" />
+    <ClInclude Include="ecs\EntityConcepts.h" />
     <ClInclude Include="ecs\EntityEvents.h" />
     <ClInclude Include="events\ControllerInputSignal.h" />
     <ClInclude Include="events\data\CoreEventDataTypeList.h" />
@@ -469,6 +474,8 @@
     <ClInclude Include="inputs\mouse\MouseInputSource.h" />
     <ClInclude Include="inputs\mouse\MouseInputUpdater.h" />
     <ClInclude Include="physics\B2Chain.h" />
+    <ClInclude Include="physics\B2Common.h" />
+    <ClInclude Include="physics\B2ContactData.h" />
     <ClInclude Include="physics\B2Explosion.h" />
     <ClInclude Include="render\DebugDrawHandler.h" />
     <ClInclude Include="render\GlyphCacheHandler.h" />
@@ -546,6 +553,7 @@
     <ClInclude Include="scripting\user_types\SpriteAnimationLuaUserTypes.h" />
     <ClInclude Include="scripting\user_types\TransformLuaUserTypes.h" />
     <ClInclude Include="systems\AudioSystem.h" />
+    <ClInclude Include="systems\CoreSystemManager.h" />
     <ClInclude Include="systems\EntityDestructionSystem.h" />
     <ClInclude Include="systems\EntityStateSystem.h" />
     <ClInclude Include="systems\EventCallbackSystem.h" />
@@ -559,7 +567,6 @@
     <ClInclude Include="events\EventUtils.h" />
     <ClInclude Include="events\IEventData.h" />
     <ClInclude Include="events\types\CollisionEvents.h" />
-    <ClInclude Include="inputs\InputData.h" />
     <ClInclude Include="inputs\InputState.h" />
     <ClInclude Include="inputs\mouse\Mouse.h" />
     <ClInclude Include="inputs\mouse\MouseCursor.h" />
@@ -723,7 +730,6 @@
     <ClInclude Include="core\HandleFactory.h" />
     <ClInclude Include="inputs\controller\GameController.h" />
     <ClInclude Include="events\handler\GameControllerEventHandler.h" />
-    <ClInclude Include="inputs\InputDataCache.h" />
     <ClInclude Include="core\ScopedInvoker.h" />
     <ClInclude Include="physics\B2Handle.h" />
     <ClInclude Include="resource.h" />
@@ -739,6 +745,7 @@
     <ClInclude Include="systems\CollisionSystem.h" />
     <ClInclude Include="systems\GameLoopSystem.h" />
     <ClInclude Include="systems\GuiSystem.h" />
+    <ClInclude Include="systems\Phase.h" />
     <ClInclude Include="systems\RenderablePreProcessorSystem.h" />
     <ClInclude Include="systems\NewRenderSystem.h" />
     <ClInclude Include="systems\PhysicsSystem.h" />
@@ -756,6 +763,15 @@
     <ClInclude Include="render\GlyphFormattingUtils.h" />
     <ClInclude Include="systems\util\RenderUtils.h" />
     <ClInclude Include="systems\util\SerializationSystemUtils.h" />
+    <ClInclude Include="test\demo\PlatformerDemo.h" />
+    <ClInclude Include="test\demo\platformer\GirlPhysicsEditor.h" />
+    <ClInclude Include="test\demo\platformer\Setup.h" />
+    <ClInclude Include="test\demo\platformer\EntityStateNode.h" />
+    <ClInclude Include="test\demo\platformer\Common.h" />
+    <ClInclude Include="test\demo\platformer\GirlStateCoordinator.h" />
+    <ClInclude Include="test\demo\platformer\GirlStateFunctions.h" />
+    <ClInclude Include="test\demo\platformer\EntityStateMachine.h" />
+    <ClInclude Include="test\demo\SandDemo.h" />
     <ClInclude Include="test\setups\TileSet.h" />
     <ClInclude Include="test\ui\ControllerMappingEditor.h" />
     <ClInclude Include="test\ui\DataEditDisplayUtils.h" />
@@ -780,6 +796,7 @@
     <ClInclude Include="user\UserEventSignalList.h" />
     <ClInclude Include="user\UserEventTypeList.h" />
     <ClInclude Include="user\UserEventUtils.h" />
+    <ClInclude Include="user\UserSystemScheduler.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\Downloads\ezgif-split\knight_anim224.png" />
@@ -805,6 +822,36 @@
     <Image Include="resources\sprites\crosshairs\Sight_64x64_013.png" />
     <Image Include="resources\sprites\crosshairs\Sight_64x64_014.png" />
     <Image Include="resources\sprites\crosshairs\Sight_64x64_015.png" />
+    <Image Include="resources\sprites\environment\caverns\back-walls.png" />
+    <Image Include="resources\sprites\environment\caverns\background.png" />
+    <Image Include="resources\sprites\environment\caverns\tiles.png" />
+    <Image Include="resources\sprites\girl\attack\girl_attack_A_000.png" />
+    <Image Include="resources\sprites\girl\attack\girl_attack_A_001.png" />
+    <Image Include="resources\sprites\girl\attack\girl_attack_A_002.png" />
+    <Image Include="resources\sprites\girl\attack\girl_attack_A_003.png" />
+    <Image Include="resources\sprites\girl\attack\girl_attack_A_004.png" />
+    <Image Include="resources\sprites\girl\attack\girl_attack_A_005.png" />
+    <Image Include="resources\sprites\girl\idle\girl_idle_0.png" />
+    <Image Include="resources\sprites\girl\idle\girl_idle_1.png" />
+    <Image Include="resources\sprites\girl\idle\girl_idle_2.png" />
+    <Image Include="resources\sprites\girl\idle\girl_idle_3.png" />
+    <Image Include="resources\sprites\girl\jump\girl_jump_000.png" />
+    <Image Include="resources\sprites\girl\jump\girl_jump_001.png" />
+    <Image Include="resources\sprites\girl\jump\girl_jump_002.png" />
+    <Image Include="resources\sprites\girl\jump\girl_jump_003.png" />
+    <Image Include="resources\sprites\girl\jump\girl_jump_004.png" />
+    <Image Include="resources\sprites\girl\jump\girl_jump_005.png" />
+    <Image Include="resources\sprites\girl\land\girl_land_000.png" />
+    <Image Include="resources\sprites\girl\land\girl_land_001.png" />
+    <Image Include="resources\sprites\girl\land\girl_land_002.png" />
+    <Image Include="resources\sprites\girl\land\girl_land_003.png" />
+    <Image Include="resources\sprites\girl\walk\girl_walk_000.png" />
+    <Image Include="resources\sprites\girl\walk\girl_walk_001.png" />
+    <Image Include="resources\sprites\girl\walk\girl_walk_002.png" />
+    <Image Include="resources\sprites\girl\walk\girl_walk_003.png" />
+    <Image Include="resources\sprites\girl\walk\girl_walk_004.png" />
+    <Image Include="resources\sprites\girl\walk\girl_walk_005.png" />
+    <Image Include="resources\sprites\girl\walk\girl_walk_006.png" />
     <Image Include="resources\sprites\knight\airborne\0.png" />
     <Image Include="resources\sprites\knight\airborne\1.png" />
     <Image Include="resources\sprites\knight\airborne\10.png" />

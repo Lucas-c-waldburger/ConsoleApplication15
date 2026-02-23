@@ -8,6 +8,7 @@ B2World B2World::Create(float gravX, float gravY)
 
     b2WorldDef worldDef = b2DefaultWorldDef();
     worldDef.gravity = { gravX, gravY };
+    worldDef.enableSleep = true;
 
     world.worldId_ = b2CreateWorld(&worldDef);
     assert(b2World_IsValid(world.worldId_));

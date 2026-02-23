@@ -70,9 +70,9 @@ TEST_CASE("System handles single sprite", "[rendering][system]")
 	SDL_PumpEvents();
 	SDLite::Renderer().Clear(SDLite::kColorWhite);
 
-	auto& cam = fixture->GetSystem<CameraSystem>()->GetCamera();
+	auto& cam = fixture->GetSystem<CameraSystem>().GetCamera();
 
-	fixture->GetSystem<NewRenderSystem>()->Update(SDLite::Renderer(), cam, textureRepo);
+	fixture->GetSystem<NewRenderSystem>().Update(SDLite::Renderer(), cam, textureRepo);
 
 	SDLite::Renderer().Show();
 
@@ -137,9 +137,9 @@ TEST_CASE("System handles sprites and glyphs", "[rendering][system]")
 	SDL_PumpEvents();
 	SDLite::Renderer().Clear(SDLite::kColorWhite);
 
-	auto& cam = fixture->GetSystem<CameraSystem>()->GetCamera();
+	auto& cam = fixture->GetSystem<CameraSystem>().GetCamera();
 
-	fixture->GetSystem<NewRenderSystem>()->Update(SDLite::Renderer(), cam, textureRepo);
+	fixture->GetSystem<NewRenderSystem>().Update(SDLite::Renderer(), cam, textureRepo);
 
 	SDLite::Renderer().Show();
 

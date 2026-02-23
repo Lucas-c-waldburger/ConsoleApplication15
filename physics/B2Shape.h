@@ -1,6 +1,7 @@
 #pragma once
 #include "B2Utils.h"
 #include "B2Handle.h"
+#include "B2ContactData.h"
 #include "../core/commonObjects.h"
 #include "B2CollisionFilter.h"
 #include <optional>
@@ -199,6 +200,9 @@ public:
 
         return b2Shape_TestPoint(shapeHandle_, ToB2VecScaled(point));
     }
+
+    std::vector<B2ContactData> GetContactData() const;
+    std::vector<B2ContactData> GetContactDataWith(const Handle<B2Shape>& query) const;
 
     template <typename T>
     T GetAs() const;

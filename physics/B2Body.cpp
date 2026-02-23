@@ -1,6 +1,7 @@
 #include "B2Body.h"
 #include "../core/HandleFactory.h"
 #include "../core/TypeUtils.h"
+#include "B2Common.h"
 #include <cassert>
 #include <ranges>
 
@@ -108,21 +109,22 @@ Result<B2Chain> B2Body::AddChain(const B2ChainDefinition& chainDef)
         return MAKE_ERROR("Chains must be made with at least 4 points");
     }
 
-    if (chainDef.materials.size() != 1)
-    {
-        if (chainDef.materials.size() != chainDef.points.size())
-        {
-            return MAKE_ERROR("Chain material count must either be 1 or "
-                "equal to point count");
-        }
-    }
-
     auto points = chainDef.points | std::views::transform(ToB2VecScaled)
         | std::ranges::to<std::vector>();
 
     auto mats = chainDef.materials | std::views::transform([](const auto& mat) {
         return static_cast<b2SurfaceMaterial>(mat);
     }) | std::ranges::to<std::vector>();
+
+    if (mats.empty())
+    {
+        mats.emplace_back(b2DefaultSurfaceMaterial());
+    }
+    if (mats.size() > 1 && mats.size() != points.size())
+    {
+        return MAKE_ERROR("Chain material count must either be 1 or "
+            "equal to point count");
+    }
 
     b2ChainDef def = b2DefaultChainDef();
     def.count = chainDef.points.size();
@@ -168,6 +170,20 @@ std::unordered_set<Handle<B2Shape>> B2Body::GetShapeHandles() const
     return handles;
 }
 
+bool B2Body::OwnsShape(b2ShapeId shapeId) const
+{
+    if (!b2Shape_IsValid(shapeId))
+    {
+        return false;
+    }
+    if (!IsValid())
+    {
+        return false;
+    }
+
+    return b2Shape_GetBody(shapeId) == bodyHandle_;
+}
+
 bool B2Body::OwnsShape(const Handle<B2Shape>& shapeHandle) const
 {
     if (!shapeHandle.IsValid())
@@ -179,18 +195,7 @@ bool B2Body::OwnsShape(const Handle<B2Shape>& shapeHandle) const
         return false;
     }
 
-    b2ShapeId shapeIds[B2Body::kMaxShapesPerBody];
-    int count = b2Body_GetShapes(bodyHandle_, shapeIds, B2Body::kMaxShapesPerBody);
-
-    for (int i = 0; i < count; i++)
-    {
-        if (shapeHandle == shapeIds[i])
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return b2Shape_GetBody(shapeHandle) == bodyHandle_;
 }
 
 Result<b2ShapeId> B2Body::AddCircle(b2BodyId bodyId, const B2ShapeDefinition& shapeDef)
@@ -270,4 +275,21 @@ Result<b2ShapeId> B2Body::AddBox(b2BodyId bodyId, const B2ShapeDefinition& shape
     }
 
     return b2CreatePolygonShape(bodyId, &shapeDef.shapeDef, &poly);
+}
+
+std::vector<B2ContactData> B2Body::GetContactData() const
+{
+    return GetContactDataImpl(bodyHandle_, Handle<B2Body>{});
+}
+
+std::vector<B2ContactData> 
+B2Body::GetContactDataWith(const Handle<B2Body>& query) const
+{
+    return GetContactDataImpl(bodyHandle_, query);
+}
+
+std::vector<B2ContactData>
+B2Body::GetContactDataWith(const Handle<B2Shape>& query) const
+{
+    return GetContactDataImpl(bodyHandle_, query);
 }

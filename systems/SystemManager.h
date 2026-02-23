@@ -1,26 +1,7 @@
 #pragma once
-#include "System.h"
-#include "../core/Result.h"
-#include "SystemRegistry.h"
-#include <memory>
-#include "../core/TypeUtils.h"
+#include "CoreSystemManager.h"
+#include "../user/UserSystemScheduler.h"
 
-template <typename T>
-concept SomeSystem = std::derived_from<T, System> &&
-					 SomeTypeInList<T, SystemTypeList>;
-
-namespace detail {
-template <typename TList>
-struct system_tuple;
-
-template <typename...Ts>
-struct system_tuple<TypeList<Ts...>>
-{
-	using type = std::tuple<std::unique_ptr<Ts>...>;
-};
-}
-
-using system_tuple_t = detail::system_tuple<SystemTypeList>::type;
 
 class SystemManager
 {
@@ -28,41 +9,101 @@ public:
 	SystemManager() = default;
 	~SystemManager() = default;
 
-	template <SomeSystem T>
-	std::unique_ptr<T>& GetSystem()
+	template <typename T>
+	T& GetSystem()
 	{
-		return std::get<std::unique_ptr<T>>(systems_);
-	}
+		static_assert(std::same_as<T, std::remove_cvref_t<T>>,
+			"System type template argument should have no cv-ref qualifiers");
 
-	template <SomeSystem T>
-	const std::unique_ptr<T>& GetSystem() const
-	{
-		return std::get<std::unique_ptr<T>>(systems_);
-	}
-
-	template <SomeSystem T, typename...Args> requires (std::constructible_from<T, Args...>)
-	std::unique_ptr<T>& InitializeSystem(Args&&...args)
-	{
-		auto& sys = GetSystem<T>();
-		if (!sys)
+		if constexpr (SomeSystem<T>)
 		{
-			sys = std::make_unique<T>(std::forward<Args>(args)...);
+			return coreSystems_.GetSystem<T>();
 		}
-
-		return sys;
+		else
+		{
+			static_assert(ImplementsSystemUpdate<T>, 
+				"User system must implement public method 'void Update(float)'");
+			return userSystems_.GetSystem<T>();
+		}
 	}
 
-	template <SomeSystem T>
-	bool IsSystemInitialized() const
+	template <typename T>
+	const T& GetSystem() const
 	{
-		return GetSystem<T>() != nullptr;
+		static_assert(std::same_as<T, std::remove_cvref_t<T>>,
+			"System type template argument should have no cv-ref qualifiers");
+
+		if constexpr (SomeSystem<T>)
+		{
+			return coreSystems_.GetSystem<T>();
+		}
+		else
+		{
+			static_assert(ImplementsSystemUpdate<T>,
+				"User system must implement public method 'void Update(float)'");
+			return userSystems_.GetSystem<T>();
+		}
+	}
+
+	template <SomeSystem T, typename...Args> 
+		requires std::constructible_from<T, Args...>
+	T& RegisterSystem(Args&&...args)
+	{
+		static_assert(std::same_as<T, std::remove_cvref_t<T>>,
+			"System type template argument should have no cv-ref qualifiers");
+
+		return coreSystems_.RegisterSystem<T>(std::forward<Args>(args)...);
+	}
+
+	template <typename T, typename...Args>
+		requires (!SomeSystem<T> && std::constructible_from<T, Args...>)
+	T& RegisterSystem(Phase ph, Args&&...args)
+	{
+		static_assert(std::same_as<T, std::remove_cvref_t<T>>,
+			"System type template argument should have no cv-ref qualifiers");
+
+		static_assert(ImplementsSystemUpdate<T>,
+			"User system must implement public method 'void Update(float)'");
+
+		return userSystems_.RegisterSystem<T>(ph, std::forward<Args>(args)...);
+	}
+
+	template <typename T> requires (!SomeSystem<T>)
+	bool RemoveSystem()
+	{
+		static_assert(std::same_as<T, std::remove_cvref_t<T>>,
+			"System type template argument should have no cv-ref qualifiers");
+
+		static_assert(ImplementsSystemUpdate<T>,
+			"User system must implement public method 'void Update(float)'");
+
+		return userSystems_.RemoveSystem<T>();
+	}
+
+	template <typename T>
+	bool IsSystemRegistered() const
+	{
+		static_assert(std::same_as<T, std::remove_cvref_t<T>>,
+			"System type template argument should have no cv-ref qualifiers");
+
+		if constexpr (SomeSystem<T>)
+		{
+			return coreSystems_.IsSystemRegistered<T>();
+		}
+		else
+		{
+			static_assert(ImplementsSystemUpdate<T>,
+				"User system must implement public method 'void Update(float)'");
+			return userSystems_.IsSystemRegistered<T>();
+		}
+	}
+
+	void RunSystemUpdates(Phase ph, float dt)
+	{
+		userSystems_.UpdateSystems(ph, dt);
 	}
 
 private:
-	system_tuple_t systems_;
+	CoreSystemManager coreSystems_;
+	UserSystemScheduler userSystems_;
 };
-
-
-//namespace impl {
-//	using SystemManager = SystemManagerTemplate<SYSTEM_REGISTRY_LIST>;
-//}

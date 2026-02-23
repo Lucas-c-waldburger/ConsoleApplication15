@@ -99,8 +99,9 @@ void GameControllerInputUpdater::Update(const SDL_Event& ev)
 		assert(source != Source::Invalid);
 
 		auto& input = inputs_[source];
-		input.state = (ev.cbutton.state == SDL_CONTROLLERBUTTONDOWN) ? InputState::Pressed : 
-																	   InputState::Released;
+		input.state = (ev.cbutton.state == SDL_PRESSED) ? InputState::Pressed : 
+														  InputState::Released;
+
 		input.stateDuration = 0;
 
 		size_t idx = static_cast<size_t>(source);
@@ -138,7 +139,6 @@ void GameControllerInputUpdater::FinalizeAndPushEvents(SDL_JoystickID ownerId, E
 			if (IsInputSourceButton(input.source))
 			{
 				// already updated state during the update loop, skip
-				continue;
 			}
 			else // axis or trigger, needs state update
 			{
