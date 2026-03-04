@@ -105,6 +105,17 @@ protected:
     }
 };
 
+template <typename Derived, typename...Ts>
+class HasWriteAccessImpl : HasWriteAccess<Derived, Ts>...
+{
+protected:
+    template <typename U> requires (std::same_as<U, Ts> || ...)
+    U& GetWriteAccess(ReadOnly<U>& readOnly) const
+    {
+        return HasWriteAccess<Derived, U>::GetWriteAccess(readOnly);
+    }
+};
+
 
 template <typename T>
 class WriteAccessor : public HasWriteAccess<WriteAccessor<T>, T>

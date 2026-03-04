@@ -8,6 +8,7 @@
 #include "../../../systems/System.h"
 #include "../../../deps/function2/function2.hpp"
 #include "../../../components/UserComponents.h"
+#include "../../../ecs/Ecs.h"
 #include <array>
 
 class Entity;
@@ -21,6 +22,9 @@ static Dimensions<float> kGirlSwordHitboxDimensions = { 45.0f, 30.0f };
 static SDL_FPoint kGirlSwordHitboxOffset = { 20.0f, 20.0f };
 
 // GIRL
+static constexpr std::string_view kGirlAttackASeriesName = "girl_attack_A";
+static constexpr std::string_view kGirlAttackBSeriesName = "girl_attack_B";
+
 static float kGirlColliderFriction = 0.8f;
 static float kGirlColliderLandingFriction = 2.8f;
 
@@ -30,6 +34,7 @@ static float kGirlJumpImpulseY = 6.5f;
 static float kGirlAccelGround = 45.0f;
 static float kGirlAccelAir = 15.0f;
 static float kGirlMaxWalkSpeedX = 6.0f;
+static float kGirlDashImpulseX = 18.0f;
 
 static float kGirlIdleAnimChangeTime = 0.35f;
 static float kGirlLandAnimChangeTime = 0.14f;
@@ -37,7 +42,17 @@ static float kGirlLandAnimChangeTimeEndMod = 0.14f;
 static float kGirlWalkAnimChangeXDelta = 13.0f;
 static float kGirlJumpAnimChangeYDelta = 15.0f;
 static float kGirlFallAnimChangeYDelta = 15.0f;
-static float kGirlAttackAnimChangeTime = 0.09f;
+static float kGirlAttackAAnimChangeTime = 0.08f;
+static float kGirlAttackBAnimChangeTime = 0.07f;
+static float kGirlRollAnimChangeTime = 0.15f;
+static float kGirlDashAnimChangeTime = 0.03f;
+
+static float kGirlDashAnimXDeltaDuration = 40.0f;
+static float kGirlDashAnimYDeltaDuration = 20.0f;
+static float kGirlDashAnimEnforcedTime = 0.25f;
+static float kGirlDashCooldownTime = 0.65f;
+
+static float kGirlAttackAltAnimWindowTime = 0.2f;
 
 static int kGirlControllerAxisDeadzone = 2600;
 
@@ -141,14 +156,14 @@ static const MoveTargets kGirlBaseMoveTargets{
 	.jumpVelY = kGirlJumpImpulseY,
 	.accelGround = kGirlAccelGround,
 	.accelAir = kGirlAccelAir,
-	.maxSpeed = kGirlMaxWalkSpeedX,
-	.dt = 0.0f
+	.maxSpeed = kGirlMaxWalkSpeedX
 };
 
 struct AnimationDeltas
 {
 	float idleTime = 0.0f;
-	float attackTime = 0.0f;
+	float attackATime = 0.0f;
+	float attackBTime = 0.0f;
 	float landTime = 0.0f;
 	float landTimeEndMod = 0.0f;
 	float walkDeltaX = 0.0f;
@@ -158,7 +173,8 @@ struct AnimationDeltas
 
 static const AnimationDeltas kGirlBaseAnimationDeltas{
 	.idleTime = kGirlIdleAnimChangeTime,
-	.attackTime = kGirlAttackAnimChangeTime,
+	.attackATime = kGirlAttackAAnimChangeTime,
+	.attackBTime = kGirlAttackBAnimChangeTime,
 	.landTime = kGirlLandAnimChangeTime,
 	.landTimeEndMod = kGirlLandAnimChangeTimeEndMod,
 	.walkDeltaX = kGirlWalkAnimChangeXDelta,
@@ -386,9 +402,20 @@ static void UpdateGirlPhysics(
 	}
 }
 
+struct GirlActionIntent
+{
+	InputState jumpIntent = InputState::None;
+	InputState attackIntent = InputState::None;
+	InputState dashIntent = InputState::None;
+	std::optional<SDL_FPoint> moveIntent;
+
+	void Reset() { *this = GirlActionIntent{}; }
+};
+
+
 struct GirlState
 {
-	enum Animation : uint16_t
+	enum Animation : uint32_t
 	{
 		Idle,
 		Walking,
@@ -396,6 +423,9 @@ struct GirlState
 		Jumping,
 		Landing,
 		Falling,
+		Rolling,
+		Dashing,
+		Sheathing,
 		ENUM_SIZE_
 	};
 	static constexpr size_t stateCount = enum_size_v<Animation>;
@@ -403,9 +433,8 @@ struct GirlState
 
 	Animation animation = Animation::Idle;
 	CollisionCategoryTracker collidingCategories = {};
-	bool jumpInitiated = false;
-	bool attackInitiated = false;
-	std::optional<int> axisMoveIntentX;
+	GirlActionIntent action;
+	//std::optional<int> axisMoveIntentX;
 
 	bool operator==(const GirlState&) const = default;
 };
@@ -447,7 +476,7 @@ struct EvaluatedGirlStateContext
 	bool thumbstickEngaged = false;
 };
 
-struct GirlStateContext
+struct GirlStateContextOld
 {
 	enum Flag : uint8_t
 	{
@@ -461,7 +490,7 @@ struct GirlStateContext
 	//CollisionCategoryTracker collidingCategories;
 	uint8_t flags = 0;
 
-	static EvaluatedGirlStateContext Evaluate(const Entity& girl, const GirlStateContext& ctx);
+	static EvaluatedGirlStateContext Evaluate(const Entity& girl, const GirlStateContextOld& ctx);
 };
 
 struct GirlStateChangeEvent
@@ -471,22 +500,20 @@ struct GirlStateChangeEvent
 };
 
 static float ComputeMoveImpulseX(const RigidBody& rigid, const GirlState& state,
-								 const MoveTargets& targets)
+								 const MoveTargets& targets, float desiredVelX, float dt)
 {
 	const auto& body = rigid.body.GetData();
 
 	float velX = body.GetLinearVelocity().x;
 
-	float desired = targets.targetVelX;
-
-	float delta = desired - velX;
+	float delta = desiredVelX - velX;
 
 	float accel = state.collidingCategories[ObjectCategory::Ground] > 0
 		? targets.accelGround
 		: targets.accelAir;
 
 	// limit how much velocity we change this frame
-	float maxDelta = accel * targets.dt;
+	float maxDelta = accel * dt;
 
 	delta = std::clamp(delta, -maxDelta, maxDelta);
 
@@ -494,18 +521,243 @@ static float ComputeMoveImpulseX(const RigidBody& rigid, const GirlState& state,
 	return body.GetMass() * delta;
 }
 
-static float ComputeJumpImpulseY(const RigidBody& rigid, const MoveTargets& targets)
+static float ComputeJumpImpulseY(const RigidBody& rigid, float jumpVelY)
 {
 	const auto& body = rigid.body.GetData();
 
-	float desiredVelY = targets.jumpVelY;
-
 	float currentVelY = body.GetLinearVelocity().y;
 
-	float delta = desiredVelY - currentVelY;
+	float delta = jumpVelY - currentVelY;
 
 	return body.GetMass() * delta;
 }
+
+static SDL_FPoint ComputeDashImpulse(const RigidBody& rigid, SDL_FPoint dashVel)
+{
+	const auto& body = rigid.body.GetData();
+
+	SDL_FPoint currentVel = body.GetLinearVelocity();
+
+	SDL_FPoint delta = dashVel - currentVel;
+
+	return delta * body.GetMass();
+}
+
+struct GirlStateContext
+{
+	Entity girl;
+	SDL_FPoint lastPosition = { 0.0f, 0.0f };
+	float timeInCurrentAnimFrame = 0.0f;
+	SDL_FPoint distanceInCurrentAnimFrame = { 0.0f, 0.0f };
+	float dt = 0.0f;
+};
+
+//template <GirlState::Animation PrimaryState, typename SubStateEnum>
+//	requires std::is_enum_v<SubStateEnum>
+//struct GirlStateUnion
+//{
+//public:
+//	static constexpr GirlState::Animation primaryState = PrimaryState;
+//	SubStateEnum subState;
+//};
+//
+//template <typename T>
+//struct is_girl_state_union : std::false_type {};
+//
+//template <GirlState::Animation PrimaryState, typename SubStateEnum>
+//struct is_girl_state_union<GirlStateUnion<PrimaryState, SubStateEnum>> : std::true_type {};
+//
+//enum class GirlAttackSubState
+//{
+//	AttackA,
+//	AttackB
+//};
+
+//template <GirlState::Animation stateVal>
+//class EmptyGirlStateHandlerImpl
+//{
+//	friend class Super;
+//
+//	void UpdateImpl(GirlStateContext&) {}
+//	void OnEnterImpl(GirlStateContext&) {}
+//	void OnExitImpl(GirlStateContext&) {}
+//};
+//
+//template <GirlState::Animation stateVal, typename Derived = EmptyGirlStateHandler<stateVal>>
+//class GirlStateHandler
+//{
+//public:
+//	using Super = GirlStateHandler<stateVal, Derived>;
+//	using State = GirlState::Animation;
+//
+//	static constexpr State state = stateVal;
+//	using DerivedType = Derived;
+//
+//	void Update(GirlStateContext& ctx)
+//	{
+//		return static_cast<Derived*>(this)->UpdateImpl(ctx);
+//	}
+//
+//	void OnEnter(GirlStateContext& ctx)
+//	{
+//		return static_cast<Derived*>(this)->OnEnterImpl(ctx);
+//	}
+//
+//	void OnExit(GirlStateContext& ctx)
+//	{
+//		return static_cast<Derived*>(this)->OnExitImpl(ctx);
+//	}
+//};
+//
+//template <GirlState::Animation stateVal>
+//class EmptyGirlStateHandler : public GirlStateHandler<stateVal>
+//{};
+//
+//template <typename T>
+//concept SomeGirlStateHandler = requires {
+//	std::same_as<std::remove_cvref_t<decltype(T::state)>, GirlState::Animation>;
+//	std::derived_from<T, GirlStateHandler<T::state, T>>;
+//};
+//
+//template <typename A, typename B>
+//struct sort_by_girl_state_enum_val : 
+//	std::bool_constant<(static_cast<size_t>(A::state) < static_cast<size_t>(B::state))> {};
+//
+//template <SomeGirlStateHandler...Ts> requires pack_types_unique_v<Ts...>
+//struct girl_state_handler_tuple
+//{
+//	using list = TypeList<Ts...>;
+//	using type = sort_types_t<list, sort_by_girl_state_enum_val>::AsTuple<std::type_identity>;
+//};
+//
+//template <typename...Ts>
+//using girl_state_handler_tuple_t = girl_state_handler_tuple<Ts...>::type;
+
+//template <typename TupLike, typename ISeq>
+//struct girl_state_handler_tuple_impl;
+//
+//template <template <typename...> class TupLike, typename...Ts, size_t...Is>
+//struct girl_state_handler_tuple_impl<TupLike<Ts...>, std::index_sequence<Is...>>
+//{
+//
+//	using type = std::tuple<typename Ts::DerivedType...>;
+//};
+
+
+
+//class GirlStateHandlers
+//{
+//public:
+//	using enum GirlState::Animation;
+//
+//	using AttackHandlerType = EmptyGirlStateHandler<Attacking>;
+//	using WalkHandlerType	= EmptyGirlStateHandler<Walking>;
+//	using JumpHandlerType	= EmptyGirlStateHandler<Jumping>;
+//	using FallHandlerType	= EmptyGirlStateHandler<Falling>;
+//	using LandHandlerType	= EmptyGirlStateHandler<Landing>;
+//	using IdleHandlerType	= EmptyGirlStateHandler<Idle>;
+//
+//private:
+//	using HandlerTuple = girl_state_handler_tuple_t<
+//		AttackHandlerType,
+//		WalkHandlerType,
+//		JumpHandlerType,
+//		FallHandlerType,
+//		LandHandlerType,
+//		IdleHandlerType
+//	>;
+//	
+//	HandlerTuple handlers_;
+//
+//public:
+//	template <GirlState::Animation enumVal> requires (static_cast<size_t>(enumVal) < 
+//													  std::tuple_size_v<HandlerTuple>)
+//	auto& GetHandler()
+//	{
+//		return std::get<static_cast<size_t>(enumVal)>(handlers_);
+//	}
+//
+//
+//};
+
+//template <GirlState::Animation PrimaryState, typename SubStateEnum, typename DataCtx=Void>
+//class GirlStateHandler : GirlStateUnion<PrimaryState, SubStateEnum>
+//{
+//public:
+//	
+//
+//protected:
+//	DataCtx dataContext_;
+//};
+
+//template <GirlState::Animation>
+//struct GirlStateHandler {};
+//
+//template <typename Handler>
+//struct get_girl_state_enum_val;
+//
+//template <GirlState::Animation enumVal>
+//struct get_girl_state_enum_val<GirlStateHandler<enumVal>>
+//{
+//	static constexpr GirlState::Animation value = enumVal;
+//};
+
+//template <typename Handler>
+//concept SomeGirlStateHandler = requires(Handler& h, Entity& e) {
+//	{ h.onEnter(e) } -> std::same_as<void>;
+//	{ h.onExit(e) } -> std::same_as<void>;
+//	{ h.onExit(e) } -> std::same_as<void>;
+//};
+
+
+//template <SomeSizedEnum E>
+//using sized_enum_iseq = std::make_index_sequence<enum_size_v<E>>;
+//
+//template <typename Derived, GirlState::Animation, typename ISeq>
+//struct girl_state_tuple_impl;
+
+
+
+//
+//template <template <GirlState::Animation> class Wrap, typename ISeq>
+//struct girl_state_tuple_impl;
+//
+//template <template <GirlState::Animation> class Wrap, size_t...Is>
+//struct girl_state_tuple_impl<Wrap, std::index_sequence<Is...>>
+//{
+//	using type = std::tuple<Wrap<static_cast<GirlState::Animation>(Is)>...>;
+//};
+//
+//template <template <GirlState::Animation> class Wrap>
+//struct girl_state_tuple : girl_state_tuple_impl<Wrap, sized_enum_iseq<GirlState::Animation>> {};
+//
+//template <template <GirlState::Animation> class Wrap>
+//using girl_state_tuple_t = girl_state_tuple<Wrap>::type;
+//
+//class GirlStateHandlers
+//{
+//public:
+//	template <GirlState::Animation stateVal>
+//	GirlStateHandler<stateVal>& GetStateHandler() 
+//	{ 
+//		return std::get<GirlStateHandler<stateVal>>(handlers_);
+//	}
+//
+//private:
+//	using HandlerTuple = girl_state_tuple_t<GirlStateHandler>;
+//
+//	HandlerTuple handlers_;
+//};
+
+
+//class GirlAttackStateHandler : GirlStateUnion<GirlState::Animation::Attacking,
+//											  GirlAttackSubState>
+//{
+//public:
+//
+//private:
+//};
+
 
 //static ObjectCategory::Type GetEntityObjectCategory(Entity_t entityId)
 //{

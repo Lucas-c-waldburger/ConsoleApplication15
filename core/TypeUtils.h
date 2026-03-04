@@ -187,7 +187,7 @@ template <typename...TLists>
 using concat_type_lists_t = detail::concat_type_lists<TLists...>::type;
 /**/
 
-/* TRANSFORM / FILTER TUPLE */
+/* TRANSFORMS */
 /* PREPEND */
 namespace detail {
 template <typename T, typename TList>
@@ -227,6 +227,59 @@ public:
 
 template <typename List, template <typename> class Pred>
 using filter_types_t = detail::filter_types<List, Pred>::type;
+
+namespace detail {
+
+template <typename T, typename TList, template <typename, typename> class Pred>
+struct insert_type;
+
+template <typename T, template <typename, typename> class Pred>
+struct insert_type<T, TypeList<>, Pred>
+{
+	using type = TypeList<T>;
+};
+
+template <typename T, typename Head, typename... Tail,
+		  template <typename, typename> class Pred>
+struct insert_type<T, TypeList<Head, Tail...>, Pred>
+{
+	using type = std::conditional_t<
+		Pred<T, Head>::value,
+		TypeList<T, Head, Tail...>,
+		typename insert_type<T, TypeList<Tail...>, Pred>::type::template prepend_type<Head>
+	>;
+};
+
+} // detail
+
+template <typename T, typename TList, template <typename, typename> class Pred>
+using insert_type_t = detail::insert_type<T, TList, Pred>::type;
+
+/* SORT TYPES */
+
+namespace detail {
+
+template <typename TList, template <typename, typename> class Pred>
+struct sort_types;
+
+template <template<class, class> class Pred>
+struct sort_types<TypeList<>, Pred>
+{
+	using type = TypeList<>;
+};
+
+template <typename Head, typename...Tail, template <typename, typename> class Pred>
+struct sort_types<TypeList<Head, Tail...>, Pred>
+{
+	using rest = typename sort_types<TypeList<Tail...>, Pred>::type;
+	using type = typename insert_type_t<Head, rest, Pred>;
+};
+
+} // detail
+
+template <typename TList, template <typename, typename> class Pred>
+using sort_types_t = detail::sort_types<TList, Pred>::type;
+
 
 /* AS TUPLE */
 namespace detail {

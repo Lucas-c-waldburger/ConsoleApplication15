@@ -21,8 +21,12 @@ static Result<SpriteDescriptorPackage> GetGirlSpriteDescriptorPackage()
 	TRY(ResourcePaths::SpriteDirectory("girl/walk"), walkPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/jump"), jumpPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/land"), landPaths);
-	TRY(ResourcePaths::SpriteDirectory("girl/attack"), attackPaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/attack_A"), attackAPaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/attack_B"), attackBPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/fall"), fallPaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/roll"), rollPaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/dash"), dashPaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/sheath"), sheathPaths);
 
 	static constexpr auto toDescriptors = []
 	(std::string_view seriesName, std::vector<std::string>&& paths) {
@@ -39,8 +43,12 @@ static Result<SpriteDescriptorPackage> GetGirlSpriteDescriptorPackage()
 		toDescriptors("girl_walk", std::move(walkPaths)),
 		toDescriptors("girl_jump", std::move(jumpPaths)),
 		toDescriptors("girl_land", std::move(landPaths)),
-		toDescriptors("girl_attack", std::move(attackPaths)),
-		toDescriptors("girl_fall", std::move(fallPaths))
+		toDescriptors("girl_attack_A", std::move(attackAPaths)),
+		toDescriptors("girl_attack_B", std::move(attackBPaths)),
+		toDescriptors("girl_fall", std::move(fallPaths)),
+		toDescriptors("girl_roll", std::move(rollPaths)),
+		toDescriptors("girl_dash", std::move(dashPaths)),
+		toDescriptors("girl_sheath", std::move(sheathPaths))
 	};
 }
 
@@ -153,7 +161,7 @@ public:
 		writer.text = std::format(kTextDrawFmt,
 			GetAnimStateString(state.animation),
 			vel.x, vel.y,
-			(state.jumpInitiated ? "true" : "false"),
+			(state.action.jumpIntent == InputState::Pressed ? "true" : "false"),
 			cats[Cat::Ground], cats[Cat::Wall],
 			cats[Cat::Ceiling], cats[Cat::Enemy]);
 
@@ -396,20 +404,6 @@ ResolveCollisionData(const Collider& selfCollider, const T& ev)
 	return std::nullopt;
 }
 
-//struct CollisionOwners
-//{
-//	Entity colliderEntity;
-//	Entity bodyEntity;
-//
-//	bool Valid() const 
-//	{ 
-//		return colliderEntity.IsValid() && 
-//			   bodyEntity.IsValid() &&
-//			   colliderEntity.HasComponent<Collider>() &&
-//			   bodyEntity.HasComponent<RigidBody>();
-//	}
-//};
-
 static Entity FindOwningBodyEntity(const CollisionData& collisionData)
 {
 	auto shapeEnt = ECS::GetEntityByID(collisionData.entity);
@@ -444,46 +438,6 @@ static Entity FindOwningBodyEntity(const CollisionData& collisionData)
 	return parent;
 }
 
-//static CollisionOwners FindCollisionOwners(const CollisionData& collisionData)
-//{
-//	auto shapeEnt = ECS::GetEntityByID(collisionData.entity);
-//	if (!shapeEnt.IsValid())
-//	{
-//		return {};
-//	}
-//
-//	assert(shapeEnt.HasComponent<Collider>());
-//
-//	if (shapeEnt.HasComponent<RigidBody>())
-//	{
-//		assert(shapeEnt.GetComponent<RigidBody>().body.GetData().OwnsShape(
-//			collisionData.shapeHandle));
-//
-//		return { .colliderEntity = shapeEnt, .bodyEntity = shapeEnt };
-//	}
-//
-//	auto& colliderShape = shapeEnt.GetComponent<Collider>().shape;
-//	auto parentBodyHandle = colliderShape.GetData().GetParentBodyHandle();
-//
-//	auto rels = shapeEnt.GetRelations();
-//	assert(rels.IsChild());
-//
-//	auto parent = rels.GetParent();
-//
-//	assert(parent.IsValid());
-//	assert(parent.HasComponent<RigidBody>());
-//	assert(parent.GetComponent<RigidBody>().body.GetData().GetHandle() ==
-//		parentBodyHandle);
-//
-//	return { .colliderEntity = shapeEnt, .bodyEntity = parent };
-//}
-
-//static std::vector<B2ContactData> 
-//GetShapeContactData(const Collider& lhs, const Collider& rhs)
-//{
-//	return lhs.shape.GetData().GetContactDataWith(rhs.shape.GetData().GetHandle());
-//}
-
 static ObjectCategory::Type GetEntityObjectCategory(Entity_t entityId)
 {
 	auto e = ECS::GetEntityByID(entityId);
@@ -497,25 +451,6 @@ static ObjectCategory::Type GetEntityObjectCategory(Entity_t entityId)
 		: ObjectCategory::Unknown;
 }
 
-static bool ShouldTriggerNewJump(const events::GameControllerInput& ev, 
-								 const GirlState& state)
-{
-	return ev.input.state == InputState::Pressed &&
-		  !state.jumpInitiated && !state.attackInitiated &&
-		   state.collidingCategories[ObjectCategory::Ground] > 0 &&
-		   state.animation != GirlState::Animation::Attacking &&
-		   state.animation != GirlState::Animation::Jumping &&
-		   state.animation != GirlState::Animation::Falling;
-}
-
-//static bool ShouldTriggerNewAttack(const events::GameControllerInput& ev, 
-//								   const GirlState& state)
-//{
-//	return ev.input.state == InputState::Pressed &&
-//		  !state.jumpInitiated && !state.attackInitiated &&
-//		   state.animation != GirlState::Animation::Attacking &&
-//		   state.animation != GirlState::Animation::Jumping;
-//}
 static SDL_FPoint ComputeSwordHitImpulse(SDL_FPoint normal, const RigidBody& otherRigid)
 {
 	const auto& otherBody = otherRigid.body.GetData();
@@ -625,11 +560,6 @@ static void SetUpGirlEntityCallbacks(Entity& e, EventBus2& bus)
 			auto objCat = GetEntityObjectCategory(resolvedData->other.entity);
 
 			state.collidingCategories.Decrement(objCat);
-
-			if (state.collidingCategories[ObjectCategory::Ground] == 0)
-			{
-				state.jumpInitiated = false;
-			}
 		});
 
 	evs.OnEvent([](const events::GameControllerConnected& ev,
@@ -652,91 +582,41 @@ static void SetUpGirlEntityCallbacks(Entity& e, EventBus2& bus)
 	evs.OnInput(GameControllerInputSource::LeftStickAxis,
 		[](const events::GameControllerInput& ev, GirlState& state)
 		{
-			if (state.axisMoveIntentX.has_value())
+			if (state.action.moveIntent.has_value())
 			{
 				return;
 			}
 
 			const int axisValX = ev.input.value.axis.x;
-			if (std::abs(axisValX) < kGirlControllerAxisDeadzone)
+			const int axisValY = ev.input.value.axis.y;
+			if (std::abs(axisValX) < kGirlControllerAxisDeadzone &&
+				std::abs(axisValY) < kGirlControllerAxisDeadzone)
 			{
 				return;
 			}
 
-			state.axisMoveIntentX = axisValX;
+			state.action.moveIntent = SDL_FPoint{
+				static_cast<float>(axisValX),
+				static_cast<float>(axisValY)
+			};
 		});
 
-	//evs.OnInput(GameControllerInputSource::LeftStickAxis,
-	//	[](const events::GameControllerInput& ev, GirlIntent& intent)
-	//	{
-	//		const int axisValX = ev.input.value.axis.x;
-	//		if (std::abs(axisValX) < GameController::kAxisDeadzone)
-	//		{
-	//			return;
-	//		}
-
-	//		intent.moveIntent = SDL_FPoint{ static_cast<float>(axisValX), 0.0f };
-	//	});
-
-	/*evs.OnInput(GameControllerInputSource::LeftStickAxis,
-	[](const events::GameControllerInput& ev, RigidBody& rigid,
-		GirlState& state, MoveTargets& targets)
-	{
-		if (state.animation == GirlState::Animation::Attacking)
-		{
-			return;
-		}
-
-		const int axisValX = ev.input.value.axis.x;
-		if (std::abs(axisValX) < kGirlControllerAxisDeadzone)
-		{
-			return;
-		}
-	
-		const float normedX = static_cast<float>(axisValX) /
-							  static_cast<float>(GameController::kAxisMax);
-	
-		targets.targetVelX = normedX * targets.maxSpeed;
-	
-		float moveImpulseX = ComputeMoveImpulseX(rigid, state, targets);
-		if (state.animation == GirlState::Animation::Landing)
-		{
-			moveImpulseX /= 3.0f;
-		}
-	
-		rigid.forceRequests.impulses.emplace_back(
-			Force{ .value = { moveImpulseX, 0.0f } });
-	});*/
-
-	//evs.OnInput(GameControllerInputSource::A,
-	//	[](const events::GameControllerInput& ev, GirlIntent& intent)
-	//	{
-	//		assert(ev.input.state != InputState::None);
-
-	//		intent.jumpIntent = ev.input.state;
-	//	});
-
 	evs.OnInput(GameControllerInputSource::A,
-				[](const events::GameControllerInput& ev, GirlState& state)
-	{
-		if (ShouldTriggerNewJump(ev, state))
+		[](const events::GameControllerInput& ev, GirlState& state)
 		{
-			//const float jumpImpulseY = ComputeJumpImpulseY(rigid, targets);
-
-			//rigid.forceRequests.impulses.emplace_back(
-			//	Force{ .value = { 0.0f, -jumpImpulseY } });
-
-			state.jumpInitiated = true;
-		}
-	});
+			state.action.jumpIntent = ev.input.state;
+		});
 
 	evs.OnInput(GameControllerInputSource::X,
 		[](const events::GameControllerInput& ev, GirlState& state)
 		{
-			if (ev.input.state == InputState::Pressed)
-			{
-				state.attackInitiated = true;
-			}
+			state.action.attackIntent = ev.input.state;
+		});
+
+	evs.OnInput(GameControllerInputSource::RightTrigger,
+		[](const events::GameControllerInput& ev, GirlState& state)
+		{
+			state.action.dashIntent = ev.input.state;
 		});
 }
 

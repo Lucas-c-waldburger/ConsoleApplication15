@@ -396,6 +396,15 @@
     <ClCompile Include="test\demo\platformer\GirlPhysicsEditor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\demo\platformer\GirlStateHandlers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\platformer\states\GirlStateHandlerImpls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\platformer\states\AttackAnimDataReference.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1937,6 +1946,33 @@
     <ClInclude Include="physics\B2Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="test\demo\platformer\GirlStatConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\GirlStateHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\GirlStateHandlers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\states\GirlStateHandlerImpls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\states\AttackAnimDataReference.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\states\GirlUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\states\GirlStateEvaluator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\GirlChecks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\states\CooldownTimer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -2431,22 +2467,22 @@
     <Image Include="resources\sprites\environment\caverns\tiles.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\girl\attack\girl_attack_A_000.png">
+    <Image Include="resources\sprites\girl\attack_A\girl_attack_A_000.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\girl\attack\girl_attack_A_001.png">
+    <Image Include="resources\sprites\girl\attack_A\girl_attack_A_001.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\girl\attack\girl_attack_A_002.png">
+    <Image Include="resources\sprites\girl\attack_A\girl_attack_A_002.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\girl\attack\girl_attack_A_003.png">
+    <Image Include="resources\sprites\girl\attack_A\girl_attack_A_003.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\girl\attack\girl_attack_A_004.png">
+    <Image Include="resources\sprites\girl\attack_A\girl_attack_A_004.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\sprites\girl\attack\girl_attack_A_005.png">
+    <Image Include="resources\sprites\girl\attack_A\girl_attack_A_005.png">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="resources\sprites\girl\idle\girl_idle_0.png">
@@ -2510,6 +2546,84 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="resources\sprites\girl\walk\girl_walk_006.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\attack_B\girl_attack_B_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\attack_B\girl_attack_B_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\attack_B\girl_attack_B_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\attack_B\girl_attack_B_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\attack_B\girl_attack_B_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\attack_B\girl_attack_B_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\roll\girl_roll_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\roll\girl_roll_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\roll\girl_roll_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\roll\girl_roll_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\roll\girl_roll_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\roll\girl_roll_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\roll\girl_roll_006.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\roll\girl_roll_007.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\roll\girl_roll_008.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\roll\girl_roll_009.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\sheath\girl_unsheath_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\sheath\girl_unsheath_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\sheath\girl_unsheath_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\sheath\girl_sheath_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\sheath\girl_sheath_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\sheath\girl_sheath_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\idleS\girl_idleS_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\idleS\girl_idleS_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\idleS\girl_idleS_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\idleS\girl_idleS_003.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

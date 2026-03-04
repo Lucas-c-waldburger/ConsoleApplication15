@@ -76,7 +76,6 @@ public:
         return os;
     }
 
-private:
     WeightGenerator(int cnt, std::vector<double>&& weights) : count_(cnt), weights_(std::move(weights)) {}
 
     static std::vector<double> GenerateGaussianWeights(int count, double center, double spread)
@@ -145,6 +144,7 @@ private:
         return weights;
     }
 
+private:
     int count_ = 0;
     std::vector<double> weights_;
 };

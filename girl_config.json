@@ -1,0 +1,18 @@
+{
+    "animation_deltas": {
+        "attackATime": 0.07999999821186066,
+        "attackBTime": 0.07000000029802322,
+        "fallDeltaY": 15.0,
+        "idleTime": 0.3499999940395355,
+        "jumpDeltaY": 15.0,
+        "landTime": 0.10999999940395355,
+        "landTimeEndMod": 0.14000000059604645,
+        "walkDeltaX": 14.0
+    },
+    "move_targets": {
+        "accelAir": 15.0,
+        "accelGround": 45.0,
+        "jumpVelY": 6.900000095367432,
+        "maxSpeed": 6.5
+    }
+}
