@@ -2,6 +2,7 @@
 #include "EntityDestructor.h"
 #include "EntityRelationsHelper.h"
 #include "EntityEvents.h"
+#include "EntityPhysics.h"
 #include "../core/Algorithms.h"
 
 namespace {
@@ -53,6 +54,11 @@ EntityRelations Entity::GetRelations()
 EntityEvents Entity::GetEvents(EventBus2& bus)
 {
 	return EntityEvents{ *this, &bus };
+}
+
+EntityPhysics Entity::GetPhysics(B2World& world)
+{
+	return EntityPhysics{ *this, &world };
 }
 
 // ENTITY RELATION DEFS //

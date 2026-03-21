@@ -54,7 +54,7 @@ static float kGirlDashCooldownTime = 0.65f;
 
 static float kGirlAttackAltAnimWindowTime = 0.2f;
 
-static int kGirlControllerAxisDeadzone = 2600;
+static int kGirlControllerAxisDeadzone = 2700;
 
 // SWORD
 static float kSwordHitImpulse = 6.5f;

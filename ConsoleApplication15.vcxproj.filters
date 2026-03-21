@@ -405,6 +405,12 @@
     <ClCompile Include="test\demo\platformer\states\AttackAnimDataReference.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ecs\EntityPhysics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\ecs\EntityPhysicsTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1973,6 +1979,15 @@
     <ClInclude Include="test\demo\platformer\states\CooldownTimer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="test\demo\platformer\states\JumpQuery.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\GamepadUiOverlay.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ecs\EntityPhysics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -2624,6 +2639,24 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="resources\sprites\girl\idleS\girl_idleS_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\joystick\LargeHandleFilledGrey.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\joystick\Joystick.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\controller_btn\btn_a.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\controller_btn\btn_b.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\controller_btn\btn_x.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\controller_btn\btn_y.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

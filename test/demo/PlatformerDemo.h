@@ -10,6 +10,8 @@
 #include "../../systems/GuiSystem.h"
 #include "platformer/states/AttackAnimDataReference.h"
 #include "platformer/states/CooldownTimer.h"
+#include "platformer/states/JumpQuery.h"
+#include "platformer/GamepadUiOverlay.h"
 
 namespace test {
 
@@ -36,11 +38,11 @@ public:
 		auto [tf, state, rigid, coll, rend, targets, animDeltas, gc] = 
 			e.GetComponents<GirlComponentSuite>();
 
-		UpdateMemberDeltas(tf, targets, dt);
+		UpdateMembers(state, tf, targets, animDeltas, dt);
 
 		auto animCopy = GetAnimComponentCopy(e);
 
-		if (IsGirlJumpFlagged(state))
+		if (jumpQuery_.JumpBuffered())
 		{
 			if (ShouldJump(state, animCopy))
 			{
@@ -74,7 +76,7 @@ public:
 					SetGirlFallState(animCopy, state, rigid, coll);
 				}
 			}
-			else if (JumpButtonReleased(state))
+			else if (!JumpIntentMatchesAny(state, InputState::Pressed, InputState::Held))
 			{
 				CutJump(rigid);
 			}
@@ -83,15 +85,29 @@ public:
 		{
 			if (IsGirlOnGround(state))
 			{
-				SetGirlLandState(animCopy, state, rigid, coll);
+				if (IsThumbstickEngaged(gc))
+				{
+					SetGirlWalkState(animCopy, state, rigid, coll);
+				}
+				else
+				{
+					SetGirlLandState(animCopy, state, rigid, coll);
+				}
 			}
 		}
 		else if (IsGirlCurrentlyLanding(state))
 		{
-			if (IsGirlOnGround(state) && 
-				IsGirlAtEndOfAnimationSeries(animCopy) &&
-				TimeInAnimCrossesThreshold(animDeltas.landTime, 
-										   animDeltas.landTimeEndMod))
+			if (!IsGirlOnGround(state))
+			{
+				SetGirlFallState(animCopy, state, rigid, coll);
+			}
+			else if (state.action.moveIntent.has_value())
+			{
+				SetGirlWalkState(animCopy, state, rigid, coll);
+			}
+			else if (IsGirlAtEndOfAnimationSeries(animCopy) &&
+					 TimeInAnimCrossesThreshold(animDeltas.landTime,
+												animDeltas.landTimeEndMod))
 			{
 				SetGirlIdleState(animCopy, state, rigid, coll);
 			}
@@ -161,7 +177,7 @@ public:
 		HandleAxisMoveIntent(rigid, state, targets, dt);
 
 		UpdateAnimations(tf, animCopy, state, animDeltas);
-		UpdateSpriteFacingSide(tf, rend, state);
+		UpdateSpriteFacingSide(tf, rend, animCopy, state);
 
 		if (SpriteChanged(animCopy, e))
 		{
@@ -250,12 +266,12 @@ private:
 
 		state.animation = GirlState::Animation::Landing;
 
-		GetWriteAccess(rigid.body).SetLinearVelocity({0.0f, 0.0f});
+		//GetWriteAccess(rigid.body).SetLinearVelocity({0.0f, 0.0f});
 		//GetWriteAccess(collider.shape).SetFriction(kGirlColliderLandingFriction);
 	}
 	void ExitGirlLandState(Collider& collider)
 	{
-		GetWriteAccess(collider.shape).SetFriction(kGirlColliderFriction);
+		//GetWriteAccess(collider.shape).SetFriction(kGirlColliderFriction);
 	}
 
 	void SetGirlFallState(SpriteAnimationComponent& anim, GirlState& state,
@@ -291,10 +307,10 @@ private:
 
 		state.animation = GirlState::Animation::Attacking;
 
-		if (IsGirlOnGround(state))
-		{
-			GetWriteAccess(collider.shape).SetFriction(kGirlColliderLandingFriction);
-		}
+		//if (IsGirlOnGround(state))
+		//{
+		//	GetWriteAccess(collider.shape).SetFriction(kGirlColliderLandingFriction);
+		//}
 	}
 	void ExitGirlAttackState(Collider& collider)
 	{
@@ -410,8 +426,7 @@ private:
 	{
 		return dashCooldown_.Ready() &&
 			GirlNotInState(state, State::Dashing) &&
-			GirlNotInState(state, State::Attacking).Or(IsGirlAtEndOfAnimationSeries(anim, 1)) &&
-			GirlNotInState(state, State::Landing).Or(IsGirlAtEndOfAnimationSeries(anim, 1));
+			GirlNotInState(state, State::Attacking).Or(IsGirlAtEndOfAnimationSeries(anim, 1));
 		//return !IsGirlCurrentlyDashing(state) && dashCooldown_.Ready();
 	}
 
@@ -453,7 +468,8 @@ private:
 			break;
 		case State::Jumping:
 			assert(anim.spriteSeriesName == "girl_jump");
-			if (DistYInAnimCrossesThreshold(deltas.jumpDeltaY) &&
+
+			if (DistYInAnimCrossesThreshold(jumpQuery_.GetJumpAnimDeltaY()) &&
 				!IsGirlAtEndOfAnimationSeries(anim))
 			{
 				++anim.index;
@@ -497,21 +513,34 @@ private:
 	}
 
 	void UpdateSpriteFacingSide(Transform& tf, SpriteRenderableComponent& rend,
-								GirlState& state) const
+								const SpriteAnimationComponent& anim, GirlState& state) const
 	{
-		if (state.animation == State::Landing)
+		if (GirlInState(state, State::Landing))
+		{
+			return;
+		}
+		if (GirlInState(state, State::Attacking)
+			.And(!IsGirlAtEndOfAnimationSeries(anim, 1)))
 		{
 			return;
 		}
 
-		float xMoveDelta = lastPosition_.x - tf.position.x;
-
-		rend.profile.flip = (tf.position.x < lastPosition_.x) ? SDL_FLIP_HORIZONTAL :
-							(tf.position.x > lastPosition_.x) ? SDL_FLIP_NONE :
-							rend.profile.flip;
+		if (state.action.moveIntent.has_value())
+		{
+			rend.profile.flip = state.action.moveIntent->x < 0.0f ? SDL_FLIP_HORIZONTAL :
+								state.action.moveIntent->x > 0.0f ? SDL_FLIP_NONE :
+								rend.profile.flip;
+		}
+		else
+		{ 
+			rend.profile.flip = (tf.position.x < lastPosition_.x) ? SDL_FLIP_HORIZONTAL :
+								(tf.position.x > lastPosition_.x) ? SDL_FLIP_NONE :
+								rend.profile.flip;
+		}
 	}
 
-	void UpdateMemberDeltas(const Transform& tf, MoveTargets& targets, float dt)
+	void UpdateMembers(const GirlState& state, const Transform& tf, 
+					   MoveTargets& targets, const AnimationDeltas& animDeltas, float dt)
 	{
 		distanceInCurrentAnimFrame_.x +=
 			std::abs(tf.position.x - lastPosition_.x);
@@ -523,6 +552,7 @@ private:
 
 		attackAnimDataRef_.Update(dt);
 		dashCooldown_.Update(dt);
+		jumpQuery_.Update(state, animDeltas);
 	}
 
 	static void HandleAxisMoveIntent(RigidBody& rigid, GirlState& state, 
@@ -534,7 +564,6 @@ private:
 		}
 		if (IsGirlCurrentlyAttacking(state) || IsGirlCurrentlyDashing(state))
 		{
-			state.action.moveIntent.reset();
 			return;
 		}
 
@@ -544,10 +573,10 @@ private:
 		targets.targetVelX = normedX * targets.maxSpeed;
 
 		float moveImpulseX = ComputeMoveImpulseX(rigid, state, targets, targets.targetVelX, dt);
-		if (IsGirlCurrentlyLanding(state))
-		{
-			moveImpulseX /= 2.0f;
-		}
+		//if (IsGirlCurrentlyLanding(state))
+		//{
+		//	moveImpulseX /= 2.0f;
+		//}
 
 		rigid.forceRequests.impulses.emplace_back(
 			Force{ .value = { moveImpulseX, 0.0f } });
@@ -580,6 +609,7 @@ private:
 	float timeInCurrentAnimFrame_ = 0.0f;
 	SDL_FPoint distanceInCurrentAnimFrame_ = { 0.0f, 0.0f };
 	AttackAnimDataReference attackAnimDataRef_;
+	JumpQuery jumpQuery_;
 	EventBus2* eventBus_ = nullptr;
 	CooldownTimer dashCooldown_{ .duration = kGirlDashCooldownTime };
 };
@@ -600,6 +630,8 @@ static Result<Void> RunPlatformerDemo(SceneFixture::SharedPtr& fixture)
 	//	girlEnt.GetID(), fixture->GetEventBus());
 
 	TRY(SetUpGirlStateReporter(girlEnt, fixture));
+	TRY(ThumbstickUiDraw::CreateAndConnect(girlEnt, fixture));
+	TRY(ControllerButtonUiDraw::CreateAndConnect(girlEnt, fixture));
 
 #if IMGUI_ENABLED
 

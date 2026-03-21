@@ -30,7 +30,8 @@ struct GirlInStateImpl
 	//GirlInStateImpl& And(GirlInState)
 
 	GirlInStateImpl& And(bool b) { result = result && b; return *this; }
-	GirlInStateImpl& Or(bool b)  { result = result || b; return *this; }
+	GirlInStateImpl& AndNot(bool b) { result = !result && b; return *this; }
+	GirlInStateImpl& Or(bool b) { result = result || b; return *this; }
 
 protected:
 	template <AllAnimStates...Ts>
@@ -94,8 +95,8 @@ inline bool IsThumbstickEngaged(const GameControllerState& gc)
 
 	return (gcAxis.state == InputState::Pressed ||
 			gcAxis.state == InputState::Held) &&
-			axisX > kGirlControllerAxisDeadzone ||
-			axisY > kGirlControllerAxisDeadzone;
+		   (axisX > kGirlControllerAxisDeadzone ||
+			axisY > kGirlControllerAxisDeadzone);
 }
 inline bool IsGirlJumpFlagged(const GirlState& state)
 {
@@ -150,7 +151,7 @@ inline bool ShouldAttack(const GirlState& state, const SpriteAnimationComponent&
 {
 	using enum GirlState::Animation;
 
-	if (IsGirlInState(state, Attacking, Landing))
+	if (IsGirlInState(state, Attacking))
 	{
 		return IsGirlAtEndOfAnimationSeries(anim, 1);
 	}
@@ -184,8 +185,11 @@ inline bool SpriteChanged(const SpriteAnimationComponent& animCopy,
 	return animCopy != girl.GetComponent<SpriteAnimationComponent>();
 }
 
-
-
+template <typename...Ts> requires (std::same_as<std::remove_cvref_t<Ts>, InputState> && ...)
+inline bool JumpIntentMatchesAny(const GirlState& state, Ts...ts)
+{
+	return ((state.action.jumpIntent == ts) || ...);
+}
 
 
 } // test

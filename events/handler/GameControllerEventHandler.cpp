@@ -109,9 +109,9 @@ void GameControllerEventHandler::Finalize(EventBus2& bus)
 {
 	for (auto& [joystickId, pair] : activeControllers_)
 	{
-		auto& updater = pair.second;
+		auto& [gc, updater] = pair;
 
-		updater.FinalizeAndPushEvents(joystickId, bus);
+		updater.FinalizeAndPushEvents(joystickId, gc, bus);
 	}
 
 	UpdateControllerStateComponents();

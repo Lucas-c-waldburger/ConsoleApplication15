@@ -18,6 +18,8 @@ public:
 
 	SDL_JoystickID GetJoystickID() const { return joystickId_; }
 
+	operator SDL_GameController* () { return controller_; }
+
 private:
 	Result<SDL_JoystickID> ConnectImpl(Sint32 deviceIndex);
 

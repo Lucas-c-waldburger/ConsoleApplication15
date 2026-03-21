@@ -56,6 +56,27 @@ struct get_components_helper<Tup<ComponentTs...>>
 
 		std::invoke(fn, ev, e.GetComponent<ComponentTs>()...);
 	}
+
+	template <typename Fn>
+	static void call_for_timer(Fn&& fn, Entity& e)
+	{
+		if (!e.HasComponents<ComponentTs...>())
+		{
+			return;
+		}
+
+		std::invoke(fn, e.GetComponent<ComponentTs>()...);
+	}
+	template <typename Fn>
+	static void call_for_timer(Fn&& fn, const Entity& e)
+	{
+		if (!e.HasComponents<ComponentTs...>())
+		{
+			return;
+		}
+
+		std::invoke(fn, e.GetComponent<ComponentTs>()...);
+	}
 };
 
 } // detail
@@ -78,6 +99,17 @@ template <typename Tup, typename Fn, typename Ev>
 inline void ForwardEventCallbackComponents(Fn&& fn, const Ev& ev, const Entity& e)
 {
 	return detail::get_components_helper<Tup>::call(fn, ev, e);
+}
+
+template <typename Tup, typename Fn>
+inline void ForwardTimerCallbackComponents(Fn&& fn, Entity& e)
+{
+	return detail::get_components_helper<Tup>::call_for_timer(fn, e);
+}
+template <typename Tup, typename Fn>
+inline void ForwardEventCallbackComponents(Fn&& fn, const Entity& e)
+{
+	return detail::get_components_helper<Tup>::call_for_timer(fn, e);
 }
 
 template <typename Fn>
@@ -142,6 +174,35 @@ inline constexpr bool valid_input_callback_sig_v = (
 		std::remove_cvref_t<typename func_traits<Fn>::template arg_at<0>>>, Src>
 );
 
+template <typename Fn> requires fn_returns_void_v<Fn>
+struct timer_ev_callback_sig
+{
+	static constexpr bool with_no_args_v = func_traits<Fn>::argCount == 0;
+
+	static constexpr bool with_entity_v = (func_traits<Fn>::argCount == 1 &&
+		std::same_as<typename func_traits<Fn>::template arg_at<0>, Entity&>);
+
+	static constexpr bool with_const_entity_v = (func_traits<Fn>::argCount == 1 &&
+		std::same_as<typename func_traits<Fn>::template arg_at<0>, const Entity&>);
+
+	static constexpr bool with_components_v = (func_traits<Fn>::argCount >= 1 &&
+		no_args_are_entities_v<typename func_traits<Fn>::arg_types> &&
+		all_args_refs_v<typename func_traits<Fn>::arg_types>);
+
+	static constexpr bool with_const_components_v = (func_traits<Fn>::argCount >= 1 &&
+		no_args_are_entities_v<typename func_traits<Fn>::arg_types> &&
+		all_args_const_refs_v<typename func_traits<Fn>::arg_types>);
+};
+
+template <typename Fn>
+inline constexpr bool valid_timer_event_callback_sig_v = (
+	timer_ev_callback_sig<Fn>::with_no_args_v ||
+	timer_ev_callback_sig<Fn>::with_entity_v ||
+	timer_ev_callback_sig<Fn>::with_const_entity_v ||
+	timer_ev_callback_sig<Fn>::with_components_v ||
+	timer_ev_callback_sig<Fn>::with_const_components_v
+);
+
 class EntityEvents
 {
 public:
@@ -162,17 +223,27 @@ public:
 	template <typename Src, typename Fn> requires valid_input_callback_sig_v<Src, Fn>
 	Result<Void> OnInput(Src src, Fn&& fn, FilterDef filterDef = {});
 
-	//template <typename T>
-	//bool ShouldProduceEvent() const;
+	template <typename Fn> requires valid_timer_event_callback_sig_v<Fn>
+	Result<Void> MakeTimer(float durationSec, Fn&& fn, int numRepeats = 0);
 
 private:
 	Entity entity_;
 	EventBus2* bus_ = nullptr;
 };
 
+
+inline void RemoveTimerChild(Entity& ch)
+{
+	if (ch.IsValid() && (!ch.HasComponent<Timer>() || 
+		ch.GetComponent<Timer>().numRepeats == 0))
+	{
+		ch.Destroy();
+	}
+}
+
 template <HasEntityParticipants Ev>
 inline bool IsEntityParticipantInEvent(const Ev& event, 
-									const EntityEvents::FilterDef& filterDef)
+									   const EntityEvents::FilterDef& filterDef)
 {
 	static constexpr auto entityMatchesOne =
 	[]<size_t I>(const EntityEvents::FilterDef& def, const Ev& ev) {
@@ -193,9 +264,12 @@ template <SomeGameControllerEvent Ev>
 inline bool IsGameControllerInEvent(const Entity& e, const Ev& ev,
 									const EntityEvents::FilterDef& filterDef)
 {
-	//return true;
-	
 	assert(ev.joystickID > -1);
+
+	if (filterDef.relevantJoystickId == -1)
+	{
+		return true;
+	}
 
 	if (e.GetID() == filterDef.relevantEntity)
 	{
@@ -345,6 +419,50 @@ inline void OnInputImpl(EventBus2& bus, Src src, Entity& e, Fn&& fn,
 	}
 }
 
+template <typename Fn> requires valid_timer_event_callback_sig_v<Fn>
+inline void MakeTimerImpl(EventBus2& bus, Entity& e, Entity& ch, Fn&& fn)
+{
+	auto& tks = ch.AddComponent<SignalTokenStorage>().signalTokens;
+
+	if constexpr (timer_ev_callback_sig<Fn>::with_no_args_v)
+	{
+		tks.emplace_back(bus.ConnectToEvent([e, ch, f = std::forward<Fn>(fn)]
+		(const events::TimerFired& ev) mutable {
+			if (ev.entity<0>() == ch.GetID())
+			{
+				std::invoke(f);
+				RemoveTimerChild(ch);
+			}
+		}));
+	}
+	else if constexpr (timer_ev_callback_sig<Fn>::with_entity_v ||
+					   timer_ev_callback_sig<Fn>::with_const_entity_v)
+	{
+		tks.emplace_back(bus.ConnectToEvent([e, ch, f = std::forward<Fn>(fn)]
+		(const events::TimerFired& ev) mutable {
+			if (ev.entity<0>() == ch.GetID())
+			{
+				std::invoke(f, e);
+				RemoveTimerChild(ch);
+			}
+		}));
+	}
+	else if constexpr (timer_ev_callback_sig<Fn>::with_components_v ||
+					   timer_ev_callback_sig<Fn>::with_const_components_v)
+	{
+		using cmps = remove_cvrefs_t<typename func_traits<Fn>::arg_types>;
+
+		tks.emplace_back(bus.ConnectToEvent([e, ch, f = std::forward<Fn>(fn)]
+		(const events::TimerFired& ev) mutable {
+			if (ev.entity<0>() == ch.GetID())
+			{
+				ForwardTimerCallbackComponents<cmps>(std::forward<Fn>(f), e);
+				RemoveTimerChild(ch);
+			}
+		}));
+	}
+}
+
 template <typename Fn>
 inline void ResolveFilterDefinition(Entity& e, const Fn& fn, 
 									EntityEvents::FilterDef& filterDef)
@@ -414,13 +532,33 @@ Result<Void> EntityEvents::OnInput(Src src, Fn&& fn, FilterDef filterDef)
 	return kVoid;
 }
 
-//template <typename T>
-//bool EntityEvents::ShouldProduceEvent() const
-//{
-//	if (!(entity_.IsValid() && bus_))
-//	{
-//		return false;
-//	}
-//
-//
-//}
+template <typename Fn> requires valid_timer_event_callback_sig_v<Fn>
+Result<Void> EntityEvents::MakeTimer(float durationSec, Fn&& fn, int numRepeats)
+{
+	if (!entity_.IsValid())
+	{
+		return MAKE_ERROR("Internal Entity was invalid");
+	}
+	if (!bus_)
+	{
+		return MAKE_ERROR("Internal EventBus was null");
+	}
+
+	auto rels = entity_.GetRelations();
+	if (rels.IsChild())
+	{
+		return MAKE_ERROR("Internal Entity is a child - could not delegate new timer");
+	}
+
+	auto ch = rels.AddChild();
+	ch.AddComponent(Timer{
+		.duration = durationSec,
+		.numRepeats = numRepeats
+	});
+
+	MakeTimerImpl(*bus_, entity_, ch, std::forward<Fn>(fn));
+
+	return kVoid;
+}
+
+

@@ -46,10 +46,10 @@ void TimerSystem::Update(float delta, EventBus2& bus)
 		
 		if (EntityShouldProduceEvent<events::TimerFired>(entity))
 		{
-			bus.PushEvent(events::TimerFired{
-				.producer = entity.GetID(),
-				.duration = timer.duration
-			});
+			events::TimerFired ev{};
+			ev.entity<0>() == entity.GetID();
+
+			bus.PushEvent(std::move(ev));
 		}
 
 		timer.elapsed = 0.0f;

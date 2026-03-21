@@ -10,7 +10,7 @@ public:
 	~GameControllerInputUpdater() = default;
 
 	void Update(const SDL_Event& ev);
-	void FinalizeAndPushEvents(SDL_JoystickID ownerId, EventBus2& bus);
+	void FinalizeAndPushEvents(SDL_JoystickID ownerId, SDL_GameController* gc, EventBus2& bus);
 
 	GameControllerInputMap& GetInputMap() { return inputs_; }
 	const GameControllerInputMap& GetInputMap() const { return inputs_; }

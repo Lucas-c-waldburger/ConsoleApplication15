@@ -74,6 +74,48 @@ constexpr InputState GetNextAxisState(InputState last, const GameControllerInput
 	}
 }
 
+void AssignAxisValueFromSDL(GameControllerInputField& field, SDL_GameController* gc)
+{
+	using enum GameControllerInputSource;
+
+	switch (field.source)
+	{
+	case LeftStickAxis: 
+	case RightStickAxis:
+	{
+		const auto sdlEnumX = (field.source == LeftStickAxis)
+			? SDL_CONTROLLER_AXIS_LEFTX
+			: SDL_CONTROLLER_AXIS_RIGHTX;
+		const auto sdlEnumY = (field.source == LeftStickAxis)
+			? SDL_CONTROLLER_AXIS_LEFTY
+			: SDL_CONTROLLER_AXIS_RIGHTY;
+
+		const auto xVal = SDL_GameControllerGetAxis(gc, sdlEnumX);
+		const auto yVal = SDL_GameControllerGetAxis(gc, sdlEnumY);
+
+		field.value.axis.x = static_cast<int>(xVal);
+		field.value.axis.y = static_cast<int>(yVal);
+
+		break;
+	}
+	case LeftTrigger:
+	case RightTrigger:
+	{
+		const auto sdlEnum = (field.source == LeftTrigger)
+			? SDL_CONTROLLER_AXIS_TRIGGERLEFT
+			: SDL_CONTROLLER_AXIS_TRIGGERRIGHT;
+
+		const auto val = SDL_GameControllerGetAxis(gc, sdlEnum);
+
+		field.value.trigger = static_cast<int>(val);
+
+		break;
+	}
+	default:
+		break;
+	}
+}
+
 } // unnamed
 
 void GameControllerInputUpdater::Update(const SDL_Event& ev)
@@ -116,7 +158,8 @@ void GameControllerInputUpdater::Update(const SDL_Event& ev)
 	return;
 }
 
-void GameControllerInputUpdater::FinalizeAndPushEvents(SDL_JoystickID ownerId, EventBus2& bus)
+void GameControllerInputUpdater::FinalizeAndPushEvents(
+	SDL_JoystickID ownerId, SDL_GameController* gc, EventBus2& bus)
 {
 	using Source = GameControllerInputSource;
 
@@ -133,6 +176,13 @@ void GameControllerInputUpdater::FinalizeAndPushEvents(SDL_JoystickID ownerId, E
 			input.state = (lastState == InputState::Pressed || lastState == InputState::Held)
 				? InputState::Held
 				: InputState::None;
+
+			//// if axis, need to keep value updated
+			//if (IsInputSourceAxis(input.source))
+			//{
+			//	//// TODO: also check IsInputSourceTrigger if need this for trigger too
+			//	AssignAxisValueFromSDL(input, gc);
+			//}
 		}
 		else // was updated this frame
 		{

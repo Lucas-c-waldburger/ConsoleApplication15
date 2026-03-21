@@ -175,6 +175,7 @@
     <ClCompile Include="deps\imgui\imgui_widgets.cpp" />
     <ClCompile Include="ecs\EntityAccess.cpp" />
     <ClCompile Include="ecs\EntityManager.cpp" />
+    <ClCompile Include="ecs\EntityPhysics.cpp" />
     <ClCompile Include="file\FilePathUtility.cpp" />
     <ClCompile Include="games\bullet_heaven\Functions.cpp" />
     <ClCompile Include="games\bullet_heaven\Player.cpp" />
@@ -251,6 +252,7 @@
     <ClCompile Include="systems\util\SerializationSystemUtils.cpp" />
     <ClCompile Include="test\catch\core\StableSOATests.cpp" />
     <ClCompile Include="test\catch\ecs\EntityEventTests.cpp" />
+    <ClCompile Include="test\catch\ecs\EntityPhysicsTests.cpp" />
     <ClCompile Include="test\catch\ecs\UserComponentBridgeTests.cpp" />
     <ClCompile Include="test\catch\serial\SerializationTests.cpp" />
     <ClCompile Include="test\catch\systems\SpriteAnimationSystemTests.cpp" />
@@ -439,6 +441,7 @@
     <ClInclude Include="ecs\EntityAccess.h" />
     <ClInclude Include="ecs\EntityConcepts.h" />
     <ClInclude Include="ecs\EntityEvents.h" />
+    <ClInclude Include="ecs\EntityPhysics.h" />
     <ClInclude Include="events\ControllerInputSignal.h" />
     <ClInclude Include="events\data\CoreEventDataTypeList.h" />
     <ClInclude Include="events\data\EntityEventConcept.h" />
@@ -464,6 +467,7 @@
     <ClInclude Include="games\bullet_heaven\Terrain.h" />
     <ClInclude Include="games\bullet_heaven\Updates.h" />
     <ClInclude Include="games\bullet_heaven\Weapon.h" />
+    <ClInclude Include="test\demo\platformer\GamepadUiOverlay.h" />
     <ClInclude Include="test\demo\platformer\GirlChecks.h" />
     <ClInclude Include="test\demo\platformer\GirlStateHandlers.h" />
     <ClInclude Include="gui\GuiContext.h" />
@@ -780,6 +784,7 @@
     <ClInclude Include="test\demo\platformer\EntityStateMachine.h" />
     <ClInclude Include="test\demo\platformer\states\AttackAnimDataReference.h" />
     <ClInclude Include="test\demo\platformer\states\CooldownTimer.h" />
+    <ClInclude Include="test\demo\platformer\states\JumpQuery.h" />
     <ClInclude Include="test\demo\platformer\states\GirlStateEvaluator.h" />
     <ClInclude Include="test\demo\platformer\states\GirlStateHandlerImpls.h" />
     <ClInclude Include="test\demo\platformer\states\GirlUtils.h" />
@@ -1018,6 +1023,12 @@
     <Image Include="resources\sprites\sword_slash\sword_slash_004.png" />
     <Image Include="resources\sprites\ui\button\button_rectangle_depth_gradient.png" />
     <Image Include="resources\sprites\ui\button\button_rectangle_gradient.png" />
+    <Image Include="resources\sprites\ui\controller_btn\btn_a.png" />
+    <Image Include="resources\sprites\ui\controller_btn\btn_b.png" />
+    <Image Include="resources\sprites\ui\controller_btn\btn_x.png" />
+    <Image Include="resources\sprites\ui\controller_btn\btn_y.png" />
+    <Image Include="resources\sprites\ui\joystick\Joystick.png" />
+    <Image Include="resources\sprites\ui\joystick\LargeHandleFilledGrey.png" />
     <Image Include="test\catch\test_images\airborne_series_sprites.png" />
     <Image Include="test\catch\test_images\GlyphCacheHandler_change_offset_pos.png" />
     <Image Include="test\catch\test_images\GlyphCacheHandler_change_rotation.png" />

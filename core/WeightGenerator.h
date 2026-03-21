@@ -144,6 +144,35 @@ public:
         return weights;
     }
 
+    static std::vector<double> GenerateDecayWeights(int count, double falloff, bool invert = false)
+    {
+        std::vector<double> weights(count);
+
+        double sum = 0.0;
+
+        for (int i = 0; i < count; ++i)
+        {
+            double x = static_cast<double>(i) / (count - 1); // 0 Å® 1
+
+            if (invert)
+            {
+                x = 1.0 - x;  // mirror it
+            }
+
+            double weight = std::exp(-falloff * x);
+
+            weights[i] = weight;
+            sum += weight;
+        }
+
+        for (auto& w : weights)
+        {
+            w /= sum;
+        }
+
+        return weights;
+    }
+
 private:
     int count_ = 0;
     std::vector<double> weights_;

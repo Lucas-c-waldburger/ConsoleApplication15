@@ -13,8 +13,11 @@
 
 class ECS;
 class EntityRelations;
-class EventBus2;
 class EntityEvents;
+class EntityPhysics;
+
+class B2World;
+class EventBus2;
 
 // ENTITY //
 class Entity
@@ -92,9 +95,9 @@ public:
     template <typename...Ts>
     bool HasComponents() const;
     template <typename T, typename Fn> requires FnReturningBool<Fn, const T&>
-    bool HasComponentAnd(Fn&& fn) const;
+    bool HasComponent(Fn&& fn) const;
     template <typename...Ts, typename Fn> requires FnReturningBool<Fn, const Ts&...>
-    bool HasComponentsAnd(Fn&& fn) const;
+    bool HasComponents(Fn&& fn) const;
 
     // component visibility
     template <typename T>
@@ -113,6 +116,9 @@ public:
 
     // events
     EntityEvents GetEvents(EventBus2& bus);
+
+    // physics
+    EntityPhysics GetPhysics(B2World& world);
 
     void Destroy();
     bool IsValid() const;
@@ -154,8 +160,11 @@ public:
     Entity FindChild(Entity_t childId);
     Entity FindChild(std::string_view childName);
 
-    template <typename...Ts>
+    template <typename...Ts> requires (sizeof...(Ts) > 0)
     std::vector<Entity> GetAllChildrenWith();
+    template <typename...Ts, typename Fn> requires (
+        sizeof...(Ts) > 0 && std::is_invocable_r_v<bool, Fn, const Ts&...>)
+    std::vector<Entity> GetAllChildrenWith(Fn&& fn);
 
     template <typename...Ts, typename Fn>
         requires (sizeof...(Ts) > 0 && std::invocable<Fn, Ts&...>)
@@ -445,6 +454,7 @@ private:
         }
     }
 
+    //// TODO: Does this actually work since adding UserComponentBridge?
     std::vector<Entity> GetAllEntitiesWithImpl(uint64_t mask, bool(*testFn)(uint64_t, uint64_t))
     {
         auto activeEntities = entityManager_.GetActiveEntities();
@@ -475,7 +485,7 @@ private:
     template <typename...Ts, typename Container> requires (sizeof...(Ts) > 0)
     std::vector<Entity> GetAllEntitiesWithImpl(Container&& entities)
     {
-        // calculate and cache include/exclude/any masks
+        // calculate include/exclude/any masks
         auto componentMasks = ComponentMasks::template MakeMasks<Ts...>(
             userComponentBridge_);
 
@@ -503,6 +513,47 @@ private:
             if (componentMasks.ShouldIncludeEntity(entitySig))
             {
                 result.emplace_back(entity, *this);
+            }
+        }
+
+        return result;
+    }
+
+    template <typename...Ts, typename Container, typename Fn> requires (
+        sizeof...(Ts) > 0 && std::is_invocable_r_v<bool, Fn, const Ts&...>)
+    std::vector<Entity> GetAllEntitiesWithImpl(Container&& entities, Fn&& fn)
+    {
+        // calculate and cache include/exclude/any masks
+        auto componentMasks = ComponentMasks::template MakeMasks<Ts...>(
+            userComponentBridge_);
+
+        std::vector<Entity> result;
+        result.reserve(entities.size());
+
+        for (const auto& entity : entities)
+        {
+            // get full list of components that entity has
+            uint64_t entitySig = componentManager_.GetSignature(entity);
+
+            // unless the Get() call explicitly asks to include MarkDestroyed component, omit entity
+            if (componentManager_.HasComponent<MarkedDestroyed>(entity) &&
+                ((componentMasks.includeMask & MarkedDestroyed::componentBit) == 0))
+            {
+                continue;
+            }
+
+            assert(componentManager_.HasComponent<EntityFlags>(entity));
+
+            // remove invisible components
+            entitySig &= componentManager_.GetComponent<EntityFlags>(entity).
+                componentVisibilityFlags;
+
+            if (componentMasks.ShouldIncludeEntity(entitySig))
+            {
+                if (std::invoke(fn, GetComponent<Ts>(entity)...))
+                {
+                    result.emplace_back(entity, *this);
+                }
             }
         }
 
@@ -777,14 +828,14 @@ inline bool Entity::HasComponents() const
 }
 
 template <typename T, typename Fn> requires FnReturningBool<Fn, const T&>
-bool Entity::HasComponentAnd(Fn&& fn) const
+bool Entity::HasComponent(Fn&& fn) const
 {
     return HasComponent<T>() &&
            std::invoke(std::forward<Fn>(fn), GetComponent<T>());
 }
 
 template <typename...Ts, typename Fn> requires FnReturningBool<Fn, const Ts&...>
-bool Entity::HasComponentsAnd(Fn&& fn) const
+bool Entity::HasComponents(Fn&& fn) const
 {
     return HasComponents<Ts...>() &&
            std::invoke(std::forward<Fn>(fn), GetComponent<Ts>()...);
@@ -918,7 +969,7 @@ void EntityRelations::ForAllChildrenWith(Fn&& fn) const
 }
  
 
-template <typename...Ts>
+template <typename...Ts> requires (sizeof...(Ts) > 0)
 std::vector<Entity> EntityRelations::GetAllChildrenWith()
 {
     if (!(IsValid() && IsParent()))
@@ -935,4 +986,24 @@ std::vector<Entity> EntityRelations::GetAllChildrenWith()
     }
 
     return ecs_->GetAllEntitiesWithImpl<Ts...>(children);
+}
+
+template <typename...Ts, typename Fn> requires (
+    sizeof...(Ts) > 0 && std::is_invocable_r_v<bool, Fn, const Ts&...>)
+std::vector<Entity> EntityRelations::GetAllChildrenWith(Fn&& fn)
+{
+    if (!(IsValid() && IsParent()))
+    {
+        return {};
+    }
+
+    const auto& children = EntityRelationsHelper::GetChildren(
+        ecs_->GetEntityManager(), ecs_->GetComponentManager(), id_);
+
+    if (children.empty())
+    {
+        return {};
+    }
+
+    return ecs_->GetAllEntitiesWithImpl<Ts...>(children, std::forward<Fn>(fn));
 }
