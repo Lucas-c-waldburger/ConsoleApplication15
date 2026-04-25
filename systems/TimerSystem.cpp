@@ -1,6 +1,5 @@
 #include "TimerSystem.h"
 #include "../ecs/Ecs.h"
-#include "../events/EventBus.h"
 #include "../events/data/TimeEvents.h"
 #include "../core/CommonEntityMethods.h"
 
@@ -23,7 +22,7 @@ void HandleTimerExpiry(Timer& timer, Entity& e)
 
 } // unnamed
 
-void TimerSystem::Update(float delta, EventBus2& bus)
+void TimerSystem::Update(float delta, EventBus& bus)
 {
 	auto entities = ECS::GetAllEntitiesWith<Timer>();
 
@@ -47,7 +46,7 @@ void TimerSystem::Update(float delta, EventBus2& bus)
 		if (EntityShouldProduceEvent<events::TimerFired>(entity))
 		{
 			events::TimerFired ev{};
-			ev.entity<0>() == entity.GetID();
+			ev.entity<0>() = entity.GetID();
 
 			bus.PushEvent(std::move(ev));
 		}

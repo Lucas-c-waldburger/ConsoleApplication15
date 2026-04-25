@@ -8,7 +8,6 @@
 #include "SDLInputSystem.h"
 #include "TimerSystem.h"
 #include "SpriteAnimationSystem.h"
-#include "EntityStateSystem.h"
 #include "GameLoopSystem.h"
 #include "AudioSystem.h"
 #include "SerializationSystem.h"
@@ -22,8 +21,7 @@ using CoreSystemTypeList = TypeList<
 	PhysicsSystem, 
 	SDLInputSystem, 
 	TimerSystem,  
-	SpriteAnimationSystem, 
-	EntityStateSystem,
+	SpriteAnimationSystem,
 	GameLoopSystem,
 	AudioSystem,
 	NewRenderSystem,

@@ -6,11 +6,11 @@
 class GameControllerInputUpdater
 {
 public:
-	GameControllerInputUpdater() : inputs_(MakeGameControllerInputMap()), tracker_() {}
+	GameControllerInputUpdater() : inputs_(MakeInputMap<GameControllerInputMap>()), tracker_() {}
 	~GameControllerInputUpdater() = default;
 
 	void Update(const SDL_Event& ev);
-	void FinalizeAndPushEvents(SDL_JoystickID ownerId, SDL_GameController* gc, EventBus2& bus);
+	void FinalizeAndPushEvents(SDL_JoystickID ownerId, SDL_GameController* gc, EventBus& bus);
 
 	GameControllerInputMap& GetInputMap() { return inputs_; }
 	const GameControllerInputMap& GetInputMap() const { return inputs_; }

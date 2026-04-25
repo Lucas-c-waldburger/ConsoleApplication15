@@ -8,8 +8,13 @@
 
 namespace test {
 
-Result<Void> GirlPhysicsEditor::Init(GuiSystem& guiSystem, Entity& girl, bool useOriginalDefaults)
+Result<Void> GirlPhysicsEditor::Init(GuiSystem& guiSystem, EntityMap& entities, 
+									 bool useOriginalDefaults)
 {
+	assert(entities.contains("girl"));
+
+	auto& girl = entities["girl"];
+
 	assert((girl.HasComponents<AnimationDeltas, MoveTargets>()));
 
 	if (!GirlStatConfig::ConfigFileExists() || useOriginalDefaults)
@@ -23,18 +28,24 @@ Result<Void> GirlPhysicsEditor::Init(GuiSystem& guiSystem, Entity& girl, bool us
 		&girl.GetComponent<AnimationDeltas>(),
 		&girl.GetComponent<MoveTargets>()));
 
-	guiSystem.AddWidget("Girl Physics Editor", [girl] mutable {
-		if (girl.IsValid())
+	guiSystem.AddWidget("Girl Physics Editor", [entities] mutable {
+		if (entities.AllValid())
 		{
-			GirlPhysicsEditor::Draw(girl);
+			GirlPhysicsEditor::Draw(entities);
 		}
 	});
 
 	return kVoid;
 }
 
-void GirlPhysicsEditor::Draw(Entity& girl)
+void GirlPhysicsEditor::Draw(EntityMap& entities)
 {
+	assert(entities.contains("girl"));
+	assert(entities.contains("crate"));
+
+	auto& girl = entities["girl"];
+	auto& crate = entities["crate"];
+
 	if (ImGui::Button("Animations"))
 	{
 		ImGui::OpenPopup("AnimationsPopup");
@@ -57,7 +68,24 @@ void GirlPhysicsEditor::Draw(Entity& girl)
 		ImGui::EndPopup();
 	}
 
-	//ImGui::Separator();
+	ImGui::Separator();
+
+	if (ImGui::Button(kResetPosLabel))
+	{
+		assert(girl.HasComponent<RigidBody>());
+		assert(crate.HasComponent<RigidBody>());
+
+		auto girlSpawnPos = GetGirlSpawnPosition();
+		auto crateSpawnPos = SDL_FPoint{ girlSpawnPos.x + 60.0f, girlSpawnPos.y };
+
+		auto write = WriteAccessor<B2Body>{};
+
+		write(girl.GetComponent<RigidBody>().body).SetPosition(girlSpawnPos);
+		write(girl.GetComponent<RigidBody>().body).SetLinearVelocity({0.0f, 0.0f});
+
+		write(crate.GetComponent<RigidBody>().body).SetPosition(crateSpawnPos);
+		write(crate.GetComponent<RigidBody>().body).SetLinearVelocity({ 0.0f, 0.0f });
+	}
 
 	//const bool saveAll = ImGui::Button("Save All");
 	//const bool resetAll = ImGui::Button("Reset All");

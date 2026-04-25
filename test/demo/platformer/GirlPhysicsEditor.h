@@ -46,9 +46,12 @@ public:
 	static constexpr const char* kLandFrictionLabel = "Landing Friction    ";
 	static constexpr const char* kWalkStopVelXLabel = "Walk Stop Velocity X";
 
-	static Result<Void> Init(GuiSystem& guiSystem, Entity& girl, bool useOriginalDefaults=false);
+	static constexpr const char* kResetPosLabel     = "Reset Positions";
 
-	static void Draw(Entity& girl);
+	static Result<Void> Init(GuiSystem& guiSystem, EntityMap& entities, 
+							 bool useOriginalDefaults=false);
+
+	static void Draw(EntityMap& entities);
 
 private:
 	static void DrawAnimationsPopup(Entity& girl);

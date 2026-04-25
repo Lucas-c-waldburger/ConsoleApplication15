@@ -204,6 +204,8 @@ public:
     std::vector<B2ContactData> GetContactData() const;
     std::vector<B2ContactData> GetContactDataWith(const Handle<B2Shape>& query) const;
 
+    std::vector<Handle<B2Shape>> GetSensorOverlaps() const;
+
     template <typename T>
     T GetAs() const;
 

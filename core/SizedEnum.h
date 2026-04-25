@@ -1,5 +1,6 @@
 #pragma once
 #include <concepts>
+#include <utility>
 
 template <typename Enum>
 concept SomeSizedEnum =
@@ -7,8 +8,15 @@ concept SomeSizedEnum =
 	std::same_as<decltype(Enum::ENUM_SIZE_), Enum> && // has this value
 	static_cast<std::underlying_type_t<Enum>>(Enum::ENUM_SIZE_) >= 0; // enum size non-negative
 
+namespace detail {
+
 template <SomeSizedEnum Enum>
-static constexpr size_t enum_start_v = 0;
+struct enum_start { static constexpr size_t value = 0; };
+
+} // detail
+
+template <SomeSizedEnum Enum>
+static constexpr size_t enum_start_v = detail::enum_start<Enum>::value;
 
 template <SomeSizedEnum Enum>
 static constexpr size_t enum_size_v = static_cast<size_t>(Enum::ENUM_SIZE_);

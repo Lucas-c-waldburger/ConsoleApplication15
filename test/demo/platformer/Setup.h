@@ -3,6 +3,7 @@
 #include "Common.h"
 #include "GirlStateCoordinator.h"
 #include "../../../ecs/Ecs.h"
+#include "../../../ecs/EntityPhysics.h"
 #include "../../../file/FilePathUtility.h"
 #include "../../Fixtures.h"
 #include "../../../ecs/EntityEvents.h"
@@ -18,12 +19,16 @@ namespace test {
 static Result<SpriteDescriptorPackage> GetGirlSpriteDescriptorPackage()
 {
 	TRY(ResourcePaths::SpriteDirectory("girl/idle"), idlePaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/idleS"), idleSPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/walk"), walkPaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/walkS"), walkSPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/jump"), jumpPaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/jumpS"), jumpSPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/land"), landPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/attack_A"), attackAPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/attack_B"), attackBPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/fall"), fallPaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/fallS"), fallSPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/roll"), rollPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/dash"), dashPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/sheath"), sheathPaths);
@@ -40,12 +45,16 @@ static Result<SpriteDescriptorPackage> GetGirlSpriteDescriptorPackage()
 
 	return SpriteDescriptorPackage{
 		toDescriptors("girl_idle", std::move(idlePaths)),
+		toDescriptors("girl_idle_s", std::move(idleSPaths)),
 		toDescriptors("girl_walk", std::move(walkPaths)),
+		toDescriptors("girl_walk_s", std::move(walkSPaths)),
 		toDescriptors("girl_jump", std::move(jumpPaths)),
+		toDescriptors("girl_jump_s", std::move(jumpSPaths)),
 		toDescriptors("girl_land", std::move(landPaths)),
 		toDescriptors("girl_attack_A", std::move(attackAPaths)),
 		toDescriptors("girl_attack_B", std::move(attackBPaths)),
 		toDescriptors("girl_fall", std::move(fallPaths)),
+		toDescriptors("girl_fall_s", std::move(fallSPaths)),
 		toDescriptors("girl_roll", std::move(rollPaths)),
 		toDescriptors("girl_dash", std::move(dashPaths)),
 		toDescriptors("girl_sheath", std::move(sheathPaths))
@@ -463,25 +472,41 @@ static constexpr bool IsSwordActive(const SpriteRenderableComponent& rend)
 	return rend.profile.debugDraw.collider.on == true;
 }
 
-static void SetUpSwordEntityCallbacks(Entity& sword, Entity& girl, EventBus2& bus)
+static void SetUpSwordEntityCallbacks(Entity& sword, EventBus& bus)
 {
 	auto evs = sword.GetEvents(bus);
 
-	evs.OnEvent([](const GirlStateChangeEvent& ev, SpriteRenderableComponent& rend) 
-	{
-		assert(ev.lastState != ev.newState);
+	//static constexpr auto getOtherShape = [](const auto& ev, const Collider& collider) {
+	//	const auto& selfHandle = collider.shape.GetData().GetHandle();
 
-		if (ev.lastState == GirlState::Animation::Attacking)
+	//	return (ev.a.shapeHandle == selfHandle) ? ev.b.shapeHandle : ev.a.shapeHandle;
+	//};
+
+	evs.OnEvent([](const events::SensorCollisionBegin& ev, Collider& collider,
+				   CollisionCache& collisionCache) {
+		auto resolved = ResolveCollisionData(collider, ev);
+		if (!resolved.has_value())
 		{
-			rend.profile.debugDraw.collider.on = false;
+			return;
 		}
-		else if (ev.newState == GirlState::Animation::Attacking)
-		{
-			rend.profile.debugDraw.collider.on = true;
-		}
+
+		collisionCache.data.emplace(resolved->other.shapeHandle, resolved->other.entity);
 	});
 
-	evs.OnEvent([](const events::ContactCollisionBegin& ev, 
+	evs.OnEvent([](const events::SensorCollisionEnd& ev, Collider& collider,
+				   CollisionCache& collisionCache) {
+		auto resolved = ResolveCollisionData(collider, ev);
+		if (!resolved.has_value())
+		{
+			return;
+		}
+
+		collisionCache.data.erase(resolved->other.shapeHandle);
+	});
+
+	/*auto evFilter = EntityEvents::FilterDef{};
+
+	evs.OnEvent([](const events::SensorCollisionBegin& ev, 
 				   SpriteRenderableComponent& rend, Collider& collider)
 	{
 		if (!IsSwordActive(rend))
@@ -527,10 +552,10 @@ static void SetUpSwordEntityCallbacks(Entity& sword, Entity& girl, EventBus2& bu
 				Force{ .value = hitImpulse }
 			);
 		}	
-	});
+	}, evFilter);*/
 }
 
-static void SetUpGirlEntityCallbacks(Entity& e, EventBus2& bus)
+static void SetUpGirlEntityCallbacks(Entity& e, EventBus& bus)
 {
 	auto evs = e.GetEvents(bus);
 
@@ -620,6 +645,49 @@ static void SetUpGirlEntityCallbacks(Entity& e, EventBus2& bus)
 		});
 }
 
+static Result<Entity> MakeCrateEntity(SceneFixture::SharedPtr& fixture,
+									  SDL_FPoint startingPos)
+{
+	static constexpr float kCrateScale = 2.0f;
+
+	TRY(ResourcePath::Sprite("environment/sCrate.png"), cratePath);
+	TRY(fixture->GetTextureRepository().GetSpriteAtlas().LoadSprite(
+		fixture->GetRenderer(), SpriteDescriptor{ .filepath = std::move(cratePath) }
+	), crateSprite);
+
+	auto e = ECS::CreateEntity();
+	assert(e.IsValid());
+
+	auto phys = e.GetPhysics(fixture->GetWorld());
+	auto body = phys.AddBody({
+		.bodyType = B2Body::Type::Dynamic,
+		.position = startingPos,
+		.gravityScale = 3.0f 
+	});
+	assert(body.IsValid());
+
+	B2CollisionFilter filter{ .categories = ObjectCategory::Enemy };
+
+	auto shape = phys.AddColliderBox(
+		{ 48.0f * kCrateScale, 48.0f * kCrateScale },
+		{ .settings = {.enableEvents = {true, true, true} }, .filter = filter });
+	assert(shape.IsValid());
+
+	e.GetComponent<Transform>().scale = { kCrateScale, kCrateScale };
+
+	e.AddComponent(SpriteRenderableComponent{
+		.sprite = crateSprite,
+		.profile = {
+			.drawOrder = 500,  
+			.debugDraw = { .collider = {.on = true} },
+		},
+	});
+
+	e.AddComponent<ObjectCategory>().value = ObjectCategory::Enemy;
+
+	return e;
+}
+
 
 static Result<Entity> MakeGirlEntity(SceneFixture::SharedPtr& fixture,
 									 SDL_FPoint startingPos)
@@ -641,8 +709,9 @@ static Result<Entity> MakeGirlEntity(SceneFixture::SharedPtr& fixture,
 	.WithBodyParameters({
 		.bodyType = B2Body::Type::Dynamic,
 		.position = startingPos,
+		.gravityScale = kGirlNormalGravityScale,
 		.fixedRotation = true
-		}).Build(fixture->GetWorld()));
+	}).Build(fixture->GetWorld()));
 
 	B2CollisionFilter filter{};
 	filter.categories = ObjectCategory::Player;
@@ -657,7 +726,7 @@ static Result<Entity> MakeGirlEntity(SceneFixture::SharedPtr& fixture,
 		}
 	}).WithColliderSettings({
 		.friction = kGirlColliderFriction,
-		.enableEvents = true
+		.enableEvents = {true, true, true}
 	})
 	.WithFilter(filter).Build(rigid.body));
 
@@ -671,29 +740,33 @@ static Result<Entity> MakeGirlEntity(SceneFixture::SharedPtr& fixture,
 	return e;
 }
 
-static Result<Entity> AddGirlSwordChild(SceneFixture::SharedPtr& fixture, Entity& e)
+static Result<Entity> MakeSwordEntity(SceneFixture::SharedPtr& fixture, Entity& girl)
 {
-	assert(e.HasComponent<RigidBody>());
-	assert(e.HasComponent<Collider>());
+	assert(girl.HasComponent<RigidBody>());
+	assert(girl.HasComponent<Collider>());
 
-	auto [eTf, eRigid, eCollider] = e.GetComponents<Transform, RigidBody, Collider>();
-	auto& eBody = WriteAccessor<B2Body>{}(eRigid.body);
-	auto& eShape = WriteAccessor<B2Shape>{}(eCollider.shape);
+	auto [gTf, gRigid, gCollider] = girl.GetComponents<Transform, RigidBody, Collider>();
+	const SDL_FPoint gScale = gTf.scale;
+	const auto& gBody = WriteAccessor<B2Body>{}(gRigid.body);
+	const auto& gShape = WriteAccessor<B2Shape>{}(gCollider.shape);
 
-	auto rels = e.GetRelations();
-	assert(!rels.IsChild());
-	
-	auto ch = rels.AddChild();
+	//auto rels = e.GetRelations();
+	//assert(!rels.IsChild());
+	//
+	//auto ch = rels.AddChild();
 
-	ch.AddComponent(Transform{ .scale = eTf.scale });
+	auto sw = ECS::CreateEntity();
+	assert(sw.IsValid());
 
-	auto& chBody = ch.AddComponent(ComponentBuilder<RigidBody>{}
+	sw.AddComponent(Transform{ .scale = gScale });
+
+	auto& swBody = sw.AddComponent(ComponentBuilder<RigidBody>{}
 	.WithBodyParameters({
 		.bodyType = B2Body::Type::Static,
-		.position = eBody.GetPosition()
+		.position = gBody.GetPosition()
 	}).Build(fixture->GetWorld()));
 
-	ch.AddComponent(ComponentBuilder<Collider>{}
+	sw.AddComponent(ComponentBuilder<Collider>{}
 	.WithFilter({
 		.categories = ObjectCategory::PlayerSword,
 		.categoryMask = ObjectCategory::Enemy
@@ -701,24 +774,21 @@ static Result<Entity> AddGirlSwordChild(SceneFixture::SharedPtr& fixture, Entity
 	.WithShapeParameters({
 		.shapeType = B2Shape::Type::Polygon,
 		.dimensions = Dimensions<float>{
-			kGirlSwordHitboxDimensions.w * eTf.scale.x,
-			kGirlSwordHitboxDimensions.h * eTf.scale.y
+			kGirlSwordHitboxDimensions.w * gScale.x,
+			kGirlSwordHitboxDimensions.h * gScale.y
 		}
 	})
 	.WithColliderSettings({
-		.enableEvents = { .sensor = true },
+		.enableEvents = { true, true, true },
 		.isSensor = true
-	}).Build(chBody.body));
+	}).Build(swBody.body));
 
-	ch.AddComponent<SpriteRenderableComponent>();
+	sw.AddComponent<SpriteRenderableComponent>();
+	sw.AddComponent<CollisionCache>();
 
-	//ch.AddComponent(SpriteRenderableComponent{ 
-	//	.profile = {.debugDraw = {.collider = {
-	//		.on = true, .color = SDLite::kColorBlue
-	//	}}}
-	//});
+	SetUpSwordEntityCallbacks(sw, fixture->GetEventBus());
 
-	return ch;
+	return sw;
 }
 
 } // test

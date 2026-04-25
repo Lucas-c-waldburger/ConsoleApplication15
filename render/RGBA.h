@@ -65,6 +65,21 @@ struct RGB
 	{
 		return PerformRgbScalarOp(lhs, scalar, +[](int i, T t) { return i * t; });
 	}
+
+	static constexpr RGB FromSDLColor(const SDL_Color& c)
+	{
+		return RGB{ c.r, c.g, c.b };
+	}
+
+	static constexpr SDL_Color ToSDLColor(const RGB& rgb)
+	{
+		return SDL_Color{
+			.r = ClampToLimits<uint8_t>(rgb.r),
+			.g = ClampToLimits<uint8_t>(rgb.g),
+			.b = ClampToLimits<uint8_t>(rgb.b),
+			.a = 255
+		};
+	}
 };
 
 

@@ -6,15 +6,16 @@
 #include "EntityT.h"
 #include "../components/ComponentIncludes.h"
 
+using ComponentIndex_t = size_t;
+
+static constexpr ComponentIndex_t kInvalidComponentIndex =
+    std::numeric_limits<ComponentIndex_t>::max();
+
 template <typename T>
 class ComponentArray
 {
 public:
     using ValueType = T;
-    using ComponentIndex_t = size_t;
-
-    static constexpr ComponentIndex_t kInvalidComponentIndex = 
-        std::numeric_limits<ComponentIndex_t>::max();
 
     ComponentArray()
     {
@@ -25,7 +26,7 @@ public:
     {
         const auto entityIndex = GetEntity_tIndex(entity);
 
-        assert(entityIndex < kMaxEntityIndex);
+        assert(entityIndex < kMaxEntities);
 
         ComponentIndex_t cmpIndex = indexWithEntityIdxToGetComponentIdx_[entityIndex];
 
@@ -52,7 +53,7 @@ public:
     {
         const auto entityIndex = GetEntity_tIndex(entity);
 
-        assert(entityIndex < kMaxEntityIndex);
+        assert(entityIndex < kMaxEntities);
 
         const ComponentIndex_t cmpIndex = 
             indexWithEntityIdxToGetComponentIdx_[entityIndex];
@@ -61,6 +62,7 @@ public:
         {
             return;
         }
+        assert(!components_.empty());
 
         const ComponentIndex_t lastIdx = components_.size() - 1;
 
@@ -85,12 +87,12 @@ public:
     {
         const auto entityIndex = GetEntity_tIndex(entity);
 
-        assert(entityIndex < kMaxEntityIndex);
+        assert(entityIndex < kMaxEntities);
 
         const ComponentIndex_t cmpIndex = 
             indexWithEntityIdxToGetComponentIdx_[entityIndex];
 
-        assert(cmpIndex != kInvalidComponentIndex);
+        assert(cmpIndex < components_.size());
 
         return components_[cmpIndex];
     }
@@ -99,7 +101,7 @@ public:
     {
         const auto entityIndex = GetEntity_tIndex(entity);
 
-        assert(entityIndex < kMaxEntityIndex);
+        assert(entityIndex < kMaxEntities);
 
         const ComponentIndex_t cmpIndex = 
             indexWithEntityIdxToGetComponentIdx_[entityIndex];
@@ -112,7 +114,7 @@ public:
 private:
     std::vector<T> components_;
     std::vector<Entity_t> indexWithComponentIdxToGetEntity_;
-    std::array<size_t, kMaxEntityIndex> indexWithEntityIdxToGetComponentIdx_;
+    std::array<size_t, kMaxEntities> indexWithEntityIdxToGetComponentIdx_;
 };
 
 namespace detail {
@@ -139,7 +141,7 @@ public:
 
         const auto entityIndex = GetEntity_tIndex(entity);
 
-        assert(entityIndex < kMaxEntityIndex);
+        assert(entityIndex < kMaxEntities);
 
         indexWithEntityIdxToGetComponentSignature_[entityIndex] 
             |= cmp_type_t::componentBit;
@@ -154,7 +156,7 @@ public:
     {
         const auto entityIndex = GetEntity_tIndex(entity);
 
-        assert(entityIndex < kMaxEntityIndex);
+        assert(entityIndex < kMaxEntities);
 
         indexWithEntityIdxToGetComponentSignature_[entityIndex] |= T::componentBit;
 
@@ -258,5 +260,5 @@ protected:
     }
 
     ComponentArrayTuple componentArrays_;
-    std::array<ComponentSignature, kMaxEntityIndex> indexWithEntityIdxToGetComponentSignature_{};
+    std::array<ComponentSignature, kMaxEntities> indexWithEntityIdxToGetComponentSignature_{};
 };

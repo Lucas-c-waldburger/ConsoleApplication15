@@ -8,6 +8,7 @@
 #include <vector>
 #include <array>
 #include <format>
+#include <sstream>
 #include "../../core/Handle.h"
 
 namespace detail {

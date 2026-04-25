@@ -3,7 +3,7 @@
 #include "../../inputs/mouse/MouseInputUpdater.h"
 #include <bitset>
 
-class EventBus2;
+class EventBus;
 
 class MouseEventHandler
 {
@@ -12,7 +12,7 @@ public:
 	~MouseEventHandler() = default;
 
 	void HandleMouseEvent(const SDL_Event& ev);
-	void Finalize(float delta, EventBus2& bus);
+	void Finalize(float delta, EventBus& bus);
 
 	MouseState GetMouseState() const;
 

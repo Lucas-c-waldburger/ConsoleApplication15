@@ -6,9 +6,9 @@
 class GameLoopSystem : public System
 {
 public:
-	void UpdateLoopStepStart(EventBus2& bus);
-	void UpdateLoopStepRender(EventBus2& bus);
-	void UpdateLoopStepEnd(EventBus2& bus);
+	void UpdateLoopStepStart(EventBus& bus);
+	void UpdateLoopStepRender(EventBus& bus);
+	void UpdateLoopStepEnd(EventBus& bus);
 
 	const Counter& GetCounter() const { return counter_; }
 

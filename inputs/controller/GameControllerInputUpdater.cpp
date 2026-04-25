@@ -1,6 +1,5 @@
 #include "GameControllerInputUpdater.h"
 #include "GameController.h"
-#include "../../events/EventBus.h"
 #include "../../events/data/GameControllerEvents.h"
 #include <cassert>
 
@@ -129,7 +128,7 @@ void GameControllerInputUpdater::Update(const SDL_Event& ev)
 
 		auto& input = inputs_[source];
 		AssignAxisValue(input, ev.caxis);
-		input.stateDuration = 0;
+		input.stateDuration = 0.0f;
 
 		size_t idx = static_cast<size_t>(source);
 		tracker_.updated.set(idx);
@@ -144,7 +143,7 @@ void GameControllerInputUpdater::Update(const SDL_Event& ev)
 		input.state = (ev.cbutton.state == SDL_PRESSED) ? InputState::Pressed : 
 														  InputState::Released;
 
-		input.stateDuration = 0;
+		input.stateDuration = 0.0f;
 
 		size_t idx = static_cast<size_t>(source);
 		tracker_.updated.set(idx);
@@ -159,7 +158,7 @@ void GameControllerInputUpdater::Update(const SDL_Event& ev)
 }
 
 void GameControllerInputUpdater::FinalizeAndPushEvents(
-	SDL_JoystickID ownerId, SDL_GameController* gc, EventBus2& bus)
+	SDL_JoystickID ownerId, SDL_GameController* gc, EventBus& bus)
 {
 	using Source = GameControllerInputSource;
 
@@ -169,7 +168,8 @@ void GameControllerInputUpdater::FinalizeAndPushEvents(
 
 		if (!tracker_.updated.test(i)) // not updated
 		{
-			input.stateDuration = SDL_GetTicks() - tracker_.timestamps[i];
+			input.stateDuration = static_cast<float>(SDL_GetTicks() - tracker_.timestamps[i])
+				/ 1000.0f;
 
 			const auto lastState = input.state;
 

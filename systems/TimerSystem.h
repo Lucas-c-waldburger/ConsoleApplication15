@@ -6,5 +6,5 @@
 class TimerSystem : public System
 {
 public:
-	void Update(float delta, EventBus2& bus);
+	void Update(float delta, EventBus& bus);
 };

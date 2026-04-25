@@ -75,7 +75,7 @@ void MouseInputUpdater::Update(const SDL_Event& ev)
 			? InputState::Pressed 
 			: InputState::Released;
 
-		input.stateDuration = 0;
+		input.stateDuration = 0.0f;
 
 		size_t idx = static_cast<size_t>(btnSource);
 		tracker_.updated.set(idx);
@@ -90,7 +90,7 @@ void MouseInputUpdater::Update(const SDL_Event& ev)
 	return;
 }
 
-void MouseInputUpdater::FinalizeAndPushEvents(float delta, EventBus2& bus)
+void MouseInputUpdater::FinalizeAndPushEvents(float dt, EventBus& bus)
 {
 	using Source = MouseInputSource;
 
@@ -100,13 +100,16 @@ void MouseInputUpdater::FinalizeAndPushEvents(float delta, EventBus2& bus)
 
 		if (!tracker_.updated.test(i)) // not updated
 		{
-			input.stateDuration = SDL_GetTicks() - tracker_.timestamps[i];
+			//// TODO: Change to just adding dt
+			input.stateDuration = static_cast<float>(SDL_GetTicks() - tracker_.timestamps[i])
+				/ 1000.0f;
 
 			const auto lastState = input.state;
 
 			if (IsInputSourceButton(input.source))
 			{
-				input.state = (lastState == InputState::Pressed || lastState == InputState::Held)
+				input.state = (lastState == InputState::Pressed || 
+							   lastState == InputState::Held)
 					? InputState::Held
 					: InputState::None;
 
@@ -124,7 +127,8 @@ void MouseInputUpdater::FinalizeAndPushEvents(float delta, EventBus2& bus)
 				values_.wheel.scroll = { 0.0f, 0.0f };
 			}
 
-			input.state = (lastState == InputState::Pressed || lastState == InputState::Held)
+			input.state = (lastState == InputState::Pressed || 
+						   lastState == InputState::Held)
 				? InputState::Released // have to determine released manually
 				: InputState::None; 
 		}
@@ -146,8 +150,8 @@ void MouseInputUpdater::FinalizeAndPushEvents(float delta, EventBus2& bus)
 				assert(input.state != InputState::None);
 
 				input.stateDuration = (input.state == InputState::Held)
-					? input.stateDuration + static_cast<uint32_t>(delta * 1000.0f)
-					: 0;			
+					? input.stateDuration + dt
+					: 0.0f;			
 			}
 		}
 

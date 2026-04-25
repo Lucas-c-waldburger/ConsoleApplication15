@@ -58,6 +58,10 @@ public:
 	template <SomeEventData T>
 	void Emit(const T& ev)
 	{
+		if constexpr (std::same_as<std::remove_cvref_t<T>, events::ContactCollisionBegin>)
+		{
+			int i = 0;
+		}
 		return std::get<EventSignal<T>>(signals_).Emit(ev);
 	}
 

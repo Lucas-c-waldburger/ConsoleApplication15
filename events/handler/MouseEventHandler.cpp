@@ -8,7 +8,7 @@ void MouseEventHandler::HandleMouseEvent(const SDL_Event& ev)
 	inputUpdater_.Update(ev);
 }
 
-void MouseEventHandler::Finalize(float delta, EventBus2& bus)
+void MouseEventHandler::Finalize(float delta, EventBus& bus)
 {
 	inputUpdater_.FinalizeAndPushEvents(delta, bus);
 

@@ -36,7 +36,7 @@ public:
 
     static bool ConnectEntityToFirstController(Entity& e);
 
-    static void DrawControllerMappingEditor(Entity& e, EventBus2& bus);
+    static void DrawControllerMappingEditor(Entity& e, EventBus& bus);
 
     static void DrawControllerState(Entity& e);
 

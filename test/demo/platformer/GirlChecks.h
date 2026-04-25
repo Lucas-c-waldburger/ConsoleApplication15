@@ -76,9 +76,19 @@ inline bool IsGirlAtEndOfAnimationSeries(const SpriteAnimationComponent& anim,
 	return anim.index.current == idxEnd;
 }
 
-inline bool IsGirlOnGround(const GirlState& state)
+inline bool IsGirlOnGround(const GirlState& state, const Collider& collider = {})
 {
-	return state.collidingCategories[ObjectCategory::Ground] > 0;
+	bool result = state.collidingCategories[ObjectCategory::Ground] > 0;
+	if (state.collidingCategories[ObjectCategory::Enemy] > 0)
+	{
+		result |= OnTopOfAShape(collider);
+	}
+
+	return result;
+}
+inline bool IsThumbstickEngaged(const GirlState& state)
+{
+	return state.action.moveIntent.has_value();
 }
 inline bool IsThumbstickEngaged(const GameControllerState& gc)
 {
@@ -142,6 +152,10 @@ inline bool IsGirlCurrentlyDashing(const GirlState& state)
 {
 	return state.animation == GirlState::Animation::Dashing;
 }
+inline bool IsGirlCurrentlySheathingSword(const GirlState& state)
+{
+	return state.animation == GirlState::Animation::Sheathing;
+}
 inline bool WalkVelocityXUnderStopThreshold(RigidBody& rigid)
 {
 	return std::abs(rigid.body.GetData().GetLinearVelocity().x) <
@@ -164,11 +178,12 @@ inline bool ShouldAttack(const GirlState& state, const SpriteAnimationComponent&
 	return true;
 }
 
-inline bool ShouldJump(GirlState& state, const SpriteAnimationComponent& anim)
+inline bool ShouldJump(GirlState& state, const SpriteAnimationComponent& anim, 
+					   const Collider& collider)
 {
 	using enum GirlState::Animation;
 
-	return IsGirlOnGround(state) &&
+	return IsGirlOnGround(state, collider) &&
 		  GirlNotInState(state, Jumping) &&
 		  GirlNotInState(state, Attacking).Or(IsGirlAtEndOfAnimationSeries(anim, 1)) &&
 		  GirlNotInState(state, Dashing).Or(IsGirlAtEndOfAnimationSeries(anim));

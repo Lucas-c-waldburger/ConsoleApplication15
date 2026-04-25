@@ -76,7 +76,7 @@ bool ControllerMappingEditor::ConnectEntityToFirstController(Entity& e)
 	return false;
 }
 
-void ControllerMappingEditor::DrawControllerMappingEditor(Entity& e, EventBus2& bus)
+void ControllerMappingEditor::DrawControllerMappingEditor(Entity& e, EventBus& bus)
 {
 	using CTX = ControllerMappingEditorContext;
 	assert(CTX::controllerEventHandler);

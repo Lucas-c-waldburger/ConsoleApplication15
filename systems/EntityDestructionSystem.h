@@ -3,12 +3,12 @@
 #include "System.h"
 #include "../events/data/EntityActions.h"
 
-class EventBus2;
+class EventBus;
 
 class EntityDestructionSystem : public System
 {
 public:
-	void Update(EventBus2& bus);
+	void Update(EventBus& bus);
 
 private:
 	//std::vector<events::EntityDestroyed> destroyEvents_;

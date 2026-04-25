@@ -3,7 +3,6 @@
 #include "../ecs/Ecs.h"
 #include "../physics/B2World.h"
 #include "../core/Algorithms.h"
-#include "../events/EventBus.h"
 #include "../events/data/EntityCollision.h"
 
 namespace {
@@ -154,7 +153,7 @@ Entity_t FindOwningBodyEntity(Entity& shapeEnt, const Handle<B2Shape>& handle)
 }
 
 template <SomeCustomCollisionEvent T, SomeB2CollisionEvent U>
-void BufferCollisionEventsImpl(std::vector<Entity>& entities, EventBus2& bus, 
+void BufferCollisionEventsImpl(std::vector<Entity>& entities, EventBus& bus, 
 							   U* b2EventArray, int count)
 {
 	for (int i = 0; i < count; ++i)
@@ -193,7 +192,7 @@ void BufferCollisionEventsImpl(std::vector<Entity>& entities, EventBus2& bus,
 
 } // unnamed namespace
 
-Result<Void> DispatchCollisionEvents(const B2World* world, EventBus2& bus)
+Result<Void> DispatchCollisionEvents(const B2World* world, EventBus& bus)
 {
 	assert(world);
 	assert(world->IsValid());

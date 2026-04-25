@@ -10,7 +10,7 @@ class PhysicsSystem : public System,
 					  public HasWriteAccess<PhysicsSystem, B2Body>
 {
 public:
-	void Update(B2World* world_, EventBus2& bus, float timeStep, int subStepCount);
+	void Update(B2World* world_, EventBus& bus, float timeStep, int subStepCount);
 
 private:
 	void UpdateForces();

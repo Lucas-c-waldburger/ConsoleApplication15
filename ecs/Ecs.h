@@ -17,7 +17,7 @@ class EntityEvents;
 class EntityPhysics;
 
 class B2World;
-class EventBus2;
+class EventBus;
 
 // ENTITY //
 class Entity
@@ -115,7 +115,7 @@ public:
     EntityRelations GetRelations();
 
     // events
-    EntityEvents GetEvents(EventBus2& bus);
+    EntityEvents GetEvents(EventBus& bus);
 
     // physics
     EntityPhysics GetPhysics(B2World& world);
@@ -215,16 +215,6 @@ public:
         return ecs.ForAllEntitiesWithImpl<Ts...>(
             ecs.GetAllActiveEntities(), std::forward<Fn>(fn)
         );
-        //auto entities = ecs.GetAllEntityTsWithImpl<Ts...>();
-
-        //for (Entity_t e : entities)
-        //{
-        //    auto componentTup = ecs.GetComponents<Ts...>(e);
-
-        //    std::apply([&](auto&...cmps) {
-        //        std::invoke(fn, cmps...);
-        //    }, componentTup);
-        //}
     }
 
     template <typename...Ts, typename Fn>
@@ -236,16 +226,6 @@ public:
         return ecs.ForAllEntitiesWithImpl<Ts...>(
             ecs.GetAllActiveEntities(), std::forward<Fn>(fn)
         );
-        //auto entities = ecs.GetAllEntityTsWithImpl<Ts...>();
-
-        //for (Entity_t e : entities)
-        //{
-        //    auto componentTup = ecs.GetComponents<Ts...>(e);
-
-        //    std::apply([&](const auto&...cmps) {
-        //        std::invoke(fn, cmps...);
-        //    }, componentTup);
-        //}
     }
 
     template <typename...Ts> requires (sizeof...(Ts) > 0)
@@ -256,6 +236,15 @@ public:
         return ecs.GetAllEntitiesWithImpl<Ts...>();
     }
 
+    template <typename...Ts, typename Fn> requires 
+        (sizeof...(Ts) > 0 && std::is_invocable_r_v<bool, Fn, const Ts&...>)
+    static std::vector<Entity> GetAllEntitiesWith(Fn&& fn)
+    {
+        auto& ecs = ECS::Get();
+
+        return ecs.GetAllEntitiesWithImpl<Ts...>(std::forward<Fn>(fn));
+    }
+
     // grabs all active entities with at least one of the desired components
     template <typename...Ts>
     static std::vector<Entity> GetAllEntitiesWithAny()
@@ -264,7 +253,7 @@ public:
 
         uint64_t anyMask = (0ULL | ... | ecs.GetComponentBit<Ts>());
 
-        return ecs.GetAllEntitiesWithImpl(anyMask, 
+        return ecs.GetAllEntitiesWithInternal(anyMask, 
             [](uint64_t sig, uint64_t mask) -> bool { return sig & mask; });
     }
 
@@ -278,7 +267,7 @@ public:
         uint64_t exactMask = (ActiveState::componentBit | EntityFlags::componentBit);
         exactMask |= (... | ecs.GetComponentBit<Ts>());
 
-        return ecs.GetAllEntitiesWithImpl(exactMask, 
+        return ecs.GetAllEntitiesWithInternal(exactMask, 
             [](uint64_t sig, uint64_t mask) -> bool { return sig == mask; });
     }
 
@@ -298,6 +287,21 @@ public:
     }
 
     static Entity GetEntityByID(Entity_t id);
+
+    template <typename T>
+    static bool RegisterComponent()
+    {
+        if constexpr (!SomeComponent<T>)
+        {
+            auto& ecs = ECS::Get();
+
+            return ecs.userComponentBridge_.RegisterComponentData<T>();
+        }
+        else
+        {
+            return false;
+        }
+    }
 
 private:
     template <typename T>
@@ -455,7 +459,7 @@ private:
     }
 
     //// TODO: Does this actually work since adding UserComponentBridge?
-    std::vector<Entity> GetAllEntitiesWithImpl(uint64_t mask, bool(*testFn)(uint64_t, uint64_t))
+    std::vector<Entity> GetAllEntitiesWithInternal(uint64_t mask, bool(*testFn)(uint64_t, uint64_t))
     {
         auto activeEntities = entityManager_.GetActiveEntities();
 
@@ -483,7 +487,7 @@ private:
     }
 
     template <typename...Ts, typename Container> requires (sizeof...(Ts) > 0)
-    std::vector<Entity> GetAllEntitiesWithImpl(Container&& entities)
+    std::vector<Entity> GetAllEntitiesWithInternal(Container&& entities)
     {
         // calculate include/exclude/any masks
         auto componentMasks = ComponentMasks::template MakeMasks<Ts...>(
@@ -521,7 +525,7 @@ private:
 
     template <typename...Ts, typename Container, typename Fn> requires (
         sizeof...(Ts) > 0 && std::is_invocable_r_v<bool, Fn, const Ts&...>)
-    std::vector<Entity> GetAllEntitiesWithImpl(Container&& entities, Fn&& fn)
+    std::vector<Entity> GetAllEntitiesWithInternal(Container&& entities, Fn&& fn)
     {
         // calculate and cache include/exclude/any masks
         auto componentMasks = ComponentMasks::template MakeMasks<Ts...>(
@@ -563,7 +567,16 @@ private:
     template <typename...Ts> requires (sizeof...(Ts) > 0)
     std::vector<Entity> GetAllEntitiesWithImpl()
     {
-        return GetAllEntitiesWithImpl<Ts...>(entityManager_.GetActiveEntities());
+        return GetAllEntitiesWithInternal<Ts...>(entityManager_.GetActiveEntities());
+    }
+
+    template <typename...Ts, typename Fn> requires
+        (sizeof...(Ts) > 0 && std::is_invocable_r_v<bool, Fn, const Ts&...>)
+    std::vector<Entity> GetAllEntitiesWithImpl(Fn&& fn)
+    {
+        return GetAllEntitiesWithInternal<Ts...>(
+            entityManager_.GetActiveEntities(), std::forward<Fn>(fn)
+        );
     }
 
     template <typename...Ts> requires (sizeof...(Ts) > 0)
@@ -985,7 +998,7 @@ std::vector<Entity> EntityRelations::GetAllChildrenWith()
         return {};
     }
 
-    return ecs_->GetAllEntitiesWithImpl<Ts...>(children);
+    return ecs_->GetAllEntitiesWithInternal<Ts...>(children);
 }
 
 template <typename...Ts, typename Fn> requires (
@@ -1005,5 +1018,5 @@ std::vector<Entity> EntityRelations::GetAllChildrenWith(Fn&& fn)
         return {};
     }
 
-    return ecs_->GetAllEntitiesWithImpl<Ts...>(children, std::forward<Fn>(fn));
+    return ecs_->GetAllEntitiesWithInternal<Ts...>(children, std::forward<Fn>(fn));
 }

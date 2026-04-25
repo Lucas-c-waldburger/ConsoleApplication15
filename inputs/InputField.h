@@ -10,7 +10,7 @@ struct InputField
 
 	SourceType source = static_cast<SourceType>(-1);
 	InputState state = InputState::None;
-	uint32_t stateDuration = 0;
+	float stateDuration = 0.0f;
 	FieldValueType value;
 };
 
@@ -21,7 +21,7 @@ struct InputField<T, void>
 
 	SourceType source = static_cast<SourceType>(-1);
 	InputState state = InputState::None;
-	uint32_t stateDuration = 0;
+	float stateDuration = 0.0f;
 };
 
 namespace detail {

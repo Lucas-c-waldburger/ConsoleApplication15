@@ -1,7 +1,7 @@
 #pragma once
 #include "EventStorage.h"
 
-class EventBus2
+class EventBus
 {
 public:
 	// Connect to event types

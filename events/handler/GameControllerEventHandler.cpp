@@ -1,6 +1,5 @@
 #include "GameControllerEventHandler.h"
 #include "../../inputs/InputState.h"
-#include "../../events/EventBus.h"
 #include "../../ecs/Ecs.h"
 #include "../data/GameControllerEvents.h"
 #include <cassert>
@@ -30,7 +29,7 @@ GameControllerEventHandler::~GameControllerEventHandler()
 	}
 }
 
-void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev, EventBus2& bus)
+void GameControllerEventHandler::HandleDeviceEvent(const SDL_Event& ev, EventBus& bus)
 {
 	switch (ev.type)
 	{
@@ -105,7 +104,7 @@ void GameControllerEventHandler::HandleInputEvent(const SDL_Event& ev)
 	inputUpdater.Update(ev);
 }
 
-void GameControllerEventHandler::Finalize(EventBus2& bus)
+void GameControllerEventHandler::Finalize(EventBus& bus)
 {
 	for (auto& [joystickId, pair] : activeControllers_)
 	{

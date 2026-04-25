@@ -18,6 +18,8 @@ namespace events {
 
 	struct MouseInput;
 
+	struct KeyboardInput;
+
 	struct TimerFired;
 
 	struct SpriteIndexChange;
@@ -46,6 +48,8 @@ using CoreEventDataTypeList = TypeList <
 	events::GameControllerInput,
 
 	events::MouseInput,
+
+	events::KeyboardInput,
 
 	events::TimerFired,
 

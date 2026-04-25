@@ -49,7 +49,8 @@ B2Body EntityPhysics::AddBody(B2Body::Type bodyType, SDL_FPoint pos)
 }
 
 B2Shape EntityPhysics::AddColliderImpl(B2ShapeParameters&& shapeParams, 
-									  ColliderSettings&& settings)
+									   ColliderSettings&& settings,
+									   B2CollisionFilter&& filter)
 {
 	if (!HasBody())
 	{
@@ -67,6 +68,7 @@ B2Shape EntityPhysics::AddColliderImpl(B2ShapeParameters&& shapeParams,
 	auto& collider = colliderEnt.AddComponent(ComponentBuilder<Collider>{}
 		.WithShapeParameters(std::move(shapeParams))
 		.WithColliderSettings(std::move(settings))
+		.WithFilter(std::move(filter))
 		.Build(body)
 	);
 
@@ -76,7 +78,33 @@ B2Shape EntityPhysics::AddColliderImpl(B2ShapeParameters&& shapeParams,
 	return shape;
 }
 
-B2PolygonShape EntityPhysics::AddColliderBox(Dimensions<float> dims, ColliderSettings settings,
+Entity EntityPhysics::AddCollider(B2ShapeParameters sh, ColliderParams params)
+{
+	if (!HasBody())
+	{
+		return {};
+	}
+
+	auto& body = GetWriteAccess(entity_.GetComponent<RigidBody>().body);
+
+	auto colliderEnt = GetOpenColliderEntity();
+	if (!colliderEnt.IsValid())
+	{
+		return {};
+	}
+
+	auto& collider = colliderEnt.AddComponent(ComponentBuilder<Collider>{}
+	.WithShapeParameters(std::move(sh))
+		.WithColliderSettings(std::move(params.settings))
+		.WithFilter(std::move(params.filter))
+		.Build(body)
+	);
+	assert(collider.shape.GetData().IsValid());
+
+	return colliderEnt;
+}
+
+B2PolygonShape EntityPhysics::AddColliderBox(Dimensions<float> dims, ColliderParams params,
 											 Local local)
 {
 	return AddColliderImpl({
@@ -84,23 +112,25 @@ B2PolygonShape EntityPhysics::AddColliderBox(Dimensions<float> dims, ColliderSet
 		.dimensions = dims,
 		.localPosition = std::move(local.localPosition),
 		.localRotation = std::move(local.localRotation)
-	}, std::move(settings)).GetAs<B2PolygonShape>();
+	}, std::move(params.settings), std::move(params.filter))
+	.GetAs<B2PolygonShape>();
 }
 
 B2PolygonShape EntityPhysics::AddColliderBox(Dimensions<float> dims, Local local)
 {
-	return AddColliderBox(dims, {}, local);
+	return AddColliderBox(dims, ColliderParams{}, local);
 }
 
 B2PolygonShape EntityPhysics::AddColliderPoly(std::vector<SDL_FPoint> hull, 
-											  ColliderSettings settings, Local local)
+											  ColliderParams params, Local local)
 {
 	return AddColliderImpl({
 		.shapeType = B2Shape::Type::Polygon,
 		.hull = std::move(hull),
 		.localPosition = std::move(local.localPosition),
 		.localRotation = std::move(local.localRotation)
-	}, std::move(settings)).GetAs<B2PolygonShape>();
+	}, std::move(params.settings), std::move(params.filter))
+	.GetAs<B2PolygonShape>();
 }
 
 B2PolygonShape EntityPhysics::AddColliderPoly(std::vector<SDL_FPoint> hull, Local local)
@@ -108,7 +138,7 @@ B2PolygonShape EntityPhysics::AddColliderPoly(std::vector<SDL_FPoint> hull, Loca
 	return AddColliderPoly(std::move(hull), {}, local);
 }
 
-B2CircleShape EntityPhysics::AddColliderCircle(float radius, ColliderSettings settings, 
+B2CircleShape EntityPhysics::AddColliderCircle(float radius, ColliderParams params,
 											   Local local)
 {
 	return AddColliderImpl({
@@ -116,7 +146,8 @@ B2CircleShape EntityPhysics::AddColliderCircle(float radius, ColliderSettings se
 		.localPosition = std::move(local.localPosition),
 		.localRotation = std::move(local.localRotation),
 		.radius = radius
-	}, std::move(settings)).GetAs<B2CircleShape>();
+	}, std::move(params.settings), std::move(params.filter))
+	.GetAs<B2CircleShape>();
 }
 
 B2CircleShape EntityPhysics::AddColliderCircle(float radius, Local local)
@@ -140,14 +171,6 @@ const B2Body EntityPhysics::GetBody() const
 
 std::vector<B2Shape> EntityPhysics::GetColliderShapes()
 {
-	//auto body = GetBody();
-	//if (!body.IsValid())
-	//{
-	//	return {};
-	//}
-
-	//return body.GetShapes();
-
 	return GetColliderEntities() | std::views::transform([this](Entity& e) {
 		return GetWriteAccess(e.GetComponent<Collider>().shape);
 	}) | std::ranges::to<std::vector>();

@@ -6,7 +6,7 @@
 
 struct MouseState : BaseComponent<MouseState>
 {
-    MouseInputMap inputs = MakeMouseInputMap();
+    MouseInputMap inputs = MakeInputMap<MouseInputMap>();
     MouseInputValues values;
     //MouseCursorInputValue cursorValue;
     //MouseWheelInputValue wheelValue;

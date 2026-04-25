@@ -242,13 +242,9 @@ Result<b2ShapeId> B2Body::AddPolygonImpl(b2BodyId bodyId, const B2ShapeDefinitio
             data.localRotation.value_or(0.0f)
         );
     }
-    else if (data.radius.has_value())
-    {
-        poly = B2ShapeFactory::MakePolygon(*data.hull, *data.radius);
-    }
     else
     {
-        return MAKE_ERROR("shape type was polygon but had no radius OR had no offset data");
+        poly = B2ShapeFactory::MakePolygon(*data.hull, data.radius.value_or(0.01f));
     }
 
     return b2CreatePolygonShape(bodyId, &shapeDef.shapeDef, &poly);

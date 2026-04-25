@@ -3,7 +3,6 @@
 #include "../ecs/Ecs.h"
 #include "../sdl/SDLUtils.h"
 #include "../physics/B2World.h"
-#include "../events/EventBus.h"
 #include "../events/data/EntityActions.h"
 #include "../core/CommonEntityMethods.h"
 #include <algorithm>
@@ -74,7 +73,7 @@ void ApplyForceRequests(B2Body& body, ForceRequests& requests)
 	ApplyForceRequestsImpl(body, requests.impulses, &B2Body::ApplyLinearImpulse);
 }
 
-void UpdateTransformComponents(EventBus2& bus)
+void UpdateTransformComponents(EventBus& bus)
 {
 	auto entities = ECS::GetAllEntitiesWith<RigidBody, Transform>();
 
@@ -111,7 +110,7 @@ void UpdateTransformComponents(EventBus2& bus)
 
 } // unnamed namespace
 
-void PhysicsSystem::Update(B2World* world_, EventBus2& bus, float timeStep, int subStepCount)
+void PhysicsSystem::Update(B2World* world_, EventBus& bus, float timeStep, int subStepCount)
 {
 	if (!world_)
 	{

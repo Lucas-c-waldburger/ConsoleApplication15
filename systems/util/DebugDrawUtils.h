@@ -27,4 +27,6 @@ void RotateRectPoints(std::vector<SDL_FPoint>& points, SDL_FPoint center, float 
 
 SDL_Rect ComputeBoundingBox(const std::vector<SDL_Rect>& rects);
 
+std::vector<SDL_FPoint> MakeCirclePerimeterPoints(SDL_FPoint center, float radius);
+
 } // util

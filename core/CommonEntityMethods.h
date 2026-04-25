@@ -4,9 +4,9 @@
 template <SomeEventData T>
 inline bool EntityShouldProduceEvent(const Entity& entity)
 {
-	return !entity.HasComponent<EventProductionFlags>() ||
-		    entity.GetComponent<EventProductionFlags>().flags.test(T::eventType);
+	assert(entity.HasComponent<EntityFlags>());
 
+	return entity.GetComponent<EntityFlags>().eventProductionFlags.Test(T::eventType);
 }
 
 template <SomeComponent T>

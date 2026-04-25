@@ -47,7 +47,7 @@ struct JumpAnimDelta
 		if (GirlInState(state, Jumping)
 			.And(JumpIntentMatchesAny(state, InputState::Released, InputState::None)))
 		{
-			deltaY /= 3.0f;
+			deltaY *= 0.5;
 		}
 	}
 };

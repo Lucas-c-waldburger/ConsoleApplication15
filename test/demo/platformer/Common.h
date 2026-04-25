@@ -46,6 +46,7 @@ static float kGirlAttackAAnimChangeTime = 0.08f;
 static float kGirlAttackBAnimChangeTime = 0.07f;
 static float kGirlRollAnimChangeTime = 0.15f;
 static float kGirlDashAnimChangeTime = 0.03f;
+static float kGirlSheathAnimChangeTime = 0.14f;
 
 static float kGirlDashAnimXDeltaDuration = 40.0f;
 static float kGirlDashAnimYDeltaDuration = 20.0f;
@@ -53,11 +54,17 @@ static float kGirlDashAnimEnforcedTime = 0.25f;
 static float kGirlDashCooldownTime = 0.65f;
 
 static float kGirlAttackAltAnimWindowTime = 0.2f;
+static float kGirlSheathSwordIdleTriggerTime = 2.0f;
 
 static int kGirlControllerAxisDeadzone = 2700;
 
+static Range<size_t> kGirlAttackAnimSwordActiveIdxRange = { 1, 2 };
+
+static float kGirlNormalGravityScale = 2.0f;
+static float kGirlJumpGravityScale = 3.5f;
+
 // SWORD
-static float kSwordHitImpulse = 6.5f;
+static float kSwordHitImpulse = 80.5f;
 
 struct ObjectCategory
 {
@@ -169,6 +176,7 @@ struct AnimationDeltas
 	float walkDeltaX = 0.0f;
 	float jumpDeltaY = 0.0f;
 	float fallDeltaY = 0.0f;
+	float sheathTime = 0.0f;
 };
 
 static const AnimationDeltas kGirlBaseAnimationDeltas{
@@ -179,7 +187,8 @@ static const AnimationDeltas kGirlBaseAnimationDeltas{
 	.landTimeEndMod = kGirlLandAnimChangeTimeEndMod,
 	.walkDeltaX = kGirlWalkAnimChangeXDelta,
 	.jumpDeltaY = kGirlJumpAnimChangeYDelta,
-	.fallDeltaY = kGirlFallAnimChangeYDelta
+	.fallDeltaY = kGirlFallAnimChangeYDelta,
+	.sheathTime = kGirlSheathAnimChangeTime
 };
 
 struct MovementProfile
@@ -550,6 +559,110 @@ struct GirlStateContext
 	float timeInCurrentAnimFrame = 0.0f;
 	SDL_FPoint distanceInCurrentAnimFrame = { 0.0f, 0.0f };
 	float dt = 0.0f;
+};
+
+struct CollisionCache
+{
+	std::unordered_map<Handle<B2Shape>, Entity_t> data;
+
+	CollisionCache() = default;
+	~CollisionCache() = default;
+	CollisionCache(CollisionCache&) = default;
+	CollisionCache& operator=(CollisionCache&) = default;
+	CollisionCache(CollisionCache&&) noexcept = default;
+	CollisionCache& operator=(CollisionCache&&) noexcept = default;
+};
+
+inline constexpr float Dot(SDL_FPoint a, SDL_FPoint b)
+{
+	return a.x * b.x + a.y * b.y;
+}
+
+inline SDL_FPoint Normalize(SDL_FPoint ax)
+{
+    float mag = std::sqrt(ax.x * ax.x + ax.y + ax.y);
+    if (mag > 0.0001f)
+    {
+        return { ax.x / mag, ax.y / mag };
+    }
+    return { 0.0f, -1.0f };
+}
+
+inline constexpr SDL_FPoint MulSV(float s, SDL_FPoint v)
+{
+	return { s * v.x, s * v.y };
+}
+
+inline SDL_FPoint GetGirlSpawnPosition()
+{
+	const auto [winCenterX, winCenterY] =
+		SDLite::Window().GetLocalCenter<SDL_FPoint>();
+
+	return { winCenterX, winCenterY - 60.0f };
+}
+
+inline bool OnTopOfAShape(const Collider& collider)
+{
+	const auto& shape = collider.shape.GetData();
+
+	if (!shape.IsValid())
+	{
+		return false;
+	}
+
+	static constexpr SDL_FPoint up = { 0.0f, -1.0f };
+
+	auto contacts = shape.GetContactData();
+	for (const auto& contact : contacts)
+	{
+		auto normal = contact.manifold.normal;
+		if (contact.shapeHandleA == shape.GetHandle())
+		{
+			normal = MulSV(-1.0f, normal);
+		}
+
+		float alignment = Dot(normal, up);
+
+		if (alignment > 0.7f)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+inline SDL_FPoint GetAxisNormed(SDL_FPoint axis)
+{
+	SDL_FPoint dir = {
+		axis.x / 32768.0f,
+		axis.y / 32768.0f
+	};
+
+	// Deadzone
+	float lenSq = dir.x * dir.x + dir.y * dir.y;
+	if (lenSq < 0.01f)
+	{
+		return { 0.0f, 0.0f };
+	}
+
+	// Normalize
+	float invLen = 1.0f / std::sqrt(lenSq);
+
+	return { dir.x * invLen, dir.y * invLen };
+}
+
+class EntityMap : public UnorderedDictionary<Entity>
+{
+public:
+	bool AllValid() const 
+	{ 
+		return std::all_of(this->begin(), this->end(), [](const auto& pair) {
+			return pair.second.IsValid();
+		});
+	}
+
+private:
 };
 
 //template <GirlState::Animation PrimaryState, typename SubStateEnum>

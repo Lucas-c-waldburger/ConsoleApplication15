@@ -38,42 +38,58 @@ Entity_t EntityManager::CreateEntity()
 
 void EntityManager::DestroyEntity(Entity_t entityToRemove)
 {
-    assert(nextFreeFlatIndex_ > 0);
+    if (nextFreeFlatIndex_ <= 0)
+    {
+        return;
+    }
 
     const EntityIndex_t entityToRemoveEntityIndex = GetEntity_tIndex(entityToRemove);
+
     assert(entityToRemoveEntityIndex <= kMaxEntityIndex);
 
     const FlatIdx entityToRemoveFlatIndex =
         indexWithEntityIdxToGetFlatIdx_[entityToRemoveEntityIndex];
 
-    if (entityToRemoveFlatIndex >= nextFreeFlatIndex_) // this is already 'erased'
+    if (entityToRemoveFlatIndex >= nextFreeFlatIndex_)
     {
-        return;
+		return; // this entity is already 'erased' or was never created
     }
 
-    if (nextFreeFlatIndex_ > 1) // this isnt the only entity active
+    const Entity_t entityCurrentlyAtFlatIndex =
+		indexWithFlatIdxToGetEntity_t_[entityToRemoveFlatIndex];
+
+    if (entityCurrentlyAtFlatIndex != entityToRemove)
     {
-        const FlatIdx lastActiveFlatIndex = nextFreeFlatIndex_ - 1;
-        const Entity_t lastActiveEntity =
-            indexWithFlatIdxToGetEntity_t_[lastActiveFlatIndex];
-        const EntityIndex_t lastActiveEntityIndex = GetEntity_tIndex(lastActiveEntity);
-
-        indexWithEntityIdxToGetFlatIdx_[entityToRemoveEntityIndex] =
-            lastActiveFlatIndex;
-        indexWithFlatIdxToGetEntity_t_[lastActiveFlatIndex] =
-            entityToRemove;
-
-        indexWithEntityIdxToGetFlatIdx_[lastActiveEntityIndex] =
-            entityToRemoveFlatIndex;
-        indexWithFlatIdxToGetEntity_t_[entityToRemoveFlatIndex] =
-            lastActiveEntity;
+        assert(GetEntity_tGeneration(entityToRemove) < 
+               GetEntity_tGeneration(entityCurrentlyAtFlatIndex));
+        return; // entity at this index already replaced by newer generation
     }
 
+    const FlatIdx lastActiveFlatIndex = nextFreeFlatIndex_ - 1;
+    const Entity_t lastActiveEntity =
+        indexWithFlatIdxToGetEntity_t_[lastActiveFlatIndex];
+    const EntityIndex_t lastActiveEntityIndex = GetEntity_tIndex(lastActiveEntity);
+
+    indexWithEntityIdxToGetFlatIdx_[entityToRemoveEntityIndex] =
+        lastActiveFlatIndex;
+    indexWithFlatIdxToGetEntity_t_[lastActiveFlatIndex] =
+        entityToRemove;
+
+    indexWithEntityIdxToGetFlatIdx_[lastActiveEntityIndex] =
+        entityToRemoveFlatIndex;
+    indexWithFlatIdxToGetEntity_t_[entityToRemoveFlatIndex] =
+        lastActiveEntity;
+    
     --nextFreeFlatIndex_;
 }
 
 std::span<const Entity_t> EntityManager::GetActiveEntities() const
 {
+    if (nextFreeFlatIndex_ == 0)
+    {
+        return {};
+    }
+
     return std::span<const Entity_t>{
         indexWithFlatIdxToGetEntity_t_}.subspan(0, nextFreeFlatIndex_);
 }

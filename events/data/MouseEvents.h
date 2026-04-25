@@ -10,10 +10,7 @@ struct MouseInput : IEventData<MouseInput>
 {
 	MouseInputField input;
 	MouseInputValues values;
-
-	//std::optional<MouseCursorInputValue> cursorValue;
-	//std::optional<MouseWheelInputValue> wheelValue;
 };
 static_assert(SomeInputEvent<MouseInput>);
 
-}
+} // events

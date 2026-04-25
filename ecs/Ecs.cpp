@@ -51,7 +51,7 @@ EntityRelations Entity::GetRelations()
 	return EntityRelations{ *this };
 }
 
-EntityEvents Entity::GetEvents(EventBus2& bus)
+EntityEvents Entity::GetEvents(EventBus& bus)
 {
 	return EntityEvents{ *this, &bus };
 }
@@ -271,13 +271,16 @@ Entity EntityRelations::FindChild(std::string_view childName)
 
 ECS& ECS::Get()
 {
-	static std::unique_ptr<ECS> ecs;
-	if (!ecs)
-	{
-		ecs = std::unique_ptr<ECS>(new ECS());
-	}
+	static ECS instance{};
+	return instance;
 
-	return *ecs;
+	//static std::unique_ptr<ECS> ecs;
+	//if (!ecs)
+	//{
+	//	ecs = std::unique_ptr<ECS>(new ECS());
+	//}
+
+	//return *ecs;
 }
 
 
@@ -321,12 +324,14 @@ void ECS::DestroyEntity(Entity_t entity)
 	//componentManager_.EntityDestroyed(entity);
 }
 
+//// TODO: Remove "ActiveState" component
 bool ECS::IsEntityActive(Entity_t entity) const
 {
-	assert(GetEntity_tIndex(entity) < kMaxEntityIndex);
+    assert(GetEntity_tIndex(entity) < kMaxEntities);
 
-	bool activeAccordingToComponentManager =
-		componentManager_.GetSignature(entity) & ActiveState::componentBit;
+	const auto& sig = componentManager_.GetSignature(entity);
+
+	bool activeAccordingToComponentManager = (sig & ActiveState::componentBit);
 	bool activeAccordingToEntityManager = entityManager_.IsEntityActive(entity);
 
 	assert(activeAccordingToComponentManager == activeAccordingToEntityManager);
@@ -336,5 +341,5 @@ bool ECS::IsEntityActive(Entity_t entity) const
 
 bool ECS::IsEntityValid(Entity_t entity) const
 {
-	return IsEntityActive(entity);
+	return entity != kInvalidEntity && IsEntityActive(entity);
 }

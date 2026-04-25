@@ -16,9 +16,9 @@ public:
 	GameControllerEventHandler() = default;
 	~GameControllerEventHandler();
 
-	void HandleDeviceEvent(const SDL_Event& ev, EventBus2& bus);
+	void HandleDeviceEvent(const SDL_Event& ev, EventBus& bus);
 	void HandleInputEvent(const SDL_Event& ev);
-	void Finalize(EventBus2& bus);
+	void Finalize(EventBus& bus);
 
 	GameControllerState GetControllerState(SDL_JoystickID joystickId) const;
 	//const GameControllerInputMap& GetControllerState(SDL_JoystickID joystickId) const;

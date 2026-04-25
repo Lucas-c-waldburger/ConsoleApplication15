@@ -208,14 +208,20 @@ class EntityEvents
 public:
 	struct FilterDef
 	{
+		struct RelevantEntity
+		{
+			Entity_t id = kInvalidEntity;
+			bool capture = false;
+		};
+
 		using AuxiliaryFilter = bool(*)(const Entity&);
 
-		Entity_t relevantEntity = kInvalidEntity;
+		RelevantEntity relevantEntity;
 		SDL_JoystickID relevantJoystickId = -1;
 	};
 
 	EntityEvents() = default;
-	EntityEvents(const Entity& e, EventBus2* bus) : entity_(e), bus_(bus) {}
+	EntityEvents(const Entity& e, EventBus* bus) : entity_(e), bus_(bus) {}
 
 	template <typename Fn> requires valid_event_callback_sig_v<Fn>
 	Result<Void> OnEvent(Fn&& fn, FilterDef filterDef = {});
@@ -228,7 +234,7 @@ public:
 
 private:
 	Entity entity_;
-	EventBus2* bus_ = nullptr;
+	EventBus* bus_ = nullptr;
 };
 
 
@@ -247,7 +253,7 @@ inline bool IsEntityParticipantInEvent(const Ev& event,
 {
 	static constexpr auto entityMatchesOne =
 	[]<size_t I>(const EntityEvents::FilterDef& def, const Ev& ev) {
-		return def.relevantEntity == ev.entity<I>();
+		return def.relevantEntity.id == ev.entity<I>();
 	};
 
 	static constexpr auto entityMatchesAny =
@@ -271,7 +277,7 @@ inline bool IsGameControllerInEvent(const Entity& e, const Ev& ev,
 		return true;
 	}
 
-	if (e.GetID() == filterDef.relevantEntity)
+	if (e.GetID() == filterDef.relevantEntity.id)
 	{
 		if (!e.HasComponent<GameControllerState>())
 		{
@@ -294,7 +300,7 @@ inline bool IsGameControllerInEvent(const Entity& e, const Ev& ev,
 		return false;
 	}
 
-	auto relevantE = ECS::GetEntityByID(filterDef.relevantEntity);
+	auto relevantE = ECS::GetEntityByID(filterDef.relevantEntity.id);
 	if (!relevantE.IsValid())
 	{
 		return false;
@@ -329,8 +335,15 @@ inline bool IsEventRelevant(const Entity& e, const Ev& ev,
 	return true;	
 }
 
+inline Entity GetRelevantEntity(const Entity& e, const EntityEvents::FilterDef& def)
+{
+	return (def.relevantEntity.capture)
+		? ECS::GetEntityByID(def.relevantEntity.id)
+		: e;
+}
+
 template <typename Fn> requires valid_event_callback_sig_v<Fn>
-inline void OnEventImpl(EventBus2& bus, Entity& e, Fn&& fn, 
+inline void OnEventImpl(EventBus& bus, Entity& e, Fn&& fn, 
 						const EntityEvents::FilterDef& filterDef)
 {
 	using event_data_t = 
@@ -355,7 +368,9 @@ inline void OnEventImpl(EventBus2& bus, Entity& e, Fn&& fn,
 		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
 			if (IsEventRelevant(e, ev, def))
 			{
-				std::invoke(f, ev, e);
+				auto relE = GetRelevantEntity(e, def);
+
+				std::invoke(f, ev, relE);
 			}
 		}));
 	}
@@ -366,16 +381,27 @@ inline void OnEventImpl(EventBus2& bus, Entity& e, Fn&& fn,
 
 		tks.emplace_back(bus.ConnectToEvent(
 		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
+
+			if constexpr (std::same_as<event_data_t, events::SensorCollisionBegin>)
+			{
+				//if (e.GetID() != def.relevantEntity.id && def.relevantEntity.capture)
+				//{
+					int i = 0;
+				//}
+			}
+
 			if (IsEventRelevant(e, ev, def))
 			{
-				ForwardEventCallbackComponents<cmps>(std::forward<Fn>(f), ev, e);
+				auto relE = GetRelevantEntity(e, def);
+
+				ForwardEventCallbackComponents<cmps>(std::forward<Fn>(f), ev, relE);
 			}
 		}));
 	}
 }
 
 template <typename Src, typename Fn> requires valid_input_callback_sig_v<Src, Fn>
-inline void OnInputImpl(EventBus2& bus, Src src, Entity& e, Fn&& fn, 
+inline void OnInputImpl(EventBus& bus, Src src, Entity& e, Fn&& fn, 
 						const EntityEvents::FilterDef& filterDef)
 {
 	using event_data_t =
@@ -400,7 +426,9 @@ inline void OnInputImpl(EventBus2& bus, Src src, Entity& e, Fn&& fn,
 		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
 			if (IsEventRelevant(e, ev, def))
 			{
-				std::invoke(f, ev, e);
+				auto relE = GetRelevantEntity(e, def);
+
+				std::invoke(f, ev, relE);
 			}
 		}));
 	}
@@ -413,14 +441,16 @@ inline void OnInputImpl(EventBus2& bus, Src src, Entity& e, Fn&& fn,
 		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
 			if (IsEventRelevant(e, ev, def))
 			{
-				ForwardEventCallbackComponents<cmps>(std::forward<Fn>(f), ev, e);
+				auto relE = GetRelevantEntity(e, def);
+
+				ForwardEventCallbackComponents<cmps>(std::forward<Fn>(f), ev, relE);
 			}
 		}));
 	}
 }
 
 template <typename Fn> requires valid_timer_event_callback_sig_v<Fn>
-inline void MakeTimerImpl(EventBus2& bus, Entity& e, Entity& ch, Fn&& fn)
+inline void MakeTimerImpl(EventBus& bus, Entity& e, Entity& ch, Fn&& fn)
 {
 	auto& tks = ch.AddComponent<SignalTokenStorage>().signalTokens;
 
@@ -471,9 +501,9 @@ inline void ResolveFilterDefinition(Entity& e, const Fn& fn,
 		std::remove_cvref_t<typename func_traits<Fn>::template arg_at<0>>;
 
 	// try to match current entity if none specified
-	if (filterDef.relevantEntity == kInvalidEntity)
+	if (filterDef.relevantEntity.id == kInvalidEntity)
 	{
-		filterDef.relevantEntity = e.GetID();
+		filterDef.relevantEntity.id = e.GetID();
 	}
 
 	//if constexpr (SomeGameControllerEvent<event_data_t>)

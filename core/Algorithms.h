@@ -33,7 +33,7 @@ inline bool EraseIf(Container& c, Pred&& pred)
 template <typename Container, typename Object>
 inline auto Find(Container& c, Object&& obj)
 {
-    return std::find_if(std::begin(c), std::end(c), std::forward<Object>(obj));
+    return std::find(std::begin(c), std::end(c), std::forward<Object>(obj));
 }
 
 template <typename Container, typename Pred>

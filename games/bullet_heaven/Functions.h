@@ -81,7 +81,7 @@ struct CrosshairComponent
 
 
 static Result<Entity> SetUpCrosshairEntity(Entity& parent, SpriteAtlasTexture& atlas, 
-										   EventBus2& bus, B2World& world)
+										   EventBus& bus, B2World& world)
 {
 	assert(parent.IsValid());
 	auto rels = parent.GetRelations();
@@ -135,7 +135,7 @@ static Result<Entity> SetUpCrosshairEntity(Entity& parent, SpriteAtlasTexture& a
 }
 
 static Result<Entity> SetUpPlayerEntity(Entity& parent, SpriteAtlasTexture& atlas,
-										EventBus2& bus, B2World& world)
+										EventBus& bus, B2World& world)
 {
 	//auto e = ECS::CreateEntity();
 	//assert(e.IsValid());

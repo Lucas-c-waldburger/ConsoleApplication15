@@ -16,6 +16,7 @@ class SceneFixture
 {
 public:
 	using SharedPtr = std::shared_ptr<SceneFixture>;
+	using WeakPtr = std::weak_ptr<SceneFixture>;
 
 	static constexpr std::string_view kScriptResourcesPathFmt = 
 		R"(C:\Users\Lucas\source\repos\ConsoleApplication15\resources\scripts\{})";
@@ -32,6 +33,11 @@ public:
 		ImGuiEnabled = 1 << 0
 	};
 
+	struct SceneConfiguration
+	{
+		SDL_Color screenColor = SDLite::kColorBlack;
+	};
+
 	SceneFixture() = default;
 	~SceneFixture();
 
@@ -45,7 +51,6 @@ public:
 
 	// updates
 	void LoopStart();
-	Result<Void> UpdateEntityStates();
 	Result<bool> UpdateSDLInputs();
 	Result<Void> UpdatePhysics();
 	Result<Void> UpdateCamera();	
@@ -72,22 +77,18 @@ public:
 	ScriptManager& GetScripts() { return scripts_; }
 	SDL_Renderer* GetRenderer() { return SDLite::Renderer(); }
 	SDL_Window* GetWindow() { return SDLite::Window(); }
-	
-	float GetDeltaTime() const { return systems_.GetSystem<GameLoopSystem>().GetDeltaTime(); }
-
-	// bundled processes
-	Result<Void> RenderScene(SDL_Color bgColor = SDLite::kColorWhite);
-
-	EventBus2& GetEventBus() { return eventBus_; }
+	SceneConfiguration& GetConfiguration() { return config_; }
+	EventBus& GetEventBus() { return eventBus_; }
 	Camera& GetCamera();
 
-	void TearDown();
+	float GetDeltaTime() const { return systems_.GetSystem<GameLoopSystem>().GetDeltaTime(); }
 	
 	template <typename...Ts>
 	void SetTestScriptFile(std::string_view scriptFileName, std::function<void(Lua&)>&& setupFn);
 
-	// creation
+	// create/destroy
 	static Result<std::shared_ptr<SceneFixture>> GetInstance();
+	void TearDown();
 
 	// system scheduling
 	template <typename T, typename...Args>
@@ -96,19 +97,11 @@ public:
 		return systems_.RegisterSystem<T>(std::forward<Args>(args)...);
 	}
 
-	//template <ImplementsSystemUpdate T, typename...Args>
-	//	requires std::constructible_from<T, Args...>
-	//T& RegisterSystem(Phase phase, Args&&...args)
-	//{
-	//	static_assert(std::same_as<T, std::remove_cvref_t<T>>,
-	//		"System type argument should have no cv-ref qualifiers");
-
-	//	return userSystemScheduler_.RegisterSystem<T>(
-	//		phase, std::forward<Args>(args)...);
-	//}
-
 private:
 	void UpdateTimers();
+	Result<Void> RenderScene();
+
+	Result<bool> RunGameLoopImpl();
 
 	TextureRepository textureRepo_;
 	SystemManager systems_;
@@ -116,7 +109,8 @@ private:
 	B2World world_;
 	ScriptManager scripts_;
 	TestScript testScript_;
-	EventBus2 eventBus_;
+	EventBus eventBus_;
+	SceneConfiguration config_;
 };
 
 template<typename Fn> requires std::is_invocable_r_v<bool, Fn>
@@ -132,11 +126,10 @@ inline Result<Void> SceneFixture::RunGameLoopCondition(Fn&& fn)
 			break;
 		}
 
-		TRY(UpdateEntityStates());
-
 		TRY(UpdatePhysics());
 
 		TRY(UpdateAudio());
+
 		TRY(UpdateCamera());
 
 		TRY(RenderScene());

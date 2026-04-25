@@ -5,5 +5,5 @@
 
 class B2World;
 
-Result<Void> DispatchCollisionEvents(const B2World* world, EventBus2& bus);
+Result<Void> DispatchCollisionEvents(const B2World* world, EventBus& bus);
 

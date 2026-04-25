@@ -8,6 +8,26 @@ SceneFixture::~SceneFixture()
 	TearDown(); 
 }
 
+Result<bool> SceneFixture::RunGameLoopImpl()
+{
+	LoopStart();
+
+	TRY(UpdateSDLInputs(), cont);
+	if (!cont)
+	{
+		return false;
+	}
+
+	TRY(UpdatePhysics());
+	TRY(UpdateAudio());
+	TRY(UpdateCamera());
+	TRY(RenderScene());
+
+	LoopEnd();
+
+	return true;
+}
+
 Result<Void> SceneFixture::RunGameLoopMs(int ms)
 {
 	assert(ms > 0);
@@ -16,32 +36,11 @@ Result<Void> SceneFixture::RunGameLoopMs(int ms)
 
 	while (elapsed < sec)
 	{
-		LoopStart();
-
-		elapsed += GetDeltaTime();
-
-		TRY(UpdateSDLInputs(), cont);
+		TRY(RunGameLoopImpl(), cont);
 		if (!cont)
 		{
 			break;
 		}
-
-		TRY(UpdateEntityStates());
-
-		TRY(UpdatePhysics());
-
-		if (elapsed >= sec)
-		{
-			int x = 0;
-		}
-
-		TRY(UpdateAudio());
-
-		TRY(UpdateCamera());
-
-		TRY(RenderScene());
-
-		LoopEnd();
 	}
 
 	return Void{};
@@ -51,29 +50,16 @@ Result<Void> SceneFixture::StepGameLoop(int count)
 {
 	while (true)
 	{
-		LoopStart();
 		if (count-- <= 0)
 		{
 			break;
 		}
 
-		TRY(UpdateSDLInputs(), cont);
+		TRY(RunGameLoopImpl(), cont);
 		if (!cont)
 		{
 			break;
 		}
-
-		TRY(UpdateEntityStates());
-
-		TRY(UpdatePhysics());
-
-		TRY(UpdateAudio());
-
-		TRY(UpdateCamera());
-
-		TRY(RenderScene());
-
-		LoopEnd();
 	}
 
 	return Void{};
@@ -83,32 +69,11 @@ Result<Void> SceneFixture::RunGameLoop()
 {
 	while (true)
 	{
-		LoopStart();
-
-		systems_.RunSystemUpdates(Phase::Setup, GetDeltaTime());
-
-		TRY(UpdateSDLInputs(), cont);
+		TRY(RunGameLoopImpl(), cont);		
 		if (!cont)
 		{
 			break;
 		}
-
-		systems_.RunSystemUpdates(Phase::Input, GetDeltaTime());
-
-		systems_.RunSystemUpdates(Phase::Simulation, GetDeltaTime());
-		TRY(UpdatePhysics());
-		systems_.RunSystemUpdates(Phase::SimResponse, GetDeltaTime());
-
-		TRY(UpdateAudio());
-		TRY(UpdateCamera());
-
-		systems_.RunSystemUpdates(Phase::Presentation, GetDeltaTime());
-
-		TRY(RenderScene(SDLite::kColorBlack));
-
-		LoopEnd();
-
-		systems_.RunSystemUpdates(Phase::Cleanup, GetDeltaTime());
 	}
 
 	return Void{};
@@ -118,23 +83,11 @@ Result<Void> SceneFixture::RunGameLoopConditional(bool& cond)
 {
 	while (cond)
 	{
-		LoopStart();
-
-		TRY(UpdateSDLInputs(), cont);
+		TRY(RunGameLoopImpl(), cont);	
 		if (!cont)
 		{
 			break;
 		}
-
-		TRY(UpdatePhysics());
-
-		TRY(UpdateAudio());
-
-		TRY(UpdateCamera());
-
-		TRY(RenderScene());
-
-		LoopEnd();
 	}
 
 	return Void{};
@@ -148,18 +101,8 @@ void SceneFixture::LoopStart()
 	hooks_.SetHookPoint<HookPoint::LoopStart>();
 
 	UpdateTimers();
-}
 
-Result<Void> SceneFixture::UpdateEntityStates()
-{
-	assert(systems_.IsSystemRegistered<EntityStateSystem>());
-	assert(systems_.IsSystemRegistered<GameLoopSystem>());
-
-	float delta = systems_.GetSystem<GameLoopSystem>().GetDeltaTime();
-
-	systems_.GetSystem<EntityStateSystem>().Update(delta);
-
-	return Void{};
+	systems_.RunSystemUpdates(Phase::Setup, GetDeltaTime());
 }
 
 Result<bool> SceneFixture::UpdateSDLInputs()
@@ -168,15 +111,21 @@ Result<bool> SceneFixture::UpdateSDLInputs()
 	auto& inputSys = systems_.GetSystem<SDLInputSystem>();
 
 	return inputSys.Update(GetDeltaTime(), eventBus_, textureRepo_, GetRenderer());
+
+	systems_.RunSystemUpdates(Phase::Input, GetDeltaTime());
 }
 
 Result<Void> SceneFixture::UpdatePhysics()
 {
+	systems_.RunSystemUpdates(Phase::Simulation, GetDeltaTime());
+
 	assert(systems_.IsSystemRegistered<PhysicsSystem>());
 	assert(world_.IsValid());
 
 	static constexpr float kTimeStep = 1.0f / 60.0f;
 	systems_.GetSystem<PhysicsSystem>().Update(&world_, eventBus_, kTimeStep, 4);
+
+	systems_.RunSystemUpdates(Phase::SimResponse, GetDeltaTime());
 
 	return Void{};
 }
@@ -236,7 +185,9 @@ Result<Void> SceneFixture::UpdateUi()
 void SceneFixture::LoopEnd()
 {
 	assert(systems_.IsSystemRegistered<GameLoopSystem>());
-	systems_.GetSystem<GameLoopSystem>().UpdateLoopStepRender(eventBus_);
+	systems_.GetSystem<GameLoopSystem>().UpdateLoopStepEnd(eventBus_);
+
+	systems_.RunSystemUpdates(Phase::Cleanup, GetDeltaTime());
 }
 
 Camera& SceneFixture::GetCamera()
@@ -245,7 +196,7 @@ Camera& SceneFixture::GetCamera()
 	return systems_.GetSystem<CameraSystem>().GetCamera();
 }
 
-Result<Void> SceneFixture::RenderScene(SDL_Color bgColor)
+Result<Void> SceneFixture::RenderScene()
 {
 #if IMGUI_ENABLED
 	assert(systems_.IsSystemRegistered<GuiSystem>());
@@ -255,9 +206,11 @@ Result<Void> SceneFixture::RenderScene(SDL_Color bgColor)
 	systems_.GetSystem<GuiSystem>().RenderPrepare();
 #endif
 
-	SDLite::Renderer().Clear(bgColor);
+	SDLite::Renderer().Clear(config_.screenColor);
 
 	TRY(UpdateRender());
+
+	systems_.RunSystemUpdates(Phase::Presentation, GetDeltaTime());
 
 #if IMGUI_ENABLED
 	assert(systems_.IsSystemRegistered<GuiSystem>());
@@ -309,7 +262,6 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
 	fixture->systems_.RegisterSystem<PhysicsSystem>();
 	fixture->systems_.RegisterSystem<SDLInputSystem>();
 	fixture->systems_.RegisterSystem<TimerSystem>();
-	fixture->systems_.RegisterSystem<EntityStateSystem>();
 	fixture->systems_.RegisterSystem<GameLoopSystem>();
 	fixture->systems_.RegisterSystem<AudioSystem>();
 	fixture->systems_.RegisterSystem<NewRenderSystem>();

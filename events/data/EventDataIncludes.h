@@ -5,6 +5,7 @@
 #include "EntityCollision.h"
 #include "GameControllerEvents.h"
 #include "MouseEvents.h"
+#include "KeyboardEvents.h"
 #include "TimeEvents.h"
 #include "SpriteAnimationEvents.h"
 #include "GameLoopStepEvents.h"

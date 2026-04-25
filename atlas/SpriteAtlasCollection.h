@@ -2,7 +2,7 @@
 #include "SpriteAtlas.h"
 #include "TextureObserverSignal.h"
 
-class EventBus2;
+class EventBus;
 
 struct SpriteInfo
 {

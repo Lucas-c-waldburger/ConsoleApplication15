@@ -1,6 +1,5 @@
 #include "SDLInputSystem.h"
 #include "../FeatureFlags.h"
-#include "../events/EventBus.h"
 #include "../events/data/GameControllerEvents.h"
 #include "../atlas/NewTextureRepository.h"
 
@@ -8,7 +7,7 @@
 #include "../gui/GuiContext.h"
 #endif
 
-bool SDLInputSystem::Update(float delta, EventBus2& bus, 
+bool SDLInputSystem::Update(float dt, EventBus& bus, 
 							TextureRepository& repo, SDL_Renderer* renderer)
 {
 	while (SDL_PollEvent(&sdlEvent_))
@@ -47,13 +46,19 @@ bool SDLInputSystem::Update(float delta, EventBus2& bus,
 			mouseHandler_.HandleMouseEvent(sdlEvent_);
 			break;
 
+		case SDL_KEYUP:
+		case SDL_KEYDOWN:
+			keyboardHandler_.HandleKeyboardEvent(dt, sdlEvent_);
+			break;
+
 		default:
 			break;
 		}
 	}
 
 	gameControllerHandler_.Finalize(bus);
-	mouseHandler_.Finalize(delta, bus);
+	mouseHandler_.Finalize(dt, bus);
+	keyboardHandler_.Finalize(dt, bus);
 
 	bus.DispatchEvents();
 

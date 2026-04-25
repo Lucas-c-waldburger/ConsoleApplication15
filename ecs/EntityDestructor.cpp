@@ -5,7 +5,6 @@
 //#include "../components/RigidBodyComponent.h"
 //#include "../components/ColliderComponent.h"
 #include "../core/ReadOnly.h"
-#include "../events/EventBus.h"
 #include "../events/data/EntityActions.h"
 #include "../physics/B2Body.h";
 #include "../events/EventBus2.h"
@@ -96,10 +95,11 @@ void EntityDestructor::EntityDestroyed(EntityManager& entityManager, ComponentMa
 	{
 		CleanupB2Components(componentManager, destructionEvent.entity);
 
-		entityManager.DestroyEntity(destructionEvent.entity);
-
 		assert(componentManager.HasComponent<EntityFlags>(destructionEvent.entity));
 		const auto& flags = componentManager.GetComponent<EntityFlags>(destructionEvent.entity);
+
+		entityManager.DestroyEntity(destructionEvent.entity);
+
 		//if (flags.eventProductionFlags.Test<events::EntityDestroyed>())
 		//{
 			//	bus.PushEvent(std::move(destructionEvent));

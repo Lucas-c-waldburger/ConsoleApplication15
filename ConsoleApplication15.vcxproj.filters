@@ -123,13 +123,7 @@
     <ClCompile Include="physics\B2CompoundObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="events\EventDispatchListener.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="systems\SDLInputSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="systems\EventCallbackSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="systems\SpriteAnimationSystem.cpp">
@@ -156,13 +150,7 @@
     <ClCompile Include="inputs\controller\GameControllerInputUpdater.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="inputs\controller\GameControllerInputMap.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="systems\TimerSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="systems\EntityStateSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="components\driver\EntityStateDriver.cpp">
@@ -409,6 +397,27 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\catch\ecs\EntityPhysicsTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="events\handler\KeyboardEventHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="inputs\keyboard\KeyboardInputUpdater.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\events\InputEventTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\collider_maker\ColliderMaker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\collider_maker\ColliderDrawSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\collider_maker\ColliderMaker2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\collider_maker\ColliderMakerCommon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1013,9 +1022,6 @@
     <ClInclude Include="core\CommonFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\EventDispatchListener.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="events\types\CollisionEvents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1040,19 +1046,7 @@
     <ClInclude Include="core\TypeListVectorMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\EventUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="events\EventDataStorage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="events\EventStage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="events\EventBus.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="systems\EventCallbackSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\TransparentStringHash.h">
@@ -1064,16 +1058,10 @@
     <ClInclude Include="scripting\TypedLuaFunction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\EventDispatchListenerInterface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="systems\SpriteAnimationSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\SpriteAnimationsComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="components\EventProductionFlagsComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\CommonEntityMethods.h">
@@ -1130,9 +1118,6 @@
     <ClInclude Include="scripting\user_types\GameControllerLuaUserTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\GameControllerInputCallbacksComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="components\TimerComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1176,9 +1161,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="callbacks\StateTransitionCallbackRegistry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="systems\EntityStateSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="callbacks\EventCallback.h">
@@ -1859,9 +1841,6 @@
     <ClInclude Include="components\SignalTokenStorageComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="events\EventFilter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="events\data\EntityEventConcept.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1887,9 +1866,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inputs\controller\GameControllerUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="systems\SystemManager2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="atlas\SpriteAtlasCollection.h">
@@ -1986,6 +1962,48 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ecs\EntityPhysics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\handler\KeyboardEventHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\keyboard\KeyboardInputSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\keyboard\KeyboardInputField.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\keyboard\KeyboardInputMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\InputMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\InputUpdater.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inputs\keyboard\KeyboardInputUpdater.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="events\data\KeyboardEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\PhysicsTuning.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\collider_maker\ColliderMaker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\collider_maker\ColliderDrawSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\collider_maker\ColliderMakerCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\collider_maker\ColliderMakerApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\collider_maker\ColliderMaker2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -2657,6 +2675,75 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="resources\sprites\ui\controller_btn\btn_y.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\fallS\girl_fallS_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\fallS\girl_fallS_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\fallS\girl_fallS_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\jumpS\girl_jumpS_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\jumpS\girl_jumpS_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\jumpS\girl_jumpS_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\jumpS\girl_jumpS_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\jumpS\girl_jumpS_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\jumpS\girl_jumpS_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walkS\girl_walkS_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walkS\girl_walkS_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walkS\girl_walkS_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walkS\girl_walkS_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walkS\girl_walkS_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walkS\girl_walkS_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\walkS\girl_walkS_006.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\environment\back.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\environment\collision.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\environment\ground_dirt_0.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\environment\middle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\environment\tileset.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\environment\wood_box.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\environment\sCrate.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

@@ -47,3 +47,27 @@ std::pair<SDL_FPoint, SDL_FPoint> B2ChainSegmentShape::GetPoints() const
                           ToSDLFPointScaled(worldPoint2));
 }
 
+std::vector<Handle<B2Shape>> B2Shape::GetSensorOverlaps() const
+{
+    if (!IsValid())
+    {
+        return {};
+    }
+    if (!IsSensor())
+    {
+        return {};
+    }
+
+    b2ShapeId overlaps[16];
+    const int count = b2Shape_GetSensorOverlaps(shapeHandle_, overlaps, 16);
+
+    std::vector<Handle<B2Shape>> result;
+    result.reserve(static_cast<size_t>(count));
+
+    for (size_t i = 0; i < static_cast<size_t>(count); ++i)
+    {
+        result.emplace_back(Handle<B2Shape>::Create(overlaps[i]));
+    }
+
+    return result;
+}

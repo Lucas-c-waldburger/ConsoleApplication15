@@ -1,8 +1,7 @@
 #include "GameLoopSystem.h"
 #include "../events/EventDataTypeList.h"
-#include "../events/EventBus.h"
 
-void GameLoopSystem::UpdateLoopStepStart(EventBus2& bus)
+void GameLoopSystem::UpdateLoopStepStart(EventBus& bus)
 {
 	counter_.Update();
 
@@ -10,13 +9,13 @@ void GameLoopSystem::UpdateLoopStepStart(EventBus2& bus)
 	bus.DispatchEvents();
 }
 
-void GameLoopSystem::UpdateLoopStepRender(EventBus2& bus)
+void GameLoopSystem::UpdateLoopStepRender(EventBus& bus)
 {
 	bus.PushEvent(events::GameLoopStepRender{});
 	bus.DispatchEvents();
 }
 
-void GameLoopSystem::UpdateLoopStepEnd(EventBus2& bus)
+void GameLoopSystem::UpdateLoopStepEnd(EventBus& bus)
 {
 	bus.PushEvent(events::GameLoopStepEnd{});
 	bus.DispatchEvents();

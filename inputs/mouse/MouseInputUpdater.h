@@ -9,11 +9,11 @@ class MouseInputUpdater
 public:
 	//MouseInputUpdater() : 
 	//	inputs_(MakeMouseInputMap()), cursorValue_(), wheelValue_(), tracker_() {}
-	MouseInputUpdater() : inputs_(MakeMouseInputMap()) {}
+	MouseInputUpdater() : inputs_(MakeInputMap<MouseInputMap>()) {}
 	~MouseInputUpdater() = default;
 
 	void Update(const SDL_Event& ev);
-	void FinalizeAndPushEvents(float delta, EventBus2& bus);
+	void FinalizeAndPushEvents(float dt, EventBus& bus);
 
 	MouseInputMap& GetInputMap() { return inputs_; }
 	const MouseInputMap& GetInputMap() const { return inputs_; }
@@ -32,7 +32,5 @@ private:
 
 	MouseInputMap inputs_;
 	MouseInputValues values_;
-	//MouseCursorInputValue cursorValue_;
-	//MouseWheelInputValue wheelValue_;
 	Tracker tracker_;
 };

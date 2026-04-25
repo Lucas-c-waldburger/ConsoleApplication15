@@ -4,7 +4,7 @@
 class EventContext
 {
 public:
-	static inline EventBus2* eventBus = nullptr;
+	static inline EventBus* eventBus = nullptr;
 
 private:
 	EventContext() = default;

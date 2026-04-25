@@ -160,6 +160,24 @@ public:
         return gravity * GetGravityScale();
     }
 
+    void SetLinearDamping(float newDamp)
+    {
+        b2Body_SetLinearDamping(bodyHandle_, newDamp);
+    }
+    float GetLinearDamping() const
+    {
+        return (IsValid()) ? b2Body_GetLinearDamping(bodyHandle_) : 0.0f;
+    }
+
+    void SetAngularDamping(float newDamp)
+    {
+        b2Body_SetAngularDamping(bodyHandle_, newDamp);
+    }
+    float GetAngularDamping() const
+    {
+        return (IsValid()) ? b2Body_GetAngularDamping(bodyHandle_) : 0.0f;
+    }
+
     bool operator==(const B2Body& rhs) const noexcept { return bodyHandle_ == rhs.bodyHandle_; }
 
     // Shapes API

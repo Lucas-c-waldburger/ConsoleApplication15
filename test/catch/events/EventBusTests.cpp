@@ -17,7 +17,7 @@ struct EventTestFixture
 
 TEST_CASE("EventBus stores pushed events", "[events]")
 {
-	EventBus2 bus{};
+	EventBus bus{};
 	EventTestFixture fixture{};
 
 	bus.PushEvent(ev::EntityCreated{});
@@ -34,7 +34,7 @@ TEST_CASE("EventBus stores pushed events", "[events]")
 
 TEST_CASE("EventBus removes events on dispatch", "[events]")
 {
-	EventBus2 bus{};
+	EventBus bus{};
 	EventTestFixture fixture{};
 
 	bus.PushEvent(ev::EntityCreated{});
@@ -50,7 +50,7 @@ TEST_CASE("EventBus removes events on dispatch", "[events]")
 
 TEST_CASE("EventBus correctly interacts with signals", "[events]")
 {
-	EventBus2 bus{};
+	EventBus bus{};
 	EventTestFixture fixture{};
 
 	fixture.signalTokens.emplace_back(
@@ -96,7 +96,7 @@ TEST_CASE("EventBus correctly interacts with signals", "[events]")
 
 TEST_CASE("EventBus correctly dispatches events to signals", "[events]")
 {
-	EventBus2 bus{};
+	EventBus bus{};
 	EventTestFixture fixture{};
 
 	fixture.signalTokens.emplace_back(
@@ -130,7 +130,7 @@ TEST_CASE("EventBus correctly dispatches events to signals", "[events]")
 
 TEST_CASE("EventBus allows connections to different input sources", "[events]")
 {
-	EventBus2 bus{};
+	EventBus bus{};
 	EventTestFixture fixture{};
 
 	fixture.signalTokens.emplace_back(bus.ConnectToInput(

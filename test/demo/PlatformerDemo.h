@@ -25,7 +25,8 @@ private:
 public:
 	using State = GirlState::Animation;
 
-	GirlStateUpdater(Entity_t girl, EventBus2& bus) : girl_(girl), eventBus_(&bus) {}
+	GirlStateUpdater(Entity_t girl, Entity_t sword, EventBus& bus) : 
+		girl_(girl), sword_(sword), eventBus_(&bus) {}
 
 	void Update(float dt)
 	{
@@ -42,20 +43,15 @@ public:
 
 		auto animCopy = GetAnimComponentCopy(e);
 
-		if (jumpQuery_.JumpBuffered())
+		if (jumpQuery_.JumpBuffered() && ShouldJump(state, animCopy, coll))
 		{
-			if (ShouldJump(state, animCopy))
-			{
-				SetGirlJumpState(animCopy, state, rigid, coll, targets);
-			}
+			SetGirlJumpState(animCopy, state, rigid, coll, targets);
 		}
-		else if (IsGirlAttackFlagged(state))
+		else if (IsGirlAttackFlagged(state) && ShouldAttack(state, animCopy))
 		{
-			if (ShouldAttack(state, animCopy))
-			{
-				SetGirlAttackState(animCopy, state, rigid, coll);
-			}
+			SetGirlAttackState(animCopy, state, rigid, coll);
 		}
+		
 		//else if (IsGirlDashFlagged(state))
 		//{
 		//	if (ShouldDash(state, animCopy))
@@ -67,7 +63,7 @@ public:
 		{
 			if (IsYIncreasing(tf.position))
 			{
-				if (IsGirlOnGround(state))
+				if (IsGirlOnGround(state, coll))
 				{
 					SetGirlLandState(animCopy, state, rigid, coll);
 				}
@@ -76,28 +72,21 @@ public:
 					SetGirlFallState(animCopy, state, rigid, coll);
 				}
 			}
-			else if (!JumpIntentMatchesAny(state, InputState::Pressed, InputState::Held))
+			else if (JumpIntentMatchesAny(state, InputState::Released))
 			{
 				CutJump(rigid);
 			}
 		}
 		else if (IsGirlCurrentlyFalling(state))
 		{
-			if (IsGirlOnGround(state))
+			if (IsGirlOnGround(state, coll))
 			{
-				if (IsThumbstickEngaged(gc))
-				{
-					SetGirlWalkState(animCopy, state, rigid, coll);
-				}
-				else
-				{
-					SetGirlLandState(animCopy, state, rigid, coll);
-				}
+				SetGirlIdleState(animCopy, state, rigid, coll);
 			}
 		}
 		else if (IsGirlCurrentlyLanding(state))
 		{
-			if (!IsGirlOnGround(state))
+			if (!IsGirlOnGround(state, coll))
 			{
 				SetGirlFallState(animCopy, state, rigid, coll);
 			}
@@ -114,31 +103,31 @@ public:
 		}
 		else if (IsGirlCurrentlyIdle(state))
 		{
-			if (GirlMoved(tf))
-			{
-				if (IsGirlOnGround(state))
-				{
-					SetGirlWalkState(animCopy, state, rigid, coll);
-				}
-				else
-				{
-					SetGirlFallState(animCopy, state, rigid, coll);
-				}
-			} 
-		}
-		else if (IsGirlCurrentlyWalking(state))
-		{
-			if (!IsGirlOnGround(state))
+			if (!IsGirlOnGround(state, coll))
 			{
 				SetGirlFallState(animCopy, state, rigid, coll);
 			}
-			else if (WalkVelocityXUnderStopThreshold(rigid) &&
-					 !IsThumbstickEngaged(gc))
+			else if (IsThumbstickEngaged(state))
+			{
+				SetGirlWalkState(animCopy, state, rigid, coll);
+			} 
+			else if (ShouldSheathSword())
+			{
+				SetGirlSheathState(animCopy, state, rigid, coll);
+			}
+		}
+		else if (IsGirlCurrentlyWalking(state))
+		{
+			if (!IsGirlOnGround(state, coll))
+			{
+				SetGirlFallState(animCopy, state, rigid, coll);
+			}
+			else if (!IsThumbstickEngaged(state))
 			{
 				StopWalkVelocityX(rigid);
 			}
 
-			if (!GirlMoved(tf))
+			if (!IsThumbstickEngaged(state))
 			{
 				SetGirlIdleState(animCopy, state, rigid, coll);
 			}
@@ -149,7 +138,7 @@ public:
 				TimeInAnimCrossesThreshold(
 				attackAnimDataRef_.GetAttackAnimChangeTime(animDeltas)))
 			{
-				if (IsGirlOnGround(state))
+				if (IsGirlOnGround(state, coll))
 				{
 					SetGirlIdleState(animCopy, state, rigid, coll);
 				}
@@ -163,7 +152,7 @@ public:
 		{
 			if (GirlCompletedDashAnimation(state, animCopy))
 			{
-				if (IsGirlOnGround(state))
+				if (IsGirlOnGround(state, coll))
 				{
 					SetGirlIdleState(animCopy, state, rigid, coll);
 				}
@@ -173,11 +162,29 @@ public:
 				}
 			}
 		}
+		else if (IsGirlCurrentlySheathingSword(state))
+		{
+			if (!IsGirlOnGround(state, coll))
+			{
+				SetGirlFallState(animCopy, state, rigid, coll);
+			}
+			else if (IsThumbstickEngaged(state))
+			{
+				SetGirlWalkState(animCopy, state, rigid, coll);
+			}
+			else if (IsGirlAtEndOfAnimationSeries(animCopy) &&
+					 TimeInAnimCrossesThreshold(animDeltas.sheathTime)) 
+			{
+				SetGirlIdleState(animCopy, state, rigid, coll);
+			}
+		}
 
 		HandleAxisMoveIntent(rigid, state, targets, dt);
 
 		UpdateAnimations(tf, animCopy, state, animDeltas);
 		UpdateSpriteFacingSide(tf, rend, animCopy, state);
+
+		UpdateSword(state, animCopy, rend, tf);
 
 		if (SpriteChanged(animCopy, e))
 		{
@@ -218,7 +225,16 @@ private:
 	{
 		ExitCurrentState(state, rigid, collider);
 
-		anim.spriteSeriesName = "girl_idle";
+		if (isSwordOut_)
+		{
+			anim.spriteSeriesName = "girl_idle_s";
+			sheathIdleCooldown_.Reset();
+		}
+		else
+		{
+			anim.spriteSeriesName = "girl_idle";
+		}
+		
 		anim.index.current = 0;
 
 		PushStateChangeEvent(state, GirlState::Animation::Idle);
@@ -230,7 +246,7 @@ private:
 	{
 		ExitCurrentState(state, rigid, collider);
 
-		anim.spriteSeriesName = "girl_jump";
+		anim.spriteSeriesName = (isSwordOut_) ? "girl_jump_s" : "girl_jump";
 		anim.index.current = 0;
 
 		PushStateChangeEvent(state, GirlState::Animation::Jumping);
@@ -241,13 +257,16 @@ private:
 
 		rigid.forceRequests.impulses.emplace_back(
 			Force{ .value = { 0.0f, -jumpImpulseY } });
+
+		//GetWriteAccess(rigid.body).SetGravityScale(1.8f);
+		GetWriteAccess(rigid.body).SetGravityScale(kGirlJumpGravityScale);
 	}
 	void SetGirlWalkState(SpriteAnimationComponent& anim, GirlState& state, 
 						  RigidBody& rigid, Collider& collider)
 	{
 		ExitCurrentState(state, rigid, collider);
 
-		anim.spriteSeriesName = "girl_walk";
+		anim.spriteSeriesName = (isSwordOut_) ? "girl_walk_s" : "girl_walk";
 		anim.index.current = 0;
 
 		PushStateChangeEvent(state, GirlState::Animation::Walking);
@@ -279,18 +298,19 @@ private:
 	{
 		ExitCurrentState(state, rigid, collider);
 
-		anim.spriteSeriesName = "girl_fall";
+		anim.spriteSeriesName = (isSwordOut_) ? "girl_fall_s" : "girl_fall";
 		anim.index.current = 0;
 
 		PushStateChangeEvent(state, GirlState::Animation::Falling);
 
 		state.animation = GirlState::Animation::Falling;
 
-		GetWriteAccess(rigid.body).SetGravityScale(2.5f);
+		//GetWriteAccess(rigid.body).SetGravityScale(2.5f);
+		GetWriteAccess(rigid.body).SetGravityScale(kGirlJumpGravityScale);
 	}
 	void ExitGirlFallState(RigidBody& rigid)
 	{
-		GetWriteAccess(rigid.body).SetGravityScale(1.0f);
+		GetWriteAccess(rigid.body).SetGravityScale(kGirlNormalGravityScale);
 	}
 
 	void SetGirlAttackState(SpriteAnimationComponent& anim, GirlState& state,
@@ -307,16 +327,33 @@ private:
 
 		state.animation = GirlState::Animation::Attacking;
 
-		//if (IsGirlOnGround(state))
-		//{
-		//	GetWriteAccess(collider.shape).SetFriction(kGirlColliderLandingFriction);
-		//}
+		isSwordOut_ = true;
 	}
 	void ExitGirlAttackState(Collider& collider)
 	{
 		GetWriteAccess(collider.shape).SetFriction(kGirlColliderFriction);
 
 		attackAnimDataRef_.MarkAttackEnd();
+
+		if (auto* swordRend = GetSwordRenderable())
+		{
+			SetSwordActive(*swordRend, false);
+		}
+	}
+
+	void SetGirlSheathState(SpriteAnimationComponent& anim, GirlState& state,
+							RigidBody& rigid, Collider& collider)
+	{
+		ExitCurrentState(state, rigid, collider);
+
+		anim.spriteSeriesName = "girl_sheath";
+		anim.index.current = 0;
+
+		PushStateChangeEvent(state, GirlState::Animation::Sheathing);
+
+		state.animation = GirlState::Animation::Sheathing;
+
+		isSwordOut_ = false;
 	}
 
 	bool GirlMoved(const Transform& tf) const
@@ -330,9 +367,10 @@ private:
 		auto& body = GetWriteAccess(rigid.body);
 
 		auto vel = body.GetLinearVelocity();
-		vel.y *= 0.7f;
+		vel.y *= 0.5f;
 
 		body.SetLinearVelocity(vel);
+		//body.SetGravityScale(2.5f);
 	}
 
 	SDL_FPoint GetDashImpulse(const GirlState& state, RigidBody& rigid,
@@ -402,10 +440,10 @@ private:
 	{
 		auto& body = GetWriteAccess(rigid.body);
 
-		body.SetLinearVelocity({
-			0.0f,
-			body.GetLinearVelocity().y
-		});
+		auto vel = body.GetLinearVelocity();
+		vel.x *= 0.2f;
+
+		body.SetLinearVelocity(vel);
 	}
 
 	bool IsYIncreasing(SDL_FPoint currentPos) const
@@ -428,6 +466,141 @@ private:
 			GirlNotInState(state, State::Dashing) &&
 			GirlNotInState(state, State::Attacking).Or(IsGirlAtEndOfAnimationSeries(anim, 1));
 		//return !IsGirlCurrentlyDashing(state) && dashCooldown_.Ready();
+	}
+
+	bool ShouldSheathSword() const
+	{
+		return isSwordOut_ && sheathIdleCooldown_.Ready();
+	}
+
+	SpriteRenderableComponent* GetSwordRenderable()
+	{
+		auto sw = ECS::GetEntityByID(sword_);
+		if (!sw.IsValid())
+		{
+			return nullptr;
+		}
+
+		assert(sw.HasComponent<SpriteRenderableComponent>());
+
+		return &sw.GetComponent<SpriteRenderableComponent>();
+	}
+
+
+	static bool IsSwordActive(const SpriteRenderableComponent& rend) 
+	{
+		return rend.profile.debugDraw.collider.on;
+	}
+
+	static bool InSwordAnimationWindow(const SpriteAnimationComponent& anim)
+	{
+		const auto [minIdx, maxIdx] = kGirlAttackAnimSwordActiveIdxRange;
+		return anim.index.current >= minIdx && anim.index.current <= maxIdx;
+	}
+
+	static bool IsGirlFacingRight(const SpriteRenderableComponent& rend)
+	{
+		return rend.profile.flip == SDL_FLIP_NONE;
+	}
+
+	static void SetSwordActive(SpriteRenderableComponent& rend, bool active)
+	{
+		rend.profile.debugDraw.collider.on = active;
+	}
+
+	void UpdateSword(const GirlState& state, const SpriteAnimationComponent& anim, 
+					 const SpriteRenderableComponent& rend, const Transform& tf)
+	{
+		auto sw = ECS::GetEntityByID(sword_);
+		if (!sw.IsValid())
+		{
+			return;
+		}
+
+		assert((sw.HasComponents<SpriteRenderableComponent, RigidBody>()));
+		auto [swordRend, swordRigid] = sw.GetComponents<SpriteRenderableComponent, RigidBody>();
+		
+		auto& swordBody = GetWriteAccess(swordRigid.body);
+
+		float xOffset = kGirlIdleHitboxDimensions.w * kGirlSpriteScale.x;
+
+		swordBody.SetPosition({
+			tf.position.x + (IsGirlFacingRight(rend) ? xOffset : -xOffset),
+			tf.position.y
+		});
+
+		if (state.animation != State::Attacking)
+		{
+			return;
+		}
+
+		if (!IsSwordActive(swordRend))
+		{
+			if (InSwordAnimationWindow(anim))
+			{
+				SetSwordActive(swordRend, true);		
+			}
+		}
+		else
+		{
+			if (!InSwordAnimationWindow(anim))
+			{
+				SetSwordActive(swordRend, false);
+				shapesHitBySword_.clear();
+			} 
+		}
+
+		// apply impulse on colliding shapes
+		if (IsSwordActive(swordRend))
+		{
+			assert((sw.HasComponents<Collider, CollisionCache>()));
+			auto [collider, collisionCache] = 
+				sw.GetComponents<Collider, CollisionCache>();
+
+			if (collisionCache.data.empty())
+			{
+				return;
+			}
+
+			auto swordShape = GetWriteAccess(collider.shape);
+			assert(swordShape.IsValid());
+
+			const auto swordPos = swordBody.GetPosition();
+
+			const auto axis = state.action.moveIntent.value_or(SDL_FPoint{ 0.0f, 0.0f });
+			auto normed = GetAxisNormed(axis);
+
+			float hitImpulseX = IsGirlFacingRight(rend)
+				? kSwordHitImpulse
+				: -kSwordHitImpulse;
+			float hitImpulseY = normed.y * kSwordHitImpulse * 2.0f;
+
+			for (const auto& [otherShape, otherEntId] : collisionCache.data)
+			{
+				if (shapesHitBySword_.contains(otherShape))
+				{
+					continue;
+				}
+
+				auto otherEnt = FindOwningBodyEntity(CollisionData{
+					.entity = otherEntId,
+					.shapeHandle = otherShape
+				});
+				if (!otherEnt.IsValid())
+				{
+					continue;
+				}
+
+				assert(otherEnt.HasComponent<RigidBody>());
+				auto& otherRigid = otherEnt.GetComponent<RigidBody>();
+
+				otherRigid.forceRequests.impulses.emplace_back(
+					Force{ .value = { hitImpulseX, hitImpulseY } }
+				);
+
+				shapesHitBySword_.insert(otherShape);
+			}
+		}
 	}
 
 	void ExitCurrentState(GirlState& state, RigidBody& rigid, Collider& collider)
@@ -453,22 +626,18 @@ private:
 		switch (state.animation)
 		{
 		case State::Idle:
-			assert(anim.spriteSeriesName == "girl_idle");
 			if (TimeInAnimCrossesThreshold(deltas.idleTime))
 			{
 				++anim.index;
 			}
 			break;
 		case State::Walking:
-			assert(anim.spriteSeriesName == "girl_walk");
 			if (DistXInAnimCrossesThreshold(deltas.walkDeltaX))
 			{
 				++anim.index;
 			}
 			break;
 		case State::Jumping:
-			assert(anim.spriteSeriesName == "girl_jump");
-
 			if (DistYInAnimCrossesThreshold(jumpQuery_.GetJumpAnimDeltaY()) &&
 				!IsGirlAtEndOfAnimationSeries(anim))
 			{
@@ -476,7 +645,6 @@ private:
 			}
 			break;
 		case State::Falling:
-			assert(anim.spriteSeriesName == "girl_fall");
 			if (DistYInAnimCrossesThreshold(deltas.fallDeltaY) &&
 				!IsGirlAtEndOfAnimationSeries(anim))
 			{
@@ -484,7 +652,6 @@ private:
 			}
 			break;
 		case State::Landing:
-			assert(anim.spriteSeriesName == "girl_land");
 			if (TimeInAnimCrossesThreshold(deltas.landTime) &&
 				!IsGirlAtEndOfAnimationSeries(anim))
 			{
@@ -492,7 +659,6 @@ private:
 			}
 			break;
 		case State::Attacking:
-			assert(anim.spriteSeriesName == attackAnimDataRef_.GetAttackAnimSeriesName());
 			if (TimeInAnimCrossesThreshold(attackAnimDataRef_.GetAttackAnimChangeTime(deltas)) &&
 				!IsGirlAtEndOfAnimationSeries(anim))
 			{
@@ -500,13 +666,18 @@ private:
 			}
 			break;
 		case State::Dashing:
-			assert(anim.spriteSeriesName == "girl_dash");
 			if (TimeInAnimCrossesThreshold(kGirlDashAnimChangeTime) &&
 				!IsGirlAtEndOfAnimationSeries(anim))
 			{
 				++anim.index;
 			}
 			break;
+		case State::Sheathing:
+			if (TimeInAnimCrossesThreshold(deltas.sheathTime) &&
+				!IsGirlAtEndOfAnimationSeries(anim))
+			{
+				++anim.index;
+			}
 		default:
 			break;
 		}
@@ -531,12 +702,12 @@ private:
 								state.action.moveIntent->x > 0.0f ? SDL_FLIP_NONE :
 								rend.profile.flip;
 		}
-		else
-		{ 
-			rend.profile.flip = (tf.position.x < lastPosition_.x) ? SDL_FLIP_HORIZONTAL :
-								(tf.position.x > lastPosition_.x) ? SDL_FLIP_NONE :
-								rend.profile.flip;
-		}
+		//else
+		//{ 
+		//	rend.profile.flip = (tf.position.x < lastPosition_.x) ? SDL_FLIP_HORIZONTAL :
+		//						(tf.position.x > lastPosition_.x) ? SDL_FLIP_NONE :
+		//						rend.profile.flip;
+		//}
 	}
 
 	void UpdateMembers(const GirlState& state, const Transform& tf, 
@@ -552,6 +723,7 @@ private:
 
 		attackAnimDataRef_.Update(dt);
 		dashCooldown_.Update(dt);
+		sheathIdleCooldown_.Update(dt);
 		jumpQuery_.Update(state, animDeltas);
 	}
 
@@ -573,10 +745,6 @@ private:
 		targets.targetVelX = normedX * targets.maxSpeed;
 
 		float moveImpulseX = ComputeMoveImpulseX(rigid, state, targets, targets.targetVelX, dt);
-		//if (IsGirlCurrentlyLanding(state))
-		//{
-		//	moveImpulseX /= 2.0f;
-		//}
 
 		rigid.forceRequests.impulses.emplace_back(
 			Force{ .value = { moveImpulseX, 0.0f } });
@@ -604,14 +772,18 @@ private:
 	}
 
 	Entity_t girl_;
+	Entity_t sword_;
 	SDL_FPoint lastPosition_ = { 0.0f, 0.0f };
 	GirlState lastState_;
 	float timeInCurrentAnimFrame_ = 0.0f;
 	SDL_FPoint distanceInCurrentAnimFrame_ = { 0.0f, 0.0f };
 	AttackAnimDataReference attackAnimDataRef_;
 	JumpQuery jumpQuery_;
-	EventBus2* eventBus_ = nullptr;
+	EventBus* eventBus_ = nullptr;
 	CooldownTimer dashCooldown_{ .duration = kGirlDashCooldownTime };
+	CooldownTimer sheathIdleCooldown_{ .duration = kGirlSheathSwordIdleTriggerTime };
+	bool isSwordOut_ = false;
+	std::unordered_set<Handle<B2Shape>> shapesHitBySword_;
 };
 
 
@@ -622,12 +794,14 @@ static Result<Void> RunPlatformerDemo(SceneFixture::SharedPtr& fixture)
 	const auto [winCenterX, winCenterY] = 
 		SDLite::Window().GetLocalCenter<SDL_FPoint>();
 
-	TRY(MakeGirlEntity(fixture, {winCenterX, winCenterY - 60.0f}), girlEnt);
+	const SDL_FPoint girlStartPos = { winCenterX, winCenterY - 60.0f };
+
+	TRY(MakeGirlEntity(fixture, girlStartPos), girlEnt);
+	TRY(MakeSwordEntity(fixture, girlEnt), swordEnt);
+	TRY(MakeCrateEntity(fixture, { girlStartPos.x + 60.0f, girlStartPos.y}), crateEnt);
 
 	fixture->RegisterSystem<GirlStateUpdater>(Phase::Input, 
-		girlEnt.GetID(), fixture->GetEventBus());
-	//fixture->RegisterSystem<GirlStateCoordinator>(Phase::Input,
-	//	girlEnt.GetID(), fixture->GetEventBus());
+		girlEnt.GetID(), swordEnt.GetID(), fixture->GetEventBus());
 
 	TRY(SetUpGirlStateReporter(girlEnt, fixture));
 	TRY(ThumbstickUiDraw::CreateAndConnect(girlEnt, fixture));
@@ -639,7 +813,12 @@ static Result<Void> RunPlatformerDemo(SceneFixture::SharedPtr& fixture)
 
 	auto& guiSys = fixture->GetSystem<GuiSystem>();
 
-	TRY(GirlPhysicsEditor::Init(guiSys, girlEnt));
+	EntityMap entities{};
+	entities["girl"] = girlEnt;
+	entities["sword"] = swordEnt;
+	entities["crate"] = crateEnt;
+
+	TRY(GirlPhysicsEditor::Init(guiSys, entities));
 
 #endif
 

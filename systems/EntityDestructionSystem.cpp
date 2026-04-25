@@ -4,7 +4,7 @@
 #include "../events/EventBus2.h"
 
 
-void EntityDestructionSystem::Update(EventBus2& bus)
+void EntityDestructionSystem::Update(EventBus& bus)
 {
 	auto entities = ECS::GetAllEntitiesWith<MarkedDestroyed>();
 	if (entities.empty())

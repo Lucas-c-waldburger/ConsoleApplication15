@@ -9,6 +9,7 @@
 #include "games/bullet_heaven/Terrain.h"
 #include "test/demo/SandDemo.h"
 #include "test/demo/PlatformerDemo.h"
+#include "test/demo/collider_maker/ColliderMakerApp.h"
 
 int main(int argc, char* argv[]) 
 {
@@ -210,8 +211,11 @@ int main(int argc, char* argv[])
     ASSERT_RESULT(fixtureResult);
 
     //auto runResult = test::RunSandDemo(fixtureResult.GetValue());
-    auto runResult = test::RunPlatformerDemo(fixtureResult.GetValue());
+    //auto runResult = test::RunPlatformerDemo(fixtureResult.GetValue());
+    auto runResult = test::RunColliderMaker(fixtureResult.GetValue());
     ASSERT_RESULT(runResult);
+
+    fixtureResult.GetValue().reset();
 
 #endif
     return 0;
