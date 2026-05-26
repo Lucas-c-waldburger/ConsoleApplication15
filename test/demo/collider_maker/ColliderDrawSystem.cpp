@@ -41,7 +41,12 @@ void ColliderDrawSystem::Update(float)
 		}
 		else
 		{
-			switch (data.shapeType)
+			// treat upright rect as polygon if fully formed
+			const auto shapeType = (data.shapeType == ShapeData::kUprightRect && 
+									data.points.size() >= 4) ? B2Shape::Type::Polygon
+															 : data.shapeType; 
+
+			switch (shapeType)
 			{
 			case B2Shape::Type::Polygon:
 			{

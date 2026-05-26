@@ -212,7 +212,7 @@ public:
     }
 
     auto TryGetView(size_t index)
-    {
+    { 
         return TryGetView<MemberPtrs...>(index);
     }
 

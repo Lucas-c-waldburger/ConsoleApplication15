@@ -21,22 +21,25 @@ public:
 		std::optional<fs::path> selectedFile;
 	};
 
-    bool Display(State& state)
+    FileTreeView() = default;
+    FileTreeView(const fs::path& defaultPath) { SetDirectory(defaultPath); }
+
+    bool Display()
     {
-        assert(fs::exists(state.currentPath));
+        assert(fs::exists(state_.currentPath));
 
         bool complete = false;
 
         if (ImGui::Selectable(".."))
         {
-            if (state.currentPath != state.topLevelPath &&
-                state.currentPath.has_parent_path())
+            if (state_.currentPath != state_.topLevelPath &&
+                state_.currentPath.has_parent_path())
             {
-                state.currentPath = state.currentPath.parent_path();
+                state_.currentPath = state_.currentPath.parent_path();
             }
         }
 
-        for (auto& entry : fs::directory_iterator(state.currentPath))
+        for (auto& entry : fs::directory_iterator(state_.currentPath))
         {
             const fs::path path = entry.path();
             const std::string name = path.filename().string();
@@ -47,8 +50,8 @@ public:
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.9f, 1.0f, 1.0f));
             }
 
-            bool selected = (state.selectedFile.has_value() &&
-                             *state.selectedFile == path);
+            bool selected = (state_.selectedFile.has_value() &&
+                             *state_.selectedFile == path);
 
             bool activated = ImGui::Selectable(name.c_str(), selected);
 
@@ -59,13 +62,13 @@ public:
                 if (isDir) 
                 {
                     // Enter folder
-                    state.currentPath = path;
-                    state.selectedFile.reset();
+                    state_.currentPath = path;
+                    state_.selectedFile.reset();
                 }
                 else 
                 {
                     // Single click: select file
-                    state.selectedFile = path;
+                    state_.selectedFile = path;
 
                     // Double-click: confirm selection ¨ return true
                     complete = doubleClicked;
@@ -78,13 +81,46 @@ public:
             }
         }
 
-        if (!complete && state.selectedFile.has_value())
+        if (!complete && state_.selectedFile.has_value())
         {
             complete = (ImGui::Button("Open"));
         }
 
         return complete;
     }
+
+    void SetDirectory(const fs::path& path)
+    {
+        assert(fs::exists(path));
+
+        state_.topLevelPath = path;
+        state_.currentPath = path;
+    }
+
+    const fs::path& GetCurrentDirectory() const
+    {
+        return state_.currentPath;
+    }
+
+    auto GetCurrentDirectoryIter()
+    {
+        assert(fs::exists(state_.currentPath));
+
+        return fs::directory_iterator(state_.currentPath);
+    }
+
+    bool HasSelectedFile() const
+    {
+        return state_.selectedFile.has_value();
+    }
+
+    std::string GetSelectedFile() const
+    {
+        return (HasSelectedFile()) ? state_.selectedFile->string() : "";
+    }
+
+private:
+    State state_;
 };
 
 }

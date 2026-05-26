@@ -6,11 +6,11 @@
 class EventDataBitset
 {
 public:
+	using BitsetType = std::bitset<EventDataTypeList::size>;
+
 	EventDataBitset() = default;
-	EventDataBitset(uint8_t onOrOff) :
-		bitset_(onOrOff ? std::bitset<EventDataTypeList::size>{}.set() :
-						  std::bitset<EventDataTypeList::size>{})
-	{}
+	explicit EventDataBitset(const BitsetType& bitset) : bitset_(bitset) {}
+	EventDataBitset(bool onOrOff) : bitset_(onOrOff ? BitsetType{}.set() : BitsetType{}) {}
 
 	void Reset() { bitset_.reset(); }
 	void SetAll(bool tf) { (tf) ? bitset_.set() : bitset_.reset(); }
@@ -28,17 +28,20 @@ public:
 	template <SomeEventData...Ts> requires (sizeof...(Ts) > 0)
 	bool TestAny() const { return (bitset_.test(static_cast<size_t>(Ts::eventType)) || ...); }
 
+	const BitsetType& GetBitset() const { return bitset_; }
+
 private:
-	std::bitset<EventDataTypeList::size> bitset_;
+	BitsetType bitset_;
 };
 
 class ComponentBitset
 {
 public:
+	using BitsetType = ComponentSignature;
+
 	ComponentBitset() = default;
-	ComponentBitset(uint8_t onOrOff) :
-		bitset_(onOrOff ? 0xFFFFFFFFFFFFFFFF : 0)
-	{}
+	explicit ComponentBitset(BitsetType bitset) : bitset_(bitset) {}
+	ComponentBitset(bool onOrOff) : bitset_(onOrOff ? 0xFFFFFFFFFFFFFFFF : 0) {}
 
 	void Reset() { bitset_ = 0; }
 
@@ -83,8 +86,9 @@ public:
 
 	constexpr bool TestAny(ComponentSignature sig) const { return (bitset_ & sig) != 0; }
 
-	operator ComponentSignature() const { return bitset_; }
+	operator BitsetType() const { return bitset_; }
+	BitsetType GetBitset() const { return bitset_; }
 
 private:
-	ComponentSignature bitset_ = 0;
+	BitsetType bitset_ = 0;
 };

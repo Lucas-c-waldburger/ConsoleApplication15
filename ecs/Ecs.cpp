@@ -133,6 +133,14 @@ Entity EntityRelations::AddProxyChild(std::string_view childName)
 	return newChildEntity;
 }
 
+bool EntityRelations::SetParent(Entity_t parent)
+{
+	assert(ecs_);
+
+	return EntityRelationsHelper::SetParent(ecs_->GetEntityManager(),
+											ecs_->GetComponentManager(), id_, parent);
+}
+
 bool EntityRelations::IsParent() const
 {
 	assert(ecs_);

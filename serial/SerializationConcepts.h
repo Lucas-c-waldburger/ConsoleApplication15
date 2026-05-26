@@ -26,7 +26,5 @@ concept HasComponentName = requires {
 
 
 #define DEF_SERIALIZABLE_EMPTY(type) \
-template <typename BasicJson>        \
-inline void to_json(BasicJson&, const type&) {} \
-template <typename BasicJson> \
-inline void from_json(const BasicJson&, type&) {} 
+template <typename BasicJson> inline void to_json(BasicJson&, const type&) {} \
+template <typename BasicJson> inline void from_json(const BasicJson&, type&) {} 

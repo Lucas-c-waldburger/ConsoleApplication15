@@ -96,9 +96,7 @@ public:
 		{
 			return MAKE_ERROR("TextureRepositoryContext's repo has not been set");
 		}
-		//TRY(CTX::repo->CreateAtlas<SpriteAtlasTexture>(SDLite::Renderer(), 
-		//	TextureAtlas::kMaxAtlasSize), spriteAtlas);
-		//assert(spriteAtlas);
+
 		auto& spriteAtlas = CTX::repo->GetSpriteAtlas();
 
 		TRY(spriteAtlas.LoadSprites(SDLite::Renderer(), std::move(descriptors)),

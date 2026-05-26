@@ -8,6 +8,8 @@
 #include "../core/HandleFactory.h"
 #include "../core/ReadOnly.h"
 
+struct BodyParameters;
+
 struct B2BodyDefinition
 {
     B2BodyDefinition() : bodyData(b2DefaultBodyDef()) {}

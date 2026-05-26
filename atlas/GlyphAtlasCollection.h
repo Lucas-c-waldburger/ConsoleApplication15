@@ -175,7 +175,7 @@ public:
 
 		assert(fontInfo_.Size() == fontAtlasTextures_.size());
 
-		const size_t fontIdx = static_cast<size_t>(handle.GetResourceIndex().value);
+		const size_t fontIdx = static_cast<size_t>(handle.GetResourceIndex());
 		if (fontIdx >= fontInfo_.Size())
 		{
 			return Ret{ std::nullopt };

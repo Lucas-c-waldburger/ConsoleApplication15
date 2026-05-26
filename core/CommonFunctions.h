@@ -17,9 +17,23 @@ inline constexpr uint32_t fnv1aHash(std::string_view sv)
     return hash;    
 }
 
-inline void HashCombine(size_t& seed, size_t value) noexcept
+inline constexpr void HashCombine(size_t& seed, size_t value) noexcept
 {
     seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
+template <typename T>
+concept Hashable = requires(T t) {
+    { std::hash<T>{}(t) } -> std::convertible_to<std::size_t>;
+};
+
+template <typename...Ts> requires (Hashable<Ts> && ...)
+inline constexpr size_t MakeHash(const Ts&...args)
+{
+    size_t hash = 0;
+    ((HashCombine(hash, std::hash<Ts>(args))), ...);
+
+    return hash;
 }
 
 

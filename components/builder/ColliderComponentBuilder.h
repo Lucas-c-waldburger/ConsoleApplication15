@@ -34,6 +34,8 @@ struct ColliderSettings
     
     bool enableCollision = true;
     bool isSensor = false;
+
+    static ColliderSettings FromB2Shape(const B2Shape& shape);
 };
 
 template <>

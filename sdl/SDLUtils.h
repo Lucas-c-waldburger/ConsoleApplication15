@@ -2,6 +2,7 @@
 #include <SDL.h>
 #include <concepts>
 #include "../core/TypeUtils.h"
+#include "../core/CommonFunctions.h"
 
 // unique sdl ptr wrappers
 // surface
@@ -82,10 +83,14 @@ inline constexpr bool operator==(const SDL_Color& lhs, const SDL_Color& rhs)
 // SDL POINT/RECT OVERLOADS
 // POINT //
 // equality
-template <SDLPointType P>
-inline constexpr bool operator==(const P& lhs, const P& rhs)
+inline constexpr bool operator==(const SDL_Point& lhs, const SDL_Point& rhs)
 {
     return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+inline constexpr bool operator==(const SDL_FPoint& lhs, const SDL_FPoint& rhs)
+{
+    return EqualsWithTolerance(lhs.x, rhs.x) && EqualsWithTolerance(lhs.y, rhs.y);
 }
 
 // Point on Point

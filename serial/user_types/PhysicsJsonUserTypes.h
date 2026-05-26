@@ -1,4 +1,5 @@
 #pragma once
+#include "../../ecs/Ecs.h"
 #include "CoreJsonUserTypes.h"
 #include "SDLJsonUserTypes.h"
 #include "../../components/builder/RigidBodyComponentBuilder.h"
@@ -82,3 +83,4 @@ inline void to_json(BasicJson& j, const ReadOnly<B2Shape>& roShape)
 }
 template <typename BasicJson>
 inline void from_json(const BasicJson& j, ReadOnly<B2Shape>& roShape) {}
+

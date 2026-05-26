@@ -34,9 +34,6 @@ struct FormatArgs
 	int totalHeight = 0;
 };
 
-//FormatArgs MakeFormatArgs(std::string_view text, std::vector<GlyphCacheData>& cache,
-//						  Dimensions<int> bounds, bool scaleToFit, int fontHeight);
-
 FormatArgs MakeFormatArgs(const TextRenderableComponent& textRenderable,
 						  const TextRenderableGlyphCache& cacheComponent, int fontHeight);
 

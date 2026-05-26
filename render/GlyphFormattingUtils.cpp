@@ -38,11 +38,11 @@ uint8_t MakeChangeLog(const TextRenderableComponent& textRenderable,
 					  const Transform& transform,
 					  const TextRenderableGlyphCache& glyphCache)
 {
-	const auto& [glyphs, ctx] = glyphCache;
+	const auto& ctx = glyphCache.context;
 
 	return BitIf(textRenderable.writer.resourceHandle != ctx.resourceHandle, 
 				 AtlasChanged) |
-		   BitIf(textRenderable.writer.text != glyphs, 
+		   BitIf(RapidHash(textRenderable.writer.text) != ctx.textHash, 
 			     TextChanged) |
 		   BitIf(textRenderable.formatting != ctx.formatting, 
 			     FormatChanged) |

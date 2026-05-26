@@ -8,6 +8,16 @@
 
 namespace {
 
+constexpr SDL_Rect ApplyOffset(SDL_Rect rect, SDL_FPoint offset)
+{
+	return SDL_Rect{
+		.x = rect.x + static_cast<int>(offset.x),
+		.y = rect.y + static_cast<int>(offset.y),
+		.w = rect.w,
+		.h = rect.h
+	};
+}
+
 constexpr SDL_Rect MakeTransformedRect(const Transform& transform, 
 									   int w, int h, const RenderProfile& profile)
 {
@@ -252,8 +262,8 @@ void AddGlyphRenderCalls(const Entity& entity, const Camera& camera,
 			continue;
 		}
 
-		// was pre-transformed by glyph caching in preprocessor
-		SDL_Rect renderDestRect = destRect;
+		// was pre-transformed by glyph caching in preprocessor, but need to apply offset from profile
+		SDL_Rect renderDestRect = ApplyOffset(destRect, renderable.profile.offset);
 		SDL_Point renderRotationCenter = rotationCenter;
 		
 		if (!renderable.profile.isOverlay)

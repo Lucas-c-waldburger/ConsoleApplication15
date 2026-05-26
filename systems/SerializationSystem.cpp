@@ -21,12 +21,12 @@ Result<Void> SerializationSystem::SerializeState(std::string_view jsonFilename,
 		return Void{};
 	}
 
-	auto path = JoinPathsRaw(kJsonDirName, jsonFilename);
+	auto pathStr = JoinPathsRaw(kJsonDirName, jsonFilename).string();
 
-	std::ofstream file(path);
+	std::ofstream file(pathStr);
 	if (!file) 
 	{
-		return MAKE_ERROR_FMT("Could not open JSON file at path: '{}'", path.string());
+		return MAKE_ERROR_FMT("Could not open JSON file at path: '{}'", pathStr);
 	}
 
 	auto& entityArr = j[kJsonEntitiesKey] = nlohmann::json::array();

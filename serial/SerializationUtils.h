@@ -3,7 +3,28 @@
 #include "../core/Result.h"
 #include "../core/commonObjects.h"
 #include <limits>
+#include <fstream>
 
+inline Result<nlohmann::json> LoadJson(const std::string& jsonFilepath)
+{
+	std::ifstream file(jsonFilepath);
+	if (!file)
+	{
+		return MAKE_ERROR_FMT("Could not open entities JSON file at path: '{}'", jsonFilepath);
+	}
+
+	nlohmann::json j;
+	try
+	{
+		j = nlohmann::json::parse(file);
+	}
+	catch (const nlohmann::json::parse_error& err)
+	{
+		return MAKE_ERROR_FMT("JSON parse error: '{}'", err.what());
+	}
+
+	return j;
+}
 
 template <typename T>
 inline Result<T> GetJsonNativeValue(const nlohmann::json& j, std::string_view keyName)

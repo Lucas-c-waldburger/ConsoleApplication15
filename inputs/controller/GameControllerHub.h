@@ -20,7 +20,7 @@ public:
 	bool Disconnect(SDL_JoystickID joystickId);
 	bool IsConnected(SDL_JoystickID joystickId) const;
 	const GameControllerState& GetControllerState(SDL_JoystickID joystickId) const;
-
+	
 private:
 	static inline GameControllerState kInvalidGameControllerState{};
 

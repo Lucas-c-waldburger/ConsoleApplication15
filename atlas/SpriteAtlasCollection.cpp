@@ -180,10 +180,8 @@ Result<Void> SpriteAtlasTexture::RebuildSourceTexture(SDL_Renderer* renderer,
     return kVoid;
 }
 
-
-
 Result<Sprite> SpriteAtlas::LoadSprite(SDL_Renderer* renderer,
-                                                 SpriteDescriptor&& descriptor)
+                                       SpriteDescriptor&& descriptor)
 {
     if (spriteAtlasTextures_.empty())
     {
@@ -211,8 +209,13 @@ size_t SpriteAtlas::GetTextureCount() const
     return spriteAtlasTextures_.size();
 }
 
+size_t SpriteAtlas::GetTextureSize() const
+{
+    return textureSize_;
+}
+
 Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
-												     SpriteDescriptor&& descriptor)
+										   SpriteDescriptor&& descriptor)
 {
     if (!std::filesystem::exists(descriptor.filepath))
     {

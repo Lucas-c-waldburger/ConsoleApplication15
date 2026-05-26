@@ -30,7 +30,7 @@ B2Chain B2ChainSegmentShape::GetParentChain()
     return B2Chain(Handle<B2Chain>::Create(parentChainId));
 }
 
-std::pair<SDL_FPoint, SDL_FPoint> B2ChainSegmentShape::GetPoints() const
+std::pair<SDL_FPoint, SDL_FPoint> B2ChainSegmentShape::GetPoints(B2Shape::CoordinateSpace space) const
 {
     if (!IsValid())
     {
@@ -38,6 +38,13 @@ std::pair<SDL_FPoint, SDL_FPoint> B2ChainSegmentShape::GetPoints() const
     }
 
     auto segShape = b2Shape_GetChainSegment(GetHandle());
+
+    if (space == LocalSpace)
+    {
+        return std::make_pair(ToSDLFPointScaled(segShape.segment.point1), 
+                              ToSDLFPointScaled(segShape.segment.point2));
+	}
+
     b2Transform tf = GetParentTransform();
 
     b2Vec2 worldPoint1 = b2TransformPoint(tf, segShape.segment.point1);

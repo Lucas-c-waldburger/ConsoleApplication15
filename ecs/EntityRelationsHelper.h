@@ -28,6 +28,9 @@ public:
     static Entity_t AddChild(EntityManager& entityManager, ComponentManager& componentManager,
                              Entity_t parent);
 
+    static bool SetParent(EntityManager& entityManager, ComponentManager& componentManager,
+		                  Entity_t child, Entity_t parent);
+
     static void UnlinkChildFromParent(EntityManager& entityManager, ComponentManager& componentManager,
                                       Entity_t child);
 

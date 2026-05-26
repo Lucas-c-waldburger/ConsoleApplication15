@@ -144,6 +144,8 @@ public:
     Entity AddProxyChild(); // to spoof extra copies of components for parent
     Entity AddProxyChild(std::string_view childName);
 
+	bool SetParent(Entity_t parent);
+
     bool IsParent() const;
     bool IsChild() const;
 

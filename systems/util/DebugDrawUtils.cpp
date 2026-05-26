@@ -114,6 +114,35 @@ void ExtractRectPoints(SDL_Rect rect, std::vector<SDL_FPoint>& points)
 	points[4] = points[0];
 }
 
+SDL_Rect ComputeBoundingBox(const std::vector<SDL_FPoint>& points)
+{
+	SDL_Rect rect{0, 0, 0, 0};
+
+	if (points.empty())
+	{
+		return rect;
+	}
+
+	float minX = std::numeric_limits<float>::infinity();
+	float minY = std::numeric_limits<float>::infinity();
+	float maxX = -std::numeric_limits<float>::infinity();
+	float maxY = -std::numeric_limits<float>::infinity();
+
+	for (const auto& p : points)
+	{
+		if (p.x < minX) { minX = p.x; }
+		if (p.x > maxX) { maxX = p.x; }
+		if (p.y < minY) { minY = p.y; }
+		if (p.y > maxY) { maxY = p.y; }
+	}
+
+	rect.x = static_cast<int>(minX);
+	rect.y = static_cast<int>(minY);
+	rect.w = static_cast<int>(maxX) - static_cast<int>(minX);
+	rect.h = static_cast<int>(maxY) - static_cast<int>(minY);
+
+	return rect;
+}
 
 
 SDL_Rect ComputeBoundingBox(const std::vector<SDL_Rect>& rects)

@@ -75,6 +75,12 @@ public:
         ChainSegment = b2_chainSegmentShape
     };
 
+    enum CoordinateSpace
+    {
+        WorldSpace = 1,
+        LocalSpace
+    };
+
     struct EventsEnabled
     {
         bool contact = false;
@@ -201,6 +207,8 @@ public:
         return b2Shape_TestPoint(shapeHandle_, ToB2VecScaled(point));
     }
 
+
+
     std::vector<B2ContactData> GetContactData() const;
     std::vector<B2ContactData> GetContactDataWith(const Handle<B2Shape>& query) const;
 
@@ -287,7 +295,7 @@ public:
             : std::numeric_limits<float>::min();
     }
 
-    std::vector<SDL_FPoint> GetVertices() const
+    std::vector<SDL_FPoint> GetVertices(B2Shape::CoordinateSpace space = WorldSpace) const
     {
         if (!IsValid())
         {
@@ -295,14 +303,20 @@ public:
         }
 
         b2Polygon poly = b2Shape_GetPolygon(shapeHandle_);
-        b2Transform tf = GetParentTransform();
+        b2Transform tf{};
+        if (space == WorldSpace)
+        {
+            tf = GetParentTransform();
+		}
 
         std::vector<SDL_FPoint> verts(poly.count + 1);
         for (int i = 0; i < poly.count; i++)
         {
             b2Vec2 worldPoint = b2TransformPoint(tf, poly.vertices[i]);
 
-            verts[i] = ToSDLFPointScaled(worldPoint);
+            verts[i] = ToSDLFPointScaled(space == WorldSpace 
+                ? b2TransformPoint(tf, poly.vertices[i]) 
+                : poly.vertices[i]);
         }
 
         verts[poly.count] = verts[0];
@@ -328,7 +342,7 @@ public:
             : std::numeric_limits<float>::min();
     }
 
-    SDL_FPoint GetCenter() const
+    SDL_FPoint GetCenter(B2Shape::CoordinateSpace space = WorldSpace) const
     {
         if (!IsValid())
         {
@@ -337,11 +351,15 @@ public:
         }
 
         b2Circle circle = b2Shape_GetCircle(shapeHandle_);
+
+        if (space == LocalSpace)
+        {
+            return ToSDLFPointScaled(circle.center);
+		}
+
         b2Transform tf = GetParentTransform();
 
-        b2Vec2 worldPoint = b2TransformPoint(tf, circle.center);
-
-        return ToSDLFPointScaled(worldPoint);
+        return ToSDLFPointScaled(b2TransformPoint(tf, circle.center));
     }
 
 private:
@@ -359,7 +377,7 @@ public:
 
     B2Chain GetParentChain();
 
-    std::pair<SDL_FPoint, SDL_FPoint> GetPoints() const;
+    std::pair<SDL_FPoint, SDL_FPoint> GetPoints(B2Shape::CoordinateSpace space = WorldSpace) const;
 
 private:
 };

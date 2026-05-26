@@ -346,7 +346,7 @@ static Result<Void> SetUpEnvironment(SceneFixture::SharedPtr& fixture)
 
 	// floor
 	auto floorEnt = MakeFloor(fixture->GetWorld(),
-		SDLite::kColorGreen, 50.0, 169.0);
+		SDLite::kColorGreen, 50.0f, 169.0f);
 	assert(floorEnt.IsValid());
 
 	floorEnt.AddComponent(ObjectCategory{ .value = ObjectCategory::Ground });

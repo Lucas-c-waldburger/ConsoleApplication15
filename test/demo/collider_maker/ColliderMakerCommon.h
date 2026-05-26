@@ -3,6 +3,15 @@
 
 namespace test {
 
+enum class MenuType
+{
+    Unknown,
+    Main,
+    Layer,
+    Collider,
+    Sprite
+};
+
 struct ShapeData
 {
 	static constexpr B2Shape::Type kUprightRect = static_cast<B2Shape::Type>(5);
@@ -13,6 +22,8 @@ struct ShapeData
 	SDL_Color color;
 	size_t ordinal = 0;
 };
+
+struct MouseOverPoint {};
 
 inline SDL_Color GetRandColor()
 {

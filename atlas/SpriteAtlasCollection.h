@@ -148,6 +148,8 @@ public:
 
 	size_t GetTextureCount() const;
 
+	size_t GetTextureSize() const;
+
 	SpriteDescriptorPackage ExportSpriteDescriptors() const;
 
 private:

@@ -1,6 +1,7 @@
 #pragma once
 #include "BaseComponent.h"
 #include "../core/Handle.h"
+#include "../core/Hash.h"
 #include "../atlas/SpriteAtlasCollection.h"
 #include "../atlas/GlyphAtlasCollection.h"
 #include "../sdl/SDLite.h"
@@ -74,6 +75,7 @@ struct TextRenderableGlyphCache : BaseComponent<TextRenderableGlyphCache>
         TextFormatting formatting;
         SDL_FPoint offset = { 0.0f, 0.0f };
         Handle<TextureResource> resourceHandle;
+        HashType textHash = 0;
     };
 
     std::vector<GlyphCacheData> cache;

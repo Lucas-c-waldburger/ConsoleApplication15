@@ -2,6 +2,7 @@
 #include "../../atlas/NewTextureRepository.h"
 #include "CoreJsonUserTypes.h"
 #include "../SerializationConcepts.h"
+#include "../../components/SpriteAnimationsComponent.h"
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AtlasPlot, rect, rotation)
 
@@ -162,3 +163,5 @@ inline void to_json(nlohmann::json& j, const FontAtlas& atlas)
 	//	{ kSpriteIndicesKey, atlas.spriteIndices_ },
 	//	{ kSeriesRangesKey, atlas.seriesRanges_ }
 	//};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpriteSeriesIndex, current, max)

@@ -182,32 +182,6 @@ void GlyphCacheHandler::RotateGlyphCache(std::vector<GlyphCacheData>& cache,
 		// but keep in sync in case sizes changed:
 		rotCenter.x = static_cast<int>(destRect.w * 0.5f);
 		rotCenter.y = static_cast<int>(destRect.h * 0.5f);
-
-		//SDL_Rect srcRect = glyph.plot.rect;
-
-		//SDL_FPoint destCenter = GetRectCenter(destRect);
-
-		//// Offset from bounding box center
-		//float dx = destCenter.x - bboxCenter.x;
-		//float dy = destCenter.y - bboxCenter.y;
-
-		//// Rotate position
-		//float rotatedX = dx * cosA - dy * sinA;
-		//float rotatedY = dx * sinA + dy * cosA;
-
-		//SDL_FPoint newPos = {
-		//	bboxCenter.x + rotatedX,
-		//	bboxCenter.y + rotatedY
-		//};
-
-		//// Adjust dest rect for new center
-		//destRect.x = static_cast<int>(newPos.x - destRect.w / 2.0f);
-		//destRect.y = static_cast<int>(newPos.y - destRect.h / 2.0f);
-
-		//rotCenter = {
-		//	static_cast<int>(destRect.w / 2.0f),
-		//	static_cast<int>(destRect.h / 2.0f)
-		//};
 	}
 }
 
@@ -273,14 +247,20 @@ void GlyphCacheHandler::UpdateGlyphCache(const FontAtlasTexture& glyphAtlas,
 		return;
 	}
 
-	// 1) Rebuild glyphs
+	// 1) Update text hash if needed
+	if (changeLog & TextChanged)
+	{
+		ctx.textHash = RapidHash(textRenderable.writer.text);
+	}
+
+	// 2) Rebuild glyphs
 	static constexpr uint8_t kNeedsRepopulate = (AtlasChanged | TextChanged);
 	if (changeLog & kNeedsRepopulate)
 	{
 		RepopulateGlyphCacheGlyphs(textRenderable.writer.text, glyphCache.cache, glyphAtlas);
 	}
 
-	// 2) Layout (unscaled local block-space) if formatting or glyph set changed
+	// 3) Layout (unscaled local block-space) if formatting or glyph set changed
 	static constexpr uint8_t kNeedsReprojection = (FormatChanged | kNeedsRepopulate);
 	if (changeLog & kNeedsReprojection)
 	{
@@ -289,7 +269,7 @@ void GlyphCacheHandler::UpdateGlyphCache(const FontAtlasTexture& glyphAtlas,
 		ctx.offset = { 0.0f, 0.0f };
 	}
 
-	// 3) Apply transform.scale if scale changed OR if reprojection produced new layout
+	// 4) Apply transform.scale if scale changed OR if reprojection produced new layout
 	//    We apply scale if either scale changed, or reprojection happened (which generated unscaled rects).
 	static constexpr uint8_t kNeedsScaling = (ScaleChanged | kNeedsReprojection);
 	if (changeLog & kNeedsScaling)
@@ -297,13 +277,13 @@ void GlyphCacheHandler::UpdateGlyphCache(const FontAtlasTexture& glyphAtlas,
 		ScaleGlyphCache(glyphCache.cache, textRenderable.profile.anchor.scale, transform.scale);
 	}
 
-	// 4) Rotate if rotation changed
+	// 5) Rotate if rotation changed
 	if (changeLog & RotationChanged)
 	{
 		RotateGlyphCache(glyphCache.cache, textRenderable.profile.anchor.rotation, transform.rotation);
 	}
 
-	// 5) Reposition (translate to world) if position or offset changed,
+	// 6) Reposition (translate to world) if position or offset changed,
 	//    or if any of reprojection/scale/rotation happened (we need to re-place in world space)
 	static constexpr uint8_t kNeedsReposition = (PositionChanged | RotationChanged | kNeedsScaling);
 	if (changeLog & kNeedsReposition)
@@ -311,61 +291,9 @@ void GlyphCacheHandler::UpdateGlyphCache(const FontAtlasTexture& glyphAtlas,
 		RepositionGlyphCache(glyphCache, transform.position, textRenderable.profile.offset);
 	}
 
-	// 6) update cached context
+	// 6) update rest of cached content
 	ctx.transform = transform;
 	ctx.formatting = textRenderable.formatting;
 	ctx.offset = textRenderable.profile.offset;
 	ctx.resourceHandle = textRenderable.writer.resourceHandle;
 }
-
-
-//void GlyphCacheHandler::UpdateGlyphCache(const NewGlyphAtlas& glyphAtlas,
-//										 TextRenderableComponent& textRenderable,
-//										 TextRenderableGlyphCache& glyphCache,
-//										 const Transform& transform)
-//{
-//	uint8_t changeLog = MakeChangeLog(textRenderable, transform, glyphCache);
-//	if (changeLog == NoChange)
-//	{
-//		return;
-//	}
-//
-//	auto& [cache, ctx] = glyphCache;
-//
-//	if (changeLog & (AtlasChanged | TextChanged))
-//	{
-//		RepopulateGlyphCacheGlyphs(textRenderable.writer.text, cache, glyphAtlas);
-//	}
-//
-//	if (changeLog & NeedsReprojection || changeLog & RotationChanged)
-//	{
-//		SDL_Rect projectedRect = { 0, 0,
-//			static_cast<int>(textRenderable.formatting.bounds.w * transform.scale.x),
-//			static_cast<int>(textRenderable.formatting.bounds.h * transform.scale.y)
-//		};
-//
-//		if (changeLog & NeedsReprojection)
-//		{
-//			ReprojectGlyphCacheGeometry(cache, textRenderable, transform,
-//										projectedRect, glyphAtlas);
-//		}
-//		if (changeLog & ScaleChanged)
-//		{
-//			ScaleGlyphCache(cache, textRenderable.profile.scaleAnchor, transform.scale);
-//		}
-//		if (changeLog & RotationChanged)
-//		{
-//			RotateGlyphCache(cache, projectedRect, transform.rotation);
-//		}
-//	}
-//
-//	if (changeLog & PositionChanged)
-//	{
-//		RepositionGlyphCache(glyphCache, transform.position, textRenderable.profile.offset);
-//	}
-//
-//	ctx.transform = transform;
-//	ctx.formatting = textRenderable.formatting;
-//	ctx.offset = textRenderable.profile.offset;
-//	ctx.sourceAtlas = textRenderable.writer.sourceAtlas;
-//}

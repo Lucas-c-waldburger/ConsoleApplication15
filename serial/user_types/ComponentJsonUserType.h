@@ -1,7 +1,9 @@
 #pragma once
 #include "../SerializationConcepts.h"
 #include "RenderableJsonUserTypes.h"
+#include "AtlasJsonUserTypes.h"
 #include "PhysicsJsonUserTypes.h"
+#include "BitsetJsonUserTypes.h"
 #include "../../components/ComponentIncludes.h"
 #include "../../user/UserComponentIncludes.h"
 
@@ -18,88 +20,88 @@ DEF_COMPONENT_NAME(cmpType)
 DEF_SERIALIZABLE_EMPTY(cmpType)											\
 DEF_COMPONENT_NAME(cmpType)
 
-
 DEF_COMPONENT_SERIALIZABLE(Transform, position, rotation, scale);
 DEF_COMPONENT_SERIALIZABLE(CameraTarget, offset, followSpeed);
 DEF_COMPONENT_SERIALIZABLE(TextRenderableComponent, writer, formatting, profile);
 DEF_COMPONENT_SERIALIZABLE(SpriteRenderableComponent, sprite, profile);
+DEF_COMPONENT_SERIALIZABLE(SpriteAnimationComponent, spriteSeriesName, index);
+DEF_COMPONENT_SERIALIZABLE(Tags, tags);
+DEF_COMPONENT_SERIALIZABLE_EMPTY(MouseState);
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EntityFlags, componentVisibilityFlags, eventProductionFlags)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Parent, entityId)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Children, childEntityIds)
 
 DEF_COMPONENT_NAME(RigidBody);
 template <typename BasicJson> 
 inline void to_json(BasicJson& j, const RigidBody& rb)
 {
-	//j["bodyLimits"] = rb.limits;
-	//
-	//auto& jBody = j["body"];
-	//
-	//const auto& body = rb.body.GetData();
-	//if (!body.IsValid())
-	//{
-	//	jBody = nullptr;
-	//	return;
-	//}
+	const auto& body = rb.body.GetData();
+	auto& jId = j["bodyId"] = nullptr;
+	auto& jParams = j["bodyParameters"] = nullptr;
 
-	//jBody["handle"] = body.GetHandle().GetHash();
+	if (body.IsValid())
+	{
+		jId = body.GetHandle().GetHash();
+		jParams = BodyParameters::FromB2Body(body);
+	}
 
-	//BodyParameters bodyParams{
-	//	.bodyType = body.GetBodyType(),
-	//	.position = body.GetPosition(),
-	//	.gravityScale = body.GetGravityScale(),
-	//	.fixedRotation = body.IsFixedRotation()
-	//};
-	//
-	//jBody["bodyParameters"] = bodyParams;
+	j["bodyLimits"] = rb.limits;
 }
+
 template <typename BasicJson>
-inline void from_json(const BasicJson& j, RigidBody& rb)
-{
-	//j.at("bodyLimits").get_to(rb.limits);
-}
+inline void from_json(const BasicJson& j, RigidBody& rb) {}
+
 
 // COLLIDER
 DEF_COMPONENT_NAME(Collider);
 template <typename BasicJson>
 inline void to_json(BasicJson& j, const Collider& c)
 {
-	/*auto& jShape = j["shape"];
+	auto& parentIdJ = j["parentBodyId"] = nullptr;
+	auto& settingsJ = j["colliderSettings"] = nullptr;
+	auto& paramsJ	= j["shapeParameters"] = nullptr;
 
 	const auto& shape = c.shape.GetData();
 	if (!shape.IsValid())
 	{
-		jShape = nullptr;
 		return;
 	}
 
-	jShape["parentBody"] = shape.GetParentBodyHandle().GetHash();
+	const auto& parentHandle = shape.GetParentBodyHandle();
+	const auto parentBody = B2Body{ parentHandle };
+	assert(parentBody.IsValid());
+
+	parentIdJ = parentHandle.GetHash();
+	settingsJ = ColliderSettings::FromB2Shape(shape);
 
 	B2ShapeParameters shapeParams{
 		.shapeType = shape.GetShapeType()
-	};
+	}; 
 
 	switch (shapeParams.shapeType)
 	{
 	case B2Shape::Type::Polygon:
-		shapeParams.radius = shape.GetAs<B2PolygonShape>().GetRadius();
+	{
+		const auto poly = shape.GetAs<B2PolygonShape>();
+		shapeParams.hull = poly.GetVertices(B2Shape::CoordinateSpace::LocalSpace);
 		break;
+	}
 	case B2Shape::Type::Circle:
-		shapeParams.radius = shape.GetAs<B2CircleShape>().GetRadius();
+	{
+		const auto circle = shape.GetAs<B2CircleShape>();
+		shapeParams.radius = circle.GetRadius();
+		shapeParams.localPosition = circle.GetCenter(B2Shape::CoordinateSpace::LocalSpace);
 		break;
+	}
 	default:
 		break;
 	}
 
-	jShape["shapeParameters"] = std::move(shapeParams);
-
-	jShape["colliderSettings"] = ColliderSettings{
-		.density = shape.GetDensity(),
-		.friction = shape.GetFriction(),
-		.restitution = shape.GetRestitution(),
-		.enableEvents = ColliderSettings::EnableEvents::FromEventsEnabled(
-						shape.GetEventsEnabled()),
-		.enableCollision = shape.IsCollisionEnabled(),
-		.isSensor = shape.IsSensor()
-	};*/
+	paramsJ = std::move(shapeParams);
 }
 template <typename BasicJson>
 inline void from_json(const BasicJson& j, Collider& c)
 {}
+
+

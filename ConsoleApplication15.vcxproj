@@ -165,6 +165,8 @@
     <ClCompile Include="audio\AudioBank.cpp" />
     <ClCompile Include="audio\AudioManager.cpp" />
     <ClCompile Include="callbacks\StateTransitionCallback.cpp" />
+    <ClCompile Include="components\builder\ColliderComponentBuilder.cpp" />
+    <ClCompile Include="components\builder\RigidBodyComponentBuilder.cpp" />
     <ClCompile Include="core\Counter.cpp" />
     <ClCompile Include="deps\catch\catch_amalgamated.cpp" />
     <ClCompile Include="deps\imgui\backends\imgui_impl_sdl2.cpp" />
@@ -190,7 +192,11 @@
     <ClCompile Include="render\DebugDrawHandler.cpp" />
     <ClCompile Include="render\GlyphCacheHandler.cpp" />
     <ClCompile Include="render\RenderBatchHandler.cpp" />
+    <ClCompile Include="render\TextFormatExpressionParser.cpp" />
     <ClCompile Include="sdl\SDLContext.cpp" />
+    <ClCompile Include="serial\EntityDeserializer.cpp" />
+    <ClCompile Include="serial\EntitySerializer.cpp" />
+    <ClCompile Include="serial\TextureRepositorySerializer.cpp" />
     <ClCompile Include="state\EntityState.cpp" />
     <ClCompile Include="state\EntityStateBuilder.cpp" />
     <ClCompile Include="components\driver\EntityStateDriver.cpp" />
@@ -260,6 +266,7 @@
     <ClCompile Include="test\demo\collider_maker\ColliderMaker.cpp" />
     <ClCompile Include="test\demo\collider_maker\ColliderMaker2.cpp" />
     <ClCompile Include="test\demo\collider_maker\ColliderMakerCommon.cpp" />
+    <ClCompile Include="test\demo\collider_maker\ColliderMakerMainMenu.cpp" />
     <ClCompile Include="test\demo\platformer\Common.cpp" />
     <ClCompile Include="test\demo\platformer\GirlPhysicsEditor.cpp" />
     <ClCompile Include="test\demo\platformer\GirlStateCoordinator.cpp" />
@@ -382,6 +389,7 @@
     <ClInclude Include="core\SOAConcepts.h" />
     <ClInclude Include="core\SOAInterface.h" />
     <ClInclude Include="core\StableSOA.h" />
+    <ClInclude Include="core\StringUtils.h" />
     <ClInclude Include="deps\boost\pfr.hpp" />
     <ClInclude Include="deps\boost\pfr\config.hpp" />
     <ClInclude Include="deps\boost\pfr\core.hpp" />
@@ -471,6 +479,12 @@
     <ClInclude Include="games\bullet_heaven\Terrain.h" />
     <ClInclude Include="games\bullet_heaven\Updates.h" />
     <ClInclude Include="games\bullet_heaven\Weapon.h" />
+    <ClInclude Include="render\TextFormatExpressionParser.h" />
+    <ClInclude Include="serial\EntityDeserializer.h" />
+    <ClInclude Include="serial\EntitySerializer.h" />
+    <ClInclude Include="serial\physics\PhysicsSerialization.h" />
+    <ClInclude Include="serial\TextureRepositorySerializer.h" />
+    <ClInclude Include="serial\user_types\BitsetJsonUserTypes.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMaker2.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMakerApp.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderDrawSystem.h" />
@@ -482,6 +496,11 @@
     <ClInclude Include="inputs\keyboard\KeyboardInputSource.h" />
     <ClInclude Include="inputs\keyboard\KeyboardInputUpdater.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMakerCommon.h" />
+    <ClInclude Include="test\demo\collider_maker\ColliderMakerLayer.h" />
+    <ClInclude Include="test\demo\collider_maker\ColliderMakerMainMenu.h" />
+    <ClInclude Include="test\demo\collider_maker\ColliderMakerMenu.h" />
+    <ClInclude Include="test\demo\collider_maker\NavigationStack.h" />
+    <ClInclude Include="test\demo\collider_maker\SpritePicker.h" />
     <ClInclude Include="test\demo\PhysicsTuning.h" />
     <ClInclude Include="test\demo\platformer\GamepadUiOverlay.h" />
     <ClInclude Include="test\demo\platformer\GirlChecks.h" />
@@ -1045,6 +1064,7 @@
     <Image Include="resources\sprites\particles\circle_0.png" />
     <Image Include="resources\sprites\particles\symbol\symbol_0.png" />
     <Image Include="resources\sprites\particles\symbol\symbol_1.png" />
+    <Image Include="resources\sprites\shapes\circle_icon.png" />
     <Image Include="resources\sprites\sword_slash\sword_slash_000.png" />
     <Image Include="resources\sprites\sword_slash\sword_slash_001.png" />
     <Image Include="resources\sprites\sword_slash\sword_slash_002.png" />

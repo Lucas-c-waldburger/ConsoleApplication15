@@ -99,4 +99,28 @@ void EntityRelationsHelper::UnlinkChildFromParent(EntityManager& entityManager, 
     parentsChildren.erase(child);
 }
 
+bool EntityRelationsHelper::SetParent(EntityManager& entityManager, ComponentManager& componentManager,
+                                      Entity_t child, Entity_t parent)
+{
+    if (IsParent(entityManager, componentManager, child))
+    {
+        return false;
+    }
+    if (IsChild(entityManager, componentManager, parent))
+    {
+        return false;
+    }
 
+    if (IsChild(entityManager, componentManager, child))
+    {
+        UnlinkChildFromParent(entityManager, componentManager, child);
+	}
+
+    auto& children = componentManager.AddComponent<Children>(parent).childEntityIds;
+	assert(!children.contains(child));
+    children.insert(child);
+
+    componentManager.AddComponent<Parent>(child).entityId = parent;
+
+    return true;
+}

@@ -3,6 +3,7 @@
 #include "../../ecs/Ecs.h"
 #include "../data/GameControllerEvents.h"
 #include <cassert>
+#include <ranges>
 
 namespace {
 
@@ -157,4 +158,35 @@ void GameControllerEventHandler::UpdateControllerStateComponents()
 
 		controllerState.inputs = it->second.second.GetInputMap();
 	}
+}
+
+
+size_t GameControllerEventHandler::GetFirstFreeJoystickID() const
+{
+	auto joystickIds = activeControllers_ | std::views::keys | std::ranges::to<std::unordered_set>();
+	if (joystickIds.empty())
+	{
+		return GameController::kInvalidJoystickID;
+	}
+
+	auto entities = ECS::GetAllEntitiesWith<GameControllerState>();
+	for (auto& e : entities)
+	{
+		auto& gcState = e.GetComponent<GameControllerState>();
+
+		if (gcState.joystickID == GameController::kInvalidJoystickID)
+		{
+			continue;
+		}
+
+		joystickIds.erase(gcState.joystickID);
+		if (joystickIds.empty())
+		{
+			return GameController::kInvalidJoystickID;
+		}
+	}
+
+	assert(!joystickIds.empty());
+
+	return *joystickIds.begin();
 }

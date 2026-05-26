@@ -521,11 +521,6 @@ concept HasBooleanNotOperator = requires(T t) {
 };
 
 template <typename T>
-concept Hashable = requires(T t) {
-	{ std::hash<T>{}(t) } -> std::convertible_to<std::size_t>;
-};
-
-template <typename T>
 concept UseableInUnorderedSet = requires { typename std::unordered_set<T>; };
 
 // HAS ARITHMETIC OPERATOR CONCEPTS

@@ -25,6 +25,7 @@ public:
 	const ActiveControllerMap& GetActiveControllers() const { return activeControllers_; }
 
 	//const GameControllerHub& GetGameControllers() const { return controllerHub_; }
+	size_t GetFirstFreeJoystickID() const;
 
 private:
 	void UpdateControllerStateComponents();
