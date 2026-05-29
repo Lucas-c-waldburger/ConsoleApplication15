@@ -351,3 +351,17 @@ bool ECS::IsEntityValid(Entity_t entity) const
 {
 	return entity != kInvalidEntity && IsEntityActive(entity);
 }
+
+void ECS::SerializeUserComponents(nlohmann::json& j, const Entity& e)
+{
+	const auto& ecs = ECS::Get();
+
+	ecs.userComponentBridge_.SerializeComponentData(j, e.GetID(), ecs.componentManager_);
+}
+
+Result<Void> ECS::DeserializeUserComponents(const nlohmann::json& j, Entity& e)
+{
+	auto& ecs = ECS::Get();
+
+	return ecs.userComponentBridge_.DeserializeComponentData(j, e.GetID(), ecs.componentManager_);
+}

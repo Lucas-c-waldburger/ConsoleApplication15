@@ -1,0 +1,21 @@
+{
+    "Skibidi": {
+        "f": 3.140000104904175,
+        "i": 42,
+        "str": "Skibidi bop yes yes yes"
+    },
+    "struct `anonymous namespace'::RizzComponent": {
+        "arr": [
+            0.10000000149011612,
+            1.2000000476837158,
+            33.29999923706055
+        ],
+        "vec": [
+            2,
+            62,
+            64,
+            4,
+            56
+        ]
+    }
+}

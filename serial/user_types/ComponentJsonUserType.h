@@ -21,11 +21,12 @@ DEF_SERIALIZABLE_EMPTY(cmpType)											\
 DEF_COMPONENT_NAME(cmpType)
 
 DEF_COMPONENT_SERIALIZABLE(Transform, position, rotation, scale);
-DEF_COMPONENT_SERIALIZABLE(CameraTarget, offset, followSpeed);
+DEF_COMPONENT_SERIALIZABLE(CameraTarget, offset, followSpeed, stopRadius);
 DEF_COMPONENT_SERIALIZABLE(TextRenderableComponent, writer, formatting, profile);
 DEF_COMPONENT_SERIALIZABLE(SpriteRenderableComponent, sprite, profile);
 DEF_COMPONENT_SERIALIZABLE(SpriteAnimationComponent, spriteSeriesName, index);
 DEF_COMPONENT_SERIALIZABLE(Tags, tags);
+DEF_COMPONENT_SERIALIZABLE(GameControllerState, joystickID);
 DEF_COMPONENT_SERIALIZABLE_EMPTY(MouseState);
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EntityFlags, componentVisibilityFlags, eventProductionFlags)

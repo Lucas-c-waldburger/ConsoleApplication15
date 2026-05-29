@@ -290,20 +290,30 @@ public:
 
     static Entity GetEntityByID(Entity_t id);
 
+    // TODO: Change to "RegisterUserComponent"
     template <typename T>
-    static bool RegisterComponent()
+    static bool RegisterComponent(std::string_view cmpName)
     {
         if constexpr (!SomeComponent<T>)
         {
             auto& ecs = ECS::Get();
 
-            return ecs.userComponentBridge_.RegisterComponentData<T>();
+            return ecs.userComponentBridge_.RegisterComponentData<T>(cmpName);
         }
         else
         {
             return false;
         }
     }
+
+    template <typename T>
+    static bool RegisterComponent()
+    {
+        return RegisterComponent<T>({});
+    }
+
+    static void SerializeUserComponents(nlohmann::json& j, const Entity& e);
+	static Result<Void> DeserializeUserComponents(const nlohmann::json& j, Entity& e);
 
 private:
     template <typename T>

@@ -1,0 +1,232 @@
+{
+    "entities": [
+        {
+            "CameraTarget": {
+                "followSpeed": 3.0,
+                "offset": {
+                    "x": 2.5,
+                    "y": -39.5
+                },
+                "stopRadius": 1.0
+            },
+            "Children": {
+                "childEntityIds": [
+                    81604378624,
+                    81604378626
+                ]
+            },
+            "Collider": {
+                "colliderSettings": {
+                    "density": 1.0,
+                    "enableCollision": true,
+                    "enableEvents": {
+                        "contact": false,
+                        "hit": false,
+                        "sensor": false
+                    },
+                    "friction": 0.5,
+                    "isSensor": false,
+                    "restitution": 0.0
+                },
+                "parentBodyId": 62280407,
+                "shapeParameters": {
+                    "dimensions": null,
+                    "hull": [
+                        {
+                            "x": -7.5,
+                            "y": -12.5
+                        },
+                        {
+                            "x": 7.5,
+                            "y": -12.5
+                        },
+                        {
+                            "x": 7.5,
+                            "y": 12.5
+                        },
+                        {
+                            "x": -7.5,
+                            "y": 12.5
+                        },
+                        {
+                            "x": -7.5,
+                            "y": -12.5
+                        }
+                    ],
+                    "localPosition": null,
+                    "localRotation": null,
+                    "radius": null,
+                    "shapeType": "Polygon"
+                }
+            },
+            "EntityFlags": {
+                "componentVisibilityFlags": 18446744073709550591,
+                "eventProductionFlags": "11111111111111111111110111"
+            },
+            "GameControllerState": {
+                "joystickID": -1
+            },
+            "RigidBody": {
+                "bodyId": 62280407,
+                "bodyLimits": {
+                    "angularVelocity": {
+                        "max": 3.4028234663852886e+38,
+                        "min": 0.0
+                    },
+                    "linearVelocity": {
+                        "max": {
+                            "x": 3.4028234663852886e+38,
+                            "y": 3.4028234663852886e+38
+                        },
+                        "min": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    }
+                },
+                "bodyParameters": {
+                    "bodyType": "Dynamic",
+                    "fixedRotation": false,
+                    "gravityScale": 1.0,
+                    "position": {
+                        "x": 15.0,
+                        "y": 25.0
+                    }
+                }
+            },
+            "SpriteAnimationComponent": {
+                "index": {
+                    "current": 1,
+                    "max": 2
+                },
+                "spriteSeriesName": "girl_idle"
+            },
+            "SpriteRenderableComponent": {
+                "profile": {
+                    "anchor": {
+                        "rotation": "Center",
+                        "scale": "TopLeft"
+                    },
+                    "debugDraw": {
+                        "boundingBox": {
+                            "color": {
+                                "a": 255,
+                                "b": 0,
+                                "g": 0,
+                                "r": 255
+                            },
+                            "on": false
+                        },
+                        "collider": {
+                            "color": {
+                                "a": 0,
+                                "b": 0,
+                                "g": 255,
+                                "r": 0
+                            },
+                            "on": true
+                        }
+                    },
+                    "drawOrder": 5,
+                    "flip": "SDL_FLIP_HORIZONTAL",
+                    "isOverlay": true,
+                    "mods": {
+                        "alpha": 128,
+                        "blend": "SDL_BLENDMODE_BLEND",
+                        "color": {
+                            "b": 0,
+                            "g": 0,
+                            "r": 255
+                        }
+                    },
+                    "offset": {
+                        "x": 10.0,
+                        "y": -5.0
+                    },
+                    "parallaxFactor": 0.5
+                },
+                "sprite": "girl_idle_0"
+            },
+            "Tags": {
+                "tags": [
+                    "Player",
+                    "Controllable"
+                ]
+            },
+            "Transform": {
+                "position": {
+                    "x": 15.0,
+                    "y": 25.0
+                },
+                "rotation": 45.0,
+                "scale": {
+                    "x": 2.0,
+                    "y": 5.0
+                }
+            },
+            "entityId": 81604378625
+        },
+        {
+            "EntityFlags": {
+                "componentVisibilityFlags": 18446744073709551615,
+                "eventProductionFlags": "11111111111111111111111111"
+            },
+            "Parent": {
+                "entityId": 81604378625
+            },
+            "Tags": {
+                "tags": [
+                    "ManualChild"
+                ]
+            },
+            "entityId": 81604378624
+        },
+        {
+            "Collider": {
+                "colliderSettings": {
+                    "density": 1.0,
+                    "enableCollision": true,
+                    "enableEvents": {
+                        "contact": false,
+                        "hit": false,
+                        "sensor": false
+                    },
+                    "friction": 0.5,
+                    "isSensor": false,
+                    "restitution": 0.0
+                },
+                "parentBodyId": 62280407,
+                "shapeParameters": {
+                    "dimensions": null,
+                    "hull": null,
+                    "localPosition": {
+                        "x": 0.0,
+                        "y": 0.0
+                    },
+                    "localRotation": null,
+                    "radius": 33.0,
+                    "shapeType": "Circle"
+                }
+            },
+            "EntityFlags": {
+                "componentVisibilityFlags": 18446744073709551615,
+                "eventProductionFlags": "11111111111111111111111111"
+            },
+            "Parent": {
+                "entityId": 81604378625
+            },
+            "Transform": {
+                "position": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "rotation": 0.0,
+                "scale": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            },
+            "entityId": 81604378626
+        }
+    ]
+}

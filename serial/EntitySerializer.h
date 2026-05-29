@@ -6,19 +6,19 @@
 struct SpriteSerializerContext 
 {
 	Entity entity;
-	SpriteAtlas& spriteAtlas;
+	const SpriteAtlas& spriteAtlas;
 };
 
 struct TextSerializerContext
 {
 	Entity entity;
-	FontAtlas& fontAtlas;
+	const FontAtlas& fontAtlas;
 };
 
 class EntitySerializer : EntityFullAccessPrivelage
 {
 public:
-	EntitySerializer(TextureRepository& repo) : 
+	EntitySerializer(const TextureRepository& repo) : 
 		spriteContext_({ .spriteAtlas = repo.GetSpriteAtlas() }),
 		textContext_({ .fontAtlas = repo.GetFontAtlas() })
 	{}

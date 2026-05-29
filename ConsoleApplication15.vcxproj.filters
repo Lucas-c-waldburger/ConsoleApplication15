@@ -420,9 +420,6 @@
     <ClCompile Include="test\demo\collider_maker\ColliderMakerCommon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\demo\collider_maker\ColliderMakerMainMenu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="render\TextFormatExpressionParser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -439,6 +436,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="serial\TextureRepositorySerializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="user\UserComponentBridge.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -2027,18 +2027,6 @@
     <ClInclude Include="test\demo\collider_maker\ColliderMaker2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\demo\collider_maker\ColliderMakerMenu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="test\demo\collider_maker\NavigationStack.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="test\demo\collider_maker\ColliderMakerMainMenu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="test\demo\collider_maker\ColliderMakerLayer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="test\demo\collider_maker\SpritePicker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -2061,6 +2049,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="serial\TextureRepositorySerializer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="user\UserComponentTypeId.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="user\UserComponentDispatchTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -2819,6 +2813,9 @@
     <None Include="resources\audio\music\greenpath.ogg" />
     <None Include="resources\audio\sounds\bell_hit.flac" />
     <None Include="deps\imgui-master\examples\libs\emscripten\shell_minimal.html" />
+    <None Include="test\catch\test_json\entities.json" />
+    <None Include="test\catch\test_json\textures.json" />
+    <None Include="test\catch\test_json\user_components.json" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

@@ -35,7 +35,8 @@ Result<Void> MakeComponentListJson()
 	});
 
     TextureRepository temp{};
-    auto result = SerializationSystem{}.SerializeState(kComponentListJsonFilename, temp);
+    auto result = SerializationSystem{}.SerializeState({ 
+        .entitiesPath = std::string{kComponentListJsonFilename} }, temp);
 
 	e.Destroy();
 

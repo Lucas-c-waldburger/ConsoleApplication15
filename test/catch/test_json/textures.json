@@ -1,0 +1,58 @@
+{
+    "textures": {
+        "fontAtlas": [
+            {
+                "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\fonts\\GoNotoKurrent-Regular.ttf",
+                "fontHeight": 33,
+                "fontName": "GoNotoKurrent-Regular",
+                "fontSize": 24
+            },
+            {
+                "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\fonts\\GoNotoKurrent-Bold.ttf",
+                "fontHeight": 44,
+                "fontName": "GoNotoKurrent-Bold",
+                "fontSize": 32
+            }
+        ],
+        "spriteAtlas": [
+            {
+                "data": [
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\knight\\walk_anim\\knight_walk_0.png",
+                        "spriteName": "knight_walk_0"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\knight\\jump_anim\\knight_jump_0.png",
+                        "spriteName": "knight_jump_0"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\knight\\fall_anim\\knight_fall_0.png",
+                        "spriteName": "knight_fall_0"
+                    }
+                ],
+                "seriesName": ""
+            },
+            {
+                "data": [
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\girl\\idle\\girl_idle_0.png",
+                        "spriteName": "girl_idle_0"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\girl\\idle\\girl_idle_1.png",
+                        "spriteName": "girl_idle_1"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\girl\\idle\\girl_idle_2.png",
+                        "spriteName": "girl_idle_2"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\girl\\idle\\girl_idle_3.png",
+                        "spriteName": "girl_idle_3"
+                    }
+                ],
+                "seriesName": "girl_idle"
+            }
+        ]
+    }
+}

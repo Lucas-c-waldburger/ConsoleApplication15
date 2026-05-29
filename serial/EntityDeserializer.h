@@ -82,6 +82,7 @@ public:
 private:
 	void DeserializeBasicComponents(const nlohmann::json& entityJ, Entity& e);
 	void DeserializeContextComponents(const nlohmann::json& entityJ);
+	void DeserializeUserComponents(const nlohmann::json& entityJ, Entity& e);
 
 	void UpdateContexts(Entity& e);
 

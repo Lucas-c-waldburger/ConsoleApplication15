@@ -1,5 +1,6 @@
 #pragma once
 #include "ColliderMaker2.h"
+#include "../../Fixtures.h"
 
 namespace test {
 

@@ -10,12 +10,14 @@ void to_json(BasicJson& j, const SpriteSerializerContext& ctx)
 	}
 
 	const auto& rend = ctx.entity.GetComponent<SpriteRenderableComponent>();
-	auto& spriteJ = j["sprite"];
-	auto& profileJ = j["profile"];
+
+	auto& rendJ = j["SpriteRenderableComponent"];
+	auto& spriteJ = rendJ["sprite"];
+	auto& profileJ = rendJ["profile"];
 
 	if (const auto nm = ctx.spriteAtlas.GetSpriteInfo<&SpriteInfo::spriteName>(rend.sprite))
 	{
-		spriteJ = *nm;
+		spriteJ = std::get<0>(*nm);
 	}
 
 	to_json(profileJ, rend.profile);
@@ -30,11 +32,13 @@ void to_json(BasicJson& j, const TextSerializerContext& ctx)
 	}
 
 	const auto& rend = ctx.entity.GetComponent<TextRenderableComponent>();
-	auto& fontNameJ = j["fontName"];
-	auto& fontSizeJ = j["fontSize"];
-	auto& textJ = j["text"];
-	auto& profileJ = j["profile"];
-	auto& fmtJ = j["formatting"]; 
+
+	auto& rendJ = j["TextRenderableComponent"];
+	auto& fontNameJ = rendJ["fontName"];
+	auto& fontSizeJ = rendJ["fontSize"];
+	auto& textJ = rendJ["text"];
+	auto& profileJ = rendJ["profile"];
+	auto& fmtJ = rendJ["formatting"]; 
 
 	const auto op = ctx.fontAtlas.GetFontInfo<&FontInfo::fontName, 
 										      &FontInfo::fontSize>
@@ -93,6 +97,7 @@ Result<Void> EntitySerializer::SerializeEntities(const std::string& jsonFilepath
 
 		SerializeBasicComponents(entityJ, e);
 		SerializeContextComponents(entityJ);
+		ECS::SerializeUserComponents(entityJ, e);
 	}
 
 	file << std::setw(4) << j;
@@ -117,6 +122,9 @@ void EntitySerializer::SerializeBasicComponents(nlohmann::json& entityJ, const E
 	SERIALIZE_BASIC_COMPONENT(sc, Tags);
 	SERIALIZE_BASIC_COMPONENT(sc, Parent);
 	SERIALIZE_BASIC_COMPONENT(sc, Children);
+	SERIALIZE_BASIC_COMPONENT(sc, RigidBody);
+	SERIALIZE_BASIC_COMPONENT(sc, Collider);
+	SERIALIZE_BASIC_COMPONENT(sc, GameControllerState);
 }
 
 void EntitySerializer::SerializeContextComponents(nlohmann::json& entityJ)

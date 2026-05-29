@@ -24,6 +24,29 @@ concept HasComponentName = requires {
 	{ ComponentName<T>::value } -> std::convertible_to<std::string_view>;
 };
 
+template <typename T>
+concept HasToJson = requires(nlohmann::json& j, const T & t) {
+	{ to_json(j, t) } -> std::same_as<void>;
+};
+template <typename T>
+concept HasToOrderedJson = requires(nlohmann::ordered_json& j, const T & t) {
+	{ to_json(j, t) } -> std::same_as<void>;
+};
+
+template <typename T>
+concept HasFromJson = requires(const nlohmann::json& j, T & t) {
+	{ from_json(j, t) } -> std::same_as<void>;
+};
+template <typename T>
+concept HasFromOrderedJson = requires(const nlohmann::ordered_json& j, T & t) {
+	{ from_json(j, t) } -> std::same_as<void>;
+};
+
+template <typename T>
+concept HasToBasicJson = (HasToJson<T> || HasToOrderedJson<T>);
+
+template <typename T>
+concept HasFromBasicJson = (HasFromJson<T> || HasFromOrderedJson<T>);
 
 #define DEF_SERIALIZABLE_EMPTY(type) \
 template <typename BasicJson> inline void to_json(BasicJson&, const type&) {} \

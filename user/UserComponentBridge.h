@@ -3,274 +3,285 @@
 #include <unordered_map>
 #include <typeindex>
 #include <bit>
-#include "../components/UserComponents.h"
-#include "../ecs/ComponentManager.h"
+#include "../serial/SerializationConcepts.h"
+#include "UserComponentTypeId.h"
+#include "UserComponentDispatchTable.h"
 
-using UserComponentTypeId = uint32_t;
-
-inline UserComponentTypeId NextUserComponentTypeId()
+/** UserComponentSerializationHelper */
+class UserComponentSerializationHelper
 {
-	static UserComponentTypeId next = 0;
-	return next++;
-}
-
-template <typename T>
-inline UserComponentTypeId GetUserComponentTypeId()
-{
-	static UserComponentTypeId id = NextUserComponentTypeId();
-	return id;
-}
-
-template <typename UserCmpList>
-struct UserComponentDispatchTableImpl;
-
-template <template <typename...> class UserCmpList, typename...Ts>
-class UserComponentDispatchTableImpl<UserCmpList<Ts...>>
-{
-	UserComponentDispatchTableImpl() = default;
-
-	template <typename T>
-	static InlineStorage<kUserComponentStorageSize>& 
-	AddUserComponentStorageImpl(Entity_t entity, ComponentManager& cmpManager)
-	{
-		return cmpManager.AddComponent<T>(entity).data;
-	}
-
-	template <typename T>
-	static InlineStorage<kUserComponentStorageSize>&
-	GetUserComponentStorageImpl(Entity_t entity, ComponentManager& cmpManager)
-	{
-		assert(cmpManager.HasComponent<T>(entity));
-
-		return cmpManager.GetComponent<T>(entity).data;
-	}
-
-	using AddGetUserComponentStorageSig = InlineStorage<kUserComponentStorageSize>&(*)
-										  (Entity_t, ComponentManager&);
-
-	template <typename T>
-	static const InlineStorage<kUserComponentStorageSize>&
-	GetConstUserComponentStorageImpl(Entity_t entity, const ComponentManager& cmpManager)
-	{
-		assert(cmpManager.HasComponent<T>(entity));
-
-		return cmpManager.GetComponent<T>(entity).data;
-	}
-
-	using GetConstUserComponentStorageSig = 
-		const InlineStorage<kUserComponentStorageSize>&(*)
-		(Entity_t, const ComponentManager&);
-
-	template <typename T>
-	static void RemoveUserComponentImpl(Entity_t entity, ComponentManager& cmpManager)
-	{
-		cmpManager.RemoveComponent<T>(entity);
-	}
-
-	using RemoveUserComponentSig = void(*)(Entity_t, ComponentManager&);
-
-	template <typename T>
-	static bool HasUserComponentImpl(Entity_t entity, const ComponentManager& cmpManager)
-	{
-		return cmpManager.HasComponent<T>(entity);
-	}
-
-	using HasUserComponentSig = bool(*)(Entity_t, const ComponentManager&);
-
-	template <typename T>
-	static ComponentSignature GetUserComponentBitImpl()
-	{
-		return T::componentBit;
-	}
-
-	using GetUserComponentBitSig = ComponentSignature(*)(void);
-
 public:
-	static constexpr AddGetUserComponentStorageSig kAddUserComponentStorage[] = { 
-		&AddUserComponentStorageImpl<Ts>... 
-	};
+	friend class UserComponentBridge;
 
-	static constexpr AddGetUserComponentStorageSig kGetUserComponentStorage[] = {
-		&GetUserComponentStorageImpl<Ts>...
-	};
+	using SerializeFn = void(*)(nlohmann::json&, Entity_t, std::string_view,
+								const UserComponentBridge&, const ComponentManager&);
 
-	static constexpr GetConstUserComponentStorageSig kGetConstUserComponentStorage[] = {
-		&GetConstUserComponentStorageImpl<Ts>...
-	};
+	using DeserializeFn = Result<Void>(*)(const nlohmann::json&, Entity_t, std::string_view, 
+										  UserComponentBridge&, ComponentManager&);
 
-	static constexpr RemoveUserComponentSig kRemoveUserComponent[] = {
-		&RemoveUserComponentImpl<Ts>...
-	};
+	template <typename T>
+	void HandleSerializerRegistration(std::string_view cmpName);
 
-	static constexpr HasUserComponentSig kHasUserComponent[] = {
-		&HasUserComponentImpl<Ts>...
-	};
+	void SerializeComponentData(nlohmann::json& j, Entity_t e,
+								const UserComponentBridge& bridge,
+								const ComponentManager& cmpManager) const;
 
-	static constexpr GetUserComponentBitSig kGetUserComponentBit[] = {
-		&GetUserComponentBitImpl<Ts>...
-	};
+	Result<Void> DeserializeComponentData(const nlohmann::json& j, Entity_t e,
+										  UserComponentBridge& bridge, ComponentManager& cmpManager);
+
+private:
+	std::vector<SerializeFn> serializeFns_;
+	std::vector<DeserializeFn> deserializeFns_;
+	std::vector<std::string> userComponentNames_;
 };
-
-using UserComponentDispatchTable = UserComponentDispatchTableImpl<UserComponentTypeList>;
 
 class UserComponentBridge
 {
 public:
-	size_t GetAvailableComponentCount() const
-	{
-		assert(nextFreeComponentIndex_ <= UserComponentTypeList::size);
-
-		return (nextFreeComponentIndex_ >= UserComponentTypeList::size)
-			? 0
-			: UserComponentTypeList::size - nextFreeComponentIndex_;
-	}
+	size_t GetAvailableComponentCount() const;
 
 	template <typename T>
-	bool RegisterComponentData()
-	{
-		const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
-		if (IsComponentDataRegisteredInternal(typeId))
-		{
-			return true;
-		}
-
-		return RegisterComponentDataInternal(typeId);
-	}
-
-	template <typename T, typename...Args>
-		requires std::constructible_from<T, Args...>
-	T& AddComponentData(Entity_t entity, ComponentManager& cmpManager, Args&&...args)
-	{
-		const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
-		
-		if (!IsComponentDataRegisteredInternal(typeId))
-		{
-			const bool registered = RegisterComponentDataInternal(typeId);
-			assert(registered);
-		}
-
-		const size_t idx = userComponentListIndexForDataType_[typeId];
-		assert(idx < UserComponentTypeList::size);
-
-		InlineStorage<kUserComponentStorageSize>& newCmpStorage =
-			std::invoke(UserComponentDispatchTable::kAddUserComponentStorage[idx],
-						entity, cmpManager);
-
-		return newCmpStorage.Emplace<T>(std::forward<Args>(args)...);
-	}
+	bool RegisterComponentData(std::string_view cmpName);
 
 	template <typename T>
-	T& GetComponentData(Entity_t entity, ComponentManager& cmpManager)
-	{
-		const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
-		assert(IsComponentDataRegisteredInternal(typeId));
+	bool RegisterComponentData();
 
-		const size_t idx = userComponentListIndexForDataType_[typeId];
-		assert(idx < UserComponentTypeList::size);
-
-		InlineStorage<kUserComponentStorageSize>& cmpStorage =
-			std::invoke(UserComponentDispatchTable::kGetUserComponentStorage[idx],
-						entity, cmpManager);
-
-		return cmpStorage.Get<T>();
-	}
+	template <typename T, typename...Args> requires std::constructible_from<T, Args...>
+	T& AddComponentData(Entity_t entity, ComponentManager& cmpManager, Args&&...args);
 
 	template <typename T>
-	const T& GetComponentData(Entity_t entity, const ComponentManager& cmpManager) const
-	{
-		const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
-		assert(IsComponentDataRegisteredInternal(typeId));
-
-		const size_t idx = userComponentListIndexForDataType_[typeId];
-		assert(idx < UserComponentTypeList::size);
-
-		const InlineStorage<kUserComponentStorageSize>& cmpStorage =
-			std::invoke(UserComponentDispatchTable::kGetConstUserComponentStorage[idx],
-						entity, cmpManager);
-
-		return cmpStorage.Get<T>();
-	}
+	T& GetComponentData(Entity_t entity, ComponentManager& cmpManager);
 
 	template <typename T>
-	void RemoveComponentData(Entity_t entity, ComponentManager& cmpManager)
-	{
-		const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
-		if (!IsComponentDataRegisteredInternal(typeId))
-		{
-			return;
-		}
-
-		const size_t idx = userComponentListIndexForDataType_[typeId];
-		assert(idx < UserComponentTypeList::size);
-
-		std::invoke(UserComponentDispatchTable::kRemoveUserComponent[idx],
-					entity, cmpManager);
-	}
+	const T& GetComponentData(Entity_t entity, const ComponentManager& cmpManager) const;
 
 	template <typename T>
-	bool HasComponentData(Entity_t entity, const ComponentManager& cmpManager) const
-	{
-		const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
-		if (!IsComponentDataRegisteredInternal(typeId))
-		{
-			return false;
-		}
+	void RemoveComponentData(Entity_t entity, ComponentManager& cmpManager);
 
-		const size_t idx = userComponentListIndexForDataType_[typeId];
-		assert(idx < UserComponentTypeList::size);
-
-		return std::invoke(UserComponentDispatchTable::kHasUserComponent[idx],
-						   entity, cmpManager);
-	}
+	template <typename T>
+	bool HasComponentData(Entity_t entity, const ComponentManager& cmpManager) const;
 	 
 	template <typename T>
-	bool IsComponentDataRegistered() const
-	{
-		const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
-
-		return IsComponentDataRegisteredInternal(typeId);
-	}
+	bool IsComponentDataRegistered() const;
 
 	template <typename T>
-	ComponentSignature GetComponentDataSignature() const
-	{
-		const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
-		if (!IsComponentDataRegisteredInternal(typeId))
-		{
-			return 0;
-		}
+	ComponentSignature GetComponentDataSignature() const;
 
-		const size_t idx = userComponentListIndexForDataType_[typeId];
-		assert(idx < UserComponentTypeList::size);
+	void SerializeComponentData(nlohmann::json& j, Entity_t e,
+								const ComponentManager& cmpManager) const;
 
-		return std::invoke(UserComponentDispatchTable::kGetUserComponentBit[idx]);
-	}
+	Result<Void> DeserializeComponentData(const nlohmann::json& j, Entity_t e,
+										  ComponentManager& cmpManager);
 
 private:
-	bool IsComponentDataRegisteredInternal(size_t typeId) const
-	{
-		return typeId < userComponentListIndexForDataType_.size() &&
-			userComponentListIndexForDataType_[typeId] < UserComponentTypeList::size;
-	}
-
-	bool RegisterComponentDataInternal(size_t typeId)
-	{
-		if (GetAvailableComponentCount() <= 0)
-		{
-			return false;
-		}
-		if (typeId >= userComponentListIndexForDataType_.size())
-		{
-			userComponentListIndexForDataType_.resize(typeId + 1, 
-				std::numeric_limits<size_t>::max());
-		}
-
-		userComponentListIndexForDataType_[typeId] = nextFreeComponentIndex_++;
-
-		return true;
-	}
+	bool IsComponentDataRegisteredInternal(size_t typeId) const;
+	bool RegisterComponentDataInternal(size_t typeId);
 
 	std::vector<size_t> userComponentListIndexForDataType_;
 	size_t nextFreeComponentIndex_ = 0;
+	UserComponentSerializationHelper serializationHelper_;
 };
 
+/** UserComponentSerializer template definitions */
+template <typename T>
+void UserComponentSerializationHelper::HandleSerializerRegistration(std::string_view cmpName)
+{
+	if constexpr (HasToJson<T> || HasFromJson<T>)
+	{
+		userComponentNames_.emplace_back((cmpName.empty())
+			? std::string{ typeid(T).name() }
+			: std::string{ cmpName }
+		);
+
+		if constexpr (HasToJson<T>)
+		{
+			static constexpr auto sfn = 
+			+[](nlohmann::json& j, Entity_t e, std::string_view name,
+				const UserComponentBridge& bridge, const ComponentManager& cmpManager) {
+				if (!bridge.HasComponentData<T>(e, cmpManager))
+				{
+					return;
+				}
+
+				const auto& cmpData = bridge.GetComponentData<T>(e, cmpManager);
+
+				to_json(j[name], cmpData);
+			};
+
+			serializeFns_.emplace_back(sfn);
+		}
+		else
+		{
+			serializeFns_.emplace_back(nullptr);
+		}
+
+		if constexpr (HasFromJson<T>)
+		{
+			static constexpr auto dfn = 
+			+[](const nlohmann::json& j, Entity_t e, std::string_view name, 
+				UserComponentBridge& bridge, ComponentManager& cmpManager) -> Result<Void> {
+				if (!j.contains(name))
+				{
+					return kVoid;
+				}
+
+				auto& cmpData = bridge.AddComponentData<T>(e, cmpManager);
+
+				try
+				{
+					from_json(j.at(name), cmpData);
+				}
+				catch (const nlohmann::json::exception& err)
+				{
+					return MAKE_ERROR_FMT("Could not deserialize component '{}': {}",
+						name, err.what());
+				}
+
+				return kVoid;
+			};
+
+			deserializeFns_.emplace_back(dfn);
+		}
+		else
+		{
+			deserializeFns_.emplace_back(nullptr);
+		}
+	}	
+}
+/**/
+
+/** UserComponentBridge template definitions */
+template <typename T>
+bool UserComponentBridge::RegisterComponentData(std::string_view cmpName)
+{
+	const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
+	if (IsComponentDataRegisteredInternal(typeId))
+	{
+		return true;
+	}
+
+	const bool registered = RegisterComponentDataInternal(typeId);
+	if (!registered)
+	{
+		return false;
+	}
+
+	serializationHelper_.HandleSerializerRegistration<T>(cmpName);
+
+	return true;
+}
+
+template <typename T>
+bool UserComponentBridge::RegisterComponentData()
+{
+	return RegisterComponentData<T>({});
+}
+
+template <typename T, typename...Args> requires std::constructible_from<T, Args...>
+T& UserComponentBridge::AddComponentData(Entity_t entity, ComponentManager& cmpManager, Args&&...args)
+{
+	const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
+
+	if (!IsComponentDataRegisteredInternal(typeId))
+	{
+		const bool registered = RegisterComponentDataInternal(typeId);
+		assert(registered);
+	}
+
+	const size_t idx = userComponentListIndexForDataType_[typeId];
+	assert(idx < UserComponentTypeList::size);
+
+	InlineStorage<kUserComponentStorageSize>& newCmpStorage =
+		std::invoke(UserComponentDispatchTable::kAddUserComponentStorage[idx],
+			entity, cmpManager);
+
+	return newCmpStorage.Emplace<T>(std::forward<Args>(args)...);
+}
+
+template <typename T>
+T& UserComponentBridge::GetComponentData(Entity_t entity, ComponentManager& cmpManager)
+{
+	const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
+	assert(IsComponentDataRegisteredInternal(typeId));
+
+	const size_t idx = userComponentListIndexForDataType_[typeId];
+	assert(idx < UserComponentTypeList::size);
+
+	InlineStorage<kUserComponentStorageSize>& cmpStorage =
+		std::invoke(UserComponentDispatchTable::kGetUserComponentStorage[idx],
+			entity, cmpManager);
+
+	return cmpStorage.Get<T>();
+}
+
+template <typename T>
+const T& UserComponentBridge::GetComponentData(Entity_t entity, const ComponentManager& cmpManager) const
+{
+	const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
+	assert(IsComponentDataRegisteredInternal(typeId));
+
+	const size_t idx = userComponentListIndexForDataType_[typeId];
+	assert(idx < UserComponentTypeList::size);
+
+	const InlineStorage<kUserComponentStorageSize>& cmpStorage =
+		std::invoke(UserComponentDispatchTable::kGetConstUserComponentStorage[idx],
+			entity, cmpManager);
+
+	return cmpStorage.Get<T>();
+}
+
+template <typename T>
+void UserComponentBridge::RemoveComponentData(Entity_t entity, ComponentManager& cmpManager)
+{
+	const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
+	if (!IsComponentDataRegisteredInternal(typeId))
+	{
+		return;
+	}
+
+	const size_t idx = userComponentListIndexForDataType_[typeId];
+	assert(idx < UserComponentTypeList::size);
+
+	std::invoke(UserComponentDispatchTable::kRemoveUserComponent[idx],
+		entity, cmpManager);
+}
+
+template <typename T>
+bool UserComponentBridge::HasComponentData(Entity_t entity, const ComponentManager& cmpManager) const
+{
+	const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
+	if (!IsComponentDataRegisteredInternal(typeId))
+	{
+		return false;
+	}
+
+	const size_t idx = userComponentListIndexForDataType_[typeId];
+	assert(idx < UserComponentTypeList::size);
+
+	return std::invoke(UserComponentDispatchTable::kHasUserComponent[idx],
+		entity, cmpManager);
+}
+
+template <typename T>
+bool UserComponentBridge::IsComponentDataRegistered() const
+{
+	const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
+
+	return IsComponentDataRegisteredInternal(typeId);
+}
+
+template <typename T>
+ComponentSignature UserComponentBridge::GetComponentDataSignature() const
+{
+	const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
+	if (!IsComponentDataRegisteredInternal(typeId))
+	{
+		return 0;
+	}
+
+	const size_t idx = userComponentListIndexForDataType_[typeId];
+	assert(idx < UserComponentTypeList::size);
+
+	return std::invoke(UserComponentDispatchTable::kGetUserComponentBit[idx]);
+}
+/**/

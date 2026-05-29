@@ -20,9 +20,10 @@ inline void from_json(const BasicJson& j, PhysicsDeserializerContext& ctx)
 
 	size_t bodyId = std::numeric_limits<size_t>::max();
 
-	if (j.contains("rigidBody"))
+	if (j.contains("RigidBody"))
 	{
-		if (!j.contains("bodyId"))
+		const auto& rbJ = j.at("RigidBody");
+		if (!rbJ.contains("bodyId"))
 		{
 			ctx.errors.emplace_back(MAKE_ERROR("RigidBody component JSON must contain bodyId field"));
 			return;
@@ -30,7 +31,7 @@ inline void from_json(const BasicJson& j, PhysicsDeserializerContext& ctx)
 
 		try
 		{
-			from_json(j.at("bodyId"), bodyId);
+			from_json(rbJ.at("bodyId"), bodyId);
 		}
 		catch (const nlohmann::json::exception& err)
 		{
@@ -45,11 +46,11 @@ inline void from_json(const BasicJson& j, PhysicsDeserializerContext& ctx)
 
 		ComponentBuilder<RigidBody> builder{};
 
-		if (j.contains("bodyLimits"))
+		if (rbJ.contains("bodyLimits"))
 		{
 			try 			
 			{
-				builder.WithBodyLimits(j.at("bodyLimits").get<BodyLimits>());
+				builder.WithBodyLimits(rbJ.at("bodyLimits").get<BodyLimits>());
 			}
 			catch (const nlohmann::json::exception& err)
 			{
@@ -60,7 +61,7 @@ inline void from_json(const BasicJson& j, PhysicsDeserializerContext& ctx)
 			}
 		}
 
-		if (!j.contains("bodyParameters"))
+		if (!rbJ.contains("bodyParameters"))
 		{
 			ctx.errors.emplace_back(
 				MAKE_ERROR("RigidBody component JSON must contain bodyParameters field")
@@ -69,7 +70,7 @@ inline void from_json(const BasicJson& j, PhysicsDeserializerContext& ctx)
 		}
 		try
 		{
-			builder.WithBodyParameters(j.at("bodyParameters").get<BodyParameters>());
+			builder.WithBodyParameters(rbJ.at("bodyParameters").get<BodyParameters>());
 		}
 		catch (const nlohmann::json::exception& err)
 		{
@@ -82,9 +83,10 @@ inline void from_json(const BasicJson& j, PhysicsDeserializerContext& ctx)
 		ctx.entity.AddComponent(builder.Build(ctx.world));
 	}
 
-	if (j.contains("collider"))
+	if (j.contains("Collider"))
 	{
-		if (!j.contains("parentBodyId"))
+		const auto& colliderJ = j.at("Collider");
+		if (!colliderJ.contains("parentBodyId"))
 		{
 			ctx.errors.emplace_back(MAKE_ERROR("Collider component JSON must contain parentBodyId field"));
 			return;
@@ -93,7 +95,7 @@ inline void from_json(const BasicJson& j, PhysicsDeserializerContext& ctx)
 		size_t parentBodyId = std::numeric_limits<size_t>::max();
 		try
 		{
-			from_json(j.at("parentBodyId"), parentBodyId);
+			from_json(colliderJ.at("parentBodyId"), parentBodyId);
 		}
 		catch (const nlohmann::json::exception& err)
 		{
@@ -105,11 +107,11 @@ inline void from_json(const BasicJson& j, PhysicsDeserializerContext& ctx)
 
 		ComponentBuilder<Collider> builder{};
 
-		if (j.contains("colliderSettings"))
+		if (colliderJ.contains("colliderSettings"))
 		{
 			try
 			{
-				builder.WithColliderSettings(j.at("colliderSettings").get<ColliderSettings>());
+				builder.WithColliderSettings(colliderJ.at("colliderSettings").get<ColliderSettings>());
 			}
 			catch (const nlohmann::json::exception& err)
 			{
@@ -120,7 +122,7 @@ inline void from_json(const BasicJson& j, PhysicsDeserializerContext& ctx)
 			}
 		}
 
-		if (!j.contains("shapeParameters"))
+		if (!colliderJ.contains("shapeParameters"))
 		{
 			ctx.errors.emplace_back(
 				MAKE_ERROR("Collider component JSON must contain shapeParameters field")
@@ -129,7 +131,7 @@ inline void from_json(const BasicJson& j, PhysicsDeserializerContext& ctx)
 		}
 		try
 		{
-			builder.WithShapeParameters(j.at("shapeParameters").get<B2ShapeParameters>());
+			builder.WithShapeParameters(colliderJ.at("shapeParameters").get<B2ShapeParameters>());
 		}
 		catch (const nlohmann::json::exception& err)
 		{
@@ -155,14 +157,14 @@ inline void from_json(const BasicJson& j, PhysicsDeserializerContext& ctx)
 template <typename BasicJson>
 void from_json(const BasicJson& j, RelationDeserializerContext& ctx)
 {
-	if (j.contains("parent"))
+	if (j.contains("Parent"))
 	{
-		assert(!j.contains("children"));
+		assert(!j.contains("Children"));
 
 		Parent parentCmp{};
 		try
 		{
-			from_json(j.at("parent"), parentCmp);
+			from_json(j.at("Parent"), parentCmp);
 		}
 		catch (const nlohmann::json::exception& err)
 		{
@@ -175,11 +177,20 @@ void from_json(const BasicJson& j, RelationDeserializerContext& ctx)
 		ctx.entity.AddComponent(std::move(parentCmp), ctx.passKey);
 		ctx.childrenToResolve.emplace_back(ctx.entity);
 	}
-	else if (j.contains("children"))
+	else if (j.contains("Children"))
 	{
-		const auto& childrenJ = j.at("children");
-		assert(childrenJ.is_array());
-		if (childrenJ.empty())
+		const auto& childrenJ = j.at("Children");
+		if (!childrenJ.contains("childEntityIds"))
+		{
+			ctx.errors.emplace_back(
+				MAKE_ERROR("Children component JSON must contain childEntityIds field")
+			);
+			return;
+		}
+
+		const auto& childIdsJ = childrenJ.at("childEntityIds");
+		assert(childIdsJ.is_array());
+		if (childIdsJ.empty())
 		{
 			return;
 		}
@@ -489,6 +500,18 @@ void EntityDeserializer::DeserializeBasicComponents(const nlohmann::json& entity
 	DESERIALIZE_BASIC_COMPONENT(dc, Tags);
 }
 
+void EntityDeserializer::DeserializeUserComponents(const nlohmann::json& entityJ, Entity& e)
+{
+	auto res = ECS::DeserializeUserComponents(entityJ, e); 
+	if (!res.Success())
+	{
+		deserializationErrors_.emplace_back(
+			MAKE_ERROR_FMT("Error deserializing user-defined components for entity {}: {}", 
+						   e.GetID(), res.GetError().GetMessage())
+		);
+	}
+}
+
 std::vector<Error> EntityDeserializer::DeserializeEntities(const std::string& jsonFilepath)
 {
 	auto jResult = LoadJson(jsonFilepath);
@@ -511,7 +534,11 @@ std::vector<Error> EntityDeserializer::DeserializeEntities(const std::string& js
 
 		DeserializeBasicComponents(entityJ, e);
 		DeserializeContextComponents(entityJ);
+		DeserializeUserComponents(entityJ, e);
 	}
+
+	ResolveRelations();
+	ResolvePhysics();
 
 	return deserializationErrors_;
 }
