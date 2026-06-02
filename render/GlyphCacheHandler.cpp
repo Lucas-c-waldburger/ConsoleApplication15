@@ -43,7 +43,6 @@ void FillGlyphRectsLeftAlign(std::vector<GlyphCacheData>& cache,
 								 static_cast<int>(glyph.plot.rect.h * format.layoutScale.y) };
 
 		xPos += static_cast<int>(glyph.advance * format.layoutScale.x);
-
 	}
 }
 
