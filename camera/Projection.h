@@ -84,22 +84,29 @@ public:
 										   Dimensions<float> vpDimensions, float zoom = 1.0f,
 										   float angleDegrees = 0.0f) noexcept
 	{
+		// Map the rectangle by transforming its center. This ensures a consistent
+		// rotation around the viewport center and prevents per-rect offset artifacts.
 		using PointType = point_type_for_rect_t<RectOut>;
 		using ValueType = value_type_for_point_t<PointType>;
 
-		const PointType topLeftWorld = {
-			static_cast<ValueType>(worldRect.x),
-			static_cast<ValueType>(worldRect.y)
+		// Compute world-space center of the rect
+		SDL_FPoint worldCenter{
+			static_cast<float>(worldRect.x) + static_cast<float>(worldRect.w) * 0.5f,
+			static_cast<float>(worldRect.y) + static_cast<float>(worldRect.h) * 0.5f
 		};
 
-		const PointType topLeftScreen = WorldToScreen<PointType>(topLeftWorld, cameraWorldPos,
-			vpDimensions, zoom, angleDegrees);
+		// Transform center to screen space (this applies rotation around viewport center)
+		PointType screenCenter = WorldToScreen<PointType>(worldCenter, cameraWorldPos, vpDimensions, zoom, angleDegrees);
+
+		// Scaled size
+		float scaledW = static_cast<float>(worldRect.w) * zoom;
+		float scaledH = static_cast<float>(worldRect.h) * zoom;
 
 		return {
-			topLeftScreen.x,
-			topLeftScreen.y,
-			static_cast<ValueType>(worldRect.w * zoom),
-			static_cast<ValueType>(worldRect.h * zoom)
+			static_cast<ValueType>(static_cast<float>(screenCenter.x) - (scaledW * 0.5f)),
+			static_cast<ValueType>(static_cast<float>(screenCenter.y) - (scaledH * 0.5f)),
+			static_cast<ValueType>(scaledW),
+			static_cast<ValueType>(scaledH)
 		};
 	}
 
@@ -130,22 +137,29 @@ public:
 										   Dimensions<float> vpDimensions, float zoom = 1.0f,
 										   float angleDegrees = 0.0f) noexcept
 	{
+		// Inverse of the rect mapping above: transform the screen rect center back to world,
+		// and compute world top-left from the unscaled world size.
 		using PointType = point_type_for_rect_t<RectOut>;
 		using ValueType = value_type_for_point_t<PointType>;
 
-		const PointType topLeftScreen = {
-			static_cast<ValueType>(screenRect.x),
-			static_cast<ValueType>(screenRect.y)
+		// Screen-space center
+		SDL_FPoint screenCenter{
+			static_cast<float>(screenRect.x) + static_cast<float>(screenRect.w) * 0.5f,
+			static_cast<float>(screenRect.y) + static_cast<float>(screenRect.h) * 0.5f
 		};
 
-		const PointType topLeftWorld = ScreenToWorld<PointType>(topLeftScreen, cameraWorldPos,
-			vpDimensions, zoom, angleDegrees);
+		// Convert center back to world space
+		PointType worldCenter = ScreenToWorld<PointType>(screenCenter, cameraWorldPos, vpDimensions, zoom, angleDegrees);
+
+		// World-space size
+		float worldW = static_cast<float>(screenRect.w) / zoom;
+		float worldH = static_cast<float>(screenRect.h) / zoom;
 
 		return {
-			topLeftWorld.x,
-			topLeftWorld.y,
-			static_cast<ValueType>(screenRect.w / zoom),
-			static_cast<ValueType>(screenRect.h / zoom)
+			static_cast<ValueType>(static_cast<float>(worldCenter.x) - (worldW * 0.5f)),
+			static_cast<ValueType>(static_cast<float>(worldCenter.y) - (worldH * 0.5f)),
+			static_cast<ValueType>(worldW),
+			static_cast<ValueType>(worldH)
 		};
 	}
 

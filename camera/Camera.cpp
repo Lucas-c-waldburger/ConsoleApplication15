@@ -65,13 +65,9 @@ Camera::Viewport::GetPaddedBoundingBox(Dimensions<float> padding) const noexcept
 	};
 }
 
-
 // Camera
 void Camera::SetPosition(SDL_FPoint newPos, bool clamp)
 {
-	newPos.x = std::round(newPos.x);
-	newPos.y = std::round(newPos.y);
-
 	if (!clamp)
 	{
 		worldPosition_ = newPos;
@@ -83,11 +79,7 @@ void Camera::SetPosition(SDL_FPoint newPos, bool clamp)
 		viewportSize_.h / zoomScale_
 	};
 
-	worldPosition_ = ClampToCameraBounds(
-		newPos,
-		bounds_,
-		worldViewportSize
-	);
+	worldPosition_ = ClampToBounds(newPos);
 }
 
 Camera::Viewport Camera::GetViewport() const
@@ -144,11 +136,16 @@ std::array<SDL_FPoint, 4> Camera::GetViewportCorners() const
 
 SDL_FPoint Camera::ClampToBounds(SDL_FPoint pos) const
 {
-	return ClampToCameraBounds(pos, bounds_, viewportSize_);
+	const Dimensions<float> worldViewportSize{
+		viewportSize_.w / zoomScale_,
+		viewportSize_.h / zoomScale_
+	};		
+
+	return ClampToCameraBounds(pos, bounds_, worldViewportSize);
 }
 
 void Camera::Pan(SDL_FPoint delta)
 {
-	worldPosition_.x += std::round(delta.x);
-	worldPosition_.y += std::round(delta.y);
+	worldPosition_.x += delta.x;
+	worldPosition_.y += delta.y;
 }

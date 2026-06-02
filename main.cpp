@@ -10,6 +10,7 @@
 #include "test/demo/SandDemo.h"
 #include "test/demo/PlatformerDemo.h"
 #include "test/demo/collider_maker/ColliderMakerApp.h"
+#include "test/demo/gallery/GalleryApp.h"
 
 int main(int argc, char* argv[]) 
 {
@@ -212,7 +213,8 @@ int main(int argc, char* argv[])
 
     //auto runResult = test::RunSandDemo(fixtureResult.GetValue());
     //auto runResult = test::RunPlatformerDemo(fixtureResult.GetValue());
-    auto runResult = test::RunColliderMaker(fixtureResult.GetValue());
+    //auto runResult = test::RunColliderMaker(fixtureResult.GetValue());
+    auto runResult = test::RunGalleryDemo(fixtureResult.GetValue());
     ASSERT_RESULT(runResult);
 
     fixtureResult.GetValue().reset();

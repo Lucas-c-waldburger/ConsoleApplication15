@@ -1,7 +1,7 @@
 #pragma once
 #include "user_types/ComponentJsonUserType.h"
 #include "../systems/SDLInputSystem.h"
-#include "physics/PhysicsSerialization.h"
+#include "SerializationConcepts.h"
 
 struct DeserializerContext
 {

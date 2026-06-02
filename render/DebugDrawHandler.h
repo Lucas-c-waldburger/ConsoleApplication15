@@ -22,7 +22,7 @@ public:
 	void Clear();
 	void Reserve(size_t size);
 	void Reset(size_t newSize);
-	void AddBoundingBox(SDL_Rect renderRect, float rotation, const RenderProfile& profile);
+	void AddBoundingBox(SDL_FRect renderRect, float rotation, const RenderProfile& profile);
 	void AddColliderShape(const Camera& camera, const Collider& collider,
 						  const RenderProfile& profile);
 	void Draw(SDL_Renderer* renderer);

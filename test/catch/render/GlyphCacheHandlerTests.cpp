@@ -26,7 +26,7 @@ void RenderTextGlyphs(std::string_view fileName,
 		{
 			continue;
 		}
-		SDL_RenderCopyEx(SDLite::Renderer(), srcTexture, &glyph.plot.rect, &destRect, 
+		SDL_RenderCopyExF(SDLite::Renderer(), srcTexture, &glyph.plot.rect, &destRect, 
 			static_cast<double>(tf.rotation + glyph.plot.rotation), &rotCenter,
 			textRenderable.profile.flip);
 	}
@@ -125,7 +125,7 @@ TEST_CASE("GlyphCacheHandler Tests", "[rendering]")
 			{
 				continue;
 			}
-			SDL_RenderCopyEx(SDLite::Renderer(), srcTexture, &glyph.plot.rect, &destRect,
+			SDL_RenderCopyExF(SDLite::Renderer(), srcTexture, &glyph.plot.rect, &destRect,
 				static_cast<double>(tfRot + glyph.plot.rotation), &rotCenter, flip);
 		}
 	};

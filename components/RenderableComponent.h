@@ -53,8 +53,8 @@ enum class TextAlign
 struct GlyphCacheData
 {
     Glyph glyph;
-    SDL_Rect destRect = { 0, 0, 0, 0 };
-    SDL_Point rotationCenter = { 0, 0 }; 
+    SDL_FRect destRect = { 0.0f, 0.0f, 0.0f, 0.0f };
+    SDL_FPoint rotationCenter = { 0.0f, 0.0f }; 
 };
 
 struct TextFormatting

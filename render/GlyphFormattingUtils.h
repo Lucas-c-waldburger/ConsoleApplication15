@@ -28,23 +28,23 @@ struct FormatArgs
 {
 	Dimensions<int> bounds = { 0, 0 };
 	SDL_FPoint layoutScale = { 1.0f, 1.0f };
-	SDL_Point start = { 0, 0 };
+	SDL_FPoint start = { 0, 0 };
 	int numNewlines = 0;
 	int fontHeight = 0;
-	int totalHeight = 0;
+	float totalHeight = 0.0f;
 };
 
 FormatArgs MakeFormatArgs(const TextRenderableComponent& textRenderable,
 						  const TextRenderableGlyphCache& cacheComponent, int fontHeight);
 
-int GetFormatArgsStartX(const TextRenderableComponent& textRenderable, const FormatArgs& formatArgs,
-						const std::vector<GlyphCacheData>& cache);
+float GetFormatArgsStartX(const TextRenderableComponent& textRenderable, const FormatArgs& formatArgs,
+						  const std::vector<GlyphCacheData>& cache);
 
-int CalculateGlyphRowWidth(const std::vector<GlyphCacheData>& cache,
-						   int currentPos, int newlinePos, float scaleX);
+float CalculateGlyphRowWidth(const std::vector<GlyphCacheData>& cache,
+						     size_t currentPos, size_t newlinePos, float scaleX);
 
-int CalculateLongestRowWidth(std::string_view text, const FormatArgs& format,
-							 const std::vector<GlyphCacheData>& cache);
+float CalculateLongestRowWidth(std::string_view text, const FormatArgs& format,
+							   const std::vector<GlyphCacheData>& cache);
 
 float GetScaleToFitFactor(std::string_view text, const std::vector<GlyphCacheData>& cache,
 						  const FormatArgs& formatArgs);

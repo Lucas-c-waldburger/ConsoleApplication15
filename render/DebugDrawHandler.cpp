@@ -44,13 +44,13 @@ void AddCirclePerimeterPoints(SDL_FPoint center, float radius,
 	points.push_back(points[firstCirclePointIdx]);
 }
 
-void AddRectPoints(SDL_Rect rect, std::vector<SDL_FPoint>& points)
+void AddRectPoints(SDL_FRect rect, std::vector<SDL_FPoint>& points)
 {
-	SDL_FPoint firstPoint{ static_cast<float>(rect.x), static_cast<float>(rect.y) };
+	SDL_FPoint firstPoint{ rect.x, rect.y };
 	points.push_back(firstPoint);
-	points.push_back({ static_cast<float>(rect.x + rect.w), static_cast<float>(rect.y) });
-	points.push_back({ static_cast<float>(rect.x + rect.w), static_cast<float>(rect.y + rect.h) });
-	points.push_back({ static_cast<float>(rect.x), static_cast<float>(rect.y + rect.h) });
+	points.push_back({ rect.x + rect.w, rect.y });
+	points.push_back({ rect.x + rect.w, rect.y + rect.h });
+	points.push_back({ rect.x, rect.y + rect.h });
 	points.push_back(firstPoint);
 }
 
@@ -99,7 +99,7 @@ void DebugDrawHandler::Reset(size_t newSize)
 	Reserve(newSize); 
 }
 
-void DebugDrawHandler::AddBoundingBox(SDL_Rect renderRect, float rotation,
+void DebugDrawHandler::AddBoundingBox(SDL_FRect renderRect, float rotation,
 									  const RenderProfile& profile)
 {
 	if (!shapes_.empty())
@@ -115,8 +115,8 @@ void DebugDrawHandler::AddBoundingBox(SDL_Rect renderRect, float rotation,
 	if (rotation != 0.0f)
 	{
 		SDL_FPoint rectCenter{
-			static_cast<float>(renderRect.x) + (static_cast<float>(renderRect.w) / 2.0f),
-			static_cast<float>(renderRect.y) + (static_cast<float>(renderRect.h) / 2.0f)
+			renderRect.x + (renderRect.w / 2.0f),
+			renderRect.y + (renderRect.h / 2.0f)
 		};
 
 		RotateRectPoints(debugDrawPoints_, rectCenter, rotation);

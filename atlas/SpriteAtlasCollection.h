@@ -29,6 +29,19 @@ using SpriteInfoSOA = StableSOA<
 class SpriteAtlasTexture : public TextureAtlas
 {
 public:
+	struct SpriteLoadOutcome
+	{
+		enum : uint8_t
+		{
+			Success,
+			AtlasFull,
+			SpriteTooLarge
+		};
+
+		uint8_t code = Success;	
+		SpriteInfo spriteInfo{};
+	};
+
 	SpriteAtlasTexture() = default;
 	~SpriteAtlasTexture() = default;
 
@@ -41,9 +54,8 @@ public:
 	static Result<SpriteAtlasTexture>
 	Create(SDL_Renderer* renderer, size_t size = kDefaultAtlasSize);
 
-	Result<SpriteInfo> 
-	LoadSprite(SDL_Renderer* renderer, const SpriteDescriptor& descriptor,
-			   bool& atlasFull);
+	Result<SpriteLoadOutcome> 
+	LoadSprite(SDL_Renderer* renderer, const SpriteDescriptor& descriptor);
 
 	Result<Void> RebuildSourceTexture(SDL_Renderer* renderer, 
 									  const SpriteInfoSOA& spriteInfo,
@@ -61,6 +73,8 @@ public:
 
 	SpriteAtlas() = default;
 	SpriteAtlas(size_t txSize) : textureSize_(txSize) {}
+	SpriteAtlas(size_t txSize, TextureGrowthPolicy policy) : 
+		textureSize_(txSize), growthPolicy_(policy) {}
 	~SpriteAtlas() = default;
 
 	SpriteAtlas(const SpriteAtlas&) = delete;
@@ -149,6 +163,10 @@ public:
 	size_t GetTextureCount() const;
 
 	size_t GetTextureSize() const;
+	void SetTextureSize(size_t newSize);
+
+	TextureGrowthPolicy GetTextureGrowthPolicy() const;
+	void SetTextureGrowthPolicy(TextureGrowthPolicy newPolicy);
 
 	SpriteDescriptorPackage ExportSpriteDescriptors() const;
 
@@ -168,4 +186,5 @@ private:
 	SignalToken rebuildTexturesSignalToken_;
 
 	size_t textureSize_ = TextureAtlas::kDefaultAtlasSize;
+	TextureGrowthPolicy growthPolicy_ = TextureGrowthPolicy::FlexibleSize;
 };

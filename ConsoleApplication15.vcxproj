@@ -266,6 +266,7 @@
     <ClCompile Include="test\demo\collider_maker\ColliderMaker.cpp" />
     <ClCompile Include="test\demo\collider_maker\ColliderMaker2.cpp" />
     <ClCompile Include="test\demo\collider_maker\ColliderMakerCommon.cpp" />
+    <ClCompile Include="test\demo\gallery\Gallery.cpp" />
     <ClCompile Include="test\demo\platformer\Common.cpp" />
     <ClCompile Include="test\demo\platformer\GirlPhysicsEditor.cpp" />
     <ClCompile Include="test\demo\platformer\GirlStateCoordinator.cpp" />
@@ -482,8 +483,8 @@
     <ClInclude Include="render\TextFormatExpressionParser.h" />
     <ClInclude Include="serial\EntityDeserializer.h" />
     <ClInclude Include="serial\EntitySerializer.h" />
-    <ClInclude Include="serial\physics\PhysicsSerialization.h" />
     <ClInclude Include="serial\TextureRepositorySerializer.h" />
+    <ClInclude Include="serial\user_types\AudioJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\BitsetJsonUserTypes.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMaker2.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMakerApp.h" />
@@ -497,6 +498,8 @@
     <ClInclude Include="inputs\keyboard\KeyboardInputUpdater.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMakerCommon.h" />
     <ClInclude Include="test\demo\collider_maker\SpritePicker.h" />
+    <ClInclude Include="test\demo\gallery\Gallery.h" />
+    <ClInclude Include="test\demo\gallery\GalleryApp.h" />
     <ClInclude Include="test\demo\PhysicsTuning.h" />
     <ClInclude Include="test\demo\platformer\GamepadUiOverlay.h" />
     <ClInclude Include="test\demo\platformer\GirlChecks.h" />

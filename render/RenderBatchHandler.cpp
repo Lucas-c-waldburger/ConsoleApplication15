@@ -2,7 +2,7 @@
 
 namespace {
 
-constexpr const SDL_Point* GetRotationCenter(const RenderCallArgs& args)
+constexpr const SDL_FPoint* GetRotationCenter(const RenderCallArgs& args)
 {
 	return args.rotationCenter.has_value() ? &(*args.rotationCenter) : nullptr;
 }
@@ -86,7 +86,7 @@ void RenderBatchHandler::Render(SDL_Renderer* renderer)
 
 			modTracker_.Update(texture, args.mods);
 
-			SDL_RenderCopyEx(renderer, texture, &args.srcRect,
+			SDL_RenderCopyExF(renderer, texture, &args.srcRect,
 							 &args.destRect, args.rotationAngle,
 							 GetRotationCenter(args), args.flip);
 		}

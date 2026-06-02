@@ -12,9 +12,9 @@ struct TextureModTracker
 struct RenderCallArgs
 {
 	SDL_Rect srcRect = { 0, 0, 0, 0 };
-	SDL_Rect destRect = { 0, 0, 0, 0 };
+	SDL_FRect destRect = { 0.0f, 0.0f, 0.0f, 0.0f };
 	double rotationAngle = 0.0;
-	std::optional<SDL_Point> rotationCenter;
+	std::optional<SDL_FPoint> rotationCenter;
 	TextureMods mods;
 	SDL_RendererFlip flip;
 };

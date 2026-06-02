@@ -1,6 +1,7 @@
 #include "NewRenderSystem.h"
 #include <SDL.h>
 #include <ranges>
+#include <numbers>
 #include "../ecs/Ecs.h"
 #include "../camera/Camera.h"
 #include "../atlas/NewTextureRepository.h"
@@ -8,88 +9,172 @@
 
 namespace {
 
-constexpr SDL_Rect ApplyOffset(SDL_Rect rect, SDL_FPoint offset)
+constexpr SDL_FRect ApplyOffset(SDL_FRect rect, SDL_FPoint offset)
 {
-	return SDL_Rect{
-		.x = rect.x + static_cast<int>(offset.x),
-		.y = rect.y + static_cast<int>(offset.y),
+	return SDL_FRect{
+		.x = rect.x + offset.x,
+		.y = rect.y + offset.y,
 		.w = rect.w,
 		.h = rect.h
 	};
 }
 
-constexpr SDL_Rect MakeTransformedRect(const Transform& transform, 
-									   int w, int h, const RenderProfile& profile)
+static SDL_FPoint RotatePointAround(const SDL_FPoint& p, const SDL_FPoint& center, float angleDeg)
 {
-	float scaledW = w * transform.scale.x;
-	float scaledH = h * transform.scale.y;
+	if (angleDeg == 0.0f) { return p; }
+
+	const float rad = angleDeg * (std::numbers::pi_v<float> / 180.0f);
+	const float c = std::cos(rad);
+	const float s = std::sin(rad);
+	const float dx = p.x - center.x;
+	const float dy = p.y - center.y;
+
+	return SDL_FPoint{ 
+		center.x + (dx * c - dy * s), 
+		center.y + (dx * s + dy * c) 
+	};
+}
+
+static SDL_FRect RotateRectCenterAround(const SDL_FRect& rect, const SDL_FPoint& pivot, float angleDeg)
+{
+	if (angleDeg == 0.0f) { return rect; }
+
+	const SDL_FPoint rectCenter{ 
+		rect.x + rect.w * 0.5f, 
+		rect.y + rect.h * 0.5f 
+	};
+
+	const SDL_FPoint newCenter = RotatePointAround(rectCenter, pivot, angleDeg);
+	
+	return SDL_FRect{ 
+		newCenter.x - rect.w * 0.5f, 
+		newCenter.y - rect.h * 0.5f, 
+		rect.w, 
+		rect.h 
+	};
+}
+
+constexpr SDL_FRect ScaleRectAboutCenter(const SDL_FRect& rect, float scale)
+{
+	SDL_FPoint rectCenter{
+		rect.x + rect.w * 0.5f,
+		rect.y + rect.h * 0.5f
+	};
+
+	float scaledW = rect.w * scale;
+	float scaledH = rect.h * scale;
+
+	return SDL_FRect{
+		rectCenter.x - (scaledW / 2.0f),
+		rectCenter.y - (scaledH / 2.0f),
+		scaledW,
+		scaledH
+	};
+}
+constexpr SDL_FRect MakeTransformedRect(const Transform& transform, int w, int h,
+										const RenderProfile& profile)
+{
+	float scaledW = static_cast<float>(w) * transform.scale.x;
+	float scaledH = static_cast<float>(h) * transform.scale.y;
+
+	return SDL_FRect{
+		transform.position.x - (scaledW / 2.0f) + profile.offset.x,
+		transform.position.y - (scaledH / 2.0f) + profile.offset.y,
+		scaledW,
+		scaledH	
+	};
+}
+
+SDL_FRect MakeScreenRenderRect(const Camera& camera, const Transform& transform, 
+							   int w, int h, const RenderProfile& profile)
+{
+	const float zoomScale = (!profile.isOverlay) ? camera.GetZoomScale() : 1.0f;
+
+	float scaledW = static_cast<float>(w) * transform.scale.x * zoomScale;
+	float scaledH = static_cast<float>(h) * transform.scale.y * zoomScale;
 
 	SDL_FPoint resolvedXY = transform.position + profile.offset;
 
-	return SDL_Rect{
-		static_cast<int>(resolvedXY.x - (scaledW / 2.0f)),
-		static_cast<int>(resolvedXY.y - (scaledH / 2.0f)),
-		static_cast<int>(scaledW),
-		static_cast<int>(scaledH)
-	};
-}
-
-constexpr SDL_Rect MakeScreenRenderRect(const Camera& camera, const Transform& transform,
-										int w, int h, const RenderProfile& profile)
-{
-	float scaledW = w * transform.scale.x;
-	float scaledH = h * transform.scale.y;
-
-	SDL_FPoint renderXY = transform.position + profile.offset;
-
 	if (!profile.isOverlay)
 	{
-		renderXY = camera.WorldToScreen<SDL_FPoint>(renderXY);
+		resolvedXY = camera.WorldToScreen<SDL_FPoint>(resolvedXY);
 	}
 	else if (profile.parallaxFactor != 0.0f)
 	{
-		SDL_FPoint screenXY = camera.WorldToScreen<SDL_FPoint>(renderXY);
-		renderXY = screenXY + (renderXY - screenXY) * profile.parallaxFactor;
+		SDL_FPoint screenXY = camera.WorldToScreen<SDL_FPoint>(resolvedXY);
+		resolvedXY = screenXY + (resolvedXY - screenXY) * profile.parallaxFactor;
 	}
 
-	return SDL_Rect{
-		static_cast<int>(renderXY.x - (scaledW / 2.0f)),
-		static_cast<int>(renderXY.y - (scaledH / 2.0f)),
-		static_cast<int>(scaledW),
-		static_cast<int>(scaledH)
+	return SDL_FRect{
+		resolvedXY.x - (scaledW / 2.0f),
+		resolvedXY.y - (scaledH / 2.0f),
+		scaledW,
+		scaledH	
 	};
 }
 
-//SDL_Rect MakeRenderDestRect(const Camera& camera, const Transform& transform,
-//							int w, int h, const RenderProfile& profile)
-//{
-//	float scaledW = w * transform.scale.x;
-//	float scaledH = h * transform.scale.y;
-//
-//	SDL_FPoint renderXY = transform.position + profile.offset;
-//
-//	if (!profile.isOverlay)
-//	{
-//		renderXY = camera.WorldToScreen<SDL_FPoint>(renderXY);
-//	}
-//	else if (profile.parallaxFactor != 0.0f)
-//	{
-//		SDL_FPoint screenXY = camera.WorldToScreen<SDL_FPoint>(renderXY);
-//		renderXY = screenXY + (renderXY - screenXY) * profile.parallaxFactor;
-//	}
-//
-//	return SDL_Rect{
-//		static_cast<int>(renderXY.x - (scaledW / 2.0f)),
-//		static_cast<int>(renderXY.y - (scaledH / 2.0f)),
-//		static_cast<int>(scaledW),
-//		static_cast<int>(scaledH)
-//	};
-//}
-
-SDL_Point GetScreenAdjust(const Camera& camera, SDL_Rect rect)
+SDL_FRect RotatedRectToAABB(const SDL_FRect& rect, float rotationDegrees)
 {
-	SDL_Point rectXY = { rect.x, rect.y };
-	SDL_Point screenXY = camera.WorldToScreen<SDL_Point>(rectXY);
+	if (rotationDegrees == 0.0f)
+	{
+		return rect;
+	}
+
+	const float cx = rect.x + rect.w * 0.5f;
+	const float cy = rect.y + rect.h * 0.5f;
+	const float hw = rect.w * 0.5f;
+	const float hh = rect.h * 0.5f;
+
+	const float rad = rotationDegrees * (std::numbers::pi_v<float> / 180.0f);
+	const float c = std::cos(rad);
+	const float s = std::sin(rad);
+
+	std::array<SDL_FPoint, 4> localCorners = {
+		SDL_FPoint{ -hw, -hh }, // top-left
+		SDL_FPoint{  hw, -hh }, // top-right
+		SDL_FPoint{  hw,  hh }, // bottom-right
+		SDL_FPoint{ -hw,  hh }  // bottom-left
+	};
+
+	float minX = std::numeric_limits<float>::infinity();
+	float minY = std::numeric_limits<float>::infinity();
+	float maxX = -std::numeric_limits<float>::infinity();
+	float maxY = -std::numeric_limits<float>::infinity();
+
+	for (const auto& lc : localCorners)
+	{
+		const float rx = cx + (lc.x * c - lc.y * s);
+		const float ry = cy + (lc.x * s + lc.y * c);
+
+		if (rx < minX) { minX = rx; }
+		if (ry < minY) { minY = ry; }
+		if (rx > maxX) { maxX = rx; }
+		if (ry > maxY) { maxY = ry; }
+	}
+
+	return SDL_FRect{ minX, minY, maxX - minX, maxY - minY };
+}
+
+
+bool ScreenRectIntersectsViewport(const Camera& camera, SDL_FRect testRect,
+								  float rotation)
+{
+	if (camera.GetZoomScale() != 1.0f)
+	{
+		testRect = ScaleRectAboutCenter(testRect, camera.GetZoomScale());
+	}
+	if (rotation != 0.0f)
+	{
+		testRect = RotatedRectToAABB(testRect, rotation);
+	}
+
+	return camera.GetViewport().IntersectsBoundingBox(testRect);
+}
+
+SDL_FPoint GetScreenAdjust(const Camera& camera, SDL_FRect rect)
+{
+	SDL_FPoint rectXY = { rect.x, rect.y };
+	SDL_FPoint screenXY = camera.WorldToScreen<SDL_FPoint>(rectXY);
 
 	return screenXY - rectXY;
 }
@@ -206,26 +291,31 @@ void AddSpriteRenderCall(const Entity& entity, const Camera& camera,
 						 RenderBatchHandler& renderBatchHandler,
 						 DebugDrawHandler& debugDrawHandler)
 {
-	auto [renderable, transform] = 
+	auto [renderable, transform] =
 		entity.GetComponents<SpriteRenderableComponent, Transform>();
 
 	const auto& plot = renderable.sprite.plot;
 
-	SDL_Rect transformedRect = MakeTransformedRect(transform, plot.rect.w, 
-												   plot.rect.h, renderable.profile);
+	SDL_FRect transformedRect = MakeTransformedRect(transform, plot.rect.w,
+													plot.rect.h, renderable.profile);
 
-	if (!camera.GetViewport().IntersectsBoundingBox(transformedRect))
+	float displayRotation = transform.rotation + plot.rotation;
+
+	if (!renderable.profile.isOverlay)
 	{
-		return;
-	}
+		if (!ScreenRectIntersectsViewport(camera, transformedRect, displayRotation))
+		{
+			return;
+		}
 
-	SDL_Rect renderDestRect = MakeScreenRenderRect(camera, transform, plot.rect.w, 
-										           plot.rect.h, renderable.profile);
+		displayRotation += camera.GetRotation();
+		transformedRect = camera.WorldToScreen<SDL_FRect>(transformedRect);
+	}
 
 	renderBatchHandler.PushBack({
 		.srcRect = plot.rect,
-		.destRect = renderDestRect,
-		.rotationAngle = static_cast<double>(transform.rotation + plot.rotation),
+		.destRect = transformedRect,
+		.rotationAngle = static_cast<double>(displayRotation),
 		.mods = renderable.profile.mods,
 		.flip = renderable.profile.flip
 	});
@@ -233,16 +323,17 @@ void AddSpriteRenderCall(const Entity& entity, const Camera& camera,
 	const auto& [debugBbox, debugCollider] = renderable.profile.debugDraw;
 	if (debugBbox.on)
 	{
-		debugDrawHandler.AddBoundingBox(renderDestRect, transform.rotation, 
+		debugDrawHandler.AddBoundingBox(transformedRect, displayRotation,
 										renderable.profile);
 	}
 	if (debugCollider.on && entity.HasComponent<Collider>())
 	{
-		debugDrawHandler.AddColliderShape(camera, entity.GetComponent<Collider>(), 
+		debugDrawHandler.AddColliderShape(camera, entity.GetComponent<Collider>(),
 										  renderable.profile);
 	}
 }
 
+//// TODO: Fix rotation calculation for camera
 void AddGlyphRenderCalls(const Entity& entity, const Camera& camera,
 						 RenderBatchHandler& renderBatchHandler,
 						 DebugDrawHandler& debugDrawHandler)
@@ -263,37 +354,35 @@ void AddGlyphRenderCalls(const Entity& entity, const Camera& camera,
 		}
 
 		// was pre-transformed by glyph caching in preprocessor, but need to apply offset from profile
-		SDL_Rect renderDestRect = ApplyOffset(destRect, renderable.profile.offset);
-		SDL_Point renderRotationCenter = rotationCenter;
-		
+		SDL_FRect transformedRect = ApplyOffset(destRect, renderable.profile.offset);
+
+		float displayRotation = transform.rotation + glyph.plot.rotation;
+		SDL_FPoint displayRotationCenter = rotationCenter + renderable.profile.offset;
+
 		if (!renderable.profile.isOverlay)
 		{
-			SDL_Point screenAdjust = GetScreenAdjust(camera, renderDestRect);
+			if (!ScreenRectIntersectsViewport(camera, transformedRect, displayRotation))
+			{
+				continue;
+			}
 
-			renderDestRect.x += screenAdjust.x;
-			renderDestRect.y += screenAdjust.y;
-
-			renderRotationCenter += screenAdjust;
-		}
-
-		if (!camera.GetViewport().IntersectsBoundingBox(renderDestRect))
-		{
-			continue;
+			displayRotation += camera.GetRotation();
+			transformedRect = camera.WorldToScreen<SDL_FRect>(transformedRect);
 		}
 
 		renderBatchHandler.PushBack({
 			.srcRect = glyph.plot.rect,
-			.destRect = renderDestRect,
-			.rotationAngle = static_cast<double>(transform.rotation + glyph.plot.rotation),
-			.rotationCenter = renderRotationCenter,
+			.destRect = transformedRect,
+			.rotationAngle = displayRotation,
+			.rotationCenter = displayRotationCenter,
 			.mods = renderable.profile.mods,
 			.flip = renderable.profile.flip
 		});
-
+		 
 		const auto& [debugBbox, debugCollider] = renderable.profile.debugDraw;
 		if (debugBbox.on)
 		{
-			debugDrawHandler.AddBoundingBox(renderDestRect, transform.rotation, 
+			debugDrawHandler.AddBoundingBox(transformedRect, displayRotation,
 											renderable.profile);
 		}
 		if (debugCollider.on && entity.HasComponent<Collider>())

@@ -56,53 +56,53 @@ uint8_t MakeChangeLog(const TextRenderableComponent& textRenderable,
 			     ScaleChanged);
 }
 
-int CalculateGlyphRowWidth(const std::vector<GlyphCacheData>& cache,
-						   int currentPos, int newlinePos, float scaleX)
+float CalculateGlyphRowWidth(const std::vector<GlyphCacheData>& cache,
+							 size_t currentPos, size_t newlinePos, float scaleX)
 {
 	return std::accumulate(
 		cache.begin() + currentPos,
 		cache.begin() + newlinePos,
-		0, [scale = scaleX](int sum, const auto& data) {
-			return sum + static_cast<int>(data.glyph.advance * scale);
+		0.0f, [scale = scaleX](float sum, const auto& data) {
+			return sum + static_cast<float>(data.glyph.advance) * scale;
 		});
 }
 
-int CalculateLongestRowWidth(std::string_view text, const FormatArgs& format,
-						     const std::vector<GlyphCacheData>& cache)
+float CalculateLongestRowWidth(std::string_view text, const FormatArgs& format,
+						       const std::vector<GlyphCacheData>& cache)
 {
 	// Compute the longest row width (in layout-space) so we can anchor center/right if needed
-	int currentPos = 0;
-	int longestRowWidth = 0;
+	size_t currentPos = 0;
+	float longestRowWidth = 0;
 	for (int i = 0; i <= format.numNewlines; ++i)
 	{
 		size_t newlinePos = text.find_first_of('\n', currentPos);
 		newlinePos = std::min(newlinePos, text.size());
 
-		int rowWidth = CalculateGlyphRowWidth(cache, currentPos, static_cast<int>(newlinePos),
-											  format.layoutScale.x);
+		float rowWidth = CalculateGlyphRowWidth(cache, currentPos, newlinePos,
+											    format.layoutScale.x);
 
 		longestRowWidth = std::max(longestRowWidth, rowWidth);
 
-		currentPos = static_cast<int>(newlinePos) + 1;
+		currentPos = newlinePos + 1;
 	}
 
 	return longestRowWidth;
 }
 
-int GetFormatArgsStartX(const TextRenderableComponent& textRenderable, const FormatArgs& formatArgs, 
-						const std::vector<GlyphCacheData>& cache)
+float GetFormatArgsStartX(const TextRenderableComponent& textRenderable, const FormatArgs& formatArgs, 
+						  const std::vector<GlyphCacheData>& cache)
 {	
 	if (textRenderable.formatting.align == TextAlign::Left)
 	{
-		return 0;
+		return 0.0f;
 	}
 	
-	int startX = formatArgs.bounds.w - CalculateLongestRowWidth(textRenderable.writer.text, 
-																formatArgs, cache);
+	float startX = static_cast<float>(formatArgs.bounds.w) - 
+		CalculateLongestRowWidth(textRenderable.writer.text, formatArgs, cache);
 
 	if (textRenderable.formatting.align == TextAlign::Center)
 	{
-		startX /= 2;
+		startX /= 2.0f;
 	}
 
 	return startX;
@@ -118,7 +118,7 @@ FormatArgs MakeFormatArgs(const TextRenderableComponent& textRenderable,
 		.bounds = textRenderable.formatting.bounds,
 		.numNewlines = numNewlines,
 		.fontHeight = fontHeight,
-		.totalHeight = fontHeight * (numNewlines + 1)
+		.totalHeight = static_cast<float>(fontHeight * (numNewlines + 1))
 	};
 
 	if (textRenderable.formatting.scaleToBounds)
@@ -129,8 +129,8 @@ FormatArgs MakeFormatArgs(const TextRenderableComponent& textRenderable,
 		formatArgs.layoutScale = { layoutScaleFactor, layoutScaleFactor };
 
 		formatArgs.totalHeight = 
-			static_cast<int>(formatArgs.fontHeight * formatArgs.layoutScale.y) *
-			(numNewlines + 1);
+			formatArgs.fontHeight * formatArgs.layoutScale.y *
+			static_cast<float>(numNewlines + 1);
 	}
 
 	formatArgs.start.x = GetFormatArgsStartX(textRenderable, formatArgs, cacheComponent.cache);
@@ -142,14 +142,14 @@ float GetScaleToFitFactor(std::string_view text,
 						  const std::vector<GlyphCacheData>& cache,
 						  const FormatArgs& formatArgs)
 {
-	int currentPos = 0;
-	int longestRowWidth = 0;
+	size_t currentPos = 0;
+	float longestRowWidth = 0;
 	for (int i = 0; i <= formatArgs.numNewlines; i++)
 	{
 		size_t newlinePos = text.find_first_of('\n', currentPos);
 		newlinePos = std::min(newlinePos, text.size());
 
-		int rowWidth = CalculateGlyphRowWidth(cache, currentPos,
+		float rowWidth = CalculateGlyphRowWidth(cache, currentPos,
 			newlinePos, formatArgs.layoutScale.x);
 
 		longestRowWidth = std::max(longestRowWidth, rowWidth);
@@ -157,8 +157,8 @@ float GetScaleToFitFactor(std::string_view text,
 		currentPos = newlinePos + 1;
 	}
 
-	return std::min(formatArgs.bounds.w / static_cast<float>(longestRowWidth),
-					formatArgs.bounds.h / static_cast<float>(formatArgs.totalHeight));
+	return std::min(formatArgs.bounds.w / longestRowWidth,
+					formatArgs.bounds.h / formatArgs.totalHeight);
 }
 
 SDL_FRect ComputeGlyphDataBoundingBox(const std::vector<GlyphCacheData>& cache)
@@ -168,10 +168,10 @@ SDL_FRect ComputeGlyphDataBoundingBox(const std::vector<GlyphCacheData>& cache)
 		return { 0.0f, 0.0f, 0.0f, 0.0f };
 	}
 
-	int minX = std::numeric_limits<int>::max();
-	int minY = std::numeric_limits<int>::max();
-	int maxX = std::numeric_limits<int>::lowest();
-	int maxY = std::numeric_limits<int>::lowest();
+	float minX = std::numeric_limits<float>::max();
+	float minY = std::numeric_limits<float>::max();
+	float maxX = std::numeric_limits<float>::lowest();
+	float maxY = std::numeric_limits<float>::lowest();
 
 	for (const auto& data : cache)
 	{
@@ -182,10 +182,10 @@ SDL_FRect ComputeGlyphDataBoundingBox(const std::vector<GlyphCacheData>& cache)
 	}
 
 	return SDL_FRect{
-		static_cast<float>(minX),
-		static_cast<float>(minY),
-		static_cast<float>(maxX - minX),
-		static_cast<float>(maxY - minY)
+		minX,
+		minY,
+		maxX - minX,
+		maxY - minY
 	};
 }
 

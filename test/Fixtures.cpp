@@ -110,9 +110,15 @@ Result<bool> SceneFixture::UpdateSDLInputs()
 	assert(systems_.IsSystemRegistered<SDLInputSystem>());
 	auto& inputSys = systems_.GetSystem<SDLInputSystem>();
 
-	return inputSys.Update(GetDeltaTime(), eventBus_, textureRepo_, GetRenderer());
+	bool cont = inputSys.Update(GetDeltaTime(), eventBus_, textureRepo_, GetRenderer());
+	if (!cont)
+	{
+		return false;
+	}
 
 	systems_.RunSystemUpdates(Phase::Input, GetDeltaTime());
+
+	return true;
 }
 
 Result<Void> SceneFixture::UpdatePhysics()

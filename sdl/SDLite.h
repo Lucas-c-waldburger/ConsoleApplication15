@@ -298,7 +298,7 @@ namespace SDLite
 			return winStatus;
 		}
 
-		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
 		const auto& rendStatus = App::app_->renderer_.Init(App::app_->window_);
 		if (!rendStatus.Good())

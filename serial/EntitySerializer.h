@@ -1,6 +1,5 @@
 #pragma once
 #include "user_types/ComponentJsonUserType.h"
-#include "physics/PhysicsSerialization.h"
 #include "../atlas/NewTextureRepository.h"
 
 struct SpriteSerializerContext 

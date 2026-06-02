@@ -15,8 +15,8 @@ class GlyphCacheHandler
 {
 public:
 	static void UpdateGlyphCache(const FontAtlasTexture& glyphAtlas,
-								 TextRenderableComponent& textRenderable,
-								 TextRenderableGlyphCache& glyphCache, 
+						  TextRenderableComponent& textRenderable,
+						  TextRenderableGlyphCache& glyphCache, 
 								 const Transform& transform);
 
 	static void RepopulateGlyphCacheGlyphs(std::string_view text,

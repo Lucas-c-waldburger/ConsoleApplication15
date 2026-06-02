@@ -51,9 +51,8 @@ SpriteAtlasTexture::Create(SDL_Renderer* renderer, size_t size)
     return atlas;
 }
 
-Result<SpriteInfo> SpriteAtlasTexture::LoadSprite(SDL_Renderer* renderer,
-											     const SpriteDescriptor& descriptor,
-                                                 bool& atlasFull)
+Result<SpriteAtlasTexture::SpriteLoadOutcome> 
+SpriteAtlasTexture::LoadSprite(SDL_Renderer* renderer, const SpriteDescriptor& descriptor)
 {
     if (!IsLoaded())
     {
@@ -79,6 +78,10 @@ Result<SpriteInfo> SpriteAtlasTexture::LoadSprite(SDL_Renderer* renderer,
         return MAKE_ERROR_FMT("Invalid surface dimensions: ({}, {})",
             spriteSurface->w, spriteSurface->h);
     }
+    if (spriteSurface->w > GetTextureSize() || spriteSurface->h > GetTextureSize())
+    {
+		return SpriteLoadOutcome{ .code = SpriteLoadOutcome::SpriteTooLarge };
+	}
 
     AtlasPlot plot{ .rotation = 0.0f };
 
@@ -86,9 +89,7 @@ Result<SpriteInfo> SpriteAtlasTexture::LoadSprite(SDL_Renderer* renderer,
         rbp::MaxRectsBinPack::RectBestAreaFit);
     if (!WasRectPacked(packed))
     {
-        atlasFull = true;
-
-        return SpriteInfo{};
+        return SpriteLoadOutcome{ .code = SpriteLoadOutcome::AtlasFull };
     }
 
     plot.rect = RbpToSDLRect(packed);
@@ -104,9 +105,12 @@ Result<SpriteInfo> SpriteAtlasTexture::LoadSprite(SDL_Renderer* renderer,
         return MAKE_ERROR(SDL_GetError());
     }
 
-    return SpriteInfo{
-        .atlasId = GetAtlasID(),
-        .plot = plot
+    return SpriteLoadOutcome{
+		.code = SpriteLoadOutcome::Success,
+        .spriteInfo = {
+            .atlasId = GetAtlasID(),
+            .plot = plot
+        }
     };
 }
 
@@ -214,6 +218,21 @@ size_t SpriteAtlas::GetTextureSize() const
     return textureSize_;
 }
 
+void SpriteAtlas::SetTextureSize(size_t size)
+{
+    textureSize_ = size;
+}
+
+auto SpriteAtlas::GetTextureGrowthPolicy() const -> TextureGrowthPolicy
+{
+    return growthPolicy_;
+}
+
+void SpriteAtlas::SetTextureGrowthPolicy(TextureGrowthPolicy policy)
+{
+    growthPolicy_ = policy;
+}
+
 Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
 										   SpriteDescriptor&& descriptor)
 {
@@ -237,17 +256,28 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
 
     assert(!spriteAtlasTextures_.empty());
 
-    SpriteInfo newSpriteInfo{};
-    bool atlasFull = false;
-   
+    using Outcome = SpriteAtlasTexture::SpriteLoadOutcome;
+    Outcome loadOutcome{};
+	size_t originalTextureSize = textureSize_;
     do 
     {
-        atlasFull = false;
-
-        TRY_ASSIGN(newSpriteInfo, spriteAtlasTextures_.back().LoadSprite(
-            renderer, descriptor, atlasFull));
-
-        if (atlasFull)
+        TRY_ASSIGN(loadOutcome, spriteAtlasTextures_.back().LoadSprite(renderer, descriptor));
+        
+        if (loadOutcome.code == Outcome::SpriteTooLarge)
+        {
+            if (growthPolicy_ == TextureGrowthPolicy::FixedSize ||
+                textureSize_ >= TextureAtlas::kMaxAtlasSize)
+            {
+                return MAKE_ERROR_FMT("Sprite '{}' was too large to fit in atlas texture",
+                    descriptor.filepath);
+			}
+            else
+            {
+				textureSize_ = std::min(textureSize_ * 2, TextureAtlas::kMaxAtlasSize);
+				loadOutcome.code = Outcome::AtlasFull;
+            }
+		}
+        if (loadOutcome.code == Outcome::AtlasFull)
         {
             TRY_ASSIGN(spriteAtlasTextures_.emplace_back(),
                 SpriteAtlasTexture::Create(renderer, textureSize_));
@@ -259,15 +289,18 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
             SDL_SetRenderTarget(renderer, newAtlas.GetSourceTexture());
         }
 
-    } while (atlasFull);
+    } while (loadOutcome.code != Outcome::Success);
 
+    textureSize_ = originalTextureSize;
+
+    auto& newSpriteInfo = loadOutcome.spriteInfo;
     newSpriteInfo.spriteName = std::move(descriptor.spriteName);
     newSpriteInfo.filepath = std::move(descriptor.filepath);
 
     size_t spriteIdx = spriteInfo_.PushBack(std::move(newSpriteInfo));
     spriteNameIndices_.emplace(hashedSpriteName, spriteIdx);
 
-    const auto plot = spriteInfo_.GetView<&SpriteInfo::plot>(spriteIdx);
+    const auto& plot = spriteInfo_.GetView<&SpriteInfo::plot>(spriteIdx);
     assert(plot.rect.w > 0 && plot.rect.h > 0);
 
     const auto resourceHandle = Handle<TextureResource>::Create(
