@@ -31,7 +31,7 @@ template <typename...Ts> requires (Hashable<Ts> && ...)
 inline constexpr size_t MakeHash(const Ts&...args)
 {
     size_t hash = 0;
-    ((HashCombine(hash, std::hash<Ts>(args))), ...);
+    ((HashCombine(hash, std::hash<std::remove_cvref_t<Ts>>{}(args))), ...);
 
     return hash;
 }

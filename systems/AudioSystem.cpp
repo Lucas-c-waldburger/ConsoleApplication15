@@ -251,7 +251,7 @@ void AudioSystem::EntityDestroyed(Entity& entity)
 	assert(status == AudioStatus::Stopping || status == AudioStatus::Stopped);
 }
 
-void AudioSystem::SetAudioBank(AudioBank&& bank)
+void AudioSystem::CleanupForNewAudioBank()
 {
 	auto entities = ECS::GetAllEntitiesWithAny<
 		NewAudioRequest, AudioUpdateRequest, ActiveAudio>();
@@ -265,10 +265,30 @@ void AudioSystem::SetAudioBank(AudioBank&& bank)
 
 	audioManager_.ClearChannels();
 	audioManager_.ClearStage();
+}
+
+void AudioSystem::SetAudioBank(AudioBank&& bank)
+{
+	CleanupForNewAudioBank();
 
 	audioBank_ = std::move(bank);
 }
 
+void AudioSystem::SetAudioBank(AudioBank2&& bank)
+{
+	CleanupForNewAudioBank();
+
+	audioBank2_ = std::move(bank);
+}
+
+AudioBank2&& AudioSystem::SwapAudioBanks(AudioBank2&& newBank)
+{
+	CleanupForNewAudioBank();
+
+	std::swap(audioBank2_, newBank);
+
+	return std::move(newBank);
+}
 
 //auto impl = [this]<typename T>(Entity & entity, auto* getResourceMemFn)
 //{

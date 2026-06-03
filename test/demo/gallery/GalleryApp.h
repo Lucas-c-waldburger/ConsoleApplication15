@@ -4,7 +4,8 @@
 
 namespace test {
 
-static constexpr std::string_view kGalleryTestPath = R"(D:\New folder)";
+static constexpr std::string_view kGalleryTestPath = 
+R"(C:\Users\Lucas\source\repos\ConsoleApplication15\resources\sprites\girl\idle)";
 
 Result<Void> RunGalleryDemo(SceneFixture::SharedPtr& fixture)
 {

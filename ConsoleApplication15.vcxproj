@@ -163,6 +163,7 @@
     <ClCompile Include="atlas\SpriteAtlasCollection.cpp" />
     <ClCompile Include="atlas\TextureObserverSignal.cpp" />
     <ClCompile Include="audio\AudioBank.cpp" />
+    <ClCompile Include="audio\AudioBank2.cpp" />
     <ClCompile Include="audio\AudioManager.cpp" />
     <ClCompile Include="callbacks\StateTransitionCallback.cpp" />
     <ClCompile Include="components\builder\ColliderComponentBuilder.cpp" />
@@ -311,6 +312,7 @@
     <ClInclude Include="atlas\TextureResourceHandle.h" />
     <ClInclude Include="atlas\TextureObserverSignal.h" />
     <ClInclude Include="audio\AudioBank.h" />
+    <ClInclude Include="audio\AudioBank2.h" />
     <ClInclude Include="audio\AudioHandle.h" />
     <ClInclude Include="audio\AudioCommon.h" />
     <ClInclude Include="audio\AudioInstance.h" />

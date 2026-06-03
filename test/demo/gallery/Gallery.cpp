@@ -20,25 +20,7 @@ constexpr bool PressedOrHeld(const events::GameControllerInput& ev)
 	return ev.input.state == InputState::Pressed || ev.input.state == InputState::Held;
 }
 
-auto MakeTriggerRotationCallback(Camera& cam, bool rotateRight)
-{
-	return [&cam, rotateRight](const events::GameControllerInput& ev)
-	{
-		if (!PressedOrHeld(ev))
-		{
-			return;
-		}
-
-		const float triggerNorm = static_cast<float>(ev.input.value.trigger) /
-								  static_cast<float>(GameController::kAxisMax);
-
-		const float rotationIncrement = triggerNorm * kMaxCameraRotationIncrement;
-
-		cam.SetRotation(cam.GetRotation() + (rotateRight ? rotationIncrement : -rotationIncrement));
-	};
-}
-
-auto MakeLStickZoomCallback(Camera& cam)
+auto MakeRStickRotationCallback(Camera& cam)
 {
 	return [&cam](const events::GameControllerInput& ev)
 	{
@@ -47,15 +29,33 @@ auto MakeLStickZoomCallback(Camera& cam)
 			return;
 		}
 
-		const float axisNorm = static_cast<float>(ev.input.value.axis.y) /
-							   static_cast<float>(GameController::kAxisMax);
-		const float zoomIncrement = axisNorm * 0.07f;
+		float axisX = static_cast<float>(ev.input.value.axis.x);
+		const float axisNorm = axisX / static_cast<float>(GameController::kAxisMax);
 
-		cam.SetZoomScale(std::max(0.1f, cam.GetZoomScale() + zoomIncrement));
+		const float rotationIncrement = axisNorm * kMaxCameraRotationIncrement;
+
+		cam.SetRotation(cam.GetRotation() + rotationIncrement);
 	};
 }
 
-auto MakeRStickMoveCallback()
+auto MakeTriggerZoomCallback(Camera& cam, bool zoomIn)
+{
+	return [&cam, zoomIn](const events::GameControllerInput& ev)
+	{
+		if (!PressedOrHeld(ev))
+		{
+			return;
+		}
+
+		const float triggerNorm = static_cast<float>(ev.input.value.trigger) /
+								  static_cast<float>(GameController::kAxisMax);
+		const float zoomIncrement = triggerNorm * 0.07f;
+
+		cam.SetZoomScale(std::max(0.1f, cam.GetZoomScale() + (zoomIn ? zoomIncrement : -zoomIncrement)));
+	};
+}
+
+auto MakeLStickMoveCallback()
 {
 	return [](const events::GameControllerInput& ev, Transform& tf)
 	{
@@ -107,10 +107,10 @@ Result<Void> Gallery::Init(Camera& cam, TextureRepository& repo, SDL_Renderer* r
 	});
 
 	using Src = GameControllerInputSource;
-	evs.OnInput(Src::LeftTrigger, MakeTriggerRotationCallback(cam, false));
-	evs.OnInput(Src::RightTrigger, MakeTriggerRotationCallback(cam, true));
-	evs.OnInput(Src::LeftStickAxis, MakeLStickZoomCallback(cam));
-	evs.OnInput(Src::RightStickAxis, MakeRStickMoveCallback());
+	evs.OnInput(Src::RightStickAxis, MakeRStickRotationCallback(cam));
+	evs.OnInput(Src::RightTrigger, MakeTriggerZoomCallback(cam, true));
+	evs.OnInput(Src::LeftTrigger, MakeTriggerZoomCallback(cam, false));
+	evs.OnInput(Src::LeftStickAxis, MakeLStickMoveCallback());
 
 	//TRY(LoadGalleryPictures(repo, renderer, pictureDir));
 
