@@ -1,14 +1,19 @@
 #include "SerializationSystem.h"
 #include "../serial/TextureRepositorySerializer.h"
+#include "../serial/AudioBankSerializer.h"
 #include "../serial/EntitySerializer.h"
 #include "../serial/EntityDeserializer.h"
 #include <ranges>
 
 Result<Void>
-SerializationSystem::SerializeState(const Filepaths& filepaths, const TextureRepository& textureRepo)
+SerializationSystem::SerializeState(const Filepaths& filepaths, const TextureRepository& textureRepo,
+									const AudioBank& audioBank)
 {
 	TRY(TextureRepositorySerializer::Serialize(filepaths.texturesPath, textureRepo));
-	TRY(EntitySerializer{ textureRepo }.SerializeEntities(filepaths.entitiesPath));
+	TRY(AudioBankSerializer::Serialize(filepaths.audioPath, audioBank));
+
+	auto entSerializer = EntitySerializer{ textureRepo, audioBank };
+	TRY(entSerializer.SerializeEntities(filepaths.entitiesPath));
 
 	return kVoid;
 }
@@ -16,14 +21,16 @@ SerializationSystem::SerializeState(const Filepaths& filepaths, const TextureRep
 std::vector<Error>
 SerializationSystem::DeserializeState(const Filepaths& filepaths, B2World& world,
 									  TextureRepository& textureRepo, SDLInputSystem& inputSystem,
-									  SDL_Renderer* renderer)
+									  AudioBank& audioBank, SDL_Renderer* renderer)
 {
-	auto repoErrors = TextureRepositorySerializer::Deserialize(
+	auto textureErrors = TextureRepositorySerializer::Deserialize(
 		filepaths.texturesPath, textureRepo, renderer);
-	auto entityErrors = EntityDeserializer{ world, textureRepo, inputSystem }
+	auto audioErrors = AudioBankSerializer::Deserialize(
+		filepaths.audioPath, audioBank);
+	auto entityErrors = EntityDeserializer{ world, textureRepo, inputSystem, audioBank }
 		.DeserializeEntities(filepaths.entitiesPath);
 
-	const size_t totalErrorCount = repoErrors.size() + entityErrors.size();
+	const size_t totalErrorCount = textureErrors.size() + audioErrors.size() + entityErrors.size();
 	if (totalErrorCount == 0)
 	{
 		return {};
@@ -31,7 +38,8 @@ SerializationSystem::DeserializeState(const Filepaths& filepaths, B2World& world
 
 	std::vector<Error> allErrors{};
 	allErrors.reserve(totalErrorCount);
-	allErrors.append_range(std::move(repoErrors));
+	allErrors.append_range(std::move(textureErrors));
+	allErrors.append_range(std::move(audioErrors));
 	allErrors.append_range(std::move(entityErrors));
 
 	return allErrors;

@@ -245,52 +245,12 @@ AudioManager::GetInstanceAudioSettings(const AudioInstanceID& instanceId) const
         return (channelIdx == kMusicChannelIndex)
             ? GetStagedAudioSettings(instanceId, stage_.stagedMusic)
             : GetStagedAudioSettings(instanceId, stage_.stagedSounds[channelIdx]);
-
-        //if (channelIdx == kMusicChannelIndex)
-        //{
-        //    auto& [musicWaiting, musicOnDeck] = stage_.stagedMusic;
-
-        //    auto& matchingSlot = (musicWaiting.instance.id == instanceId)
-        //        ? musicWaiting : musicOnDeck;
-
-        //    assert(matchingSlot.instance.id == instanceId);
-
-        //    return matchingSlot.settings;
-        //}
-        //else
-        //{
-        //    auto& [soundWaiting, soundOnDeck] = stage_.stagedSounds[channelIdx];
-
-        //    auto& matchingSlot = (soundWaiting.instance.id == instanceId)
-        //        ? soundWaiting : soundOnDeck;
-
-        //    assert(matchingSlot.instance.id == instanceId);
-
-        //    return matchingSlot.settings;
-        //}
     }
 
     // not staged, should be in a channel
     return (channelIdx == kMusicChannelIndex)
         ? GetChannelAudioSettings(instanceId, channels_.musicChannel)
         : GetChannelAudioSettings(instanceId, channels_.soundChannels[channelIdx]);
-
-    //if (channelIdx == kMusicChannelIndex)
-    //{
-    //    auto& [musicChannel, musicSettings] = channels_.musicChannel;
-
-    //    assert(musicChannel.GetActiveAudioInstance().id == instanceId);
-
-    //    return musicSettings;
-    //}
-    //else
-    //{
-    //    auto& [soundChannel, soundSettings] = channels_.soundChannels[channelIdx];
-
-    //    assert(soundChannel.GetActiveSoundInstance().id == instanceId);
-
-    //    return soundSettings;
-    //}
 }
 
 void AudioManager::UpdateAudioSettings(const AudioInstanceID& instanceId,
@@ -720,6 +680,10 @@ void AudioManager::UpdateMusicChannel()
             std::swap(musicWaiting, musicOnDeck);
         }
     }
+
+    // update track pos
+    musicChannelSettings.trackPosition =
+        static_cast<float>(musicChannel.GetTrackPositionSec());
 }
 
 void AudioManager::UpdateSoundChannels()
@@ -801,4 +765,14 @@ void AudioManager::UpdateSoundChannels()
     }
 }
 
+const MusicChannel& AudioManager::GetMusicChannel() const
+{
+    return channels_.musicChannel.first;
+}
 
+const SoundChannel& AudioManager::GetSoundChannel(size_t channelIdx) const
+{
+    assert(channelIdx < MIX_CHANNELS);
+
+    return channels_.soundChannels[channelIdx].first;
+}

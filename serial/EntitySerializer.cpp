@@ -54,6 +54,32 @@ void to_json(BasicJson& j, const TextSerializerContext& ctx)
 	to_json(profileJ, rend.profile);
 }
 
+template <typename BasicJson>
+void to_json(BasicJson& j, const AudioSerializerContext& ctx)
+{
+	if (!ctx.entity.HasComponent<ActiveAudio>())
+	{
+		return;
+	}
+
+	const auto& activeAudio = ctx.entity.GetComponent<ActiveAudio>();
+
+	auto& activeAudioJ = j["ActiveAudio"];
+
+	auto& nameJ = activeAudioJ["name"];
+	auto& settingsJ = activeAudioJ["settings"];
+
+	const auto op = ctx.audioBank.GetAudioInfo<&AudioInfo::name>
+											  (activeAudio.audioHandle);
+	if (op.has_value())
+	{
+		const auto& [nm] = *op;
+		nameJ = nm;
+	}
+
+	to_json(settingsJ, activeAudio.settings);
+}
+
 namespace {
 
 auto GetSerializeComponentLambda(nlohmann::json& entityJ, const Entity& e)
@@ -109,6 +135,7 @@ void EntitySerializer::UpdateContexts(const Entity& e)
 {
 	spriteContext_.entity = e;
 	textContext_.entity = e;
+	audioContext_.entity = e;
 }
 
 void EntitySerializer::SerializeBasicComponents(nlohmann::json& entityJ, const Entity& e)
@@ -131,4 +158,5 @@ void EntitySerializer::SerializeContextComponents(nlohmann::json& entityJ)
 {
 	to_json(entityJ, spriteContext_);
 	to_json(entityJ, textContext_);
+	to_json(entityJ, audioContext_);
 }

@@ -11,6 +11,7 @@
 #include "../../../serial/EntitySerializer.h"
 #include "../../../serial/EntityDeserializer.h"
 #include "../../../serial/TextureRepositorySerializer.h"
+#include "../../../serial/AudioBankSerializer.h"
 
 // TODO : Fix since new texture repository
 namespace {
@@ -205,7 +206,8 @@ TEST_CASE("Entity Serialization", "[serial]")
 	phys.AddColliderCircle(33.0f);
 
 	// serialize entities
-	EntitySerializer eSerializer{ scene->GetTextureRepository() };
+	EntitySerializer eSerializer{ scene->GetTextureRepository(), 
+		scene->GetSystem<AudioSystem>().GetAudioBank() };
 	auto eSerializeResult = eSerializer.SerializeEntities(entitiesPath);
 	CHECK(eSerializeResult.Success());
 	} //
@@ -237,7 +239,8 @@ TEST_CASE("Entity Serialization", "[serial]")
 
 	// deserialize entities
 	auto eErrors = EntityDeserializer{ 
-		scene->GetWorld(), scene->GetTextureRepository(), scene->GetSystem<SDLInputSystem>() 
+		scene->GetWorld(), scene->GetTextureRepository(), scene->GetSystem<SDLInputSystem>(),
+		scene->GetSystem<AudioSystem>().GetAudioBank()
 	}.DeserializeEntities(entitiesPath);
 
 	if (!eErrors.empty())

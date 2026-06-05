@@ -204,6 +204,64 @@ Camera& SceneFixture::GetCamera()
 	return systems_.GetSystem<CameraSystem>().GetCamera();
 }
 
+Result<Void> SceneFixture::SerializeState(SerializationSystem::Filepaths fps)
+{
+	if (fps.texturesPath.empty())
+	{
+		TRY_ASSIGN(fps.texturesPath, ResourcePath::Json("persistence/textures.json"));
+	}
+	if (fps.audioPath.empty())
+	{
+		TRY_ASSIGN(fps.audioPath, ResourcePath::Json("persistence/audio.json"));
+	}
+	if (fps.entitiesPath.empty())
+	{
+		TRY_ASSIGN(fps.entitiesPath, ResourcePath::Json("persistence/entities.json"));
+	}
+
+	assert(systems_.IsSystemRegistered<SerializationSystem>());
+	assert(systems_.IsSystemRegistered<AudioSystem>());
+
+	systems_.GetSystem<SerializationSystem>().SerializeState(
+		fps, textureRepo_, systems_.GetSystem<AudioSystem>().GetAudioBank());
+
+	return kVoid;
+}
+
+Result<std::vector<Error>> SceneFixture::DeserializeState(SerializationSystem::Filepaths fps)
+{
+	if (fps.texturesPath.empty())
+	{
+		TRY_ASSIGN(fps.texturesPath, ResourcePath::Json("persistence/textures.json"));
+	}
+	if (fps.audioPath.empty())
+	{
+		TRY_ASSIGN(fps.audioPath, ResourcePath::Json("persistence/audio.json"));
+	}
+	if (fps.entitiesPath.empty())
+	{
+		TRY_ASSIGN(fps.entitiesPath, ResourcePath::Json("persistence/entities.json"));
+	}
+
+	assert(systems_.IsSystemRegistered<SerializationSystem>());
+	assert(systems_.IsSystemRegistered<SDLInputSystem>());
+	assert(systems_.IsSystemRegistered<AudioSystem>());
+
+	auto activeEntities = ECS::GetAllActiveEntities();
+	for (auto& entity : activeEntities)
+	{
+		if (!entity.GetRelations().IsChild())
+		{
+			entity.Destroy();
+		}
+	}
+
+	return systems_.GetSystem<SerializationSystem>().DeserializeState(
+		fps, world_, textureRepo_, systems_.GetSystem<SDLInputSystem>(),
+		systems_.GetSystem<AudioSystem>().GetAudioBank(), GetRenderer()
+	);
+}
+
 Result<Void> SceneFixture::RenderScene()
 {
 #if IMGUI_ENABLED

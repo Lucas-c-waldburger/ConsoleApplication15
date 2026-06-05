@@ -2,7 +2,6 @@
 #include "../ecs/Ecs.h"
 #include <cassert>
 
-
 inline void AudioSystem::HandleAudioUpdateRequests()
 {
 	auto entities = ECS::GetAllEntitiesWith<AudioUpdateRequest>();

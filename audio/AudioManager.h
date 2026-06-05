@@ -56,6 +56,9 @@ public:
 
     bool AudioInstanceValid(const AudioInstanceID& instanceId) const;
 
+    const MusicChannel& GetMusicChannel() const;
+    const SoundChannel& GetSoundChannel(size_t channelIdx) const;
+
 private:
     using AudioInstanceLog = std::unordered_map<AudioInstanceID, 
                                                 InstanceChannelAndStatus>;

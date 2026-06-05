@@ -1,7 +1,18 @@
 #include "AudioBank.h"
+#include <filesystem>
 
 Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
 {
+    if (!std::filesystem::exists(desc.filepath))
+    {
+        return MAKE_ERROR_FMT("Invalid filepath: '{}'", desc.filepath);
+    }
+
+    if (desc.name.empty())
+    {
+        desc.name = std::filesystem::path(desc.filepath).stem().string();
+    }
+
     if (nameToInfoIdx_.contains(desc.name))
     {
 		return MAKE_ERROR_FMT("Audio with name '{}' already exists in the bank", desc.name);
@@ -59,6 +70,19 @@ Result<SoundInstanceResource> AudioBank::GetSoundInstanceResouce(const Handle<Au
 Result<MusicInstanceResource> AudioBank::GetMusicInstanceResource(const Handle<Audio>& handle)
 {
     return GetAudioInstanceDataInternal<Mix_Music>(handle);
+}
+
+Handle<Audio> AudioBank::GetAudio(std::string_view name) const
+{
+    auto it = nameToInfoIdx_.find(name);
+    if (it == nameToInfoIdx_.end())
+    {
+        return {};
+    }
+
+    assert(it->second < audioInfo_.Size());
+
+    return Handle<Audio>::Create(audioBankInstanceId_, it->second);
 }
 
 std::vector<AudioDescriptor> AudioBank::ExportAudioDescriptors() const

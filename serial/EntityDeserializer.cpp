@@ -441,6 +441,73 @@ void from_json(const BasicJson& j, GameControllerDeserializerContext& ctx)
 	}
 }
 
+template <typename BasicJson>
+void from_json(const BasicJson& j, AudioDeserializerContext& ctx)
+{
+	if (!j.contains("ActiveAudio"))
+	{
+		return;
+	}
+
+	auto& activeAudioJ = j.at("ActiveAudio");
+
+	if (!activeAudioJ.contains("name"))
+	{
+		ctx.errors.emplace_back(
+			MAKE_ERROR("ActiveAudio JSON must contain 'name' field")
+		);
+		return;
+	}
+
+	std::string audioName;
+	try
+	{
+		from_json(activeAudioJ.at("name"), audioName);
+	}
+	catch (const nlohmann::json::exception& err)
+	{
+		ctx.errors.emplace_back(
+			MAKE_ERROR_FMT("Error parsing name field for ActiveAudio: {}", err.what())
+		);
+		return;
+	}
+
+	const auto audioHandle = ctx.audioBank.GetAudio(audioName);
+	if (!audioHandle.IsValid())
+	{
+		return;
+	}
+
+	AudioChannelSettings settings{};
+
+	if (!activeAudioJ.contains("settings"))
+	{
+		ctx.errors.emplace_back(
+			MAKE_ERROR("ActiveAudio JSON did not contain 'settings' field. Using default")
+		);
+		return;
+	}
+	else
+	{
+		try
+		{
+			from_json(activeAudioJ.at("settings"), settings);
+		}
+		catch (const nlohmann::json::exception& err)
+		{
+			ctx.errors.emplace_back(
+				MAKE_ERROR_FMT("Error parsing settings field for ActiveAudio: {}", err.what())
+			);
+			return;
+		}
+	}
+
+	ctx.entity.AddComponent(NewAudioRequest{
+		.audioHandle = audioHandle,
+		.settings = std::move(settings)
+	});
+}
+
 namespace {
 
 auto GetDeserializeComponentLambda(const nlohmann::json& entityJ, Entity& e, EntityPassKey key)
@@ -478,6 +545,7 @@ void EntityDeserializer::UpdateContexts(Entity& e)
 	spriteContext_.entity = e;
 	textContext_.entity = e;
 	gameControllerContext_.entity = e;
+	audioContext_.entity = e;
 }
 
 void EntityDeserializer::DeserializeContextComponents(const nlohmann::json& entityJ)
@@ -487,6 +555,7 @@ void EntityDeserializer::DeserializeContextComponents(const nlohmann::json& enti
 	from_json(entityJ, spriteContext_);
 	from_json(entityJ, textContext_);
 	from_json(entityJ, gameControllerContext_);
+	from_json(entityJ, audioContext_);
 }
 
 void EntityDeserializer::DeserializeBasicComponents(const nlohmann::json& entityJ, Entity& e)

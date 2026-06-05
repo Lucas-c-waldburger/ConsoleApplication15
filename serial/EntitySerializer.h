@@ -1,6 +1,7 @@
 #pragma once
 #include "user_types/ComponentJsonUserType.h"
 #include "../atlas/NewTextureRepository.h"
+#include "../audio/AudioBank.h"
 
 struct SpriteSerializerContext 
 {
@@ -14,12 +15,19 @@ struct TextSerializerContext
 	const FontAtlas& fontAtlas;
 };
 
+struct AudioSerializerContext
+{
+	Entity entity;
+	const AudioBank& audioBank;
+};
+
 class EntitySerializer : EntityFullAccessPrivelage
 {
 public:
-	EntitySerializer(const TextureRepository& repo) : 
+	EntitySerializer(const TextureRepository& repo, const AudioBank& bank) : 
 		spriteContext_({ .spriteAtlas = repo.GetSpriteAtlas() }),
-		textContext_({ .fontAtlas = repo.GetFontAtlas() })
+		textContext_({ .fontAtlas = repo.GetFontAtlas() }),
+		audioContext_({ .audioBank = bank })
 	{}
 
 	Result<Void> SerializeEntities(const std::string& jsonFilepath);
@@ -32,5 +40,6 @@ private:
 
 	SpriteSerializerContext spriteContext_;
 	TextSerializerContext textContext_;
+	AudioSerializerContext audioContext_;
 	Error serializationError_;
 };

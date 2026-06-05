@@ -1,6 +1,7 @@
 #pragma once
 #include "user_types/ComponentJsonUserType.h"
 #include "../systems/SDLInputSystem.h"
+#include "../audio/AudioBank.h"
 #include "SerializationConcepts.h"
 
 struct DeserializerContext
@@ -13,7 +14,7 @@ struct DeserializerContext
 
 template <typename T>
 concept SomeDeserializerContext =
-std::derived_from<T, DeserializerContext> && HasFromJson<T>;
+	std::derived_from<T, DeserializerContext> && HasFromJson<T>;
 
 struct PhysicsDeserializerContext : DeserializerContext
 {
@@ -67,15 +68,25 @@ struct GameControllerDeserializerContext : DeserializerContext
 	const GameControllerEventHandler& gameControllerHandler;
 };
 
+struct AudioDeserializerContext : DeserializerContext
+{
+	AudioDeserializerContext(std::vector<Error>& errs, const AudioBank& bank)
+		: DeserializerContext(errs), audioBank(bank) {}
+
+	const AudioBank& audioBank;
+};
+
 class EntityDeserializer : EntityFullAccessPrivelage
 {
 public:
-	EntityDeserializer(B2World& world, const TextureRepository& repo, const SDLInputSystem& inpSys) : 
+	EntityDeserializer(B2World& world, const TextureRepository& repo, const SDLInputSystem& inpSys,
+					   const AudioBank& bank) : 
 		relationContext_(deserializationErrors_, GetEntityPassKey()),
 		physicsContext_(deserializationErrors_, world),
 		spriteContext_(deserializationErrors_, repo.GetSpriteAtlas()),
 		textContext_(deserializationErrors_, repo.GetFontAtlas()),
-		gameControllerContext_(deserializationErrors_, inpSys.GetGameControllerEventHandler()) {}
+		gameControllerContext_(deserializationErrors_, inpSys.GetGameControllerEventHandler()),
+		audioContext_(deserializationErrors_, bank) {}
 
 	std::vector<Error> DeserializeEntities(const std::string& jsonFilepath);
 
@@ -94,5 +105,6 @@ private:
 	SpriteDeserializerContext spriteContext_;
 	TextDeserializerContext textContext_;
 	GameControllerDeserializerContext gameControllerContext_;
+	AudioDeserializerContext audioContext_;
 	std::vector<Error> deserializationErrors_;
 };

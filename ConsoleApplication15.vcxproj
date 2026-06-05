@@ -198,6 +198,7 @@
     <ClCompile Include="render\RenderBatchHandler.cpp" />
     <ClCompile Include="render\TextFormatExpressionParser.cpp" />
     <ClCompile Include="sdl\SDLContext.cpp" />
+    <ClCompile Include="serial\AudioBankSerializer.cpp" />
     <ClCompile Include="serial\EntityDeserializer.cpp" />
     <ClCompile Include="serial\EntitySerializer.cpp" />
     <ClCompile Include="serial\TextureRepositorySerializer.cpp" />
@@ -489,6 +490,7 @@
     <ClInclude Include="games\bullet_heaven\Updates.h" />
     <ClInclude Include="games\bullet_heaven\Weapon.h" />
     <ClInclude Include="render\TextFormatExpressionParser.h" />
+    <ClInclude Include="serial\AudioBankSerializer.h" />
     <ClInclude Include="serial\EntityDeserializer.h" />
     <ClInclude Include="serial\EntitySerializer.h" />
     <ClInclude Include="serial\TextureRepositorySerializer.h" />
@@ -1105,6 +1107,9 @@
     <None Include="deps\imgui-master\examples\libs\emscripten\shell_minimal.html" />
     <None Include="resources\audio\music\greenpath.ogg" />
     <None Include="resources\audio\sounds\bell_hit.flac" />
+    <None Include="resources\json\persistence\audio.json" />
+    <None Include="resources\json\persistence\entities.json" />
+    <None Include="resources\json\persistence\textures.json" />
     <None Include="resources\scripts\game_controller_test.lua" />
     <None Include="resources\scripts\sprite_render_test.lua" />
     <None Include="resources\scripts\test_physics.lua" />

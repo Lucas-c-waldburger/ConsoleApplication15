@@ -38,6 +38,8 @@ public:
     AudioBank(AudioBank&&) = default;
 	AudioBank& operator=(AudioBank&&) = default;
 
+    Handle<Audio> GetAudio(std::string_view name) const;
+
 	Result<Handle<Audio>> LoadAudio(AudioDescriptor&& desc);
 	bool HasAudio(std::string_view name) const;
 
