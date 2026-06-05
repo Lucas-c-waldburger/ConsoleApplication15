@@ -1,11 +1,11 @@
 #pragma once
 #include "Handle.h"
 
-struct Audio2;
+struct Audio;
 struct SpoofStruct;
 
 template <typename T>
-concept SomeResourceType = (std::same_as<T, Audio2> || std::same_as<T, SpoofStruct>);
+concept SomeResourceType = (std::same_as<T, Audio> || std::same_as<T, SpoofStruct>);
 
 template <typename T>
 class Handle;

@@ -1,7 +1,7 @@
 #pragma once
 #include "System.h"
 #include "../audio/AudioManager.h"
-#include "../audio/AudioBank2.h"
+#include "../audio/AudioBank.h"
 
 class Entity;
 
@@ -13,10 +13,9 @@ public:
 	void EntityDestroyed(Entity& entity);
 
 	void SetAudioBank(AudioBank&& bank);
-	void SetAudioBank(AudioBank2&& bank);
-	AudioBank2& GetAudioBank() { return audioBank2_; }
-	const AudioBank2& GetAudioBank() const { return audioBank2_; }
-	AudioBank2&& SwapAudioBank(AudioBank2&& newBank);
+	AudioBank& GetAudioBank() { return audioBank_; }
+	const AudioBank& GetAudioBank() const { return audioBank_; }
+	AudioBank&& SwapAudioBank(AudioBank&& newBank);
 
 private:
 	void HandleAudioUpdateRequests();
@@ -28,6 +27,5 @@ private:
 	Result<Void> CheckActiveAudioAndUpdateRequestConsistency(const Entity& entity);
 
 	AudioBank audioBank_;
-	AudioBank2 audioBank2_;
 	AudioManager audioManager_;
 };

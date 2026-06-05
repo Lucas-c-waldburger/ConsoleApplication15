@@ -2,10 +2,14 @@
 
 Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
 {
-    auto impl = [this, &desc]
-    (auto& ptrContainer, auto& ptrMakerFunc) -> Result<Handle<Audio>>
+    if (nameToInfoIdx_.contains(desc.name))
     {
-        size_t newIdx = ptrContainer.size();
+		return MAKE_ERROR_FMT("Audio with name '{}' already exists in the bank", desc.name);
+    }
+
+    auto impl = [this, &desc](auto& ptrContainer, auto& ptrMakerFunc) 
+    -> Result<Handle<Audio>> {
+        size_t newStorageIdx = ptrContainer.size();
 
         auto newPtr = ptrMakerFunc(desc.filepath);
         if (!newPtr)
@@ -15,11 +19,18 @@ Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
 
         ptrContainer.emplace_back(std::move(newPtr));
 
-        Handle<Audio> newHandle = Handle<Audio>::Create(desc.audioType);
+        auto [_, inserted] = nameToInfoIdx_.try_emplace(desc.name, newStorageIdx);
+        assert(inserted);
 
-        indexedDescriptors_.emplace(newHandle,
-            std::make_pair(std::move(desc), newIdx)
-        );
+        const size_t newResourceIdx = audioInfo_.PushBack({
+            .audioType = desc.audioType,
+            .name = std::move(desc.name),
+			.filepath = std::move(desc.filepath),
+            .storageIndex = newStorageIdx
+		});
+
+        Handle<Audio> newHandle = 
+            Handle<Audio>::Create(audioBankInstanceId_, newResourceIdx);
 
         return newHandle;
     };
@@ -35,27 +46,9 @@ Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
     }
 }
 
-bool AudioBank::HasAudio(const Handle<Audio>& handle) const
+bool AudioBank::HasAudio(std::string_view name) const
 {
-    auto it = indexedDescriptors_.find(handle);
-    if (it != indexedDescriptors_.end())
-    {
-        const size_t idx = it->second.second;
-
-        switch (it->second.first.audioType)
-        {
-        case AudioType::Sound:
-            assert(idx < sounds_.size());
-            return sounds_[idx] != nullptr;
-        case AudioType::Music:
-            assert(idx < music_.size());
-            return music_[idx] != nullptr;
-        case AudioType::Unknown: default:
-            return false;
-        }
-    }
-
-    return false;
+    return nameToInfoIdx_.contains(name);
 }
 
 Result<SoundInstanceResource> AudioBank::GetSoundInstanceResouce(const Handle<Audio>& handle)
@@ -68,8 +61,21 @@ Result<MusicInstanceResource> AudioBank::GetMusicInstanceResource(const Handle<A
     return GetAudioInstanceDataInternal<Mix_Music>(handle);
 }
 
-AudioDescriptor* AudioBank::GetAudioDescriptor(const Handle<Audio>& handle)
+std::vector<AudioDescriptor> AudioBank::ExportAudioDescriptors() const
 {
-    auto it = indexedDescriptors_.find(handle);
-    return (it != indexedDescriptors_.end()) ? &it->second.first : nullptr;
-}
+    std::vector<AudioDescriptor> descriptors;
+    descriptors.reserve(audioInfo_.Size());
+    
+    for (const auto& [type, nm, fp] : audioInfo_.ForEach<&AudioInfo::audioType, 
+                                                         &AudioInfo::name, 
+                                                         &AudioInfo::filepath>())
+    {
+        descriptors.emplace_back(AudioDescriptor{
+            .audioType = type,
+            .name = nm,
+            .filepath = fp
+        });
+	}
+
+	return descriptors; 
+ }

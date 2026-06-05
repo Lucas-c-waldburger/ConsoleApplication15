@@ -41,6 +41,8 @@ Result<Void> SceneFixture::RunGameLoopMs(int ms)
 		{
 			break;
 		}
+
+		elapsed += GetDeltaTime();
 	}
 
 	return Void{};

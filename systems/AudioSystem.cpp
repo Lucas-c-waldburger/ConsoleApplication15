@@ -44,7 +44,19 @@ void AudioSystem::HandleNewAudioRequests()
 	{
 		auto& newRequest = entity.GetComponent<NewAudioRequest>();
 
-		switch (newRequest.audioHandle.GetAudioType())
+		auto audioTypeOp = 
+			audioBank_.GetAudioInfo<&AudioInfo::audioType>(newRequest.audioHandle);
+		if (!audioTypeOp.has_value())
+		{
+			LOG_ERROR("Failed to get audio type for handle");
+
+			entity.RemoveComponent<NewAudioRequest>();
+
+			continue;
+		}
+
+		auto [audioType] = *audioTypeOp;
+		switch (audioType)
 		{
 		case AudioType::Sound:
 		{
@@ -267,6 +279,7 @@ void AudioSystem::CleanupForNewAudioBank()
 	audioManager_.ClearStage();
 }
 
+
 void AudioSystem::SetAudioBank(AudioBank&& bank)
 {
 	CleanupForNewAudioBank();
@@ -274,18 +287,11 @@ void AudioSystem::SetAudioBank(AudioBank&& bank)
 	audioBank_ = std::move(bank);
 }
 
-void AudioSystem::SetAudioBank(AudioBank2&& bank)
+AudioBank&& AudioSystem::SwapAudioBank(AudioBank&& newBank)
 {
 	CleanupForNewAudioBank();
 
-	audioBank2_ = std::move(bank);
-}
-
-AudioBank2&& AudioSystem::SwapAudioBank(AudioBank2&& newBank)
-{
-	CleanupForNewAudioBank();
-
-	std::swap(audioBank2_, newBank);
+	std::swap(audioBank_, newBank);
 
 	return std::move(newBank);
 }

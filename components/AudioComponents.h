@@ -1,7 +1,8 @@
 #pragma once
 #include <optional>
 #include "BaseComponent.h"
-#include "../audio/AudioHandle.h"
+//#include "../audio/AudioHandle.h"
+#include "../core/ResourceHandle.h"
 #include "../audio/AudioSettings.h"
 #include "../audio/AudioInstance.h"
 

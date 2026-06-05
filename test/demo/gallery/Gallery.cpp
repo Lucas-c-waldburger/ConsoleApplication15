@@ -2,7 +2,7 @@
 #include "../../../ecs/EntityEvents.h"
 #include "../../../inputs/controller/GameController.h"
 #include "../../../file/FilePathUtility.h"
-#include "../../../audio/AudioBank2.h"
+#include "../../../audio/AudioBank.h"
 #include <filesystem>
 #include <format>
 #include <random>
@@ -72,11 +72,11 @@ Result<Void> Gallery::Init(Camera& cam, TextureRepository& repo, SDL_Renderer* r
 {
 	assert(renderer);
 
-	Handle<Audio2> h;
-	f(h);
+	//Handle<Audio2> h;
+	//f(h);
 
-	AudioBank2 bank{};
-	auto v = bank.GetAudioInfo<&AudioInfo::audioType>("test_music");
+	//AudioBank2 bank{};
+	//auto v = bank.GetAudioInfo<&AudioInfo::audioType>("test_music");
 
 	camEntity_ = ECS::CreateEntity();
 

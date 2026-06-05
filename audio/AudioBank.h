@@ -3,68 +3,133 @@
 #include <vector>
 #include <cassert>
 #include "../core/Result.h"
-#include "AudioHandle.h"
+#include "../core/ResourceHandle.h"
 #include "AudioInstance.h"
 #include "AudioDescriptor.h"
+#include "../core/StableSOA.h"
+#include "../core/Dictionary.h"
+
+struct AudioInfo
+{
+    AudioType audioType = AudioType::Sound;
+    std::string name;
+    std::string filepath;
+    size_t storageIndex = std::numeric_limits<size_t>::max();
+};
+
+using AudioInfoSOA = StableSOA<
+    AudioInfo,
+	&AudioInfo::audioType,
+	&AudioInfo::name,
+	&AudioInfo::filepath,
+    &AudioInfo::storageIndex
+>;
 
 class AudioBank
 {
 public:
-    Result<Handle<Audio>> LoadAudio(AudioDescriptor&& desc);
+  friend class AudioSystem;
 
-    bool HasAudio(const Handle<Audio>& handle) const;
+	AudioBank() : audioBankInstanceId_(audioBankInstanceIdCounter_++) {}
+	~AudioBank() = default;
 
+	AudioBank(const AudioBank&) = delete;
+	AudioBank& operator=(const AudioBank&) = delete;
+    AudioBank(AudioBank&&) = default;
+	AudioBank& operator=(AudioBank&&) = default;
+
+	Result<Handle<Audio>> LoadAudio(AudioDescriptor&& desc);
+	bool HasAudio(std::string_view name) const;
+
+    template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+    auto GetAudioInfo(const Handle<Audio>& handle) const
+    {
+		const size_t resourceIdx = (handle.GetSourceId() == audioBankInstanceId_) 
+            ? handle.GetResourceIndex() 
+			: std::numeric_limits<size_t>::max();
+
+        return GetAudioInfoImpl<MemberPtrs...>(resourceIdx);
+    }
+
+    template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+    auto GetAudioInfo(std::string_view name) const
+    {
+		auto it = nameToInfoIdx_.find(name);
+
+		return GetAudioInfoImpl<MemberPtrs...>(it != nameToInfoIdx_.end() 
+            ? it->second 
+            : std::numeric_limits<size_t>::max());
+    }
+
+	std::vector<AudioDescriptor> ExportAudioDescriptors() const;
+
+private:
     Result<SoundInstanceResource> GetSoundInstanceResouce(const Handle<Audio>& handle);
     Result<MusicInstanceResource> GetMusicInstanceResource(const Handle<Audio>& handle);
 
-    AudioDescriptor* GetAudioDescriptor(const Handle<Audio>& handle);
-
-private:
-    template <typename T> requires (std::same_as<T, Mix_Chunk> || 
+    template <typename T> requires (std::same_as<T, Mix_Chunk> ||
                                     std::same_as<T, Mix_Music>)
     Result<AudioInstanceResource<T>> GetAudioInstanceDataInternal(const Handle<Audio>& handle);
 
-    using DescriptorMap = std::unordered_map<Handle<Audio>,
-        std::pair<AudioDescriptor, size_t>>;
+    template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+    auto GetAudioInfoImpl(size_t resourceIdx) const
+    {
+		using Ret = decltype(audioInfo_.TryGetView<MemberPtrs...>(0));
 
-    DescriptorMap indexedDescriptors_;
+        if (resourceIdx >= audioInfo_.Size())
+        {
+            return Ret{ std::nullopt };
+        }
+
+        const auto& cInfo = audioInfo_;
+        return cInfo.TryGetView<MemberPtrs...>(resourceIdx);
+    }
+
+	static inline uint32_t audioBankInstanceIdCounter_ = 0;
+
+    uint32_t audioBankInstanceId_ = 0;
+
     std::vector<SoundPtr> sounds_;
     std::vector<MusicPtr> music_;
+    UnorderedDictionary<size_t> nameToInfoIdx_;
+    AudioInfoSOA audioInfo_;
 };
 
-
-template <typename T> requires (std::same_as<T, Mix_Chunk> || 
+template <typename T> requires (std::same_as<T, Mix_Chunk> ||
                                 std::same_as<T, Mix_Music>)
-inline Result<AudioInstanceResource<T>> 
+inline Result<AudioInstanceResource<T>>
 AudioBank::GetAudioInstanceDataInternal(const Handle<Audio>& handle)
 {
-    if (!handle.IsValid())
+    if (handle.GetSourceId() != audioBankInstanceId_)
     {
-        return MAKE_ERROR("Audio handle was invalid");
-    }
+        return MAKE_ERROR("Audio handle did not belong to this audio bank instance");
+	}
 
-    auto it = indexedDescriptors_.find(handle);
-    if (it == indexedDescriptors_.end())
+    const size_t resourceIdx = handle.GetResourceIndex();
+    if (resourceIdx >= audioInfo_.Size())
     {
-        return MAKE_ERROR("Audio handle not found in sound bank");
-    }
+        return MAKE_ERROR("Audio handle's resource index was out of range");
+	};
 
-    const size_t idx = it->second.second;
+	const auto& [audioType, storageIdx] = 
+        audioInfo_.GetView<&AudioInfo::audioType, &AudioInfo::storageIndex>(resourceIdx);
 
-    auto makeInstanceData = [&]
-    (auto& ptrContainer, AudioType expectedType) -> Result<AudioInstanceResource<T>>
-    {
-        if (handle.GetAudioType() != expectedType)
+    auto makeInstanceData = [&](auto& ptrContainer, AudioType expectedType) 
+    -> Result<AudioInstanceResource<T>> {
+        if (audioType != expectedType)
         {
             return MAKE_ERROR("Audio handle did not have expected audio type");
         }
-        if (idx >= ptrContainer.size())
+        if (storageIdx >= ptrContainer.size())
         {
-            return MAKE_ERROR("Mapped index for audio ptr out of range");
+            return MAKE_ERROR("Storage index out of range");
         }
 
+		auto* audioPtr = ptrContainer[storageIdx].get();
+        assert(audioPtr);
+
         return AudioInstanceResource<T>{
-            .audioPtr = ptrContainer[idx].get(),
+            .audioPtr = audioPtr,
             .id = AudioInstanceID::Create()
         };
     };
