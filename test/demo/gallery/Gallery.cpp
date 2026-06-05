@@ -2,6 +2,7 @@
 #include "../../../ecs/EntityEvents.h"
 #include "../../../inputs/controller/GameController.h"
 #include "../../../file/FilePathUtility.h"
+#include "../../../audio/AudioBank2.h"
 #include <filesystem>
 #include <format>
 #include <random>
@@ -15,6 +16,8 @@ constexpr float kMaxCameraPanIncrement = 15.0f;
 
 constexpr float kPictureSpacing = 10.0f;
 
+constexpr InputState kPressedOrHeld = (InputState::Pressed | InputState::Held);
+
 constexpr bool PressedOrHeld(const events::GameControllerInput& ev)
 {
 	return ev.input.state == InputState::Pressed || ev.input.state == InputState::Held;
@@ -24,11 +27,6 @@ auto MakeRStickRotationCallback(Camera& cam)
 {
 	return [&cam](const events::GameControllerInput& ev)
 	{
-		if (!PressedOrHeld(ev))
-		{
-			return;
-		}
-
 		float axisX = static_cast<float>(ev.input.value.axis.x);
 		const float axisNorm = axisX / static_cast<float>(GameController::kAxisMax);
 
@@ -42,11 +40,6 @@ auto MakeTriggerZoomCallback(Camera& cam, bool zoomIn)
 {
 	return [&cam, zoomIn](const events::GameControllerInput& ev)
 	{
-		if (!PressedOrHeld(ev))
-		{
-			return;
-		}
-
 		const float triggerNorm = static_cast<float>(ev.input.value.trigger) /
 								  static_cast<float>(GameController::kAxisMax);
 		const float zoomIncrement = triggerNorm * 0.07f;
@@ -59,11 +52,6 @@ auto MakeLStickMoveCallback()
 {
 	return [](const events::GameControllerInput& ev, Transform& tf)
 	{
-		if (!PressedOrHeld(ev))
-		{
-			return;
-		}
-
 		const float axisNormX = static_cast<float>(ev.input.value.axis.x) /
 								static_cast<float>(GameController::kAxisMax);
 		const float axisNormY = static_cast<float>(ev.input.value.axis.y) /
@@ -83,6 +71,12 @@ Result<Void> Gallery::Init(Camera& cam, TextureRepository& repo, SDL_Renderer* r
 						   EventBus& bus, std::string_view pictureDir)
 {
 	assert(renderer);
+
+	Handle<Audio2> h;
+	f(h);
+
+	AudioBank2 bank{};
+	auto v = bank.GetAudioInfo<&AudioInfo::audioType>("test_music");
 
 	camEntity_ = ECS::CreateEntity();
 
@@ -107,10 +101,10 @@ Result<Void> Gallery::Init(Camera& cam, TextureRepository& repo, SDL_Renderer* r
 	});
 
 	using Src = GameControllerInputSource;
-	evs.OnInput(Src::RightStickAxis, MakeRStickRotationCallback(cam));
-	evs.OnInput(Src::RightTrigger, MakeTriggerZoomCallback(cam, true));
-	evs.OnInput(Src::LeftTrigger, MakeTriggerZoomCallback(cam, false));
-	evs.OnInput(Src::LeftStickAxis, MakeLStickMoveCallback());
+	evs.OnInput(Src::RightStickAxis, kPressedOrHeld, MakeRStickRotationCallback(cam));
+	evs.OnInput(Src::RightTrigger, kPressedOrHeld, MakeTriggerZoomCallback(cam, true));
+	evs.OnInput(Src::LeftTrigger, kPressedOrHeld, MakeTriggerZoomCallback(cam, false));
+	evs.OnInput(Src::LeftStickAxis, kPressedOrHeld, MakeLStickMoveCallback());
 
 	//TRY(LoadGalleryPictures(repo, renderer, pictureDir));
 
@@ -125,33 +119,28 @@ Result<Void> Gallery::Init(Camera& cam, TextureRepository& repo, SDL_Renderer* r
 	}));
 
 	cameraState_.camera = &cam;
-	auto& zoomE = overlayEntities_.zoomTextEntity = ECS::CreateEntity();
-	assert(zoomE.IsValid());
-	zoomE.AddComponent(Transform{ .position = { 20.0f, 20.0f } });
-	zoomE.AddComponent(TextRenderableComponent{
-		.writer = GlyphTextWriter{ .resourceHandle = fontHandle, .text = "Zoom: 1.00" },
-		.formatting = {
-			.scaleToBounds = false
-		},
-		.profile = {
-			.mods = { .color = { 255, 255, 255 }, .alpha = 255},
-			.isOverlay = true
-		}
-	});
 
-	auto& rotE = overlayEntities_.rotationTextEntity = ECS::CreateEntity();
-	assert(rotE.IsValid());
-	rotE.AddComponent(Transform{ .position = { 20.0f, 50.0f } });
-	rotE.AddComponent(TextRenderableComponent{
-		.writer = GlyphTextWriter{ .resourceHandle = fontHandle, .text = "Rotation: 0.00" },
-		.formatting = {
-			.scaleToBounds = false
-		},
-		.profile = {
-			.mods = { .color = { 255, 255, 255 }, .alpha = 255},
-			.isOverlay = true
-		}
-	});
+	auto makeOverlayEntity = [&](SDL_FPoint pos, std::string_view defaultTxt) {
+		auto e = ECS::CreateEntity();
+		assert(e.IsValid());
+		e.AddComponent(Transform{ .position = pos });
+		e.AddComponent(TextRenderableComponent{
+			.writer = GlyphTextWriter{.resourceHandle = fontHandle, .text = std::string{defaultTxt} },
+			.formatting = {
+				.scaleToBounds = false
+			},
+			.profile = {
+				.mods = {.color = { 255, 255, 255 }, .alpha = 255},
+				.isOverlay = true
+			}
+			});
+
+		return e;
+		};
+
+	overlayEntities_.positionTextEntity = makeOverlayEntity({ 20.0f, 20.0f }, "Position: (0.00, 0.00)");
+	overlayEntities_.rotationTextEntity = makeOverlayEntity({ 20.0f, 50.0f }, "Rotation: 0.00");
+	overlayEntities_.zoomTextEntity = makeOverlayEntity({ 20.0f, 80.0f }, "Zoom: 1.00");
 
 	return kVoid;
 }
@@ -165,6 +154,7 @@ void Gallery::Update(float)
 
 	const float newZoom = cameraState_.camera->GetZoomScale();
 	const float newRot = cameraState_.camera->GetRotation();
+	const SDL_FPoint newPos = cameraState_.camera->GetPosition();
 
 	if (newZoom != cameraState_.lastZoom)
 	{
@@ -184,6 +174,17 @@ void Gallery::Update(float)
 			auto& text = 
 				overlayEntities_.rotationTextEntity.GetComponent<TextRenderableComponent>().writer.text;
 			text = std::format("Rotation: {:.2f}", newRot);
+		}
+	}
+	if (!EqualsWithTolerance(newPos.x, cameraState_.lastPosition.x) ||
+		!EqualsWithTolerance(newPos.y, cameraState_.lastPosition.y))
+	{
+		cameraState_.lastPosition = newPos;
+		if (overlayEntities_.positionTextEntity.IsValid())
+		{
+			auto& text = 
+				overlayEntities_.positionTextEntity.GetComponent<TextRenderableComponent>().writer.text;
+			text = std::format("Position: ({:.2f}, {:.2f})", newPos.x, newPos.y);
 		}
 	}
 }
@@ -252,9 +253,14 @@ Result<Void> Gallery::LoadGalleryText(const Handle<TextureResource>& fontHandle,
 	std::mt19937 gen(rd());
 	std::uniform_int_distribution<int> posDistrib(-500, 1000);
 	std::uniform_int_distribution<int> clrDistrib(0, 255);
+	std::uniform_int_distribution<int> rotDistrib(0, 360);
 
 	auto getPos = [&posDistrib, &gen]() {
 		return SDL_FPoint{ static_cast<float>(posDistrib(gen)), static_cast<float>(posDistrib(gen)) };
+	};
+
+	auto getRot = [&rotDistrib, &gen]() {
+		return static_cast<float>(rotDistrib(gen));
 	};
 
 	for (auto&& word : words)
@@ -262,7 +268,7 @@ Result<Void> Gallery::LoadGalleryText(const Handle<TextureResource>& fontHandle,
 		auto& e = textEntities_.emplace_back(ECS::CreateEntity());
 		assert(e.IsValid());
 
-		e.AddComponent(Transform{ .position = getPos() });
+		e.AddComponent(Transform{ .position = getPos(), .rotation = getRot() });
 		e.AddComponent(TextRenderableComponent{
 			.writer = GlyphTextWriter{ .resourceHandle = fontHandle, .text = std::move(word) },
 			.formatting = {

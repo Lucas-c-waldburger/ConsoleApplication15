@@ -81,6 +81,7 @@
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -102,6 +103,7 @@
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -123,6 +125,7 @@
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,6 +147,7 @@
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -313,10 +317,13 @@
     <ClInclude Include="atlas\TextureObserverSignal.h" />
     <ClInclude Include="audio\AudioBank.h" />
     <ClInclude Include="audio\AudioBank2.h" />
+    <ClInclude Include="audio\AudioDescriptor.h" />
+    <ClInclude Include="audio\AudioEnums.h" />
     <ClInclude Include="audio\AudioHandle.h" />
     <ClInclude Include="audio\AudioCommon.h" />
     <ClInclude Include="audio\AudioInstance.h" />
     <ClInclude Include="audio\AudioManager.h" />
+    <ClInclude Include="audio\AudioPtrs.h" />
     <ClInclude Include="audio\AudioSettings.h" />
     <ClInclude Include="audio\AudioStage.h" />
     <ClInclude Include="audio\MusicChannel.h" />
@@ -389,6 +396,7 @@
     <ClInclude Include="core\ErrorCode.h" />
     <ClInclude Include="core\Hash.h" />
     <ClInclude Include="core\MacroUtils.h" />
+    <ClInclude Include="core\ResourceHandle.h" />
     <ClInclude Include="core\SOAConcepts.h" />
     <ClInclude Include="core\SOAInterface.h" />
     <ClInclude Include="core\StableSOA.h" />

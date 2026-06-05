@@ -16,7 +16,7 @@ public:
 	void SetAudioBank(AudioBank2&& bank);
 	AudioBank2& GetAudioBank() { return audioBank2_; }
 	const AudioBank2& GetAudioBank() const { return audioBank2_; }
-	AudioBank2&& SwapAudioBanks(AudioBank2&& newBank);
+	AudioBank2&& SwapAudioBank(AudioBank2&& newBank);
 
 private:
 	void HandleAudioUpdateRequests();

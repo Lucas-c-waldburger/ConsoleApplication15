@@ -3,11 +3,17 @@
 #include <vector>
 #include <cassert>
 #include "../core/Result.h"
-#include "AudioHandle.h"
+#include "../core/ResourceHandle.h"
 #include "AudioInstance.h"
-#include "AudioBank.h"
+#include "AudioDescriptor.h"
 #include "../core/StableSOA.h"
 #include "../core/Dictionary.h"
+
+inline uint32_t f(const Handle<Audio2>& handle)
+{
+	return handle.GetSourceId();
+}
+
 
 struct AudioInfo
 {
@@ -28,9 +34,9 @@ using AudioInfoSOA = StableSOA<
 class AudioBank2
 {
 public:
-    friend class AudioSystem;
+  friend class AudioSystem;
 
-	AudioBank2() : instanceId_(instanceIdCounter_++) {}
+	AudioBank2() : audioBankInstanceId_(audioBankInstanceIdCounter_++) {}
 	~AudioBank2() = default;
 
 	AudioBank2(const AudioBank2&) = delete;
@@ -44,7 +50,7 @@ public:
     template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
     auto GetAudioInfo(const Handle<Audio2>& handle) const
     {
-		const size_t resourceIdx = (handle.GetBankInstanceId() == instanceId_) 
+		const size_t resourceIdx = (handle.GetSourceId() == audioBankInstanceId_) 
             ? handle.GetResourceIndex() 
 			: std::numeric_limits<size_t>::max();
 
@@ -85,9 +91,9 @@ private:
         return cInfo.TryGetView<MemberPtrs...>(resourceIdx);
     }
 
-	static inline uint32_t instanceIdCounter_ = 0;
+	static inline uint32_t audioBankInstanceIdCounter_ = 0;
 
-    uint32_t instanceId_ = 0;
+    uint32_t audioBankInstanceId_ = 0;
 
     std::vector<SoundPtr> sounds_;
     std::vector<MusicPtr> music_;
@@ -100,7 +106,7 @@ template <typename T> requires (std::same_as<T, Mix_Chunk> ||
 inline Result<AudioInstanceResource<T>>
 AudioBank2::GetAudioInstanceDataInternal(const Handle<Audio2>& handle)
 {
-    if (handle.GetBankInstanceId() != instanceId_)
+    if (handle.GetSourceId() != audioBankInstanceId_)
     {
         return MAKE_ERROR("Audio handle did not belong to this audio bank instance");
 	}

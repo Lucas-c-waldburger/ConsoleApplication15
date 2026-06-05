@@ -1,35 +1,10 @@
 #pragma once
-#include "../core/Handle.h"
+#include "AudioEnums.h"
+#include "AudioPtrs.h"
 #include "../core/commonObjects.h"
 #include <SDL_mixer.h>
 #include <memory>
 #include <string>
-
-enum class AudioType
-{
-    Unknown,
-    Sound,
-    Music
-};
-
-enum class AudioPlayCommand
-{
-    None,
-    Pause,
-    Resume,
-    Restart,
-    Stop
-};
-
-enum class AudioStatus
-{
-    Playing,
-    Paused,
-    Stopping,
-    Stopped,
-    Staged
-};
-
 
 template <typename T>
 concept SomeMixType = std::same_as<T, Mix_Chunk> ||
@@ -49,22 +24,3 @@ struct AudioSpatialData
                lhs.panning == rhs.panning;
     }
 };
-
-using SoundPtr = std::unique_ptr<Mix_Chunk,
-    decltype([](Mix_Chunk* chunk) { if (chunk) { Mix_FreeChunk(chunk); } })>;
-
-inline SoundPtr MakeSoundPtr(const std::string& filepath)
-{
-    return SoundPtr{ Mix_LoadWAV(filepath.c_str()) };
-}
-
-using MusicPtr = std::unique_ptr < Mix_Music,
-    decltype([](Mix_Music* music) { if (music) { Mix_FreeMusic(music); } })>;
-
-inline MusicPtr MakeMusicPtr(const std::string& filepath)
-{
-    return MusicPtr{ Mix_LoadMUS(filepath.c_str()) };
-}
-
-template <typename T>
-concept SomeAudioPtr = std::same_as<T, SoundPtr> || std::same_as<T, MusicPtr>;

@@ -1,7 +1,7 @@
 #pragma once
 #include "Ecs.h"
 #include "../events/EventBus2.h"
-//#include "../user/UserEventBridge.h"
+#include "../inputs/InputState.h"
 #include "../core/FuncTraits.h"
 #include "../events/data/EntityEventConcept.h"
 
@@ -107,7 +107,7 @@ inline void ForwardTimerCallbackComponents(Fn&& fn, Entity& e)
 	return detail::get_components_helper<Tup>::call_for_timer(fn, e);
 }
 template <typename Tup, typename Fn>
-inline void ForwardEventCallbackComponents(Fn&& fn, const Entity& e)
+inline void ForwardTimerCallbackComponents(Fn&& fn, const Entity& e)
 {
 	return detail::get_components_helper<Tup>::call_for_timer(fn, e);
 }
@@ -229,6 +229,9 @@ public:
 	template <typename Src, typename Fn> requires valid_input_callback_sig_v<Src, Fn>
 	Result<Void> OnInput(Src src, Fn&& fn, FilterDef filterDef = {});
 
+	template <typename Src, typename Fn> requires valid_input_callback_sig_v<Src, Fn>
+	Result<Void> OnInput(Src src, InputState state, Fn&& fn, FilterDef filterDef = {});
+
 	template <typename Fn> requires valid_timer_event_callback_sig_v<Fn>
 	Result<Void> MakeTimer(float durationSec, Fn&& fn, int numRepeats = 0);
 
@@ -245,6 +248,12 @@ inline void RemoveTimerChild(Entity& ch)
 	{
 		ch.Destroy();
 	}
+}
+
+template <SomeInputEvent Ev>
+inline constexpr bool InputStateMatches(const Ev& ev, InputState state)
+{
+	return static_cast<bool>(ev.input.state & state);
 }
 
 template <HasEntityParticipants Ev>
@@ -401,7 +410,7 @@ inline void OnEventImpl(EventBus& bus, Entity& e, Fn&& fn,
 }
 
 template <typename Src, typename Fn> requires valid_input_callback_sig_v<Src, Fn>
-inline void OnInputImpl(EventBus& bus, Src src, Entity& e, Fn&& fn, 
+inline void OnInputImpl(EventBus& bus, Src src, InputState state, Entity& e, Fn&& fn, 
 						const EntityEvents::FilterDef& filterDef)
 {
 	using event_data_t =
@@ -412,8 +421,8 @@ inline void OnInputImpl(EventBus& bus, Src src, Entity& e, Fn&& fn,
 	if constexpr (ev_callback_sig<Fn>::with_event_data_only_v)
 	{
 		tks.emplace_back(bus.ConnectToInput(src,
-		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) {
-			if (IsEventRelevant(e, ev, def))
+		[e, st = state, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) {
+			if (IsEventRelevant(e, ev, def) && InputStateMatches(ev, st))
 			{
 				std::invoke(f, ev);
 			}
@@ -423,8 +432,8 @@ inline void OnInputImpl(EventBus& bus, Src src, Entity& e, Fn&& fn,
 					   ev_callback_sig<Fn>::with_const_entity_v)
 	{
 		tks.emplace_back(bus.ConnectToInput(src,
-		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
-			if (IsEventRelevant(e, ev, def))
+		[e, st = state, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
+			if (IsEventRelevant(e, ev, def) && InputStateMatches(ev, st))
 			{
 				auto relE = GetRelevantEntity(e, def);
 
@@ -438,8 +447,8 @@ inline void OnInputImpl(EventBus& bus, Src src, Entity& e, Fn&& fn,
 		using cmps = pop_front_t<remove_cvrefs_t<typename func_traits<Fn>::arg_types>>;
 
 		tks.emplace_back(bus.ConnectToInput(src,
-		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
-			if (IsEventRelevant(e, ev, def))
+		[e, st = state, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
+			if (IsEventRelevant(e, ev, def) && InputStateMatches(ev, st))
 			{
 				auto relE = GetRelevantEntity(e, def);
 
@@ -557,7 +566,26 @@ Result<Void> EntityEvents::OnInput(Src src, Fn&& fn, FilterDef filterDef)
 
 	ResolveFilterDefinition(entity_, fn, filterDef);
 
-	OnInputImpl(*bus_, src, entity_, std::forward<Fn>(fn), filterDef);
+	OnInputImpl(*bus_, src, InputState::AnyInput, entity_, std::forward<Fn>(fn), filterDef);
+
+	return kVoid;
+}
+
+template <typename Src, typename Fn> requires valid_input_callback_sig_v<Src, Fn>
+Result<Void> EntityEvents::OnInput(Src src, InputState state, Fn&& fn, FilterDef filterDef)
+{
+	if (!entity_.IsValid())
+	{
+		return MAKE_ERROR("Internal Entity was invalid");
+	}
+	if (!bus_)
+	{
+		return MAKE_ERROR("Internal EventBus was null");
+	}
+
+	ResolveFilterDefinition(entity_, fn, filterDef);
+
+	OnInputImpl(*bus_, src, state, entity_, std::forward<Fn>(fn), filterDef);
 
 	return kVoid;
 }

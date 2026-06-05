@@ -12,12 +12,14 @@ public:
 	{
 		float lastZoom = 1.0f;
 		float lastRotation = 0.0f;
+		SDL_FPoint lastPosition = { 0.0f, 0.0f };
 		Camera* camera = nullptr;
 	};
 	struct CameraOverlay
 	{
 		Entity zoomTextEntity;
 		Entity rotationTextEntity;
+		Entity positionTextEntity;
 	};
 
 	Result<Void> Init(Camera& cam, TextureRepository& repo, SDL_Renderer* renderer, 

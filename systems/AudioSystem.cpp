@@ -281,7 +281,7 @@ void AudioSystem::SetAudioBank(AudioBank2&& bank)
 	audioBank2_ = std::move(bank);
 }
 
-AudioBank2&& AudioSystem::SwapAudioBanks(AudioBank2&& newBank)
+AudioBank2&& AudioSystem::SwapAudioBank(AudioBank2&& newBank)
 {
 	CleanupForNewAudioBank();
 
@@ -289,59 +289,3 @@ AudioBank2&& AudioSystem::SwapAudioBanks(AudioBank2&& newBank)
 
 	return std::move(newBank);
 }
-
-//auto impl = [this]<typename T>(Entity & entity, auto* getResourceMemFn)
-//{
-//	auto& newRequest = entity.GetComponent<NewAudioRequest>();
-//
-//	auto instanceResult = (audioBank_.*getResourceMemFn)(newRequest.audioHandle);
-//	if (!instanceResult.Success())
-//	{
-//		LOG_ERROR(instanceResult.GetError());
-//
-//		break;
-//	}
-//
-//	assert(instanceResult.GetValue().audioPtr);
-//
-//	const AudioInstanceID instanceId = instanceResult.GetValue().id;
-//	assert(instanceId.IsValid());
-//
-//	AudioStageSlot<T> stageSlot{
-//		.instance = std::move(instanceResult.GetValue()),
-//		.settings = std::move(newRequest.settings),
-//		.force = newRequest.force
-//	};
-//
-//	auto [channelIdx, status] = audioManager_.StageAudio(std::move(stageSlot));
-//	if (channelIdx == AudioManager::kInvalidChannelIndex)
-//	{
-//		LOG_WARNING("Audio could not be staged");
-//
-//		break;
-//	}
-//
-//	assert(status == AudioStatus::Staged);
-//
-//	// successfully staged. check if this entity had active audio and stop/unstage it
-//	if (entity.HasComponent<ActiveAudio>())
-//	{
-//		auto& oldActiveAudio = entity.GetComponent<ActiveAudio>();
-//
-//		AudioStatus stopResultStatus =
-//			audioManager_.ExecuteAudioCommand(oldActiveAudio.instanceId,
-//				AudioPlayCommand::Stop);
-//
-//		assert((stopResultStatus == AudioStatus::Stopped &&
-//			oldActiveAudio.status == AudioStatus::Staged) ||
-//			(stopResultStatus == AudioStatus::Stopping &&
-//				oldActiveAudio.status != AudioStatus::Staged));
-//	}
-//
-//	// add active audio either adds new one or overwrites old one
-//	// (it's okay if the old active audio is stopping, 
-//	//  this only affects what the entity sees)
-//	auto& activeAudio = entity.AddComponent<ActiveAudio>(GetEntityPassKey());
-//	activeAudio.audioHandle = newRequest.audioHandle;
-//	activeAudio.instanceId = instanceId;
-//};

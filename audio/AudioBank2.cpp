@@ -29,7 +29,7 @@ Result<Handle<Audio2>> AudioBank2::LoadAudio(AudioDescriptor&& desc)
             .storageIndex = newStorageIdx
 		});
 
-        Handle<Audio2> newHandle = Handle<Audio2>::Create(instanceId_, newResourceIdx);
+        Handle<Audio2> newHandle = Handle<Audio2>::Create(audioBankInstanceId_, newResourceIdx);
 
         return newHandle;
     };

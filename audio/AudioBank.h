@@ -5,13 +5,7 @@
 #include "../core/Result.h"
 #include "AudioHandle.h"
 #include "AudioInstance.h"
-
-struct AudioDescriptor
-{
-    AudioType audioType = AudioType::Sound;
-    std::string name;
-    std::string filepath;
-};
+#include "AudioDescriptor.h"
 
 class AudioBank
 {
