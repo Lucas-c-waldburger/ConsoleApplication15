@@ -11,6 +11,7 @@
 #include "test/demo/PlatformerDemo.h"
 #include "test/demo/collider_maker/ColliderMakerApp.h"
 #include "test/demo/gallery/GalleryApp.h"
+#include "test/demo/audio_lounge/AudioLoungeApp.h"
 
 int main(int argc, char* argv[]) 
 {
@@ -215,6 +216,7 @@ int main(int argc, char* argv[])
     //auto runResult = test::RunPlatformerDemo(fixtureResult.GetValue());
     //auto runResult = test::RunColliderMaker(fixtureResult.GetValue());
     auto runResult = test::RunGalleryDemo(fixtureResult.GetValue());
+    //auto runResult = test::RunAudioLoungeApp(fixtureResult.GetValue());
     ASSERT_RESULT(runResult);
 
     fixtureResult.GetValue().reset();

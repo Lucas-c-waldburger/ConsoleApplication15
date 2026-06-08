@@ -80,6 +80,8 @@ public:
 	SceneConfiguration& GetConfiguration() { return config_; }
 	EventBus& GetEventBus() { return eventBus_; }
 	Camera& GetCamera();
+	AudioBank& GetAudioBank();
+
 	Result<Void> SerializeState(SerializationSystem::Filepaths fps = {});
 	Result<std::vector<Error>> DeserializeState(SerializationSystem::Filepaths fps = {});
 

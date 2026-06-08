@@ -267,6 +267,7 @@
     <ClCompile Include="test\catch\serial\SerializationTests.cpp" />
     <ClCompile Include="test\catch\systems\SpriteAnimationSystemTests.cpp" />
     <ClCompile Include="test\catch\systems\UserSystemSchedulerTests.cpp" />
+    <ClCompile Include="test\demo\audio_lounge\AudioLounge.cpp" />
     <ClCompile Include="test\demo\collider_maker\ColliderDrawSystem.cpp" />
     <ClCompile Include="test\demo\collider_maker\ColliderMaker.cpp" />
     <ClCompile Include="test\demo\collider_maker\ColliderMaker2.cpp" />
@@ -496,6 +497,8 @@
     <ClInclude Include="serial\TextureRepositorySerializer.h" />
     <ClInclude Include="serial\user_types\AudioJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\BitsetJsonUserTypes.h" />
+    <ClInclude Include="test\demo\audio_lounge\AudioLounge.h" />
+    <ClInclude Include="test\demo\audio_lounge\AudioLoungeApp.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMaker2.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMakerApp.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderDrawSystem.h" />
@@ -860,6 +863,24 @@
     <Image Include="..\..\..\Downloads\ezgif-split\knight_anim229.png" />
     <Image Include="..\..\..\Downloads\ezgif-split\knight_anim230.png" />
     <Image Include="..\..\..\Downloads\ezgif-split\knight_anim231.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_001.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_002.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_003.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_004.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_005.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_006.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_007.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_008.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_009.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_010.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_013.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_014.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_015.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_016.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_017.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_018.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_019.png" />
+    <Image Include="resources\sprites\cd_spin\cd_spin_020.png" />
     <Image Include="resources\sprites\crosshairs\Sight_64x64_001.png" />
     <Image Include="resources\sprites\crosshairs\Sight_64x64_002.png" />
     <Image Include="resources\sprites\crosshairs\Sight_64x64_003.png" />
@@ -1106,6 +1127,8 @@
   <ItemGroup>
     <None Include="deps\imgui-master\examples\libs\emscripten\shell_minimal.html" />
     <None Include="resources\audio\music\greenpath.ogg" />
+    <None Include="resources\audio\music\mr_blue_sky.ogg" />
+    <None Include="resources\audio\music\one_more_time.ogg" />
     <None Include="resources\audio\sounds\bell_hit.flac" />
     <None Include="resources\json\persistence\audio.json" />
     <None Include="resources\json\persistence\entities.json" />
@@ -1115,6 +1138,7 @@
     <None Include="resources\scripts\test_physics.lua" />
     <None Include="resources\scripts\text_render_test.lua" />
     <None Include="resources\sprites\particles\2d_lights_and_shadows_neutral_point_light.webp" />
+    <None Include="test\catch\test_json\audio.json" />
     <None Include="test\catch\test_json\entities.json" />
     <None Include="test\catch\test_json\textures.json" />
     <None Include="test\catch\test_json\user_components.json" />

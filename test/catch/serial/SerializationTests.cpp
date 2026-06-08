@@ -13,7 +13,6 @@
 #include "../../../serial/TextureRepositorySerializer.h"
 #include "../../../serial/AudioBankSerializer.h"
 
-// TODO : Fix since new texture repository
 namespace {
 
 static constexpr std::string_view kSprite1Name = "knight_walk_0";
@@ -67,6 +66,22 @@ Result<Void> LoadTestFonts(FontAtlas& fontAtlas)
 		FontDescriptor{ .filepath = fontPath1, .fontSize = 24 }));
 	TRY(fontAtlas.LoadFont(SDLite::Renderer(), 
 		FontDescriptor{ .filepath = fontPath2, .fontSize = 32 }));
+
+	return kVoid;
+}
+
+Result<Void> LoadTestAudio(AudioBank& audioBank)
+{
+	TRY(ResourcePath::Music("greenpath.ogg"), musicPath1);
+	TRY(ResourcePath::Music("futuristic_beat.mp3"), musicPath2);
+
+	TRY(ResourcePath::Sound("bell_hit.flac"), soundPath1);
+	TRY(ResourcePath::Sound("boss_stun.wav"), soundPath2);
+
+	TRY(audioBank.LoadAudio({ .filepath = musicPath1 }));
+	TRY(audioBank.LoadAudio({ .filepath = musicPath2 }));
+	TRY(audioBank.LoadAudio({ .filepath = soundPath1 }));
+	TRY(audioBank.LoadAudio({ .filepath = soundPath2 }));
 
 	return kVoid;
 }
@@ -141,6 +156,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RizzComponent, vec, arr)
 TEST_CASE("Entity Serialization", "[serial]")
 {
 	const auto texturesPath = MakeJsonTestPath("textures.json");
+	const auto audioPath    = MakeJsonTestPath("audio.json");
 	const auto entitiesPath = MakeJsonTestPath("entities.json");
 
 	{ // SERIALIZE
@@ -156,13 +172,41 @@ TEST_CASE("Entity Serialization", "[serial]")
 	auto fontLoadResult = LoadTestFonts(scene->GetTextureRepository().GetFontAtlas());
 	CHECK(fontLoadResult.Success());
 
+	auto loadAudioResult = LoadTestAudio(scene->GetAudioBank());
+	CHECK(loadAudioResult.Success());
+
 	// serialize textures
 	auto txSerializeResult = TextureRepositorySerializer::Serialize(
 		texturesPath, scene->GetTextureRepository()
 	);
 	CHECK(txSerializeResult.Success());
 
+	// serialize audio
+	auto audioSerializeResult = AudioBankSerializer::Serialize(
+		audioPath, scene->GetAudioBank()
+	);
+	CHECK(audioSerializeResult.Success());
+	
+	// set up entities
 	auto e = ECS::CreateEntity();
+
+	// do our audio request first to turn it into an ActiveAudio
+	auto musicHandle = scene->GetAudioBank().GetAudio("greenpath");
+	REQUIRE(musicHandle.IsValid());
+	e.AddComponent(NewAudioRequest{
+		.audioHandle = musicHandle,
+		.settings = {
+			.loopCount = 5,
+			.fadeMs = AudioFadeMs{.in = 15, .out = 8 },
+			.spatial = {
+				.angle = 45,
+				.distance = 70,
+				.panning = AudioSpatialData::Panning{.left = 20, .right = 30 }
+			}
+		}
+	});
+	scene->StepGameLoop(1);
+	REQUIRE(e.HasComponent<ActiveAudio>());
 
 	e.AddComponent(Transform{ .position = { 0.0f, 0.0f }, .rotation = 45.0f, .scale = { 2.0f, 5.0f } });
 	e.AddComponent(CameraTarget{ .offset = { 2.5f, -39.5f }, .followSpeed = 3.0f, .stopRadius = 1.0f});
@@ -237,6 +281,19 @@ TEST_CASE("Entity Serialization", "[serial]")
 
 	CHECK(txErrors.empty());
 
+	// deserialize audio
+	auto audioErrors = AudioBankSerializer::Deserialize(audioPath, scene->GetAudioBank());
+
+	if (!audioErrors.empty())
+	{
+		for (const auto& err : audioErrors)
+		{
+			WARN(err.GetMessage());
+		}
+	}
+
+	CHECK(audioErrors.empty());
+
 	// deserialize entities
 	auto eErrors = EntityDeserializer{ 
 		scene->GetWorld(), scene->GetTextureRepository(), scene->GetSystem<SDLInputSystem>(),
@@ -257,7 +314,7 @@ TEST_CASE("Entity Serialization", "[serial]")
 	REQUIRE(entities.size() == 1);	
 	auto& e = entities.front();
 
-	SECTION("Check Transform")
+	// Check Transform
 	{
 		REQUIRE(e.HasComponent<Transform>());
 		const auto& tf = e.GetComponent<Transform>();
@@ -268,7 +325,7 @@ TEST_CASE("Entity Serialization", "[serial]")
 		CHECK(EqualsWithTolerance(tf.scale.y, 5.0f));
 	}
 
-	SECTION("Check CameraTarget")
+	// Check CameraTarget
 	{
 		REQUIRE(e.HasComponent<CameraTarget>());
 		const auto& camTarget = e.GetComponent<CameraTarget>();
@@ -278,7 +335,7 @@ TEST_CASE("Entity Serialization", "[serial]")
 		CHECK(EqualsWithTolerance(camTarget.stopRadius, 1.0f));
 	}
 
-	SECTION("Check Tags")
+	// Check Tags
 	{
 		REQUIRE(e.HasComponent<Tags>());
 		const auto& tags = e.GetComponent<Tags>().tags;
@@ -287,14 +344,14 @@ TEST_CASE("Entity Serialization", "[serial]")
 		CHECK(tags.contains("Controllable"));
 	}
 	
-	SECTION("Check GameControllerState")
+	// Check GameControllerState
 	{
 		REQUIRE(e.HasComponent<GameControllerState>());
 		const auto& gcState = e.GetComponent<GameControllerState>();
 		CHECK(gcState.joystickID == -1);
 	}
 
-	SECTION("Check SpriteRenderableComponent")
+	// Check SpriteRenderableComponent
 	{
 		REQUIRE(e.HasComponent<SpriteRenderableComponent>());
 		const auto& spriteRenderable = e.GetComponent<SpriteRenderableComponent>();
@@ -317,7 +374,7 @@ TEST_CASE("Entity Serialization", "[serial]")
 		CHECK(spriteRenderable.profile.anchor.rotation == Anchor::Center);
 	}
 
-	SECTION("Check SpriteAnimationComponent")
+	// Check SpriteAnimationComponent
 	{
 		REQUIRE(e.HasComponent<SpriteAnimationComponent>());
 		const auto& anim = e.GetComponent<SpriteAnimationComponent>();
@@ -326,7 +383,7 @@ TEST_CASE("Entity Serialization", "[serial]")
 		CHECK(anim.spriteSeriesName == "girl_idle");
 	}
 
-	SECTION("Check RigidBody")
+	// Check RigidBody
 	{
 		REQUIRE(e.HasComponent<RigidBody>());
 		const auto& rb = e.GetComponent<RigidBody>();
@@ -337,7 +394,7 @@ TEST_CASE("Entity Serialization", "[serial]")
 		CHECK(EqualsWithTolerance(body.GetPosition().y, 25.0f));
 	}
 
-	SECTION("Check Collider")
+	// Check Collider
 	{
 		REQUIRE(e.HasComponent<Collider>());
 		const auto& collider = e.GetComponent<Collider>();
@@ -346,13 +403,13 @@ TEST_CASE("Entity Serialization", "[serial]")
 		CHECK(shape.GetShapeType() == B2Shape::Type::Polygon);
 	}
 
-	SECTION("Check Flags")
+	// Check Flags
 	{
 		CHECK_FALSE(e.ShouldProduceEvent<events::ContactCollisionBegin>());
 		CHECK_FALSE(e.GetComponentVisibility<CameraTarget>());
 	}
 
-	SECTION("Check Relations")
+	// Check Relations
 	{
 		auto rels = e.GetRelations();
 		REQUIRE(rels.HasChildren());
@@ -391,6 +448,27 @@ TEST_CASE("Entity Serialization", "[serial]")
 		const auto& parentBody = parentRb.body.GetData();
 
 		CHECK(parentBody.OwnsShape(shape.GetHandle()));
+	}
+
+	// Check Audio
+	{
+		REQUIRE(e.HasComponent<NewAudioRequest>());
+		const auto& newAudioReq = e.GetComponent<NewAudioRequest>();
+		
+		CHECK(newAudioReq.audioHandle.IsValid());
+		CHECK(scene->GetAudioBank().GetAudio("greenpath") == newAudioReq.audioHandle);
+		
+		const auto& sets = newAudioReq.settings;
+
+		CHECK(sets.loopCount == 5);
+		CHECK(sets.fadeMs.in == 15);
+		CHECK(sets.fadeMs.out == 8);
+		CHECK(sets.spatial.angle == 45);
+		CHECK(sets.spatial.distance == 70);
+
+		REQUIRE(sets.spatial.panning.has_value());
+		CHECK(sets.spatial.panning->left == 20);
+		CHECK(sets.spatial.panning->right == 30);
 	}
 	}
 }

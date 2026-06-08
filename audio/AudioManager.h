@@ -36,7 +36,7 @@ public:
 
     void ClearChannels();
     void ClearStage();
-    void UpdateChannels();
+    void UpdateChannels(float dt);
 
     InstanceChannelAndStatus
     GetAudioInstanceChannelAndStatus(const AudioInstanceID& instanceId) const;
@@ -70,7 +70,7 @@ private:
     InstanceChannelAndStatus StageSound(SoundStageSlot stageSlot);
 
     void UpdateMusicChannel();
-    void UpdateSoundChannels();
+    void UpdateSoundChannels(float dt);
 
     AudioInstanceLog instanceLog_;
     AudioChannels channels_;

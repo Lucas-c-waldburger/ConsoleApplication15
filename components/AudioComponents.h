@@ -9,7 +9,7 @@
 struct NewAudioRequest : BaseComponent<NewAudioRequest>
 {
 	Handle<Audio> audioHandle;
-	AudioChannelSettings settings = AudioChannelSettings::Default();
+	AudioChannelSettings settings;
 	uint8_t force = 0;
 };
 
@@ -17,7 +17,7 @@ struct AudioUpdateRequest : BaseComponent<AudioUpdateRequest>
 {
 	AudioInstanceID instanceId;
 	AudioPlayCommand command = AudioPlayCommand::None;
-	AudioUpdateSettings settings = AudioUpdateSettings::Default();
+	AudioUpdateSettings settings;
 	AudioSpatialData spatialData;
 };
 

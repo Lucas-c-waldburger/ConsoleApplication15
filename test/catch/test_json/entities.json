@@ -1,6 +1,25 @@
 {
     "entities": [
         {
+            "ActiveAudio": {
+                "name": "greenpath",
+                "settings": {
+                    "fadeMs": {
+                        "in": 15,
+                        "out": 8
+                    },
+                    "loopCount": 5,
+                    "spatial": {
+                        "angle": 45,
+                        "distance": 70,
+                        "panning": {
+                            "left": 20,
+                            "right": 30
+                        }
+                    },
+                    "volume": 64
+                }
+            },
             "CameraTarget": {
                 "followSpeed": 3.0,
                 "offset": {
@@ -11,8 +30,8 @@
             },
             "Children": {
                 "childEntityIds": [
-                    81604378624,
-                    81604378626
+                    4294967297,
+                    4294967298
                 ]
             },
             "Collider": {
@@ -164,7 +183,7 @@
                     "y": 5.0
                 }
             },
-            "entityId": 81604378625
+            "entityId": 8589934592
         },
         {
             "EntityFlags": {
@@ -172,14 +191,14 @@
                 "eventProductionFlags": "11111111111111111111111111"
             },
             "Parent": {
-                "entityId": 81604378625
+                "entityId": 8589934592
             },
             "Tags": {
                 "tags": [
                     "ManualChild"
                 ]
             },
-            "entityId": 81604378624
+            "entityId": 4294967297
         },
         {
             "Collider": {
@@ -213,7 +232,7 @@
                 "eventProductionFlags": "11111111111111111111111111"
             },
             "Parent": {
-                "entityId": 81604378625
+                "entityId": 8589934592
             },
             "Transform": {
                 "position": {
@@ -226,7 +245,7 @@
                     "y": 1.0
                 }
             },
-            "entityId": 81604378626
+            "entityId": 4294967298
         }
     ]
 }

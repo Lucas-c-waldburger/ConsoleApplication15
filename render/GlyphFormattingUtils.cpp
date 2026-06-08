@@ -92,20 +92,28 @@ float CalculateLongestRowWidth(std::string_view text, const FormatArgs& format,
 float GetFormatArgsStartX(const TextRenderableComponent& textRenderable, const FormatArgs& formatArgs, 
 						  const std::vector<GlyphCacheData>& cache)
 {	
-	if (textRenderable.formatting.align == TextAlign::Left)
+	if (textRenderable.formatting.align == TextAlign::Right)
 	{
-		return 0.0f;
-	}
-	
-	float startX = static_cast<float>(formatArgs.bounds.w) - 
-		CalculateLongestRowWidth(textRenderable.writer.text, formatArgs, cache);
-
-	if (textRenderable.formatting.align == TextAlign::Center)
-	{
-		startX /= 2.0f;
+		return static_cast<float>(formatArgs.bounds.w) -
+			CalculateLongestRowWidth(textRenderable.writer.text, formatArgs, cache);
 	}
 
-	return startX;
+	return 0.0f;
+
+	//if (textRenderable.formatting.align == TextAlign::Left)
+	//{
+	//	return 0.0f;
+	//}
+	//
+	//float startX = static_cast<float>(formatArgs.bounds.w) - 
+	//	CalculateLongestRowWidth(textRenderable.writer.text, formatArgs, cache);
+
+	//if (textRenderable.formatting.align == TextAlign::Center)
+	//{
+	//	startX /= 2.0f;
+	//}
+
+	//return startX;
 }
 
 FormatArgs MakeFormatArgs(const TextRenderableComponent& textRenderable, 

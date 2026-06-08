@@ -1,0 +1,24 @@
+{
+    "audio": [
+        {
+            "audioType": "Sound",
+            "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\audio\\music\\greenpath.ogg",
+            "name": "greenpath"
+        },
+        {
+            "audioType": "Sound",
+            "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\audio\\music\\futuristic_beat.mp3",
+            "name": "futuristic_beat"
+        },
+        {
+            "audioType": "Sound",
+            "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\audio\\sounds\\bell_hit.flac",
+            "name": "bell_hit"
+        },
+        {
+            "audioType": "Sound",
+            "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\audio\\sounds\\boss_stun.wav",
+            "name": "boss_stun"
+        }
+    ]
+}

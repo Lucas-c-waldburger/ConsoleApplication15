@@ -368,6 +368,9 @@ void AddGlyphRenderCalls(const Entity& entity, const Camera& camera,
 
 			displayRotation += camera.GetRotation();
 			transformedRect = camera.WorldToScreen<SDL_FRect>(transformedRect);
+
+			displayRotationCenter.x = transformedRect.w * 0.5f;
+			displayRotationCenter.y = transformedRect.h * 0.5f;
 		}
 
 		renderBatchHandler.PushBack({

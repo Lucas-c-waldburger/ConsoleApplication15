@@ -2,13 +2,14 @@
 #include "../ecs/Ecs.h"
 #include <cassert>
 
+//// TODO: Remove instance id audio update request component
 inline void AudioSystem::HandleAudioUpdateRequests()
 {
 	auto entities = ECS::GetAllEntitiesWith<AudioUpdateRequest>();
 
 	for (auto& entity : entities)
 	{
-		auto consistencyResult = CheckActiveAudioAndUpdateRequestConsistency(entity);
+		auto consistencyResult = ResolveUpdateRequestInstanceId(entity);
 		if (!consistencyResult.Success())
 		{
 			LOG_ERROR(consistencyResult.GetError());
@@ -213,7 +214,7 @@ void AudioSystem::UpdateActiveAudioComponents()
 	}
 }
 
-Result<Void> AudioSystem::CheckActiveAudioAndUpdateRequestConsistency(const Entity& entity)
+Result<Void> AudioSystem::ResolveUpdateRequestInstanceId(Entity& entity)
 {
 	assert(entity.IsValid());
 	assert(entity.HasComponent<AudioUpdateRequest>());
@@ -223,25 +224,30 @@ Result<Void> AudioSystem::CheckActiveAudioAndUpdateRequestConsistency(const Enti
 		return MAKE_ERROR("Entity had audio update request but no active audio");
 	}
 
-	const auto& activeAudio = entity.GetComponent<ActiveAudio>();
-	const auto& updateRequest = entity.GetComponent<AudioUpdateRequest>();
+	auto& activeAudio = entity.GetComponent<ActiveAudio>();
+	auto& updateRequest = entity.GetComponent<AudioUpdateRequest>();
 
-	if (activeAudio.instanceId != updateRequest.instanceId)
+	if (!updateRequest.instanceId.IsValid())
 	{
-		return MAKE_ERROR("Active audio's instance id differs from "
-			"update request's instance id");
+		updateRequest.instanceId = activeAudio.instanceId;
 	}
+
+	//if (activeAudio.instanceId != updateRequest.instanceId)
+	//{
+	//	return MAKE_ERROR("Active audio's instance id differs from "
+	//		"update request's instance id");
+	//}
 
 	return Void{};
 }
 
 
-void AudioSystem::Update()
+void AudioSystem::Update(float dt)
 {
 	HandleAudioUpdateRequests();
 	HandleNewAudioRequests();
 
-	audioManager_.UpdateChannels();
+	audioManager_.UpdateChannels(dt);
 
 	UpdateActiveAudioComponents();
 }

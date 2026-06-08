@@ -141,10 +141,8 @@ Result<Void> SceneFixture::UpdatePhysics()
 Result<Void> SceneFixture::UpdateCamera()
 {
 	assert(systems_.IsSystemRegistered<CameraSystem>());
-	assert(systems_.IsSystemRegistered<GameLoopSystem>());
-	float delta = systems_.GetSystem<GameLoopSystem>().GetDeltaTime();
 
-	systems_.GetSystem<CameraSystem>().Update(delta);
+	systems_.GetSystem<CameraSystem>().Update(GetDeltaTime());
 
 	return Void{};
 }
@@ -153,7 +151,7 @@ Result<Void> SceneFixture::UpdateAudio()
 {
 	assert(systems_.IsSystemRegistered<AudioSystem>());
 
-	systems_.GetSystem<AudioSystem>().Update();
+	systems_.GetSystem<AudioSystem>().Update(GetDeltaTime());
 
 	return Void{};
 }
@@ -202,6 +200,12 @@ Camera& SceneFixture::GetCamera()
 {
 	assert(systems_.IsSystemRegistered<CameraSystem>());
 	return systems_.GetSystem<CameraSystem>().GetCamera();
+}
+
+AudioBank& SceneFixture::GetAudioBank()
+{
+	assert(systems_.IsSystemRegistered<AudioSystem>());
+	return systems_.GetSystem<AudioSystem>().GetAudioBank();
 }
 
 Result<Void> SceneFixture::SerializeState(SerializationSystem::Filepaths fps)

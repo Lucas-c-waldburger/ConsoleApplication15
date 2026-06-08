@@ -4,7 +4,7 @@
 
 struct AudioDescriptor
 {
-    AudioType audioType = AudioType::Sound;
+    AudioType audioType = AudioType::Unknown;
     std::string name;
     std::string filepath;
 };

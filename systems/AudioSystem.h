@@ -8,7 +8,7 @@ class Entity;
 class AudioSystem : public System
 {
 public:
-	void Update();
+	void Update(float dt);
 
 	void EntityDestroyed(Entity& entity);
 
@@ -24,7 +24,7 @@ private:
 
 	void CleanupForNewAudioBank();
 
-	Result<Void> CheckActiveAudioAndUpdateRequestConsistency(const Entity& entity);
+	Result<Void> ResolveUpdateRequestInstanceId(Entity& entity);
 
 	AudioBank audioBank_;
 	AudioManager audioManager_;

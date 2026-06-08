@@ -2,6 +2,9 @@
 #include "../core/commonObjects.h"
 #include "GlyphFormattingUtils.h"
 
+//// TODO: Since we calculate rotation center in AddGlyphRenderCalls, do we even need
+// to cache it? Furthermore, if its always just the center of the glyph, can it just be null?
+
 using namespace util;
 
 namespace {
@@ -137,15 +140,12 @@ void GlyphCacheHandler::ReprojectGlyphCacheGeometry(TextRenderableGlyphCache& ca
 	switch (textRenderable.formatting.align)
 	{
 	case TextAlign::Left:
-		//format.start.x = projectedRect.x;
 		FillGlyphRectsLeftAlign(cacheComponent.cache, formatArgs);
 		break;
 	case TextAlign::Right:
-		//format.start.x = projectedRect.x + projectedRect.w;
 		FillGlyphRectsRightAlign(cacheComponent.cache, formatArgs);
 		break;
 	case TextAlign::Center: default:
-		//format.start.x = projectedRect.x + (projectedRect.w / 2);
 		FillGlyphRectsCenterAlign(textRenderable.writer.text, 
 								  cacheComponent.cache, formatArgs);
 		break;
@@ -220,8 +220,6 @@ void GlyphCacheHandler::ScaleGlyphCache(std::vector<GlyphCacheData>& cache, Anch
 	}
 }
 
-
-
 void GlyphCacheHandler::RepositionGlyphCache(TextRenderableGlyphCache& cacheComponent,
 											 SDL_FPoint newPos, SDL_FPoint newOffset)
 {
@@ -274,13 +272,15 @@ void GlyphCacheHandler::UpdateGlyphCache(const FontAtlasTexture& glyphAtlas,
 	static constexpr uint8_t kNeedsScaling = (ScaleChanged | kNeedsReprojection);
 	if (changeLog & kNeedsScaling)
 	{
-		ScaleGlyphCache(glyphCache.cache, textRenderable.profile.anchor.scale, transform.scale);
+		const SDL_FPoint deltaScale = (transform.scale - ctx.transform.scale) + 1.0f;
+		ScaleGlyphCache(glyphCache.cache, textRenderable.profile.anchor.scale, deltaScale);
 	}
 
 	// 5) Rotate if rotation changed
 	if (changeLog & RotationChanged)
 	{
-		RotateGlyphCache(glyphCache.cache, textRenderable.profile.anchor.rotation, transform.rotation);
+		const float deltaRotation = transform.rotation - ctx.transform.rotation;
+		RotateGlyphCache(glyphCache.cache, textRenderable.profile.anchor.rotation, deltaRotation);
 	}
 
 	// 6) Reposition (translate to world) if position or offset changed,
@@ -293,7 +293,7 @@ void GlyphCacheHandler::UpdateGlyphCache(const FontAtlasTexture& glyphAtlas,
 
 	// 6) update rest of cached content
 	ctx.transform = transform;
-	ctx.formatting = textRenderable.formatting;
+	ctx.formatting = textRenderable.formatting; 
 	ctx.offset = textRenderable.profile.offset;
 	ctx.resourceHandle = textRenderable.writer.resourceHandle;
 }

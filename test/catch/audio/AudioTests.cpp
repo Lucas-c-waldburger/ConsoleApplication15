@@ -285,7 +285,112 @@ TEST_CASE("Audio System Tests", "[audio][system]")
 		CHECK(newEntActiveAudio2.instanceId.IsValid());
 		CHECK(newEntActiveAudio2.onChannel == 0);		
 	}
+}
 
+TEST_CASE("Track Position updates correctly", "[audio][y]")
+{
+	auto sceneResult = SceneFixture::GetInstance();
+	REQUIRE(sceneResult.Success());
 
+	auto& scene = sceneResult.GetValue();
+	REQUIRE(scene);
 
+	REQUIRE(scene->IsSystemRegistered<AudioSystem>());
+	auto& bank = scene->GetAudioBank();
+
+	auto e = ECS::CreateEntity();
+	REQUIRE(e.IsValid());
+
+	SECTION("Music")
+	{
+		auto musPathResult = ResourcePath::Music("greenpath.ogg");
+		REQUIRE(musPathResult.Success());
+
+		auto musLoadResult = bank.LoadAudio({ 
+			.audioType = AudioType::Music,
+			.filepath = std::move(musPathResult).GetValue() 
+		});
+
+		REQUIRE(musLoadResult.Success());
+		REQUIRE(musLoadResult.GetValue().IsValid());
+
+		auto& newAudioReq = e.AddComponent(NewAudioRequest{ .audioHandle = musLoadResult.GetValue() });
+		CHECK(EqualsWithTolerance(newAudioReq.settings.trackPosition, 0.0f));
+
+		scene->StepGameLoop(1);
+
+		CHECK_FALSE(e.HasComponent<NewAudioRequest>());
+		REQUIRE(e.HasComponent<ActiveAudio>());
+
+		float lastTrackPos = 0.0f;
+		int readCount = 0;
+		for (size_t i = 0; i < 10; ++i)
+		{
+			scene->StepGameLoop(8);
+			
+			if (!e.HasComponent<ActiveAudio>())
+			{
+				break;
+			}
+			const auto& activeAudio = e.GetComponent<ActiveAudio>();
+
+			CHECK(activeAudio.status == AudioStatus::Playing);
+			CHECK(activeAudio.settings.trackPosition > lastTrackPos);
+			lastTrackPos = activeAudio.settings.trackPosition;
+
+			++readCount;
+		}
+
+		CHECK(readCount >= 2);
+
+		{
+		REQUIRE(e.HasComponent<ActiveAudio>());
+		const auto& activeAudio = e.GetComponent<ActiveAudio>();
+		REQUIRE(activeAudio.instanceId.IsValid());
+
+		auto& audioUpdateReq = e.AddComponent(AudioUpdateRequest{
+			.instanceId = activeAudio.instanceId,
+			.command = AudioPlayCommand::Stop,
+			.settings = { .fadeMs = AudioFadeMs{.out = 1000 } }
+		});
+		
+		audioUpdateReq.command = AudioPlayCommand::Stop;
+		audioUpdateReq.settings.fadeMs = AudioFadeMs{ .out = 1000 };
+		}
+
+		readCount = 0;
+		while (e.HasComponent<ActiveAudio>())
+		{
+			scene->StepGameLoop(8);
+
+			if (!e.HasComponent<ActiveAudio>())
+			{
+				break;
+			}
+
+			const auto& activeAudio = e.GetComponent<ActiveAudio>();
+			REQUIRE(activeAudio.instanceId.IsValid());
+
+			CHECK(activeAudio.status == AudioStatus::Stopping);
+			CHECK(activeAudio.settings.trackPosition > lastTrackPos);
+			lastTrackPos = activeAudio.settings.trackPosition;
+
+			++readCount;
+		} 
+
+		CHECK(readCount >= 2);
+	}
+
+	//SECTION("Sound")
+	//{
+	//	auto soundPathResult = ResourcePath::Sound("chest_open.wav");
+	//	REQUIRE(soundPathResult.Success());
+
+	//	auto soundLoadResult = bank.LoadAudio({ 
+	//	.audioType = AudioType::Sound
+	//	.filepath = std::move(soundPathResult).GetValue() 
+	// });
+	//	REQUIRE(soundLoadResult.Success());
+	//	REQUIRE(soundLoadResult.GetValue().IsValid());
+	//}
 }

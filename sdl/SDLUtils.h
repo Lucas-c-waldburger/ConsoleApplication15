@@ -121,6 +121,17 @@ inline constexpr P operator*(P lhs, P rhs)
 
 // Scalar
 template <SDLPointType P, ArithmeticType T>
+inline constexpr P operator+(P p, T t)
+{
+    using ValueType = std::remove_cvref_t<decltype(P::x)>;
+
+    return P{
+        static_cast<ValueType>(static_cast<float>(p.x) + static_cast<float>(t)),
+        static_cast<ValueType>(static_cast<float>(p.y) + static_cast<float>(t))
+    };
+}
+
+template <SDLPointType P, ArithmeticType T>
 inline constexpr P operator/(P p, T t)
 {
     using ValueType = std::remove_cvref_t<decltype(P::x)>;

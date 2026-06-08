@@ -11,7 +11,7 @@
 
 struct AudioInfo
 {
-    AudioType audioType = AudioType::Sound;
+    AudioType audioType = AudioType::Unknown;
     std::string name;
     std::string filepath;
     size_t storageIndex = std::numeric_limits<size_t>::max();
@@ -61,6 +61,12 @@ public:
 		return GetAudioInfoImpl<MemberPtrs...>(it != nameToInfoIdx_.end() 
             ? it->second 
             : std::numeric_limits<size_t>::max());
+    }
+
+    template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+    auto IterAudioInfo() const
+    {
+        return audioInfo_.ForEach<MemberPtrs...>();
     }
 
 	std::vector<AudioDescriptor> ExportAudioDescriptors() const;

@@ -9,6 +9,16 @@
 
 namespace test {
 
+struct TriggeredFlags
+{
+	enum : uint8_t {
+		Dirty = 1 << 0,
+		ToggleDebugDraw = 1 << 1
+	};
+
+	uint8_t value = 0;
+};
+
 namespace {
 
 constexpr float kMaxCameraRotationIncrement = 5.0f;
@@ -17,11 +27,6 @@ constexpr float kMaxCameraPanIncrement = 15.0f;
 constexpr float kPictureSpacing = 10.0f;
 
 constexpr InputState kPressedOrHeld = (InputState::Pressed | InputState::Held);
-
-constexpr bool PressedOrHeld(const events::GameControllerInput& ev)
-{
-	return ev.input.state == InputState::Pressed || ev.input.state == InputState::Held;
-}
 
 auto MakeRStickRotationCallback(Camera& cam)
 {
@@ -65,6 +70,14 @@ auto MakeLStickMoveCallback()
 	};
 }
 
+auto MakeRBumperToggleDebugDrawCallback()
+{
+	return [](const events::GameControllerInput& ev, TriggeredFlags& flags) {
+		flags.value ^= TriggeredFlags::ToggleDebugDraw;
+		flags.value |= TriggeredFlags::Dirty;
+	};
+}
+
 } // unnamed
 
 Result<Void> Gallery::Init(Camera& cam, TextureRepository& repo, SDL_Renderer* renderer, 
@@ -72,14 +85,11 @@ Result<Void> Gallery::Init(Camera& cam, TextureRepository& repo, SDL_Renderer* r
 {
 	assert(renderer);
 
-	//Handle<Audio2> h;
-	//f(h);
-
-	//AudioBank2 bank{};
-	//auto v = bank.GetAudioInfo<&AudioInfo::audioType>("test_music");
+	ECS::RegisterComponent<TriggeredFlags>();
 
 	camEntity_ = ECS::CreateEntity();
 
+	camEntity_.AddComponent(TriggeredFlags{});
 	camEntity_.AddComponent(Transform{ .position = SDLite::Window().GetLocalCenter<SDL_FPoint>() });
 	camEntity_.AddComponent(CameraTarget{});
 	camEntity_.AddComponent(GameControllerState{});
@@ -105,6 +115,7 @@ Result<Void> Gallery::Init(Camera& cam, TextureRepository& repo, SDL_Renderer* r
 	evs.OnInput(Src::RightTrigger, kPressedOrHeld, MakeTriggerZoomCallback(cam, true));
 	evs.OnInput(Src::LeftTrigger, kPressedOrHeld, MakeTriggerZoomCallback(cam, false));
 	evs.OnInput(Src::LeftStickAxis, kPressedOrHeld, MakeLStickMoveCallback());
+	evs.OnInput(Src::RightShoulder, InputState::Pressed, MakeRBumperToggleDebugDrawCallback());
 
 	//TRY(LoadGalleryPictures(repo, renderer, pictureDir));
 
@@ -187,6 +198,28 @@ void Gallery::Update(float)
 			text = std::format("Position: ({:.2f}, {:.2f})", newPos.x, newPos.y);
 		}
 	}
+
+	assert(camEntity_.HasComponent<TriggeredFlags>());
+	auto& flags = camEntity_.GetComponent<TriggeredFlags>();
+
+	if ((flags.value & TriggeredFlags::Dirty) == 0)
+	{
+		return;
+	}
+
+	if (flags.value & TriggeredFlags::ToggleDebugDraw)
+	{
+		for (auto& txtE : textEntities_)
+		{
+			assert(txtE.HasComponent<TextRenderableComponent>());
+
+			auto& debugDraw = txtE.GetComponent<TextRenderableComponent>().profile.debugDraw.boundingBox;
+
+			debugDraw.on = !debugDraw.on;
+		}
+	}
+
+	flags.value &= ~TriggeredFlags::Dirty;
 }
 
 Result<Void> Gallery::LoadGalleryPictures(TextureRepository& repo, SDL_Renderer* renderer, 
@@ -272,10 +305,12 @@ Result<Void> Gallery::LoadGalleryText(const Handle<TextureResource>& fontHandle,
 		e.AddComponent(TextRenderableComponent{
 			.writer = GlyphTextWriter{ .resourceHandle = fontHandle, .text = std::move(word) },
 			.formatting = {
+				.align = TextAlign::Left,
 				.scaleToBounds = false
 			},
 			.profile = {
 				.mods = { .color = { clrDistrib(gen), clrDistrib(gen), clrDistrib(gen) }, .alpha = 255 }
+				//.debugDraw = { .boundingBox = { .on = true } }
 			}
 		});
 	}
