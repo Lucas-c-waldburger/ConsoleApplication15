@@ -146,6 +146,27 @@ SDL_FPoint Camera::ClampToBounds(SDL_FPoint pos) const
 
 void Camera::Pan(SDL_FPoint delta)
 {
-	worldPosition_.x += delta.x;
-	worldPosition_.y += delta.y;
+	if (EqualsWithTolerance(rotationDegrees_, 0.0f))
+	{
+		worldPosition_.x += delta.x;
+		worldPosition_.y += delta.y;
+
+		return;
+	}
+
+	const float angleRadians = -rotationDegrees_ * (std::numbers::pi_v<float> / 180.0f);
+	const float c = std::cos(angleRadians);
+	const float s = std::sin(angleRadians);
+
+	const SDL_FPoint worldDelta
+	{
+		delta.x * c - delta.y * s,
+		delta.x * s + delta.y * c
+	};
+
+	worldPosition_.x += worldDelta.x;
+	worldPosition_.y += worldDelta.y;
+
+	//worldPosition_.x += delta.x;
+	//worldPosition_.y += delta.y;
 }

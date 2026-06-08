@@ -53,9 +53,9 @@ auto MakeTriggerZoomCallback(Camera& cam, bool zoomIn)
 	};
 }
 
-auto MakeLStickMoveCallback()
+auto MakeLStickMoveCallback(Camera& camera)
 {
-	return [](const events::GameControllerInput& ev, Transform& tf)
+	return [&camera](const events::GameControllerInput& ev)
 	{
 		const float axisNormX = static_cast<float>(ev.input.value.axis.x) /
 								static_cast<float>(GameController::kAxisMax);
@@ -65,8 +65,10 @@ auto MakeLStickMoveCallback()
 		const float panIncrementX = axisNormX * kMaxCameraPanIncrement;
 		const float panIncrementY = axisNormY * kMaxCameraPanIncrement;
 
-		tf.position.x += panIncrementX;
-		tf.position.y += panIncrementY;
+		camera.Pan({ panIncrementX, panIncrementY });
+
+		//tf.position.x += panIncrementX;
+		//tf.position.y += panIncrementY;
 	};
 }
 
@@ -90,8 +92,6 @@ Result<Void> Gallery::Init(Camera& cam, TextureRepository& repo, SDL_Renderer* r
 	camEntity_ = ECS::CreateEntity();
 
 	camEntity_.AddComponent(TriggeredFlags{});
-	camEntity_.AddComponent(Transform{ .position = SDLite::Window().GetLocalCenter<SDL_FPoint>() });
-	camEntity_.AddComponent(CameraTarget{});
 	camEntity_.AddComponent(GameControllerState{});
 
 	auto evs = camEntity_.GetEvents(bus);
@@ -114,7 +114,7 @@ Result<Void> Gallery::Init(Camera& cam, TextureRepository& repo, SDL_Renderer* r
 	evs.OnInput(Src::RightStickAxis, kPressedOrHeld, MakeRStickRotationCallback(cam));
 	evs.OnInput(Src::RightTrigger, kPressedOrHeld, MakeTriggerZoomCallback(cam, true));
 	evs.OnInput(Src::LeftTrigger, kPressedOrHeld, MakeTriggerZoomCallback(cam, false));
-	evs.OnInput(Src::LeftStickAxis, kPressedOrHeld, MakeLStickMoveCallback());
+	evs.OnInput(Src::LeftStickAxis, kPressedOrHeld, MakeLStickMoveCallback(cam));
 	evs.OnInput(Src::RightShoulder, InputState::Pressed, MakeRBumperToggleDebugDrawCallback());
 
 	//TRY(LoadGalleryPictures(repo, renderer, pictureDir));
