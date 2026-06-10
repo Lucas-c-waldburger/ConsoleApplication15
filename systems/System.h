@@ -9,7 +9,7 @@ concept ImplementsSystemUpdate = requires (T& t, float dt) {
 	{ t.Update(dt) } -> std::same_as<void>;
 };
 
-template <ImplementsSystemUpdate T>
+template <typename T>
 struct SystemWrapper final : public ISystem 
 { 
 	template <typename...Args> requires std::constructible_from<T, Args...>

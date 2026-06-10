@@ -327,12 +327,6 @@
     <ClCompile Include="test\ui\MouseWorldNavigator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="games\bullet_heaven\Player.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="games\bullet_heaven\Functions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="physics\B2Explosion.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -439,6 +433,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="user\UserComponentBridge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="serial\AudioBankSerializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\audio_lounge\AudioLounge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\gallery\Gallery.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\grapple\Grapple.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1805,12 +1811,6 @@
     <ClInclude Include="core\MacroUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="games\bullet_heaven\Components.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="games\bullet_heaven\Updates.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="user\UserComponentTypeList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1818,24 +1818,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\CoreComponentTypeList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="user\UserComponentIncludes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="games\bullet_heaven\Player.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="games\bullet_heaven\Weapon.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="games\bullet_heaven\Item.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="games\bullet_heaven\Functions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="games\bullet_heaven\Systems.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="physics\B2Explosion.h">
@@ -2036,9 +2018,6 @@
     <ClInclude Include="core\StringUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="serial\physics\PhysicsSerialization.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="serial\EntityDeserializer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -2055,6 +2034,39 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="user\UserComponentDispatchTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\AudioDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\AudioEnums.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\AudioPtrs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\ResourceHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="serial\AudioBankSerializer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="serial\user_types\AudioJsonUserTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\audio_lounge\AudioLounge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\audio_lounge\AudioLoungeApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\gallery\Gallery.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\gallery\GalleryApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\grapple\Grapple.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -2800,6 +2812,60 @@
     <Image Include="resources\sprites\shapes\circle_icon.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_006.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_007.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_008.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_009.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_010.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_013.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_014.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_015.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_016.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_017.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_018.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_019.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\cd_spin\cd_spin_020.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\scripts\b2body_test.lua" />
@@ -2816,6 +2882,12 @@
     <None Include="test\catch\test_json\entities.json" />
     <None Include="test\catch\test_json\textures.json" />
     <None Include="test\catch\test_json\user_components.json" />
+    <None Include="resources\audio\music\mr_blue_sky.ogg" />
+    <None Include="resources\audio\music\one_more_time.ogg" />
+    <None Include="resources\json\persistence\audio.json" />
+    <None Include="resources\json\persistence\entities.json" />
+    <None Include="resources\json\persistence\textures.json" />
+    <None Include="test\catch\test_json\audio.json" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

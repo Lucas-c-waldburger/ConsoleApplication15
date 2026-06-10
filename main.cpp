@@ -213,9 +213,9 @@ int main(int argc, char* argv[])
     ASSERT_RESULT(fixtureResult);
 
     //auto runResult = test::RunSandDemo(fixtureResult.GetValue());
-    //auto runResult = test::RunPlatformerDemo(fixtureResult.GetValue());
+    auto runResult = test::RunPlatformerDemo(fixtureResult.GetValue());
     //auto runResult = test::RunColliderMaker(fixtureResult.GetValue());
-    auto runResult = test::RunGalleryDemo(fixtureResult.GetValue());
+    //auto runResult = test::RunGalleryDemo(fixtureResult.GetValue());
     //auto runResult = test::RunAudioLoungeApp(fixtureResult.GetValue());
     ASSERT_RESULT(runResult);
 

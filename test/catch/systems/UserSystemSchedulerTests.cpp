@@ -79,6 +79,25 @@ struct UserSystemE
 	}
 };
 
+struct UserSystemWithUpdateOperations
+{
+	static constexpr const char* kOutputMsgSetup = "Setup Operation";
+	static constexpr const char* kOutputMsgInput = "Input Operation";
+	static constexpr const char* kOutputMsgPresentation1 = "Presentation1 Operation";
+	static constexpr const char* kOutputMsgPresentation2 = "Presentation2 Operation";
+
+	explicit UserSystemWithUpdateOperations(std::string& shStr) : sharedStr(&shStr) {}
+
+	std::string* sharedStr = nullptr;
+
+	void SetupOperation(float) { if (sharedStr) { *sharedStr = kOutputMsgSetup; } }
+	void InputOperation(float) { if (sharedStr) { *sharedStr = kOutputMsgInput; } }
+	void PresentationOperation1(float) { if (sharedStr) { *sharedStr = kOutputMsgPresentation1; } }
+	void PresentationOperation2(float) { if (sharedStr) { 
+		*sharedStr += " " + std::string{kOutputMsgPresentation2};
+	} }
+};
+
 } // unnamed
 
 TEST_CASE("UserSystemScheduler Tests", "[user][system]")
@@ -170,4 +189,36 @@ TEST_CASE("UserSystemScheduler Tests", "[user][system]")
 		CHECK(sysD.updatedOrder == 1);
 		CHECK(sysE.updatedOrder == 2);
 	}
+}
+
+TEST_CASE("Registering individual update operations on UserSystemScheduler", "[user][system][y]")
+{
+	UserSystemScheduler sysScheduler{};
+	using UserSys = UserSystemWithUpdateOperations;
+
+	STATIC_CHECK_FALSE(ImplementsSystemUpdate<UserSys>);
+
+	std::string message;
+
+	auto& sys = sysScheduler.RegisterSystem<UserSys>(message);
+	CHECK(sysScheduler.IsSystemRegistered<UserSys>());
+
+	sysScheduler.RegisterUpdateOperation<&UserSys::SetupOperation>(Phase::Setup);
+	sysScheduler.RegisterUpdateOperation<&UserSys::InputOperation>(Phase::Input);
+	sysScheduler.RegisterUpdateOperation<&UserSys::PresentationOperation1>(Phase::Presentation);
+	sysScheduler.RegisterUpdateOperation<&UserSys::PresentationOperation2>(Phase::Presentation);
+
+	sysScheduler.UpdateSystems(Phase::Setup, 0.0f);
+	CHECK(message == UserSys::kOutputMsgSetup);
+
+	sysScheduler.UpdateSystems(Phase::Input, 0.0f);
+	CHECK(message == UserSys::kOutputMsgInput);
+
+	sysScheduler.UpdateSystems(Phase::Presentation, 0.0f);
+
+	const std::string expectedPresentationMsg = 
+		std::string{UserSys::kOutputMsgPresentation1} + " " + 
+		std::string{UserSys::kOutputMsgPresentation2};
+
+	CHECK(message == expectedPresentationMsg);
 }

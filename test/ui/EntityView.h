@@ -35,12 +35,13 @@ Result<Void> MakeComponentListJson()
 	});
 
     TextureRepository temp{};
-    auto result = SerializationSystem{}.SerializeState({ 
-        .entitiesPath = std::string{kComponentListJsonFilename} }, temp);
+    //auto result = SerializationSystem{}.SerializeState({ 
+        //.entitiesPath = std::string{kComponentListJsonFilename} }, temp);
 
 	e.Destroy();
 
-	return result;
+	//return result;
+    return Void{};
 }
 
 struct ComponentEditContext

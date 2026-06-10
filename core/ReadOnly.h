@@ -13,7 +13,6 @@ concept SomeWriteAccessorKey = std::same_as<T,
     typename HasWriteAccess<typename T::DerivedType, typename T::ValueType>::Key>;
 
 // wraps T inside a const-only getter
-// TODO: add support for equality operator of T and Hash of T (requires next to function)
 template <typename T> requires std::default_initializable<T>
 class ReadOnly
 {

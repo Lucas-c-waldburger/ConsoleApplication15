@@ -74,6 +74,7 @@ void Camera::SetPosition(SDL_FPoint newPos, bool clamp)
 		return;
 	}
 
+	assert(zoomScale_ > 0.0f);
 	Dimensions<float> worldViewportSize{
 		viewportSize_.w / zoomScale_,
 		viewportSize_.h / zoomScale_
@@ -86,6 +87,7 @@ Camera::Viewport Camera::GetViewport() const
 {
 	auto corners = GetViewportCorners();
 
+	assert(zoomScale_ > 0.0f);
 	Dimensions<float> worldViewportSize{
 		viewportSize_.w / zoomScale_,
 		viewportSize_.h / zoomScale_
@@ -136,6 +138,7 @@ std::array<SDL_FPoint, 4> Camera::GetViewportCorners() const
 
 SDL_FPoint Camera::ClampToBounds(SDL_FPoint pos) const
 {
+	assert(zoomScale_ > 0.0f);
 	const Dimensions<float> worldViewportSize{
 		viewportSize_.w / zoomScale_,
 		viewportSize_.h / zoomScale_

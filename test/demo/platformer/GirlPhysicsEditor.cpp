@@ -41,10 +41,9 @@ Result<Void> GirlPhysicsEditor::Init(GuiSystem& guiSystem, EntityMap& entities,
 void GirlPhysicsEditor::Draw(EntityMap& entities)
 {
 	assert(entities.contains("girl"));
-	assert(entities.contains("crate"));
+	//assert(entities.contains("crate"));
 
 	auto& girl = entities["girl"];
-	auto& crate = entities["crate"];
 
 	if (ImGui::Button("Animations"))
 	{
@@ -73,18 +72,24 @@ void GirlPhysicsEditor::Draw(EntityMap& entities)
 	if (ImGui::Button(kResetPosLabel))
 	{
 		assert(girl.HasComponent<RigidBody>());
-		assert(crate.HasComponent<RigidBody>());
 
 		auto girlSpawnPos = GetGirlSpawnPosition();
-		auto crateSpawnPos = SDL_FPoint{ girlSpawnPos.x + 60.0f, girlSpawnPos.y };
 
 		auto write = WriteAccessor<B2Body>{};
 
 		write(girl.GetComponent<RigidBody>().body).SetPosition(girlSpawnPos);
 		write(girl.GetComponent<RigidBody>().body).SetLinearVelocity({0.0f, 0.0f});
 
-		write(crate.GetComponent<RigidBody>().body).SetPosition(crateSpawnPos);
-		write(crate.GetComponent<RigidBody>().body).SetLinearVelocity({ 0.0f, 0.0f });
+		if (auto it = entities.find("crate"); it != entities.end())
+		{
+			auto& crate = it->second;
+			assert(crate.HasComponent<RigidBody>());
+
+			auto crateSpawnPos = SDL_FPoint{ girlSpawnPos.x + 60.0f, girlSpawnPos.y };
+
+			write(crate.GetComponent<RigidBody>().body).SetPosition(crateSpawnPos);
+			write(crate.GetComponent<RigidBody>().body).SetLinearVelocity({ 0.0f, 0.0f });
+		}
 	}
 
 	//const bool saveAll = ImGui::Button("Save All");

@@ -3,6 +3,13 @@
 
 namespace {
 
+bool BodyPositionValid(SDL_FPoint p)
+{
+	const float huge = 100000.0f * b2GetLengthUnitsPerMeter();
+
+	return -huge < p.x && huge > p.y && -huge < p.y && huge > p.y;
+}
+
 bool IsBodyValid(const RigidBody& rigid)
 {
 	return rigid.body.GetData().IsValid();
@@ -25,6 +32,7 @@ B2Body EntityPhysics::AddBody(BodyParameters params)
 		return {};
 	}
 
+	assert(BodyPositionValid(params.position));
 	entity_.AddComponent<Transform>().position = params.position;
 
 	auto& rigid = entity_.AddComponent<RigidBody>();

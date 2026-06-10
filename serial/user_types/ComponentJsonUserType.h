@@ -6,7 +6,6 @@
 #include "BitsetJsonUserTypes.h"
 #include "AudioJsonUserTypes.h"
 #include "../../components/ComponentIncludes.h"
-#include "../../user/UserComponentIncludes.h"
 
 #define DEF_COMPONENT_NAME(cmpType)										\
 template <> struct ComponentName<cmpType> {								\
@@ -54,7 +53,7 @@ inline void to_json(BasicJson& j, const RigidBody& rb)
 }
 
 template <typename BasicJson>
-inline void from_json(const BasicJson& j, RigidBody& rb) {}
+inline void from_json(const BasicJson& j, RigidBody& rb) {} 
 
 
 // COLLIDER

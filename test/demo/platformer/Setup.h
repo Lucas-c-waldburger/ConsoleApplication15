@@ -13,6 +13,7 @@
 #include "../../../sdl/SDLUtils.h"
 #include "../../../core/SizedEnum.h"
 #include "../SandDemo.h"
+#include "../grapple/Grapple.h"
 
 namespace test {
 

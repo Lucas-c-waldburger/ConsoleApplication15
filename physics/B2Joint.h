@@ -69,6 +69,7 @@ inline bool JointTypeMatches(const Handle<B2Joint>& jointHandle)
 	return T::jointType == static_cast<B2Joint::Type>(b2Joint_GetType(jointHandle));
 }
 
+/* DISTANCE JOINT */
 class B2DistanceJoint : public B2Joint
 {
 public:
@@ -165,6 +166,52 @@ struct B2JointParams<B2DistanceJoint>
 
 	bool collideConnected = false;
 };
+/**/
+
+class B2MotorJoint : public B2Joint
+{
+public:
+	static constexpr B2Joint::Type jointType = B2Joint::Type::Motor;
+
+	B2MotorJoint() = default;
+	explicit B2MotorJoint(const Handle<B2Joint>& handle) : B2Joint(handle) {}
+
+	SDL_FPoint GetLinearOffset() const { return ToSDLFPointScaled(b2MotorJoint_GetLinearOffset(jointHandle_)); }
+	void SetLinearOffset(SDL_FPoint offset) { b2MotorJoint_SetLinearOffset(jointHandle_, ToB2VecScaled(offset)); }
+
+	float GetAngularOffset() const { return b2MotorJoint_GetAngularOffset(jointHandle_); }
+	void SetAngularOffset(float offset) { b2MotorJoint_SetAngularOffset(jointHandle_, offset); }
+
+	float GetMaxForce() const { return b2MotorJoint_GetMaxForce(jointHandle_); }
+	void SetMaxForce(float force) { b2MotorJoint_SetMaxForce(jointHandle_, force); }
+
+	float GetMaxTorque() const { return b2MotorJoint_GetMaxTorque(jointHandle_); }
+	void SetMaxTorque(float torque) { b2MotorJoint_SetMaxTorque(jointHandle_, torque); }
+
+	float GetCorrectionFactor() const { return b2MotorJoint_GetCorrectionFactor(jointHandle_); }
+	void SetCorrectionFactor(float factor) { b2MotorJoint_SetCorrectionFactor(jointHandle_, factor); }
+
+private:
+};
+
+template <>
+struct B2JointParams<B2MotorJoint>
+{
+	struct
+	{
+		std::optional<SDL_FPoint> linear;
+		std::optional<float> angularDegrees;
+	} offset;
+
+	std::optional<float> maxForce;
+	std::optional<float> maxTorque;
+	std::optional<float> correctionFactor;
+
+	bool collideConnected = true;
+};
+
+/**/
+
 
 class B2JointFactory
 {
@@ -237,6 +284,55 @@ public:
 		return B2DistanceJoint{ handle };
 	}
 
+	static B2MotorJoint MakeMotorJoint(const Handle<B2Body>& bodyA, const Handle<B2Body>& bodyB,
+									   const B2JointParams<B2MotorJoint>& params)
+	{
+		if (!(bodyA.IsValid() && bodyB.IsValid()))
+		{
+			return {};
+		}
+
+		b2WorldId bodyAWorld = b2Body_GetWorld(bodyA);
+		b2WorldId bodyBWorld = b2Body_GetWorld(bodyB);
+
+		if (!(b2World_IsValid(bodyAWorld) && b2World_IsValid(bodyBWorld)) || bodyAWorld != bodyBWorld)
+		{
+			return {};
+		}
+
+		b2MotorJointDef def = b2DefaultMotorJointDef();
+
+		def.bodyIdA = bodyA;
+		def.bodyIdB = bodyB; 
+
+		static constexpr auto trySet = [](const auto& op, auto& defMember) -> void {
+			if (op.has_value()) { defMember = *op; }
+		};
+
+		if (params.offset.linear.has_value())
+		{
+			def.linearOffset = ToB2VecScaled(*params.offset.linear);			
+		}
+		else
+		{
+			def.linearOffset = b2Body_GetPosition(bodyB) - b2Body_GetPosition(bodyA);
+		}
+
+		if (params.offset.angularDegrees.has_value())
+		{
+			def.angularOffset = *params.offset.angularDegrees * (std::numbers::pi_v<float> / 180.0f);
+		}
+
+		trySet(params.maxForce, def.maxForce);
+		trySet(params.maxTorque, def.maxTorque);
+		trySet(params.correctionFactor, def.correctionFactor);
+		def.collideConnected = params.collideConnected;
+
+		auto handle = Handle<B2Joint>::Create(b2CreateMotorJoint(bodyAWorld, &def));
+
+		return B2MotorJoint{ handle };
+	}
+
 private:
 	B2JointFactory() = default;
 };
@@ -254,3 +350,12 @@ inline T B2Joint::GetAs()
 
 	return T{};
 }
+
+namespace std {
+template <>
+struct hash<B2Joint> {
+	size_t operator()(const B2Joint& joint) const noexcept {
+		return MakeHash(joint.GetBodyHandleA(), joint.GetBodyHandleB());
+	}
+};
+} // std

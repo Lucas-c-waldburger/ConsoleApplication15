@@ -27,6 +27,8 @@ public:
 
 	GirlStateUpdater(Entity_t girl, Entity_t sword, EventBus& bus) : 
 		girl_(girl), sword_(sword), eventBus_(&bus) {}
+	GirlStateUpdater(Entity_t girl, Entity_t sword, EventBus& bus, LegIron&& legIron) :
+		girl_(girl), sword_(sword), eventBus_(&bus), legIron_(std::move(legIron)) {}
 
 	void Update(float dt)
 	{
@@ -784,6 +786,7 @@ private:
 	CooldownTimer sheathIdleCooldown_{ .duration = kGirlSheathSwordIdleTriggerTime };
 	bool isSwordOut_ = false;
 	std::unordered_set<Handle<B2Shape>> shapesHitBySword_;
+	LegIron legIron_;
 };
 
 
@@ -798,10 +801,18 @@ static Result<Void> RunPlatformerDemo(SceneFixture::SharedPtr& fixture)
 
 	TRY(MakeGirlEntity(fixture, girlStartPos), girlEnt);
 	TRY(MakeSwordEntity(fixture, girlEnt), swordEnt);
-	TRY(MakeCrateEntity(fixture, { girlStartPos.x + 60.0f, girlStartPos.y}), crateEnt);
+	//TRY(MakeCrateEntity(fixture, { girlStartPos.x + 60.0f, girlStartPos.y}), crateEnt);
+
+	TRY(LegIron::Create(fixture->GetWorld(), fixture->GetTextureRepository(),
+		girlEnt, {
+			.headPos = { girlStartPos.x + 5.0f, girlStartPos.y},
+			.numLinks = 11,
+			.playerCategory = ObjectCategory::Player, 
+			.legIronCategory = ObjectCategory::Enemy
+		}), legIron);
 
 	fixture->RegisterSystem<GirlStateUpdater>(Phase::Input, 
-		girlEnt.GetID(), swordEnt.GetID(), fixture->GetEventBus());
+		girlEnt.GetID(), swordEnt.GetID(), fixture->GetEventBus(), std::move(legIron));
 
 	TRY(SetUpGirlStateReporter(girlEnt, fixture));
 	TRY(ThumbstickUiDraw::CreateAndConnect(girlEnt, fixture));
@@ -816,7 +827,7 @@ static Result<Void> RunPlatformerDemo(SceneFixture::SharedPtr& fixture)
 	EntityMap entities{};
 	entities["girl"] = girlEnt;
 	entities["sword"] = swordEnt;
-	entities["crate"] = crateEnt;
+	//entities["crate"] = crateEnt;
 
 	TRY(GirlPhysicsEditor::Init(guiSys, entities));
 
