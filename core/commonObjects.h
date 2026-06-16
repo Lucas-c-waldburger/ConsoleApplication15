@@ -112,3 +112,4 @@ static constexpr int GetNextPowerOfTwo(int x)
     return x + 1;
 }
 
+

@@ -2,20 +2,6 @@
 #include "../core/Handle.h"
 #include "../core/TypeUtils.h"
 
-//class DynamicSpriteAtlas;
-//class FixedSpriteAtlas;
-//class GlyphAtlas;
-//
-//using AtlasStorage = std::tuple<std::vector<DynamicSpriteAtlas>,
-//								std::vector<FixedSpriteAtlas>,
-//								std::vector<GlyphAtlas>>;
-//
-//template <typename T>
-//concept SomeTextureAtlasType = type_in_tuple_v<T, AtlasStorage>;
-//
-//template <SomeTextureAtlasType T>
-//inline constexpr bool atlas_storage_index_v = index_of_v<T, AtlasStorage>;
-
 namespace detail {
 template <typename T>
 struct is_result : std::false_type {};

@@ -4,6 +4,7 @@
 #include "../events/EventBus2.h"
 #include <filesystem>
 #include <SDL_image.h>
+#include <ranges>
 
 namespace {
 
@@ -184,6 +185,36 @@ Result<Void> SpriteAtlasTexture::RebuildSourceTexture(SDL_Renderer* renderer,
     return kVoid;
 }
 
+// SPRITE ATLAS
+SpriteAtlas::SpriteAtlas(SpriteAtlas&& other) noexcept : 
+    spriteAtlasTextures_(std::move(other.spriteAtlasTextures_)),
+    spriteInfo_(std::move(other.spriteInfo_)),
+    rebuildTexturesSignalToken_(std::move(other.rebuildTexturesSignalToken_)),
+    textureSize_(other.textureSize_), growthPolicy_(other.growthPolicy_)
+{
+    RepopulateSpriteNameIndexMap(other.spriteNameIndices_.size());
+    RepopulateSpriteSeriesRangeMap(other.seriesNameRanges_.size());
+}
+
+SpriteAtlas& SpriteAtlas::operator=(SpriteAtlas&& other) noexcept
+{
+    if (this == &other)
+    {
+        return *this;
+    }
+
+    spriteAtlasTextures_ = std::move(other.spriteAtlasTextures_);
+    spriteInfo_ = std::move(other.spriteInfo_);
+    rebuildTexturesSignalToken_ = std::move(other.rebuildTexturesSignalToken_);
+    textureSize_ = other.textureSize_;
+    growthPolicy_ = other.growthPolicy_;
+
+    RepopulateSpriteNameIndexMap(other.spriteNameIndices_.size());
+    RepopulateSpriteSeriesRangeMap(other.seriesNameRanges_.size());
+
+    return *this;
+}
+
 Result<Sprite> SpriteAtlas::LoadSprite(SDL_Renderer* renderer,
                                        SpriteDescriptor&& descriptor)
 {
@@ -247,8 +278,7 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
             std::filesystem::path(descriptor.filepath).stem().string();
     }
 
-    const HashType hashedSpriteName = RapidHash(descriptor.spriteName);
-    if (spriteNameIndices_.contains(hashedSpriteName))
+    if (spriteNameIndices_.contains(descriptor.spriteName))
     {
         return MAKE_ERROR_FMT("Sprite name '{}' already exists in atlas",
             descriptor.spriteName);
@@ -297,8 +327,22 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
     newSpriteInfo.spriteName = std::move(descriptor.spriteName);
     newSpriteInfo.filepath = std::move(descriptor.filepath);
 
+    const bool needRepopulateViews = spriteInfo_.Size() == spriteInfo_.Capacity();
+    if (needRepopulateViews)
+    {
+        const size_t newSize = spriteInfo_.Size() + kDefaultSpriteInfoCapacity;
+
+        spriteInfo_.Reserve(newSize);
+        RepopulateSpriteNameIndexMap(newSize);
+        RepopulateSpriteSeriesRangeMap(newSize / 2);
+    }
+
     size_t spriteIdx = spriteInfo_.PushBack(std::move(newSpriteInfo));
-    spriteNameIndices_.emplace(hashedSpriteName, spriteIdx);
+
+    auto [_, inserted] = spriteNameIndices_.try_emplace(
+        spriteInfo_.GetView<&SpriteInfo::spriteName>(spriteIdx), spriteIdx
+    );
+    assert(inserted);
 
     const auto& plot = spriteInfo_.GetView<&SpriteInfo::plot>(spriteIdx);
     assert(plot.rect.w > 0 && plot.rect.h > 0);
@@ -524,10 +568,8 @@ SpriteAtlas::LoadSpritesImpl(SDL_Renderer* renderer,
             const size_t spriteIdx = 
                 static_cast<size_t>(sprites.back().resourceHandle.GetResourceIndex());
 
-            auto [seriesName, seriesIdx] =
-                spriteInfo_.GetView<&SpriteInfo::seriesName,
-                                    &SpriteInfo::seriesIndex>
-                                    (spriteIdx);
+            auto [seriesName, seriesIdx] = spriteInfo_.GetView<
+                &SpriteInfo::seriesName, &SpriteInfo::seriesIndex>(spriteIdx);
 
             seriesName = descriptors.seriesName;
             seriesIdx = i;
@@ -546,9 +588,10 @@ SpriteAtlas::LoadSpritesImpl(SDL_Renderer* renderer,
         const auto& seriesNameRef =
             spriteInfo_.GetView<&SpriteInfo::seriesName>(minSpriteIdx);
 
-        seriesNameRanges_.emplace(RapidHash(seriesNameRef), 
-            Range<size_t>{ .min = minSpriteIdx, .max = maxSpriteIdx }
+        auto [_, inserted] = seriesNameRanges_.try_emplace(
+            seriesNameRef, Range<size_t>{minSpriteIdx, maxSpriteIdx}
         );
+        assert(inserted);
     }
 
     return sprites;
@@ -605,4 +648,58 @@ SpriteDescriptorPackage SpriteAtlas::ExportSpriteDescriptors() const
     }
 
     return package;
+}
+
+void SpriteAtlas::RepopulateSpriteNameIndexMap(size_t newSize)
+{
+    spriteNameIndices_.clear();
+    spriteNameIndices_.reserve(newSize);
+
+    for (size_t i = 0; i < spriteInfo_.Size(); ++i)
+    {
+        const auto& name = spriteInfo_.GetView<&SpriteInfo::spriteName>(i);
+
+        auto [_, inserted] = spriteNameIndices_.try_emplace(name, i);
+        assert(inserted);
+    }
+}
+
+void SpriteAtlas::RepopulateSpriteSeriesRangeMap(size_t newSize)
+{
+    seriesNameRanges_.clear();
+    seriesNameRanges_.reserve(newSize);
+
+    std::string_view currentSeries;
+    size_t seriesStartIdx = 0;
+    for (size_t i = 0; i < spriteInfo_.Size(); ++i)
+    {
+        const auto& series = spriteInfo_.GetView<&SpriteInfo::seriesName>(i);
+        if (series != currentSeries)
+        {
+            if (!currentSeries.empty())
+            {
+                assert(i > 0);
+
+                auto [_, inserted] = seriesNameRanges_.try_emplace(
+                    currentSeries, Range<size_t>{seriesStartIdx, i - 1}
+                );
+                assert(inserted);
+            }
+
+            currentSeries = series;
+            seriesStartIdx = i;
+        }
+        else if (series.empty())
+        {
+            seriesStartIdx = i;
+        }
+    }
+
+    if (!currentSeries.empty()) // finished on a series, cap it
+    {
+        auto [_, inserted] = seriesNameRanges_.try_emplace(
+            currentSeries, Range<size_t>{seriesStartIdx, spriteInfo_.Size() - 1}
+        );
+        assert(inserted);
+    }
 }
