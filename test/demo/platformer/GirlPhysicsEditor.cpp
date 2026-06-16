@@ -90,6 +90,23 @@ void GirlPhysicsEditor::Draw(EntityMap& entities)
 			write(crate.GetComponent<RigidBody>().body).SetPosition(crateSpawnPos);
 			write(crate.GetComponent<RigidBody>().body).SetLinearVelocity({ 0.0f, 0.0f });
 		}
+
+		if (auto it = entities.find("legIron"); it != entities.end())
+		{
+			auto& ball = it->second;
+			if (ball.HasComponent<RigidBody>())
+			{
+				auto& body = ball.GetComponent<RigidBody>().body;
+				if (body.GetData().IsValid())
+				{
+					auto ballSpawnPos = SDL_FPoint{ girlSpawnPos.x + 60.0f, girlSpawnPos.y };
+
+					write(body).SetPosition(ballSpawnPos);
+					write(body).SetLinearVelocity({ 0.0f, 0.0f });
+					write(body).SetAngularVelocity(0.0f);
+				}
+			}
+		}
 	}
 
 	//const bool saveAll = ImGui::Button("Save All");

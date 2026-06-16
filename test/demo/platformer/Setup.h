@@ -33,6 +33,7 @@ static Result<SpriteDescriptorPackage> GetGirlSpriteDescriptorPackage()
 	TRY(ResourcePaths::SpriteDirectory("girl/roll"), rollPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/dash"), dashPaths);
 	TRY(ResourcePaths::SpriteDirectory("girl/sheath"), sheathPaths);
+	TRY(ResourcePaths::SpriteDirectory("girl/push"), pushPaths);
 
 	static constexpr auto toDescriptors = []
 	(std::string_view seriesName, std::vector<std::string>&& paths) {
@@ -58,7 +59,8 @@ static Result<SpriteDescriptorPackage> GetGirlSpriteDescriptorPackage()
 		toDescriptors("girl_fall_s", std::move(fallSPaths)),
 		toDescriptors("girl_roll", std::move(rollPaths)),
 		toDescriptors("girl_dash", std::move(dashPaths)),
-		toDescriptors("girl_sheath", std::move(sheathPaths))
+		toDescriptors("girl_sheath", std::move(sheathPaths)),
+		toDescriptors("girl_push", std::move(pushPaths))
 	};
 }
 
@@ -477,12 +479,6 @@ static void SetUpSwordEntityCallbacks(Entity& sword, EventBus& bus)
 {
 	auto evs = sword.GetEvents(bus);
 
-	//static constexpr auto getOtherShape = [](const auto& ev, const Collider& collider) {
-	//	const auto& selfHandle = collider.shape.GetData().GetHandle();
-
-	//	return (ev.a.shapeHandle == selfHandle) ? ev.b.shapeHandle : ev.a.shapeHandle;
-	//};
-
 	evs.OnEvent([](const events::SensorCollisionBegin& ev, Collider& collider,
 				   CollisionCache& collisionCache) {
 		auto resolved = ResolveCollisionData(collider, ev);
@@ -504,89 +500,27 @@ static void SetUpSwordEntityCallbacks(Entity& sword, EventBus& bus)
 
 		collisionCache.data.erase(resolved->other.shapeHandle);
 	});
-
-	/*auto evFilter = EntityEvents::FilterDef{};
-
-	evs.OnEvent([](const events::SensorCollisionBegin& ev, 
-				   SpriteRenderableComponent& rend, Collider& collider)
-	{
-		if (!IsSwordActive(rend))
-		{
-			return;
-		}
-
-		auto resolvedData = ResolveCollisionData(collider, ev);
-		if (!resolvedData.has_value())
-		{
-			return;
-		}
-
-		auto otherEnt = ECS::GetEntityByID(resolvedData->other.entity);
-		if (!otherEnt.IsValid())
-		{
-			return;
-		}
-		assert(otherEnt.HasComponent<Collider>());
-
-		auto bodyEnt = FindOwningBodyEntity(resolvedData->other);
-		if (!bodyEnt.IsValid())
-		{
-			return;
-		}
-
-		auto& otherRigid = bodyEnt.GetComponent<RigidBody>();
-
-		const auto& shape = collider.shape.GetData();
-
-		auto contactData = shape.GetContactDataWith(resolvedData->other.shapeHandle);
-		assert(!contactData.empty());
-
-		for (const auto& contact : contactData)
-		{
-			SDL_FPoint normal = (shape.GetHandle() == contact.shapeHandleA)
-				?  contact.manifold.normal
-				: -contact.manifold.normal;
-
-			const auto hitImpulse = ComputeSwordHitImpulse(normal, otherRigid);
-
-			otherRigid.forceRequests.impulses.emplace_back(
-				Force{ .value = hitImpulse }
-			);
-		}	
-	}, evFilter);*/
 }
 
 static void SetUpGirlEntityCallbacks(Entity& e, EventBus& bus)
 {
 	auto evs = e.GetEvents(bus);
 
-	evs.OnEvent([](const events::ContactCollisionBegin& ev,
-		Collider& collider, GirlState& state)
-		{
-			auto resolvedData = ResolveCollisionData(collider, ev);
-			if (!resolvedData.has_value())
-			{
-				return;
+	auto addCollideLambda = [&]<typename Ev, auto memPtr>() {
+		evs.OnEvent([](const Ev& ev, Collider& col, GirlState& st) {
+			if (auto resolved = ResolveCollisionData(col, ev)) {
+				(st.collidingCategories.*memPtr)(GetEntityObjectCategory(resolved->other.entity));
 			}
-
-			auto objCat = GetEntityObjectCategory(resolvedData->other.entity);
-
-			state.collidingCategories.Increment(objCat);
 		});
+	};
 
-	evs.OnEvent([](const events::ContactCollisionEnd& ev,
-		Collider& collider, GirlState& state)
-		{
-			auto resolvedData = ResolveCollisionData(collider, ev);
-			if (!resolvedData.has_value())
-			{
-				return;
-			}
+	static constexpr auto inc = &CollisionCategoryTracker::Increment;
+	static constexpr auto dec = &CollisionCategoryTracker::Decrement;
 
-			auto objCat = GetEntityObjectCategory(resolvedData->other.entity);
-
-			state.collidingCategories.Decrement(objCat);
-		});
+	addCollideLambda.template operator()<events::ContactCollisionBegin, inc>();
+	addCollideLambda.template operator()<events::ContactCollisionEnd, dec>();
+	addCollideLambda.template operator()<events::SensorCollisionBegin, inc>();
+	addCollideLambda.template operator()<events::SensorCollisionEnd, dec>();
 
 	evs.OnEvent([](const events::GameControllerConnected& ev,
 		GameControllerState& gcState)
@@ -627,23 +561,20 @@ static void SetUpGirlEntityCallbacks(Entity& e, EventBus& bus)
 			};
 		});
 
-	evs.OnInput(GameControllerInputSource::A,
-		[](const events::GameControllerInput& ev, GirlState& state)
-		{
-			state.action.jumpIntent = ev.input.state;
-		});
+	using Act = GirlActionIntent;
+	using Src = GameControllerInputSource;
 
-	evs.OnInput(GameControllerInputSource::X,
-		[](const events::GameControllerInput& ev, GirlState& state)
-		{
-			state.action.attackIntent = ev.input.state;
+	auto addBasicIntentLambda = [&evs]<auto intentPtr, Src src>() { 
+		evs.OnInput(src, [](const events::GameControllerInput& ev, GirlState& state) {
+			state.action.*intentPtr = ev.input.state;
 		});
+	};
 
-	evs.OnInput(GameControllerInputSource::RightTrigger,
-		[](const events::GameControllerInput& ev, GirlState& state)
-		{
-			state.action.dashIntent = ev.input.state;
-		});
+	addBasicIntentLambda.template operator()<&Act::jumpIntent, Src::A>();
+	addBasicIntentLambda.template operator()<&Act::carryIntent, Src::B>();
+	addBasicIntentLambda.template operator()<&Act::attackIntent, Src::X>();
+	addBasicIntentLambda.template operator()<&Act::retractIntent, Src::RightTrigger>();
+	addBasicIntentLambda.template operator()<&Act::ballFreezeIntent, Src::LeftTrigger>();
 }
 
 static Result<Entity> MakeCrateEntity(SceneFixture::SharedPtr& fixture,
@@ -717,6 +648,7 @@ static Result<Entity> MakeGirlEntity(SceneFixture::SharedPtr& fixture,
 	B2CollisionFilter filter{};
 	filter.categories = ObjectCategory::Player;
 	filter.categoryMask &= ~(ObjectCategory::PlayerSword);
+	//filter.categoryMask |= ObjectCategory::PlayerLegIron;
 
 	e.AddComponent(ComponentBuilder<Collider>{}
 	.WithShapeParameters({
@@ -750,11 +682,6 @@ static Result<Entity> MakeSwordEntity(SceneFixture::SharedPtr& fixture, Entity& 
 	const SDL_FPoint gScale = gTf.scale;
 	const auto& gBody = WriteAccessor<B2Body>{}(gRigid.body);
 	const auto& gShape = WriteAccessor<B2Shape>{}(gCollider.shape);
-
-	//auto rels = e.GetRelations();
-	//assert(!rels.IsChild());
-	//
-	//auto ch = rels.AddChild();
 
 	auto sw = ECS::CreateEntity();
 	assert(sw.IsValid());
@@ -790,6 +717,102 @@ static Result<Entity> MakeSwordEntity(SceneFixture::SharedPtr& fixture, Entity& 
 	SetUpSwordEntityCallbacks(sw, fixture->GetEventBus());
 
 	return sw;
+}
+
+template <typename Ev, auto memPtr>
+inline void TrackerLambda(const Ev& ev, Collider& col, CollisionCategoryTracker& tr)
+{
+	if (auto resolved = ResolveCollisionData(col, ev))
+	{
+		(tr.*memPtr)(GetEntityObjectCategory(resolved->other.entity));
+	}
+}
+
+inline Result<Void> RegisterCollisionCategoryTrackerCallbacks(EntityEvents& entEvs)
+{
+	static constexpr auto makeLambda = []<typename Ev, auto memPtr>() {
+		return [](const Ev& ev, Collider& col, CollisionCategoryTracker& tr) {
+			if (auto resolved = ResolveCollisionData(col, ev))
+			{
+				(tr.*memPtr)(GetEntityObjectCategory(resolved->other.entity));
+			}
+		};
+	};
+
+	static constexpr auto inc = &CollisionCategoryTracker::Increment;
+	static constexpr auto dec = &CollisionCategoryTracker::Decrement;
+
+	TRY(entEvs.OnEvent(&TrackerLambda<events::ContactCollisionBegin, inc>));
+	TRY(entEvs.OnEvent(&TrackerLambda<events::ContactCollisionEnd, dec>));
+	TRY(entEvs.OnEvent(&TrackerLambda<events::SensorCollisionBegin, inc>));
+	TRY(entEvs.OnEvent(&TrackerLambda<events::SensorCollisionEnd, dec>));
+
+	//TRY(entEvs.OnEvent(makeLambda.template operator()<events::ContactCollisionBegin, inc>()));
+	//TRY(entEvs.OnEvent(makeLambda.template operator()<events::ContactCollisionEnd, dec>()));
+	//TRY(entEvs.OnEvent(makeLambda.template operator()<events::SensorCollisionBegin, inc>()));
+	//TRY(entEvs.OnEvent(makeLambda.template operator()<events::SensorCollisionEnd, dec>()));
+
+	return kVoid;
+}
+
+template <SomeEventData BegEv, SomeEventData EndEv>
+inline Result<Void> RegisterCollisionCacheCallbacks(EntityEvents& entEvs)
+{
+	TRY(entEvs.OnEvent([](const BegEv& ev, Collider& col, CollisionCache& cache) {
+		if (auto resolved = ResolveCollisionData(col, ev))
+		{
+			cache.data.try_emplace(resolved->other.shapeHandle, resolved->other.entity);
+		}
+	}));
+	TRY(entEvs.OnEvent([](const EndEv& ev, Collider& col, CollisionCache& cache) {
+		if (auto resolved = ResolveCollisionData(col, ev))
+		{
+			cache.data.erase(resolved->other.shapeHandle);
+		}
+	}));
+
+	return kVoid;
+}
+
+inline Result<LegIron> MakeLegIronEntity(SceneFixture::SharedPtr& fixture, Entity& girl, SDL_FPoint girlStartPos)
+{
+	TRY(LegIron::Create(fixture->GetWorld(), fixture->GetTextureRepository(),
+		girl, {
+			.headPos = { girlStartPos.x + 5.0f, girlStartPos.y},
+			.numLinks = 11,
+			.playerCategory = ObjectCategory::Player,
+			.legIronCategory = ObjectCategory::PlayerSword,
+			.ballSensorCategory = ObjectCategory::PlayerLegIron
+		}), legIron);
+
+	auto ballE = legIron.GetBallEntity();
+	assert(ballE.IsValid());
+	assert(ballE.HasComponent<Collider>());
+
+	//ballSensor.AddComponent<CollisionCache>();
+	legIron.GetBallSensor().AddComponent<ObjectCategory>().value = ObjectCategory::PlayerLegIron;
+	ballE.AddComponent<ObjectCategory>().value = ObjectCategory::PlayerLegIron;
+	ballE.AddComponent<CollisionCategoryTracker>();
+
+	auto evs = ballE.GetEvents(fixture->GetEventBus());
+
+	//evs.OnEvent([](const events::SensorCollisionBegin& ev, Collider& col, CollisionCache& cache) {
+	//	if (auto resolved = ResolveCollisionData(col, ev))
+	//	{
+	//		cache.data.try_emplace(resolved->other.shapeHandle, resolved->other.entity);
+	//	}
+	//	});
+	//evs.OnEvent([](const events::SensorCollisionEnd& ev, Collider& col, CollisionCache& cache) {
+	//	if (auto resolved = ResolveCollisionData(col, ev))
+	//	{
+	//		cache.data.erase(resolved->other.shapeHandle);
+	//	}
+	//	});
+	TRY(RegisterCollisionCategoryTrackerCallbacks(evs));
+	//TRY((RegisterCollisionCacheCallbacks<events::SensorCollisionBegin, 
+	//									 events::SensorCollisionEnd>(evs)));
+
+	return legIron;
 }
 
 } // test

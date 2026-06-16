@@ -156,6 +156,14 @@ inline bool IsGirlCurrentlySheathingSword(const GirlState& state)
 {
 	return state.animation == GirlState::Animation::Sheathing;
 }
+inline bool IsGirlCurrentlyCarrying(const GirlState& state)
+{
+	return state.animation == GirlState::Animation::Carrying;
+}
+inline bool IsGirlAlsoCarryingBall(const GirlState& state)
+{
+	return state.substate & GirlState::SubState::CarryingBall; 
+}
 inline bool WalkVelocityXUnderStopThreshold(RigidBody& rigid)
 {
 	return std::abs(rigid.body.GetData().GetLinearVelocity().x) <
@@ -204,6 +212,18 @@ template <typename...Ts> requires (std::same_as<std::remove_cvref_t<Ts>, InputSt
 inline bool JumpIntentMatchesAny(const GirlState& state, Ts...ts)
 {
 	return ((state.action.jumpIntent == ts) || ...);
+}
+
+inline bool BallOnTerrain(const CollisionCategoryTracker& tr)
+{
+	return tr[ObjectCategory::Ground] > 0 ||
+		   tr[ObjectCategory::Wall] > 0 ||
+		   tr[ObjectCategory::Ceiling] > 0;
+}
+
+inline bool CanBallBeFrozen(const Entity& ballSensor)
+{
+	return ballSensor.HasComponent<CollisionCategoryTracker>(&BallOnTerrain);
 }
 
 

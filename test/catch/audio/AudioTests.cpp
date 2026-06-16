@@ -287,7 +287,7 @@ TEST_CASE("Audio System Tests", "[audio][system]")
 	}
 }
 
-TEST_CASE("Track Position updates correctly", "[audio][y]")
+TEST_CASE("Track Position updates correctly", "[audio]")
 {
 	auto sceneResult = SceneFixture::GetInstance();
 	REQUIRE(sceneResult.Success());

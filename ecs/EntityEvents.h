@@ -390,15 +390,6 @@ inline void OnEventImpl(EventBus& bus, Entity& e, Fn&& fn,
 
 		tks.emplace_back(bus.ConnectToEvent(
 		[e, def = filterDef, f = std::forward<Fn>(fn)](const event_data_t& ev) mutable {
-
-			if constexpr (std::same_as<event_data_t, events::SensorCollisionBegin>)
-			{
-				//if (e.GetID() != def.relevantEntity.id && def.relevantEntity.capture)
-				//{
-					int i = 0;
-				//}
-			}
-
 			if (IsEventRelevant(e, ev, def))
 			{
 				auto relE = GetRelevantEntity(e, def);

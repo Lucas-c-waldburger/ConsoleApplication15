@@ -1,14 +1,20 @@
 #include "Grapple.h"
 #include "../../../ecs/EntityPhysics.h"
+#include "../../../ecs/EntityEvents.h"
 #include "../../../file/FilePathUtility.h"
+#include "../platformer/Setup.h"
 #include <ranges>
 
 namespace test {
 
+namespace {
+
+} // unnamed
+
 static constexpr float kLinkCircleRadius = 5.0f;
 static constexpr float kBallCircleRadius = 30.0f;
 
-Result<LegIron> LegIron::Create(B2World& world, TextureRepository& repo, 
+Result<LegIron> LegIron::Create(B2World& world, TextureRepository& repo,
 								Entity& connectingEnt, const Definition& def)
 {
 	assert(def.numLinks > 0);
@@ -62,6 +68,19 @@ Result<LegIron> LegIron::Create(B2World& world, TextureRepository& repo,
 	}
 	assert(circleSprite.resourceHandle.IsValid());
 
+	Sprite spikeBallSprite{};
+	if (!spriteAtlas.HasSprite("spike_ball"))
+	{
+		TRY(ResourcePath::Sprite("shapes/spike_ball.png"), spikeBallPath);
+		TRY_ASSIGN(spikeBallSprite,
+			spriteAtlas.LoadSprite(SDLite::Renderer(), { .filepath = std::move(spikeBallPath) }));
+	}
+	else
+	{
+		spikeBallSprite = spriteAtlas.GetSprite("spike_ball");
+	}
+	assert(spikeBallSprite.resourceHandle.IsValid());
+
 	for (size_t i = 0; i < def.numLinks; i++)
 	{
 		const bool isHead = i == def.numLinks - 1;
@@ -76,10 +95,10 @@ Result<LegIron> LegIron::Create(B2World& world, TextureRepository& repo,
 		assert(e.IsValid());
 
 		e.AddComponent(SpriteRenderableComponent{ 
-			.sprite = circleSprite,
+			.sprite = (isHead ? spikeBallSprite : circleSprite),
 			.profile = {
 				.drawOrder = 9999,
-				.mods = { .color = RGB::FromSDLColor(SDLite::kColorBlack) },
+				.mods = {.color = (isHead ? RGB{} : RGB::FromSDLColor(SDLite::kColorBlack)) },
 				//.debugDraw = { .collider = { .on = true }}
 			}
 		});
@@ -89,7 +108,7 @@ Result<LegIron> LegIron::Create(B2World& world, TextureRepository& repo,
 		assert(body.IsValid());
 		assert(e.HasComponent<Transform>());
 
-		e.GetComponent<Transform>().scale = (isHead ? SDL_FPoint{ 3.3f, 3.3f } : 
+		e.GetComponent<Transform>().scale = (isHead ? SDL_FPoint{ 0.2f, 0.2f } : 
 													  SDL_FPoint{ 0.6f, 0.6f });
 
 		B2CollisionFilter filter{};
@@ -99,8 +118,8 @@ Result<LegIron> LegIron::Create(B2World& world, TextureRepository& repo,
 
 		auto sh = phys.AddColliderCircle((isHead ? kBallCircleRadius : kLinkCircleRadius), { 
 			.settings = { 
-				.density = (isHead ? 5.0f : 1.0f),
-				.friction = 1.5f,
+				.density = (isHead ? 10.0f : 1.0f),
+				.friction = (isHead ? 200.0f : 1.5f),
 				.enableEvents = { .contact = true },
 				.enableCollision = true
 			},
@@ -110,11 +129,11 @@ Result<LegIron> LegIron::Create(B2World& world, TextureRepository& repo,
 
 		if (isHead)
 		{
-			filter = { .categories = def.legIronCategory };
+			filter = { .categories = def.ballSensorCategory };
 			filter.categoryMask &= ~(def.legIronCategory);
 
-			auto sensorSh = phys.AddColliderCircle(kBallCircleRadius, {
-				.settings { .enableEvents = { .sensor = true }, .isSensor = true},
+			auto sensorSh = phys.AddColliderCircle(kBallCircleRadius + 5.0f, {
+				.settings { .enableEvents = { true, true, true }, .isSensor = true},
 				.filter = filter
 			});
 			assert(sensorSh.IsValid());
@@ -122,6 +141,7 @@ Result<LegIron> LegIron::Create(B2World& world, TextureRepository& repo,
 		}
 
 		const auto len = body.GetDistance(prevBody);
+		legIron.defaultJointLength_ = 0.8f;
 
 		auto joint = B2JointFactory::MakeDistanceJoint(prevBody.GetHandle(), body.GetHandle(), {
 			.length {.rest = 0.8f, .max = len },
@@ -134,15 +154,16 @@ Result<LegIron> LegIron::Create(B2World& world, TextureRepository& repo,
 		legIron.joints_.emplace_back(joint);
 
 		prevBody = body;
+
+		if (isHead)
+		{
+			const auto pos = body.GetPosition();
+			body.SetPosition({ pos.x + 300.0f, pos.y });
+			body.SetLinearVelocity({ 0.0f, 0.0f });
+			body.SetAngularVelocity(0.0f);
+			body.SetGravityScale(2.5f);
+		}
 	}
-
-	//assert(!legIron.entities_.empty());
-	//auto headRels = legIron.entities_.back().GetRelations();
-
-	//auto sensorChild = headRels.AddChild();
-	//auto sensorPhys = sensorChild.GetPhysics(world);
-
-	//sensorP
 
 	return legIron;
 }
@@ -163,6 +184,34 @@ Entity LegIron::GetBallEntity()
 const Entity LegIron::GetBallEntity() const
 {
 	return (!entities_.empty()) ? entities_.back() : Entity{};
+}
+
+Entity LegIron::GetBallSensor()
+{
+	if (auto e = GetBallEntity(); e.IsValid())
+	{
+		if (auto ch = e.GetRelations().GetChildren(); !ch.empty())
+		{
+			assert(ch.size() == 1);
+			return ch.front();
+		}
+	}
+
+	return {};
+}
+
+void LegIron::SetJointRestLength(float len)
+{
+	len = std::clamp(len, 0.0001f, defaultJointLength_);
+
+	ForEachJoint([len](B2DistanceJoint& j) {
+		j.SetRestLength(len);
+	});
+}
+
+float LegIron::GetJointRestLength() const noexcept
+{
+	return (!joints_.empty()) ? joints_.back().GetRestLength() : 0.0f;
 }
 
 //void GrappleDrawSystem::Update(float)

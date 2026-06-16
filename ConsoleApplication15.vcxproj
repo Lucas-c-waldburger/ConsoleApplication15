@@ -507,6 +507,8 @@
     <ClInclude Include="test\demo\gallery\GalleryApp.h" />
     <ClInclude Include="test\demo\grapple\Grapple.h" />
     <ClInclude Include="test\demo\PhysicsTuning.h" />
+    <ClInclude Include="test\demo\platformer\CollisionCategoryTracker.h" />
+    <ClInclude Include="test\demo\platformer\EventCallbackRegistrar.h" />
     <ClInclude Include="test\demo\platformer\GamepadUiOverlay.h" />
     <ClInclude Include="test\demo\platformer\GirlChecks.h" />
     <ClInclude Include="test\demo\platformer\GirlStateHandlers.h" />
@@ -937,6 +939,11 @@
     <Image Include="resources\sprites\girl\land\girl_land_001.png" />
     <Image Include="resources\sprites\girl\land\girl_land_002.png" />
     <Image Include="resources\sprites\girl\land\girl_land_003.png" />
+    <Image Include="resources\sprites\girl\push\girl_push_000.png" />
+    <Image Include="resources\sprites\girl\push\girl_push_001.png" />
+    <Image Include="resources\sprites\girl\push\girl_push_002.png" />
+    <Image Include="resources\sprites\girl\push\girl_push_003.png" />
+    <Image Include="resources\sprites\girl\push\girl_push_004.png" />
     <Image Include="resources\sprites\girl\roll\girl_roll_000.png" />
     <Image Include="resources\sprites\girl\roll\girl_roll_001.png" />
     <Image Include="resources\sprites\girl\roll\girl_roll_002.png" />
@@ -1089,6 +1096,8 @@
     <Image Include="resources\sprites\particles\symbol\symbol_0.png" />
     <Image Include="resources\sprites\particles\symbol\symbol_1.png" />
     <Image Include="resources\sprites\shapes\circle_icon.png" />
+    <Image Include="resources\sprites\shapes\spike_ball.png" />
+    <Image Include="resources\sprites\shapes\spike_ball_2.png" />
     <Image Include="resources\sprites\sword_slash\sword_slash_000.png" />
     <Image Include="resources\sprites\sword_slash\sword_slash_001.png" />
     <Image Include="resources\sprites\sword_slash\sword_slash_002.png" />
@@ -1114,6 +1123,7 @@
     <Image Include="test\catch\test_images\GoNotoCurrent_Regular_font_glyphs_color_mod.png" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="docs\reference.txt" />
     <Text Include="resources\scripts\b2body_test.lua" />
   </ItemGroup>
   <ItemGroup>

@@ -184,9 +184,11 @@ static Result<Entity> MakeHourglass(B2World& world, int windowBottomOffset,
 
 static SDL_Color GetRainbowColor(float t)
 {
-	float r = std::sin(2.0f * M_PI * t + 0.0f) * 0.5f + 0.5f;
-	float g = std::sin(2.0f * M_PI * t + 2.0f * M_PI / 3.0f) * 0.5f + 0.5f;
-	float b = std::sin(2.0f * M_PI * t + 4.0f * M_PI / 3.0f) * 0.5f + 0.5f;
+	constexpr auto pi = static_cast<float>(M_PI);
+
+	float r = std::sin(2.0f * pi * t + 0.0f) * 0.5f + 0.5f;
+	float g = std::sin(2.0f * pi * t + 2.0f * pi / 3.0f) * 0.5f + 0.5f;
+	float b = std::sin(2.0f * pi * t + 4.0f * pi / 3.0f) * 0.5f + 0.5f;
 
 	return {
 		static_cast<uint8_t>(r * 255),

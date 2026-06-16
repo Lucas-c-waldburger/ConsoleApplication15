@@ -53,14 +53,6 @@ public:
 		{
 			SetGirlAttackState(animCopy, state, rigid, coll);
 		}
-		
-		//else if (IsGirlDashFlagged(state))
-		//{
-		//	if (ShouldDash(state, animCopy))
-		//	{
-		//		SetGirlDashState(tf, animCopy, state, rend, rigid, coll);
-		//	}
-		//}
 		else if (IsGirlCurrentlyJumping(state))
 		{
 			if (IsYIncreasing(tf.position))
@@ -117,6 +109,11 @@ public:
 			{
 				SetGirlSheathState(animCopy, state, rigid, coll);
 			}
+
+			if (ShouldCarry(state))
+			{
+				SetGirlCarrySubState(state, true, animCopy, rigid);
+			}
 		}
 		else if (IsGirlCurrentlyWalking(state))
 		{
@@ -132,6 +129,11 @@ public:
 			if (!IsThumbstickEngaged(state))
 			{
 				SetGirlIdleState(animCopy, state, rigid, coll);
+			}
+
+			if (ShouldCarry(state))
+			{
+				SetGirlCarrySubState(state, true, animCopy, rigid);
 			}
 		}
 		else if (IsGirlCurrentlyAttacking(state))
@@ -181,12 +183,26 @@ public:
 			}
 		}
 
+		// SUB STATES
+		if (IsGirlAlsoCarryingBall(state))
+		{
+			if (ShouldDrop(state))
+			{
+				SetGirlCarrySubState(state, false, animCopy, rigid);
+			}
+			else if (animCopy.spriteSeriesName != "girl_push")
+			{
+				animCopy.spriteSeriesName = "girl_push";
+			}
+		}
+
 		HandleAxisMoveIntent(rigid, state, targets, dt);
 
 		UpdateAnimations(tf, animCopy, state, animDeltas);
 		UpdateSpriteFacingSide(tf, rend, animCopy, state);
 
 		UpdateSword(state, animCopy, rend, tf);
+		UpdateLegIron(state, tf, rend);
 
 		if (SpriteChanged(animCopy, e))
 		{
@@ -196,6 +212,7 @@ public:
 		Cleanup(tf, state);
 	}
 
+	Entity GetLegIronBallEntity() { return legIron_.GetBallEntity(); }
 
 private:
 	bool TimeInAnimCrossesThreshold(float threshold, float mod = 0.0f) const
@@ -510,6 +527,160 @@ private:
 		rend.profile.debugDraw.collider.on = active;
 	}
 
+	static bool ShouldCarry(const GirlState& state)
+	{
+		return ((state.substate & GirlState::SubState::CarryingBall) == 0) &&
+			     state.collidingCategories[ObjectCategory::PlayerLegIron] > 0 &&
+			     state.action.carryIntent == InputState::Pressed;
+	}
+
+	static bool ShouldDrop(const GirlState& state)
+	{
+		return (state.action.carryIntent & (InputState::Pressed | InputState::Held)) == 0;
+	}
+
+	//void SetGirlCarryState(SpriteAnimationComponent& anim, GirlState& state,
+	//					           RigidBody& rigid, Collider& collider)
+	//{
+	//	ExitCurrentState(state, rigid, collider);
+
+	//	anim.spriteSeriesName = "girl_push";
+	//	anim.index.current = 0;
+
+	//	PushStateChangeEvent(state, GirlState::Animation::Carrying);
+
+	//	state.animation = GirlState::Animation::Carrying;
+	//}
+	void SetGirlCarrySubState(GirlState& state, bool on, SpriteAnimationComponent& anim,
+							  RigidBody& girlRigid)
+	{
+		if (on)
+		{
+			state.substate |= GirlState::SubState::CarryingBall;
+			anim.spriteSeriesName = "girl_push";
+			anim.index.current = 0;
+			isSwordOut_ = false;
+		}
+		else
+		{
+			state.substate &= ~(GirlState::SubState::CarryingBall);
+			anim.spriteSeriesName = GetSpriteSeriesNameForState(state);
+			anim.index.current = 0;
+		}
+
+		auto ballE = legIron_.GetBallEntity();
+
+		if (!ballE.IsValid() || !ballE.HasComponent<RigidBody>())
+		{
+			return;
+		}
+
+		auto& ballBody = GetWriteAccess(ballE.GetComponent<RigidBody>().body);
+
+		ballBody.SetGravityScale(on ? 0.0f : 2.5f);
+
+		if (on)
+		{
+			ballBody.SetAngularDamping(20.0f);
+		}
+		else
+		{
+			auto girlBody = GetWriteAccess(girlRigid.body);
+			if (!girlBody.IsValid())
+			{
+				LOG_DEBUG("Girl body was invalid");
+				return;
+			}
+			
+			auto velToApply = girlBody.GetLinearVelocity() * 1.3f;
+			if (state.action.moveIntent.has_value())
+			{
+				auto normed = std::abs(*state.action.moveIntent / 
+					static_cast<float>(GameController::kAxisMax));
+
+				velToApply *= normed * 2.0f;
+				//velToApply.y *= 1.03f;
+			}
+
+			ballBody.SetLinearVelocity(velToApply);
+		}
+	}
+
+
+	void UpdateLegIron(const GirlState& state, const Transform& tf, const SpriteRenderableComponent& rend)
+	{
+		auto ballE = legIron_.GetBallEntity();
+
+		if (!ballE.IsValid() || !ballE.HasComponent<RigidBody>())
+		{
+			return;
+		}
+
+		auto& ballBody = GetWriteAccess(ballE.GetComponent<RigidBody>().body);
+
+		std::optional<SDL_FPoint> newBallPos;
+
+		if (!IsGirlAlsoCarryingBall(state))
+		{
+			static constexpr float kRetractAmount = 0.05f;
+			const auto currentJointLen = legIron_.GetJointRestLength();
+
+			if (state.action.retractIntent & (InputState::Pressed | InputState::Held))
+			{
+				if (currentJointLen - kRetractAmount > 0.0f)
+				{
+					legIron_.SetJointRestLength(currentJointLen - kRetractAmount);				
+				}
+
+			}
+			else
+			{
+				if (currentJointLen + kRetractAmount < legIron_.GetDefaultJointLength())
+				{
+					legIron_.SetJointRestLength(currentJointLen + kRetractAmount);
+				}
+			}
+
+			if (state.action.ballFreezeIntent & (InputState::Pressed | InputState::Held))
+			{
+				if (CanBallBeFrozen(ballE))
+				{
+					if (!ballLockPosition_.has_value())
+					{
+						ballLockPosition_ = ballBody.GetPosition();
+					}
+					newBallPos = *ballLockPosition_;
+
+					ballBody.SetLinearVelocity({ 0.0f, 0.0f });
+					ballBody.SetAngularVelocity(0.0f);
+					ballBody.SetGravityScale(0.0f);
+				}
+			}
+			else
+			{
+				ballLockPosition_.reset();
+				ballBody.SetGravityScale(1.0f);
+			}
+		}
+		else
+		{
+			static constexpr float ballCarryOffsetX = 40.0f;
+			static constexpr float ballCarryOffsetY = -40.0f;
+
+			newBallPos = {
+				tf.position.x + (IsGirlFacingRight(rend) ? ballCarryOffsetX : -ballCarryOffsetX),
+				tf.position.y + ballCarryOffsetY
+			};
+		}
+
+		if (newBallPos.has_value())
+		{
+			ballBody.SetPosition(*newBallPos);
+		}
+		//ballBody.SetLinearVelocity({ 0.0f, 0.0f });
+		//ballBody.SetAngularVelocity(0.0f);
+	}
+
 	void UpdateSword(const GirlState& state, const SpriteAnimationComponent& anim, 
 					 const SpriteRenderableComponent& rend, const Transform& tf)
 	{
@@ -605,6 +776,30 @@ private:
 		}
 	}
 
+	std::string_view GetSpriteSeriesNameForState(const GirlState& state)
+	{
+		const bool carryingBall = IsGirlAlsoCarryingBall(state);
+		switch (state.animation)
+		{
+		case State::Idle:
+			return (carryingBall) ? "girl_push" : (isSwordOut_) ? "girl_idle_s" : "girl_idle";
+		case State::Walking:
+			return (carryingBall) ? "girl_push" : (isSwordOut_) ? "girl_walk_s" : "girl_walk";
+		case State::Attacking:
+			return attackAnimDataRef_.GetAttackAnimSeriesName();
+		case State::Jumping:
+			return (isSwordOut_ && !carryingBall) ? "girl_jump_s" : "girl_jump";
+		case State::Landing:
+			return "girl_land";
+		case State::Falling:
+			return (carryingBall) ? "girl_push" : "girl_fall";
+		case State::Sheathing:
+			return "girl_sheath";
+		default:
+			return "girl_idle";
+		}
+	}
+
 	void ExitCurrentState(GirlState& state, RigidBody& rigid, Collider& collider)
 	{
 		switch (state.animation)
@@ -628,13 +823,20 @@ private:
 		switch (state.animation)
 		{
 		case State::Idle:
-			if (TimeInAnimCrossesThreshold(deltas.idleTime))
+			if (!IsGirlAlsoCarryingBall(state) && TimeInAnimCrossesThreshold(deltas.idleTime))
 			{
 				++anim.index;
 			}
 			break;
 		case State::Walking:
-			if (DistXInAnimCrossesThreshold(deltas.walkDeltaX))
+			if (IsGirlAlsoCarryingBall(state))
+			{
+				if (DistXInAnimCrossesThreshold(deltas.carryDeltaX))
+				{
+					++anim.index;
+				}
+			}
+			else if (DistXInAnimCrossesThreshold(deltas.walkDeltaX))
 			{
 				++anim.index;
 			}
@@ -680,6 +882,12 @@ private:
 			{
 				++anim.index;
 			}
+		case State::Carrying:
+			if (DistXInAnimCrossesThreshold(deltas.walkDeltaX))
+			{
+				++anim.index;
+			}
+			break;
 		default:
 			break;
 		}
@@ -704,12 +912,6 @@ private:
 								state.action.moveIntent->x > 0.0f ? SDL_FLIP_NONE :
 								rend.profile.flip;
 		}
-		//else
-		//{ 
-		//	rend.profile.flip = (tf.position.x < lastPosition_.x) ? SDL_FLIP_HORIZONTAL :
-		//						(tf.position.x > lastPosition_.x) ? SDL_FLIP_NONE :
-		//						rend.profile.flip;
-		//}
 	}
 
 	void UpdateMembers(const GirlState& state, const Transform& tf, 
@@ -787,8 +989,8 @@ private:
 	bool isSwordOut_ = false;
 	std::unordered_set<Handle<B2Shape>> shapesHitBySword_;
 	LegIron legIron_;
+	std::optional<SDL_FPoint> ballLockPosition_;
 };
-
 
 static Result<Void> RunPlatformerDemo(SceneFixture::SharedPtr& fixture)
 {
@@ -802,16 +1004,9 @@ static Result<Void> RunPlatformerDemo(SceneFixture::SharedPtr& fixture)
 	TRY(MakeGirlEntity(fixture, girlStartPos), girlEnt);
 	TRY(MakeSwordEntity(fixture, girlEnt), swordEnt);
 	//TRY(MakeCrateEntity(fixture, { girlStartPos.x + 60.0f, girlStartPos.y}), crateEnt);
+	TRY(MakeLegIronEntity(fixture, girlEnt, girlStartPos), legIron);
 
-	TRY(LegIron::Create(fixture->GetWorld(), fixture->GetTextureRepository(),
-		girlEnt, {
-			.headPos = { girlStartPos.x + 5.0f, girlStartPos.y},
-			.numLinks = 11,
-			.playerCategory = ObjectCategory::Player, 
-			.legIronCategory = ObjectCategory::Enemy
-		}), legIron);
-
-	fixture->RegisterSystem<GirlStateUpdater>(Phase::Input, 
+	auto& updater = fixture->RegisterSystem<GirlStateUpdater>(Phase::Input, 
 		girlEnt.GetID(), swordEnt.GetID(), fixture->GetEventBus(), std::move(legIron));
 
 	TRY(SetUpGirlStateReporter(girlEnt, fixture));
@@ -827,6 +1022,7 @@ static Result<Void> RunPlatformerDemo(SceneFixture::SharedPtr& fixture)
 	EntityMap entities{};
 	entities["girl"] = girlEnt;
 	entities["sword"] = swordEnt;
+	entities["legIron"] = updater.GetLegIronBallEntity();
 	//entities["crate"] = crateEnt;
 
 	TRY(GirlPhysicsEditor::Init(guiSys, entities));

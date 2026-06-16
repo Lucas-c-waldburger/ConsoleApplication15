@@ -172,6 +172,24 @@ inline constexpr P& operator-=(P& lhs, P rhs)
     return lhs;
 }
 
+template <SDLPointType P>
+inline constexpr P& operator*=(P& lhs, P rhs)
+{
+    lhs.x *= rhs.x;
+    lhs.y *= rhs.y;
+
+    return lhs;
+}
+
+template <SDLPointType P>
+inline constexpr P& operator/=(P& lhs, P rhs)
+{
+    lhs.x /= rhs.x;
+    lhs.y /= rhs.y;
+
+    return lhs;
+}
+
 // Mutating Scalar
 template <SDLPointType P, ArithmeticType T>
 inline constexpr P& operator*=(P& p, T scalar)
@@ -191,6 +209,15 @@ inline constexpr P operator-(P p)
     return P{ -p.x, -p.y };
 }
 
+namespace std {
+
+template <SDLPointType P>
+constexpr P abs(P p)
+{
+    return P{ std::abs(p.x), std::abs(p.y) };
+}
+
+} // std
 
 // RECT //
 // comparison

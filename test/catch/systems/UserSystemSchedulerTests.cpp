@@ -191,7 +191,7 @@ TEST_CASE("UserSystemScheduler Tests", "[user][system]")
 	}
 }
 
-TEST_CASE("Registering individual update operations on UserSystemScheduler", "[user][system][y]")
+TEST_CASE("Registering individual update operations on UserSystemScheduler", "[user][system]")
 {
 	UserSystemScheduler sysScheduler{};
 	using UserSys = UserSystemWithUpdateOperations;
@@ -221,4 +221,35 @@ TEST_CASE("Registering individual update operations on UserSystemScheduler", "[u
 		std::string{UserSys::kOutputMsgPresentation2};
 
 	CHECK(message == expectedPresentationMsg);
+}
+
+TEST_CASE("Removing Systems", "[user][system]")
+{
+	UserSystemScheduler sysScheduler{};
+	using UserSys = UserSystemWithUpdateOperations;
+
+	std::string message;
+
+	auto& sys = sysScheduler.RegisterSystem<UserSys>(message);
+	CHECK(sysScheduler.IsSystemRegistered<UserSys>());
+
+	sysScheduler.RegisterUpdateOperation<&UserSys::PresentationOperation1>(Phase::Presentation);
+	sysScheduler.RegisterUpdateOperation<&UserSys::PresentationOperation2>(Phase::Presentation);
+
+	sysScheduler.UpdateSystems(Phase::Presentation, 0.0f);
+
+	const std::string expectedPresentationMsg =
+		std::string{ UserSys::kOutputMsgPresentation1 } + " " +
+		std::string{ UserSys::kOutputMsgPresentation2 };
+
+	CHECK(message == expectedPresentationMsg);
+
+	message.clear();
+
+	const bool removed = sysScheduler.RemoveSystem<UserSys>();
+	CHECK(removed);
+
+	sysScheduler.UpdateSystems(Phase::Presentation, 0.0f);
+
+	CHECK(message.empty());
 }

@@ -1,0 +1,8 @@
+
+Components:
+===================================================
+> Transform:
+	- An entity with RigidBody component has its transform position automatically 
+	  updated to match its body position. Editing the transform.position value directly
+	  will be overriden at physics phase each frame
+	- Scale drives the visual scale of a SpriteRenderable/TextRenderable Component

@@ -47,6 +47,7 @@ static float kGirlAttackBAnimChangeTime = 0.07f;
 static float kGirlRollAnimChangeTime = 0.15f;
 static float kGirlDashAnimChangeTime = 0.03f;
 static float kGirlSheathAnimChangeTime = 0.14f;
+static float kGirlPushAnimChangeXDelta = 20.0f;
 
 static float kGirlDashAnimXDeltaDuration = 40.0f;
 static float kGirlDashAnimYDeltaDuration = 20.0f;
@@ -77,11 +78,12 @@ struct ObjectCategory
 		Enemy = 1 << 3,
 		Player = 1 << 4,
 		PlayerSword = 1 << 5,
+		PlayerLegIron = 1 << 6,
 		Terrain = (Ground | Wall | Ceiling)
 	};
 
 	using Type = uint8_t;
-	static constexpr size_t count = 7;
+	static constexpr size_t count = 8;
 
 	Type value = Unknown;
 };
@@ -93,19 +95,19 @@ public:
 	{
 		assert(category != ObjectCategory::Unknown);
 
-		const auto idx = std::countr_zero(category);
+		const auto idx = static_cast<size_t>(std::countr_zero(category));
 		assert(idx < categories_.size());
 
-		return categories_[static_cast<size_t>(idx)];
+		return categories_[idx];
 	}
 	constexpr uint16_t operator[](ObjectCategory::Type category) const
 	{
 		assert(category != ObjectCategory::Unknown);
 
-		const auto idx = std::countr_zero(category);
+		const auto idx = static_cast<size_t>(std::countr_zero(category));
 		assert(idx < categories_.size());
 
-		return categories_[static_cast<size_t>(idx)];
+		return categories_[idx];
 	}
 
 	constexpr void Increment(ObjectCategory::Type category)
@@ -177,6 +179,7 @@ struct AnimationDeltas
 	float jumpDeltaY = 0.0f;
 	float fallDeltaY = 0.0f;
 	float sheathTime = 0.0f;
+	float carryDeltaX = 0.0f;
 };
 
 static const AnimationDeltas kGirlBaseAnimationDeltas{
@@ -188,7 +191,8 @@ static const AnimationDeltas kGirlBaseAnimationDeltas{
 	.walkDeltaX = kGirlWalkAnimChangeXDelta,
 	.jumpDeltaY = kGirlJumpAnimChangeYDelta,
 	.fallDeltaY = kGirlFallAnimChangeYDelta,
-	.sheathTime = kGirlSheathAnimChangeTime
+	.sheathTime = kGirlSheathAnimChangeTime,
+	.carryDeltaX = kGirlPushAnimChangeXDelta
 };
 
 struct MovementProfile
@@ -416,6 +420,9 @@ struct GirlActionIntent
 	InputState jumpIntent = InputState::None;
 	InputState attackIntent = InputState::None;
 	InputState dashIntent = InputState::None;
+	InputState carryIntent = InputState::None;
+	InputState retractIntent = InputState::None;
+	InputState ballFreezeIntent = InputState::None;
 	std::optional<SDL_FPoint> moveIntent;
 
 	void Reset() { *this = GirlActionIntent{}; }
@@ -435,15 +442,22 @@ struct GirlState
 		Rolling,
 		Dashing,
 		Sheathing,
+		Carrying,
 		ENUM_SIZE_
 	};
+
+	enum SubState : uint8_t
+	{
+		CarryingBall = 1 << 0
+	};
+
 	static constexpr size_t stateCount = enum_size_v<Animation>;
 	static_assert(SomeSizedEnum<Animation>);
 
 	Animation animation = Animation::Idle;
 	CollisionCategoryTracker collidingCategories = {};
 	GirlActionIntent action;
-	//std::optional<int> axisMoveIntentX;
+	uint8_t substate = 0;
 
 	bool operator==(const GirlState&) const = default;
 };
@@ -454,6 +468,7 @@ struct GirlIntent
 {
 	InputState jumpIntent = InputState::None;
 	InputState attackIntent = InputState::None;
+	InputState pickUpIntent = InputState::None;
 	SDL_FPoint moveIntent = { 0.0f, 0.0f };
 };
 
@@ -473,6 +488,7 @@ enum class GirlStateEnum : uint16_t
 	Jumping,
 	Landing,
 	Falling,
+	Carrying,
 	ENUM_SIZE_
 };
 
@@ -664,6 +680,13 @@ public:
 
 private:
 };
+
+template <SDLPointType P>
+inline constexpr P& FlipY(P& p)
+{
+	p.y = -p.y;
+	return p;
+}
 
 //template <GirlState::Animation PrimaryState, typename SubStateEnum>
 //	requires std::is_enum_v<SubStateEnum>

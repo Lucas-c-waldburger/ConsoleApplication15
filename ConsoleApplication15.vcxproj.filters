@@ -2069,6 +2069,12 @@
     <ClInclude Include="test\demo\grapple\Grapple.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="test\demo\platformer\CollisionCategoryTracker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\platformer\EventCallbackRegistrar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -2866,9 +2872,31 @@
     <Image Include="resources\sprites\cd_spin\cd_spin_020.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="resources\sprites\girl\push\girl_push_000.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\push\girl_push_001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\push\girl_push_002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\push\girl_push_003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\girl\push\girl_push_004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\shapes\spike_ball.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\shapes\spike_ball_2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\scripts\b2body_test.lua" />
+    <Text Include="docs\reference.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\scripts\game_controller_test.lua" />
