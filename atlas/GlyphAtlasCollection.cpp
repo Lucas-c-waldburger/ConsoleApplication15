@@ -272,6 +272,30 @@ Result<Void> FontAtlasTexture::RebuildSourceTexture(SDL_Renderer* renderer,
     return Void{};
 }
 
+// FONT ATLAS
+FontAtlas::FontAtlas(FontAtlas&& other) noexcept :
+    TextureCreationNotifier(std::move(other)),
+    fontAtlasTextures_(std::move(other.fontAtlasTextures_)),
+    fontInfo_(std::move(other.fontInfo_))
+{
+    RepopulateFontNameIndexMap(other.fontNameIndices_.size());
+}
+
+FontAtlas& FontAtlas::operator=(FontAtlas&& other) noexcept
+{
+    if (this == &other)
+    {
+        return *this;
+    }
+
+    TextureCreationNotifier::operator=(std::move(other));
+    fontAtlasTextures_ = std::move(other.fontAtlasTextures_);
+    fontInfo_ = std::move(other.fontInfo_);
+
+    RepopulateFontNameIndexMap(other.fontNameIndices_.size());
+
+    return *this;
+}
 
 Result<Handle<TextureResource>> FontAtlas::LoadFont(SDL_Renderer* renderer, 
 								                    FontDescriptor&& fontDescriptor)
@@ -434,4 +458,18 @@ std::vector<FontDescriptor> FontAtlas::ExportFontDescriptors() const
 size_t FontAtlas::GetTextureCount() const
 {
     return fontAtlasTextures_.size();
+}
+
+void FontAtlas::RepopulateFontNameIndexMap(size_t newSize)
+{
+    fontNameIndices_.clear();
+    fontNameIndices_.reserve(newSize);
+
+    for (size_t i = 0; i < fontInfo_.Size(); ++i)
+    {
+        const auto& name = fontInfo_.GetView<&FontInfo::fontName>(i);
+
+        auto [_, inserted] = fontNameIndices_.try_emplace(name, i);
+        assert(inserted);
+    }
 }

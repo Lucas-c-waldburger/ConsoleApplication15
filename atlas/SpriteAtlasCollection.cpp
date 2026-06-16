@@ -187,6 +187,7 @@ Result<Void> SpriteAtlasTexture::RebuildSourceTexture(SDL_Renderer* renderer,
 
 // SPRITE ATLAS
 SpriteAtlas::SpriteAtlas(SpriteAtlas&& other) noexcept : 
+    TextureCreationNotifier(std::move(other)),
     spriteAtlasTextures_(std::move(other.spriteAtlasTextures_)),
     spriteInfo_(std::move(other.spriteInfo_)),
     rebuildTexturesSignalToken_(std::move(other.rebuildTexturesSignalToken_)),
@@ -203,6 +204,7 @@ SpriteAtlas& SpriteAtlas::operator=(SpriteAtlas&& other) noexcept
         return *this;
     }
 
+    TextureCreationNotifier::operator=(std::move(other));
     spriteAtlasTextures_ = std::move(other.spriteAtlasTextures_);
     spriteInfo_ = std::move(other.spriteInfo_);
     rebuildTexturesSignalToken_ = std::move(other.rebuildTexturesSignalToken_);

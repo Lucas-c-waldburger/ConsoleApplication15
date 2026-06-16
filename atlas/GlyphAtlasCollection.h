@@ -88,16 +88,18 @@ class FontAtlas : public TextureCreationNotifier
 public:
 	static inline const FontAtlasTexture kInvalidGlyphAtlas{};
 
-	using FontIndexMap = RapidHashUnorderedMap<size_t>;
+	using FontIndexMap = std::unordered_map<std::string_view, size_t>;
 
-	FontAtlas() = default;
+	static constexpr size_t kDefaultFrontInfoCapacity = 20;
+
+	FontAtlas() { fontInfo_.Reserve(kDefaultFrontInfoCapacity); }
 	~FontAtlas() = default;
 
 	FontAtlas(const FontAtlas&) = delete;
 	FontAtlas& operator=(const FontAtlas&) = delete;
 
-	FontAtlas(FontAtlas&&) noexcept = default;
-	FontAtlas& operator=(FontAtlas&&) noexcept = default;
+	FontAtlas(FontAtlas&& other) noexcept;
+	FontAtlas& operator=(FontAtlas&& other) noexcept;
 
 	Result<Handle<TextureResource>> LoadFont(SDL_Renderer* renderer, 
 											 FontDescriptor&& fontDescriptor);
@@ -200,6 +202,8 @@ public:
 	}
 
 private:
+	void RepopulateFontNameIndexMap(size_t newSize);
+
 	std::vector<FontAtlasTexture> fontAtlasTextures_;
 	FontInfoSOA fontInfo_;
 	FontIndexMap fontNameIndices_;
