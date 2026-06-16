@@ -200,8 +200,6 @@
     <ClCompile Include="serial\EntityDeserializer.cpp" />
     <ClCompile Include="serial\EntitySerializer.cpp" />
     <ClCompile Include="serial\TextureRepositorySerializer.cpp" />
-    <ClCompile Include="state\EntityState.cpp" />
-    <ClCompile Include="state\EntityStateBuilder.cpp" />
     <ClCompile Include="components\driver\EntityStateDriver.cpp" />
     <ClCompile Include="components\util\TagsComponentUtils.cpp" />
     <ClCompile Include="core\WeightGenerator.cpp" />
@@ -251,7 +249,6 @@
     <ClCompile Include="systems\util\DebugDrawUtils.cpp" />
     <ClCompile Include="systems\util\RenderUtils.cpp" />
     <ClCompile Include="systems\PhysicsSystem.cpp" />
-    <ClCompile Include="core\AABB.cpp" />
     <ClCompile Include="systems\SDLInputSystem.cpp" />
     <ClCompile Include="systems\SpriteAnimationSystem.cpp" />
     <ClCompile Include="systems\TimerSystem.cpp" />
@@ -390,14 +387,10 @@
     <ClInclude Include="core\Anchor.h" />
     <ClInclude Include="core\FixedString.h" />
     <ClInclude Include="core\InlineStorage.h" />
-    <ClInclude Include="core\CatTypeID.h" />
-    <ClInclude Include="core\DynamicSOA.h" />
-    <ClInclude Include="core\ErrorCode.h" />
     <ClInclude Include="core\Hash.h" />
     <ClInclude Include="core\MacroUtils.h" />
     <ClInclude Include="core\ResourceHandle.h" />
     <ClInclude Include="core\SOAConcepts.h" />
-    <ClInclude Include="core\SOAInterface.h" />
     <ClInclude Include="core\StableSOA.h" />
     <ClInclude Include="core\StringUtils.h" />
     <ClInclude Include="deps\boost\pfr.hpp" />
@@ -478,7 +471,6 @@
     <ClInclude Include="events\EventStorage.h" />
     <ClInclude Include="events\handler\KeyboardEventHandler.h" />
     <ClInclude Include="FeatureFlags.h" />
-    <ClInclude Include="file\Asset.h" />
     <ClInclude Include="core\SizedEnumMap.h" />
     <ClInclude Include="file\FilePathUtility.h" />
     <ClInclude Include="games\bullet_heaven\Terrain.h" />
@@ -550,8 +542,6 @@
     <ClInclude Include="serial\user_types\RenderableJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\SDLJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\ComponentJsonUserType.h" />
-    <ClInclude Include="state\EntityState.h" />
-    <ClInclude Include="state\EntityStateBuilder.h" />
     <ClInclude Include="components\builder\RigidBodyComponentBuilder.h" />
     <ClInclude Include="components\CameraTargetComponent.h" />
     <ClInclude Include="components\ComponentIncludes.h" />
@@ -565,17 +555,13 @@
     <ClInclude Include="components\TimerComponent.h" />
     <ClInclude Include="components\util\TagsComponentUtils.h" />
     <ClInclude Include="core\Algorithms.h" />
-    <ClInclude Include="core\CommonEntityMethods.h" />
     <ClInclude Include="core\CommonFunctions.h" />
-    <ClInclude Include="core\ComponentBitset.h" />
     <ClInclude Include="core\Counter.h" />
     <ClInclude Include="core\Direction.h" />
-    <ClInclude Include="core\EventDataBitset.h" />
     <ClInclude Include="core\Bitset.h" />
     <ClInclude Include="core\FuncTraits.h" />
     <ClInclude Include="core\Literals.h" />
     <ClInclude Include="core\ReadOnly.h" />
-    <ClInclude Include="core\ShiftedIndexArray.h" />
     <ClInclude Include="core\TransparentStringHash.h" />
     <ClInclude Include="core\TypeListVectorMap.h" />
     <ClInclude Include="core\WeightGenerator.h" />
@@ -792,7 +778,6 @@
     <ClInclude Include="systems\NewRenderSystem.h" />
     <ClInclude Include="systems\PhysicsSystem.h" />
     <ClInclude Include="core\TypeUtils.h" />
-    <ClInclude Include="core\AABB.h" />
     <ClInclude Include="systems\SDLInputSystem.h" />
     <ClInclude Include="systems\SerializationSystem.h" />
     <ClInclude Include="systems\SpriteAnimationSystem.h" />
@@ -1124,6 +1109,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="docs\reference.txt" />
+    <Text Include="docs\todo.txt" />
     <Text Include="resources\scripts\b2body_test.lua" />
   </ItemGroup>
   <ItemGroup>

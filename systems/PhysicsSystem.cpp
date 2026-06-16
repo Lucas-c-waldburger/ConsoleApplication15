@@ -4,7 +4,6 @@
 #include "../sdl/SDLUtils.h"
 #include "../physics/B2World.h"
 #include "../events/data/EntityActions.h"
-#include "../core/CommonEntityMethods.h"
 #include <algorithm>
 
 namespace {
@@ -92,7 +91,7 @@ void UpdateTransformComponents(EventBus& bus)
 		float newRotation = rigidBody.body.GetData().GetAngle();
 
 		if (newPosition != transform.position && 
-			EntityShouldProduceEvent<events::EntityPositionChanged>(entity))
+			entity.ShouldProduceEvent<events::EntityPositionChanged>())
 		{
 			events::EntityPositionChanged ev{
 				.newPosition = newPosition,

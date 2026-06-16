@@ -69,9 +69,6 @@
     <ClCompile Include="test\Premades.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="core\AABB.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="systems\CollisionSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -156,9 +153,6 @@
     <ClCompile Include="components\driver\EntityStateDriver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="state\EntityStateBuilder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="callbacks\StateTransitionCallback.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -166,9 +160,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="core\Counter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="state\EntityState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="inputs\mouse\MouseInputUpdater.cpp">
@@ -929,9 +920,6 @@
     <ClInclude Include="test\Premades.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="core\AABB.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="systems\CollisionSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -990,9 +978,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inputs\mouse\MouseCursor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="core\ShiftedIndexArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\CameraTargetComponent.h">
@@ -1091,9 +1076,6 @@
     <ClInclude Include="components\SpriteAnimationsComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="core\CommonEntityMethods.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="scripting\user_types\RenderableLuaUserTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1178,12 +1160,6 @@
     <ClInclude Include="core\Direction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="core\ComponentBitset.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="core\EventDataBitset.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="components\EntityStateComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1197,9 +1173,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\driver\EntityStateDriver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="state\EntityStateBuilder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\driver\ControllerInputCallbackDriver.h">
@@ -1235,12 +1208,6 @@
     <ClInclude Include="core\Signal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="state\EntityState.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="core\CatTypeID.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="events\EventSignal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1257,9 +1224,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\UniqueVoidPtr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="file\Asset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inputs\mouse\MouseInputSource.h">
@@ -1506,12 +1470,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="systems\util\SerializationSystemUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="core\ErrorCode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="core\SOAInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\StableSOA.h">
@@ -1812,9 +1770,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="user\UserComponentTypeList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="core\DynamicSOA.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\CoreComponentTypeList.h">
@@ -2897,6 +2852,7 @@
   <ItemGroup>
     <Text Include="resources\scripts\b2body_test.lua" />
     <Text Include="docs\reference.txt" />
+    <Text Include="docs\todo.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\scripts\game_controller_test.lua" />

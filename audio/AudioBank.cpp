@@ -30,8 +30,14 @@ Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
 
         ptrContainer.emplace_back(std::move(newPtr));
 
-        auto [_, inserted] = nameToInfoIdx_.try_emplace(desc.name, newStorageIdx);
-        assert(inserted);
+        bool needRepopulateViews = audioInfo_.Size() == audioInfo_.Capacity();
+        if (needRepopulateViews)
+        {
+            const size_t newSize = audioInfo_.Size() + kDefaultAudioInfoCapacity;
+
+            audioInfo_.Reserve(newSize);
+            RepopulateAudioNameIndexMap(newSize);
+        }
 
         const size_t newResourceIdx = audioInfo_.PushBack({
             .audioType = desc.audioType,
@@ -39,6 +45,11 @@ Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
 			.filepath = std::move(desc.filepath),
             .storageIndex = newStorageIdx
 		});
+
+        auto [_, inserted] = nameToInfoIdx_.try_emplace(
+            audioInfo_.GetView<&AudioInfo::name>(newResourceIdx), newStorageIdx
+        );
+        assert(inserted);
 
         Handle<Audio> newHandle = 
             Handle<Audio>::Create(audioBankInstanceId_, newResourceIdx);
@@ -103,3 +114,17 @@ std::vector<AudioDescriptor> AudioBank::ExportAudioDescriptors() const
 
 	return descriptors; 
  }
+
+void AudioBank::RepopulateAudioNameIndexMap(size_t newSize)
+{
+    nameToInfoIdx_.clear();
+    nameToInfoIdx_.reserve(newSize);
+
+    for (size_t i = 0; i < audioInfo_.Size(); ++i)
+    {
+        const auto& name = audioInfo_.GetView<&AudioInfo::name>(i);
+
+        auto [_, inserted] = nameToInfoIdx_.try_emplace(name, i);
+        assert(inserted);
+    }
+}

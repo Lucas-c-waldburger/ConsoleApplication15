@@ -193,6 +193,7 @@ public:
 			disconnectFn_ = GetDisconnectLambda();
 			other.disconnectFn_ = nullptr;
 		}
+		return *this;
 	}
 
 	template <typename...Ts> requires (std::convertible_to<Ts, Args> && ...)

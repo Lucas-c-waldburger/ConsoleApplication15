@@ -22,13 +22,15 @@ using AudioInfoSOA = StableSOA<
 	&AudioInfo::audioType,
 	&AudioInfo::name,
 	&AudioInfo::filepath,
-    &AudioInfo::storageIndex
+    &AudioInfo::storageIndex 
 >;
 
 class AudioBank
 {
 public:
-  friend class AudioSystem;
+    friend class AudioSystem;
+
+    static constexpr size_t kDefaultAudioInfoCapacity = 40;
 
 	AudioBank() : audioBankInstanceId_(audioBankInstanceIdCounter_++) {}
 	~AudioBank() = default;
@@ -75,6 +77,8 @@ private:
     Result<SoundInstanceResource> GetSoundInstanceResouce(const Handle<Audio>& handle);
     Result<MusicInstanceResource> GetMusicInstanceResource(const Handle<Audio>& handle);
 
+    void RepopulateAudioNameIndexMap(size_t newSize);
+
     template <typename T> requires (std::same_as<T, Mix_Chunk> ||
                                     std::same_as<T, Mix_Music>)
     Result<AudioInstanceResource<T>> GetAudioInstanceDataInternal(const Handle<Audio>& handle);
@@ -99,7 +103,7 @@ private:
 
     std::vector<SoundPtr> sounds_;
     std::vector<MusicPtr> music_;
-    UnorderedDictionary<size_t> nameToInfoIdx_;
+    std::unordered_map<std::string_view, size_t> nameToInfoIdx_;
     AudioInfoSOA audioInfo_;
 };
 

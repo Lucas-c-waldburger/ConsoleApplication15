@@ -307,14 +307,21 @@ Result<Handle<TextureResource>> FontAtlas::LoadFont(SDL_Renderer* renderer,
 		return MAKE_ERROR_FMT("Duplicate font name: '{}'", fontDescriptor.fontName);
 	}
 
-	const HashType fontNameHash = RapidHash(fontDescriptor.fontName);
-
 	TRY_ASSIGN(fontAtlasTextures_.emplace_back(),
 		FontAtlasTexture::Create(renderer, fontDescriptor));
 
 	auto& newAtlas = fontAtlasTextures_.back();
 
 	NotifyTextureCreated(newAtlas.GetAtlasID(), newAtlas.GetSourceTexture());
+
+    bool needRepopulateViews = fontInfo_.Size() == fontInfo_.Capacity();
+    if (needRepopulateViews)
+    {
+        const size_t newSize = fontInfo_.Size() + kDefaultFrontInfoCapacity;
+
+        fontInfo_.Reserve(newSize);
+        RepopulateFontNameIndexMap(newSize);
+    }
 
     const size_t fontIdx = fontInfo_.PushBack(FontInfo{
         .atlasId = newAtlas.GetAtlasID(),
@@ -324,11 +331,12 @@ Result<Handle<TextureResource>> FontAtlas::LoadFont(SDL_Renderer* renderer,
         .fontHeight = fontDescriptor.fontHeight
     });
 
-	fontNameIndices_.emplace(fontNameHash, fontIdx);
-
-    return Handle<TextureResource>::Create(
-        newAtlas.GetAtlasID(), fontIdx
+	auto [_, inserted] = fontNameIndices_.try_emplace(
+        fontInfo_.GetView<&FontInfo::fontName>(fontIdx), fontIdx
     );
+    assert(inserted);
+
+    return Handle<TextureResource>::Create(newAtlas.GetAtlasID(), fontIdx);
 }
 
 Result<Void> FontAtlas::LoadFonts(SDL_Renderer* renderer, 

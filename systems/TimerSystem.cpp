@@ -1,7 +1,6 @@
 #include "TimerSystem.h"
 #include "../ecs/Ecs.h"
 #include "../events/data/TimeEvents.h"
-#include "../core/CommonEntityMethods.h"
 
 namespace {
 
@@ -43,7 +42,7 @@ void TimerSystem::Update(float delta, EventBus& bus)
 			continue;
 		}
 		
-		if (EntityShouldProduceEvent<events::TimerFired>(entity))
+		if (entity.ShouldProduceEvent<events::TimerFired>())
 		{
 			events::TimerFired ev{};
 			ev.entity<0>() = entity.GetID();
