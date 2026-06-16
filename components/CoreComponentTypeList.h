@@ -10,11 +10,8 @@ struct Children;
 struct Tags;
 struct Collider;
 struct GameControllerState;
-struct Script;
 struct CameraTarget;
 struct Timer;
-struct NeedsUpdate;
-struct EntityStateComponent;
 struct EntityFlags;
 struct SignalTokenStorage;
 struct NewAudioRequest;
@@ -37,11 +34,8 @@ using CoreComponentTypeList = TypeList<
 	Tags,
 	Collider,
 	GameControllerState,
-	Script,
 	CameraTarget,
 	Timer,
-	NeedsUpdate,
-	EntityStateComponent,
 	EntityFlags,
 	SignalTokenStorage,
 	NewAudioRequest,

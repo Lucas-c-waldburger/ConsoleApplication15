@@ -168,7 +168,6 @@
     <ClCompile Include="atlas\TextureObserverSignal.cpp" />
     <ClCompile Include="audio\AudioBank.cpp" />
     <ClCompile Include="audio\AudioManager.cpp" />
-    <ClCompile Include="callbacks\StateTransitionCallback.cpp" />
     <ClCompile Include="components\builder\ColliderComponentBuilder.cpp" />
     <ClCompile Include="components\builder\RigidBodyComponentBuilder.cpp" />
     <ClCompile Include="core\Counter.cpp" />
@@ -200,7 +199,6 @@
     <ClCompile Include="serial\EntityDeserializer.cpp" />
     <ClCompile Include="serial\EntitySerializer.cpp" />
     <ClCompile Include="serial\TextureRepositorySerializer.cpp" />
-    <ClCompile Include="components\driver\EntityStateDriver.cpp" />
     <ClCompile Include="components\util\TagsComponentUtils.cpp" />
     <ClCompile Include="core\WeightGenerator.cpp" />
     <ClCompile Include="deps\RectangleBinPack\GuillotineBinPack.cpp" />
@@ -366,13 +364,6 @@
     <ClInclude Include="boost\pfr\traits.hpp" />
     <ClInclude Include="boost\pfr\traits_fwd.hpp" />
     <ClInclude Include="boost\pfr\tuple_size.hpp" />
-    <ClInclude Include="callbacks\EventCallback.h" />
-    <ClInclude Include="callbacks\EventCallbackHandle.h" />
-    <ClInclude Include="callbacks\EventCallbackMasterTable.h" />
-    <ClInclude Include="callbacks\EventCallbackRegistry.h" />
-    <ClInclude Include="callbacks\ICallbackSource.h" />
-    <ClInclude Include="callbacks\StateTransitionCallback.h" />
-    <ClInclude Include="callbacks\StateTransitionCallbackRegistry.h" />
     <ClInclude Include="camera\Projection.h" />
     <ClInclude Include="components\AudioComponents.h" />
     <ClInclude Include="components\builder\CameraTargetComponentBuilder.h" />
@@ -380,7 +371,6 @@
     <ClInclude Include="components\builder\ComponentBuilder.h" />
     <ClInclude Include="components\CoreComponentTypeList.h" />
     <ClInclude Include="components\EntityFlagsComponent.h" />
-    <ClInclude Include="components\driver\ControllerInputCallbackDriver.h" />
     <ClInclude Include="components\MarkedDestroyedComponent.h" />
     <ClInclude Include="components\SignalTokenStorageComponent.h" />
     <ClInclude Include="components\UserComponents.h" />
@@ -546,11 +536,6 @@
     <ClInclude Include="components\CameraTargetComponent.h" />
     <ClInclude Include="components\ComponentIncludes.h" />
     <ClInclude Include="components\ComponentTypeList.h" />
-    <ClInclude Include="components\driver\BaseDriver.h" />
-    <ClInclude Include="components\driver\EntityStateDriver.h" />
-    <ClInclude Include="components\driver\EventCallbackDriver.h" />
-    <ClInclude Include="components\EntityStateComponent.h" />
-    <ClInclude Include="components\NeedsUpdateComponent.h" />
     <ClInclude Include="components\SpriteAnimationsComponent.h" />
     <ClInclude Include="components\TimerComponent.h" />
     <ClInclude Include="components\util\TagsComponentUtils.h" />
@@ -616,7 +601,6 @@
     <ClInclude Include="components\RigidBodyComponent.h" />
     <ClInclude Include="components\RelationComponents.h" />
     <ClInclude Include="components\RenderableComponent.h" />
-    <ClInclude Include="components\ScriptComponent.h" />
     <ClInclude Include="components\MouseStateComponent.h" />
     <ClInclude Include="components\TagsComponent.h" />
     <ClInclude Include="components\TransformComponent.h" />

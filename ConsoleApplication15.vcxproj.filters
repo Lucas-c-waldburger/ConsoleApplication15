@@ -150,12 +150,6 @@
     <ClCompile Include="systems\TimerSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="components\driver\EntityStateDriver.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="callbacks\StateTransitionCallback.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="systems\GameLoopSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -878,9 +872,6 @@
     <ClInclude Include="components\TagsComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\ScriptComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="components\GameControllerStateComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1139,49 +1130,16 @@
     <ClInclude Include="events\data\EventDataIncludes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="callbacks\EventCallbackRegistry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="test\callbacks\GameControllerCallbacks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="events\data\SpriteAnimationEvents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\NeedsUpdateComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="components\driver\BaseDriver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="core\Bitset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\Direction.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="components\EntityStateComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="callbacks\StateTransitionCallbackRegistry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="callbacks\EventCallback.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="callbacks\StateTransitionCallback.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="components\driver\EntityStateDriver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="components\driver\ControllerInputCallbackDriver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="components\driver\EventCallbackDriver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="callbacks\ICallbackSource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\Dictionary.h">
@@ -1197,12 +1155,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\Resources.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="callbacks\EventCallbackHandle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="callbacks\EventCallbackMasterTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\Signal.h">
