@@ -1,4 +1,6 @@
 
 1. Change Handle<TextureResource> to use the ResourceHandle specialization that Handle<Audio> uses
 
-2. 
+2. Extend RigidBody serialization to capture the physics body's current linear/angular velocity, etc.
+
+3. Add ctrack

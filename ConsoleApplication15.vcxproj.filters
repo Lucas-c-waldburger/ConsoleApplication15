@@ -276,9 +276,6 @@
     <ClCompile Include="deps\imgui\backends\imgui_impl_sdlrenderer2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="sdl\SDLContext.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="gui\GuiContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -430,6 +427,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\demo\grapple\Grapple.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\gui_edit\GuiEditCore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -896,9 +896,6 @@
     <ClInclude Include="camera\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="components\EventCallbacksComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="core\ScopedInvoker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -972,9 +969,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\CameraTargetComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="components\builder\CameraTargetComponentBuilder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="camera\Projection.h">
@@ -1380,9 +1374,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="deps\imgui\backends\imgui_impl_sdlrenderer2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDLContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="gui\GuiContext.h">
@@ -1980,6 +1971,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\demo\platformer\EventCallbackRegistrar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\EntityInspector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_edit\GuiEditCore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_edit\GuiEditRenderable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

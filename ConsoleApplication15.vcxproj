@@ -194,7 +194,6 @@
     <ClCompile Include="render\GlyphCacheHandler.cpp" />
     <ClCompile Include="render\RenderBatchHandler.cpp" />
     <ClCompile Include="render\TextFormatExpressionParser.cpp" />
-    <ClCompile Include="sdl\SDLContext.cpp" />
     <ClCompile Include="serial\AudioBankSerializer.cpp" />
     <ClCompile Include="serial\EntityDeserializer.cpp" />
     <ClCompile Include="serial\EntitySerializer.cpp" />
@@ -278,6 +277,7 @@
     <ClCompile Include="test\setups\TileSet.cpp" />
     <ClCompile Include="test\ui\ControllerMappingEditor.cpp" />
     <ClCompile Include="test\ui\FileTreeView.cpp" />
+    <ClCompile Include="test\ui\gui_edit\GuiEditCore.cpp" />
     <ClCompile Include="test\ui\MouseWorldNavigator.cpp" />
     <ClCompile Include="test\ui\PhysicsEditor.cpp" />
     <ClCompile Include="test\catch\render\GlyphCacheHandlerTests.cpp" />
@@ -366,7 +366,6 @@
     <ClInclude Include="boost\pfr\tuple_size.hpp" />
     <ClInclude Include="camera\Projection.h" />
     <ClInclude Include="components\AudioComponents.h" />
-    <ClInclude Include="components\builder\CameraTargetComponentBuilder.h" />
     <ClInclude Include="components\builder\ColliderComponentBuilder.h" />
     <ClInclude Include="components\builder\ComponentBuilder.h" />
     <ClInclude Include="components\CoreComponentTypeList.h" />
@@ -520,7 +519,6 @@
     <ClInclude Include="scripting\user_types\AudioUserType.h" />
     <ClInclude Include="scripting\user_types\EntityUserType.h" />
     <ClInclude Include="scripting\user_types\SDLUsertypes.h" />
-    <ClInclude Include="sdl\SDLContext.h" />
     <ClInclude Include="serial\Serialization.h" />
     <ClInclude Include="serial\SerializationConcepts.h" />
     <ClInclude Include="serial\SerializationUtils.h" />
@@ -596,7 +594,6 @@
     <ClInclude Include="components\ActiveStateComponent.h" />
     <ClInclude Include="components\BaseComponent.h" />
     <ClInclude Include="components\ColliderComponent.h" />
-    <ClInclude Include="components\EventCallbacksComponent.h" />
     <ClInclude Include="components\GameControllerStateComponent.h" />
     <ClInclude Include="components\RigidBodyComponent.h" />
     <ClInclude Include="components\RelationComponents.h" />
@@ -793,9 +790,12 @@
     <ClInclude Include="test\setups\TileSet.h" />
     <ClInclude Include="test\ui\ControllerMappingEditor.h" />
     <ClInclude Include="test\ui\DataEditDisplayUtils.h" />
+    <ClInclude Include="test\ui\EntityInspector.h" />
     <ClInclude Include="test\ui\EntityView.h" />
     <ClInclude Include="test\ui\EventContext.h" />
     <ClInclude Include="test\ui\FileTreeView.h" />
+    <ClInclude Include="test\ui\gui_edit\GuiEditCore.h" />
+    <ClInclude Include="test\ui\gui_edit\GuiEditRenderable.h" />
     <ClInclude Include="test\ui\MouseWorldNavigator.h" />
     <ClInclude Include="test\ui\PhysicsEditor.h" />
     <ClInclude Include="test\ui\TextureRepositoryContext.h" />
