@@ -123,7 +123,7 @@ TEST_CASE("Glyphs rendered correctly", "[rendering]")
 		"GoNotoKurrent-Regular"
 	);
 	REQUIRE(fontHeightOp.has_value());
-	const auto [fontHeight] = *fontHeightOp;
+	const auto& fontHeight = *fontHeightOp;
 	REQUIRE(fontHeight > 0);
 
 	SDL_Rect renderRect = { 0, 0, 0, 0 };

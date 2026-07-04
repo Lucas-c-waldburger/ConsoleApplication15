@@ -23,6 +23,7 @@ struct SpriteRenderableComponent;
 struct MarkedDestroyed;
 struct SpriteAnimationComponent;
 struct NeedsAnimationUpdate;
+struct Name;
 
 using CoreComponentTypeList = TypeList<
 	ActiveState,
@@ -46,5 +47,6 @@ using CoreComponentTypeList = TypeList<
 	SpriteRenderableComponent,
 	MarkedDestroyed,
 	SpriteAnimationComponent,
-	NeedsAnimationUpdate
+	NeedsAnimationUpdate,
+	Name
 >;

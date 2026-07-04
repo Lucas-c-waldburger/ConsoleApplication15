@@ -1,12 +1,12 @@
 #pragma once
-#include "../../../FeatureFlags.h"
+#include "../../FeatureFlags.h"
 
 #if IMGUI_ENABLED 
 
-#include "../../ui/FileTreeView.h"
-#include "../../../atlas/NewTextureRepository.h"
+#include "FileTreeView.h"
+#include "../../atlas/NewTextureRepository.h"
 
-namespace test {
+namespace ui {
 
 class SpritePicker
 {
@@ -78,6 +78,7 @@ public:
 	{
         assert(fs::exists(fileTreeState_.currentPath));
 
+        isOpen_ = true;
         bool complete = false;
 
         if (ImGui::Selectable(".."))
@@ -102,7 +103,8 @@ public:
 
             const bool selected = (fileTreeState_.selectedFile.has_value() &&
                                   *fileTreeState_.selectedFile == path);
-            const bool activated = ImGui::Selectable(name.c_str(), selected);
+            const bool activated = ImGui::Selectable(name.c_str(), selected, 
+                                                     ImGuiSelectableFlags_DontClosePopups);
             const bool hovered = ImGui::IsItemHovered();
             const bool doubleClicked = ImGui::IsMouseDoubleClicked(0);
 
@@ -144,9 +146,9 @@ public:
 
         if (complete)
         {
-            assert(spriteState_.hoveredSprite.has_value());
+            CompleteSelection(textureRepo);
 
-            spriteState_.selectedSprite = spriteState_.hoveredSprite;
+            isOpen_ = false;
         }
         else
         {
@@ -169,7 +171,11 @@ public:
         spriteState_.hoveredSprite.reset();
         spriteState_.selectedSprite.reset();
         spriteState_.toolTipImage.reset();
+
+        isOpen_ = false;
     }
+
+    bool IsOpen() const { return isOpen_; }
 
 private:
 
@@ -179,6 +185,20 @@ private:
         SDL_QueryTexture(tx, NULL, NULL, &size.x, &size.y);
 
         return { static_cast<float>(size.x), static_cast<float>(size.y) };
+    }
+
+    void CompleteSelection(TextureRepository& textureRepo)
+    {
+        auto& spriteAtlas = textureRepo.GetSpriteAtlas();
+        const auto spriteName = fileTreeState_.selectedFile->stem().string();
+
+        if (!spriteAtlas.HasSprite(spriteName))
+        {
+            auto loaded = spriteAtlas.LoadSprite(SDLite::Renderer(), { .spriteName = spriteName });
+            assert(loaded.Success());
+        }
+
+        spriteState_.selectedSprite.emplace(spriteAtlas.GetSprite(spriteName), spriteName);
     }
 
     void DrawSpriteToolTip(TextureRepository& textureRepo, const fs::path& spritePath)
@@ -315,9 +335,10 @@ private:
 
     FileTreeState fileTreeState_;
     SpriteState spriteState_;
+    bool isOpen_ = false;
 };
 
-} // test
+} // ui
 
 
 #endif

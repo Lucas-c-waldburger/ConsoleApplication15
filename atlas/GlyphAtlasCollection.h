@@ -153,10 +153,11 @@ public:
 		}
 
 		const auto& cInfo = fontInfo_;
+
 		return cInfo.TryGetView(fontIdx);
 	}
 
-	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 1)
 	auto GetFontInfo(std::string_view fontName) const
 	{
 		using Ret = decltype(fontInfo_.TryGetView<MemberPtrs...>(0));
@@ -168,9 +169,10 @@ public:
 		}
 
 		const auto& cInfo = fontInfo_;
+
 		return cInfo.TryGetView<MemberPtrs...>(it->second);
 	}
-	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 1)
 	auto GetFontInfo(const Handle<TextureResource>& handle) const
 	{
 		using Ret = decltype(fontInfo_.TryGetView<MemberPtrs...>(0));
@@ -188,7 +190,50 @@ public:
 		}
 
 		const auto& cInfo = fontInfo_;
+
 		return cInfo.TryGetView<MemberPtrs...>(fontIdx);
+	}
+
+	template <auto MemberPtr>
+	auto GetFontInfo(std::string_view fontName) const
+	{
+		using Ret = MonoValueOptionalTupleUnwrapper<
+			const typename member_ptr_traits<MemberPtr>::value_type&>;
+
+		assert(fontInfo_.Size() == fontAtlasTextures_.size());
+
+		auto it = fontNameIndices_.find(fontName);
+		if (it == fontNameIndices_.end())
+		{
+			return Ret{};
+		}
+
+		const auto& cInfo = fontInfo_;
+
+		return Ret{ cInfo.TryGetView<MemberPtr>(it->second) };
+	}
+
+	template <auto MemberPtr>
+	auto GetFontInfo(const Handle<TextureResource>& handle) const
+	{
+		using Ret = MonoValueOptionalTupleUnwrapper<
+			const typename member_ptr_traits<MemberPtr>::value_type&>;
+
+		assert(fontInfo_.Size() == fontAtlasTextures_.size());
+
+		const size_t fontIdx = static_cast<size_t>(handle.GetResourceIndex());
+		if (fontIdx >= fontInfo_.Size())
+		{
+			return Ret{};
+		}
+		if (handle.GetAtlasID() != fontAtlasTextures_[fontIdx].GetAtlasID())
+		{
+			return Ret{};
+		}
+
+		const auto& cInfo = fontInfo_;
+
+		return Ret{ cInfo.TryGetView<MemberPtr>(fontIdx) };
 	}
 
 	auto IterFontInfo() const

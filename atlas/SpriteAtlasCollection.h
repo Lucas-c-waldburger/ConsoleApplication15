@@ -127,7 +127,7 @@ public:
 		return GetSpriteInfo(sprite.resourceHandle);
 	}
 
-	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 1)
 	auto GetSpriteInfo(const Handle<TextureResource>& handle) const
 	{
 		using Ret = decltype(spriteInfo_.TryGetView<MemberPtrs...>(0));
@@ -146,10 +146,36 @@ public:
 		const auto& cInfo = spriteInfo_;
 		return cInfo.TryGetView<MemberPtrs...>(spriteIdx);
 	}
-	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 1)
 	auto GetSpriteInfo(const Sprite& sprite) const
 	{
 		return GetSpriteInfo<MemberPtrs...>(sprite.resourceHandle);
+	}
+
+	template <auto MemberPtr>
+	auto GetSpriteInfo(const Handle<TextureResource>& handle) const
+	{
+		using Ret = MonoValueOptionalTupleUnwrapper<
+			const typename member_ptr_traits<MemberPtr>::value_type&>;
+
+		const size_t spriteIdx = static_cast<size_t>(handle.GetResourceIndex());
+		if (spriteIdx >= spriteInfo_.Size())
+		{
+			return Ret{};
+		}
+		if (handle.GetAtlasID() != spriteInfo_.GetView<&SpriteInfo::atlasId>(spriteIdx))
+		{
+			return Ret{};
+		}
+
+		const auto& cInfo = spriteInfo_;
+
+		return Ret{ cInfo.TryGetView<MemberPtr>(spriteIdx) };
+	}
+	template <auto MemberPtr>
+	auto GetSpriteInfo(const Sprite& sprite) const
+	{
+		return GetSpriteInfo<MemberPtr>(sprite.resourceHandle);
 	}
 
 	auto IterSpriteInfo() const

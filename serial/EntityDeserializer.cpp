@@ -562,6 +562,7 @@ void EntityDeserializer::DeserializeBasicComponents(const nlohmann::json& entity
 {
 	auto dc = GetDeserializeComponentLambda(entityJ, e, GetEntityPassKey());
 
+	DESERIALIZE_BASIC_COMPONENT(dc, Name);
 	DESERIALIZE_BASIC_COMPONENT(dc, Transform);
 	DESERIALIZE_BASIC_COMPONENT(dc, CameraTarget);
 	DESERIALIZE_BASIC_COMPONENT(dc, EntityFlags);

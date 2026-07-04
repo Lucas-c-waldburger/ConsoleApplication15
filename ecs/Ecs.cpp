@@ -86,31 +86,10 @@ Entity EntityRelations::AddChild(std::string_view childName)
 		return {};
 	}
 
-	auto nameTag = Tag::Compose(TagCategory::kChildName, childName);
-
-	if (!IsParent())
-	{
-		ecs_->componentManager_.AddComponent<Children>(id_);
-	}
-
-	const auto& existingChildren = EntityRelationsHelper::GetChildren(ecs_->GetEntityManager(),
-																	  ecs_->GetComponentManager(), 
-																	  id_);
-	for (const auto& child : existingChildren)
-	{
-		if (ecs_->componentManager_.HasComponent<Tags>(child) &&
-			ecs_->componentManager_.GetComponent<Tags>(child).tags.contains(nameTag))
-		{
-			LOG_ERROR_FMT("Child already exists with child name '{}'", childName);
-			return {};
-		}
-	}
-
 	auto newChild = EntityRelationsHelper::AddChild(ecs_->GetEntityManager(),
 												    ecs_->GetComponentManager(), id_);
 
-	auto& tags = ecs_->AddComponent<Tags>(newChild).tags;
-	tags.emplace(std::move(nameTag));
+	ecs_->AddComponent<Name>(newChild).value = childName;
 
 	return Entity{ newChild, *ecs_ };
 }
@@ -322,6 +301,18 @@ Entity ECS::CreateEntity()
 	return Entity{ newEntity, ecs };
 }
 
+Entity ECS::CreateEntity(std::string_view name)
+{
+	auto& ecs = ECS::Get(); 
+
+	Entity_t newEntity = ecs.CreateEntity_t();
+
+	ecs.componentManager_.AddComponent<EntityFlags>(newEntity);
+	ecs.componentManager_.AddComponent<Name>(newEntity).value = name;
+
+	return Entity{ newEntity, ecs };
+}
+
 // TODO: call into systems with an "EntityDestroyed(...)" method
 void ECS::DestroyEntity(Entity_t entity)
 {
@@ -350,6 +341,34 @@ bool ECS::IsEntityActive(Entity_t entity) const
 bool ECS::IsEntityValid(Entity_t entity) const
 {
 	return entity != kInvalidEntity && IsEntityActive(entity);
+}
+
+bool ECS::IsEntityNameUnique(std::string_view name) const
+{
+	auto entities = entityManager_.GetActiveEntities();
+	for (const auto e : entities)
+	{
+		if (componentManager_.HasComponent<Name>(e) &&
+			componentManager_.GetComponent<Name>(e) == name)
+		{
+			return false;
+		}
+	}	
+	return true;
+}
+
+void ECS::AddEntityName(Entity_t e, std::string_view name)
+{
+	auto& nameCmp = componentManager_.AddComponent<Name>(e);
+
+	if (!IsEntityNameUnique(name))
+	{
+		nameCmp.value = std::format("{}_{}", name, __COUNTER__);
+	}
+	else
+	{
+		nameCmp.value = name;
+	}
 }
 
 void ECS::SerializeUserComponents(nlohmann::json& j, const Entity& e)

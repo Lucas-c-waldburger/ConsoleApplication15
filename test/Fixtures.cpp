@@ -208,6 +208,12 @@ AudioBank& SceneFixture::GetAudioBank()
 	return systems_.GetSystem<AudioSystem>().GetAudioBank();
 }
 
+MouseState SceneFixture::GetMouseState() const
+{
+	assert(systems_.IsSystemRegistered<SDLInputSystem>());
+	return systems_.GetSystem<SDLInputSystem>().GetMouseEventHandler().GetMouseState();
+}
+
 Result<Void> SceneFixture::SerializeState(SerializationSystem::Filepaths fps)
 {
 	if (fps.texturesPath.empty())

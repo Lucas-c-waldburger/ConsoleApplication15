@@ -192,6 +192,7 @@ public:
     ECS& operator=(ECS&&) = delete;
 
     static Entity CreateEntity();
+    static Entity CreateEntity(std::string_view name);
 
     static std::vector<Entity> GetAllActiveEntities()
     {
@@ -319,6 +320,8 @@ private:
     template <typename T>
     ComponentSignature GetComponentBit() const
     {
+        static_assert(std::same_as<T, std::remove_cvref_t<T>>, "type T should have no cvref qualifiers");
+
         if constexpr (SomeComponent<T>)
         {
             return T::componentBit;
@@ -662,6 +665,8 @@ private:
 
     bool IsEntityActive(Entity_t entity) const;
     bool IsEntityValid(Entity_t entity) const;
+    bool IsEntityNameUnique(std::string_view name) const;
+    void AddEntityName(Entity_t e, std::string_view name);
 
     EntityManager& GetEntityManager() { return entityManager_; }
     const EntityManager& GetEntityManager() const { return entityManager_; }
@@ -902,7 +907,7 @@ inline void Entity::SetComponentVisibility(bool vis)
     }
     else
     {
-        visibilityFlags.Set<Ts...>(vis);
+        ((visibilityFlags.Set(ecs_->GetComponentBit<Ts>(), vis)), ...);
     }
 }
 

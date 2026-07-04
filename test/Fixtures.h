@@ -81,6 +81,7 @@ public:
 	EventBus& GetEventBus() { return eventBus_; }
 	Camera& GetCamera();
 	AudioBank& GetAudioBank();
+	MouseState GetMouseState() const;
 
 	Result<Void> SerializeState(SerializationSystem::Filepaths fps = {});
 	Result<std::vector<Error>> DeserializeState(SerializationSystem::Filepaths fps = {});

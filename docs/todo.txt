@@ -4,3 +4,7 @@
 2. Extend RigidBody serialization to capture the physics body's current linear/angular velocity, etc.
 
 3. Add ctrack
+
+4. Add integration between Error and std::errorcode/exceptions
+
+5. Remove GameLoopSystem - UserSystem stuff has made producing events for phases unnecessary 

@@ -5,7 +5,7 @@
 
 #include <imgui.h>
 #include "ColliderMakerCommon.h"
-#include "SpritePicker.h"
+#include "../../ui/SpritePicker.h"
 #include "../../../ecs/EntityPhysics.h"
 #include "../../../deps/nlohmann/json.hpp"
 
@@ -197,7 +197,7 @@ public:
 
 
 private:
-	SpritePicker spritePicker_;
+	ui::SpritePicker spritePicker_;
 	Dictionary<size_t> spriteIdxByName_;
 	std::vector<Sprite> sprites_;
 };
@@ -274,7 +274,7 @@ private:
 	static void HandleSpriteSelection();
 
 	static inline ShapeManager shapeManager_{};
-	static inline SpritePicker spritePicker_{};
+	static inline ui::SpritePicker spritePicker_{};
 	static inline AppState appState_{};
 };
 

@@ -13,6 +13,13 @@ class GuiSystem : public System
 public:
 	using Command = fu2::unique_function<void()>;
 
+	struct WindowParams
+	{
+		std::optional<SDL_FPoint> position;
+		std::optional<Dimensions<float>> size;
+		ImGuiWindowFlags flags = 0;
+	};
+
 	GuiSystem() = default;
 
 	template <typename Fn> requires std::invocable<Fn>

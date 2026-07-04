@@ -155,6 +155,20 @@ SDL_FRect RotatedRectToAABB(const SDL_FRect& rect, float rotationDegrees)
 	return SDL_FRect{ minX, minY, maxX - minX, maxY - minY };
 }
 
+SDL_FRect GetScreenTestRect(const Camera& camera, SDL_FRect transformedRect,
+							float rotation)
+{
+	if (camera.GetZoomScale() != 1.0f)
+	{
+		transformedRect = ScaleRectAboutCenter(transformedRect, camera.GetZoomScale());
+	}
+	if (rotation != 0.0f)
+	{
+		transformedRect = RotatedRectToAABB(transformedRect, rotation);
+	}
+
+	return transformedRect;
+}
 
 bool ScreenRectIntersectsViewport(const Camera& camera, SDL_FRect testRect,
 								  float rotation)

@@ -432,6 +432,27 @@
     <ClCompile Include="test\ui\gui_edit\GuiEditCore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\ui\gui_edit\GuiEditRenderable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\gui_edit\GuiEditBasicComponents.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\gui_edit\GuiEditAudio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\gui_edit\GuiEditInputs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\gui_edit\GuiEditPhysics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\EntityInspector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\GuiResource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -1907,7 +1928,7 @@
     <ClInclude Include="test\demo\collider_maker\ColliderMaker2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\demo\collider_maker\SpritePicker.h">
+    <ClInclude Include="test\ui\SpritePicker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="render\TextFormatExpressionParser.h">
@@ -1980,6 +2001,42 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\ui\gui_edit\GuiEditRenderable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_edit\GuiEditBasicComponents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_edit\GuiEditAudio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_edit\GuiEditInputs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_edit\GuiEditPhysics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_edit\GuiEditIncludes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\NameComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_edit\GuiComponentNames.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\GuiTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_edit\GuiEditPropertyTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\GuiFonts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\GuiResource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_edit\GuiEditComponentBuilders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -2798,6 +2855,15 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="resources\sprites\shapes\spike_ball_2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\shapes\square_rounded.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\shapes\square-64.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\shapes\square-128.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

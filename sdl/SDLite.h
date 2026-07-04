@@ -165,7 +165,20 @@ namespace SDLite
 		bool IsMinimized() const { return GetFlags() & SDL_WINDOW_MINIMIZED; }
 		bool IsMaximized() const { return GetFlags() & SDL_WINDOW_MAXIMIZED; }
 		void Restore() { SDL_RestoreWindow(appPtr_.get()); }
-		//SDL_FPoint GetDpiScaling() const;
+		float GetDpiScale() const
+		{
+			int logicalW, pixelW;
+
+			SDL_GetWindowSize(appPtr_.get(), &logicalW, nullptr);
+			SDL_GetWindowSizeInPixels(appPtr_.get(), &pixelW, nullptr);
+
+			if (logicalW == 0)
+			{
+				return 1.0f;
+			}
+
+			return static_cast<float>(pixelW) / static_cast<float>(logicalW);
+		}
 
 	private:
 		AppWindow() : AppObject() {}
@@ -306,6 +319,7 @@ namespace SDLite
 			return rendStatus;
 		}
 
+		SDL_SetRenderDrawBlendMode(App::app_->renderer_, SDL_BLENDMODE_BLEND);
 		//SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "best", SDL_HINT_OVERRIDE);
 
 		return {};

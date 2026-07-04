@@ -83,3 +83,37 @@ inline constexpr std::strong_ordering operator<=>(GameControllerInputSource lhs,
 	return static_cast<Underlying>(lhs) <=> static_cast<Underlying>(rhs);
 }
 
+inline constexpr std::string_view ToString(GameControllerInputSource src)
+{
+	switch (src)
+	{
+	case GameControllerInputSource::Invalid:		  return "Invalid";
+	case GameControllerInputSource::A:				  return "A";
+	case GameControllerInputSource::B:				  return "B";
+	case GameControllerInputSource::X:				  return "X";
+	case GameControllerInputSource::Y:				  return "Y";
+	case GameControllerInputSource::Back:			  return "Back";
+	case GameControllerInputSource::Guide:			  return "Guide";
+	case GameControllerInputSource::Start:			  return "Start";
+	case GameControllerInputSource::LeftStickButton:  return "LeftStickButton";
+	case GameControllerInputSource::RightStickButton: return "RightStickButton";
+	case GameControllerInputSource::LeftShoulder:	  return "LeftShoulder";
+	case GameControllerInputSource::RightShoulder:	  return "RightShoulder";
+	case GameControllerInputSource::DPadUp:			  return "DPadUp";
+	case GameControllerInputSource::DPadDown: 		  return "DPadDown";
+	case GameControllerInputSource::DPadLeft: 		  return "DPadLeft";
+	case GameControllerInputSource::DPadRight:		  return "DPadRight";
+	case GameControllerInputSource::Misc1:			  return "Misc1";
+	case GameControllerInputSource::Paddle1:		  return "Paddle1";
+	case GameControllerInputSource::Paddle2:		  return "Paddle2";
+	case GameControllerInputSource::Paddle3:		  return "Paddle3";
+	case GameControllerInputSource::Paddle4:		  return "Paddle4";
+	case GameControllerInputSource::TouchPad:		  return "TouchPad";
+	case GameControllerInputSource::LeftStickAxis:	  return "LeftStickAxis";
+	case GameControllerInputSource::RightStickAxis:	  return "RightStickAxis";
+	case GameControllerInputSource::LeftTrigger:	  return "LeftTrigger";
+	case GameControllerInputSource::RightTrigger:	  return "RightTrigger";
+	}
+
+	return "<unknown>";
+}

@@ -112,4 +112,30 @@ static constexpr int GetNextPowerOfTwo(int x)
     return x + 1;
 }
 
+// SINGLE VALUE OPTIONAL TUPLE UNWRAPPER
+
+template <typename T>
+class MonoValueOptionalTupleUnwrapper
+{
+public:
+    MonoValueOptionalTupleUnwrapper() : tup_(std::nullopt) {}
+    explicit MonoValueOptionalTupleUnwrapper(std::optional<std::tuple<T>>&& tup) : tup_(std::move(tup)) {}
+
+    bool has_value() const noexcept { return tup_.has_value(); }
+    operator bool() const noexcept { return has_value(); }
+    bool operator!() const noexcept { return !has_value(); }
+
+    T& operator*() requires !std::is_const_v<std::remove_reference_t<T>> 
+    { 
+        assert(has_value()); return std::get<0>(*tup_); 
+    }
+    const T& operator*() const 
+    { 
+        assert(has_value()); return std::get<0>(*tup_);
+    }
+
+private:
+    std::optional<std::tuple<T>> tup_;
+};
+
 

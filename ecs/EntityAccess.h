@@ -5,7 +5,7 @@ class EntityPassKey;
 class EntityFullAccessPrivelage
 {
 protected:
-    EntityPassKey GetEntityPassKey() const; 
+    static EntityPassKey GetEntityPassKey(); 
 };
 
 class EntityPassKey

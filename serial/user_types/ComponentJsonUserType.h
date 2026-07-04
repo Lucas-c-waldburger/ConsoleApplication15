@@ -32,6 +32,7 @@ DEF_COMPONENT_SERIALIZABLE_EMPTY(MouseState);
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EntityFlags, componentVisibilityFlags, eventProductionFlags)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Parent, entityId)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Children, childEntityIds)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Name, value)
 
 //// TODO: Add Audio Stuff
 

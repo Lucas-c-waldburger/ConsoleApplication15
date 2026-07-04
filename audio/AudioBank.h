@@ -45,7 +45,7 @@ public:
 	Result<Handle<Audio>> LoadAudio(AudioDescriptor&& desc);
 	bool HasAudio(std::string_view name) const;
 
-    template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+    template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 1)
     auto GetAudioInfo(const Handle<Audio>& handle) const
     {
 		const size_t resourceIdx = (handle.GetSourceId() == audioBankInstanceId_) 
@@ -55,7 +55,7 @@ public:
         return GetAudioInfoImpl<MemberPtrs...>(resourceIdx);
     }
 
-    template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+    template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 1)
     auto GetAudioInfo(std::string_view name) const
     {
 		auto it = nameToInfoIdx_.find(name);
@@ -64,6 +64,27 @@ public:
             ? it->second 
             : std::numeric_limits<size_t>::max());
     }
+
+    template <auto MemberPtr>
+    auto GetAudioInfo(const Handle<Audio>& handle) const
+    {
+        const size_t resourceIdx = (handle.GetSourceId() == audioBankInstanceId_)
+            ? handle.GetResourceIndex()
+            : std::numeric_limits<size_t>::max();
+
+        return GetAudioInfoImpl<MemberPtr>(resourceIdx);
+    }
+
+    template <auto MemberPtr>
+    auto GetAudioInfo(std::string_view name) const
+    {
+        auto it = nameToInfoIdx_.find(name);
+
+        return GetAudioInfoImpl<MemberPtr>(it != nameToInfoIdx_.end()
+            ? it->second
+            : std::numeric_limits<size_t>::max());
+    }
+
 
     template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
     auto IterAudioInfo() const
@@ -83,7 +104,7 @@ private:
                                     std::same_as<T, Mix_Music>)
     Result<AudioInstanceResource<T>> GetAudioInstanceDataInternal(const Handle<Audio>& handle);
 
-    template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
+    template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 1)
     auto GetAudioInfoImpl(size_t resourceIdx) const
     {
 		using Ret = decltype(audioInfo_.TryGetView<MemberPtrs...>(0));
@@ -94,7 +115,24 @@ private:
         }
 
         const auto& cInfo = audioInfo_;
+
         return cInfo.TryGetView<MemberPtrs...>(resourceIdx);
+    }
+
+    template <auto MemberPtr>
+    auto GetAudioInfoImpl(size_t resourceIdx) const
+    {
+        using Ret = MonoValueOptionalTupleUnwrapper<
+            const typename member_ptr_traits<MemberPtr>::value_type&>;
+
+        if (resourceIdx >= audioInfo_.Size())
+        {
+            return Ret{};
+        }
+
+        const auto& cInfo = audioInfo_;
+
+        return Ret{ cInfo.TryGetView<MemberPtr>(resourceIdx) };
     }
 
 	static inline uint32_t audioBankInstanceIdCounter_ = 0;

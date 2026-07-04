@@ -1,6 +1,6 @@
 #include "EntityAccess.h"
 
-EntityPassKey EntityFullAccessPrivelage::GetEntityPassKey() const
+EntityPassKey EntityFullAccessPrivelage::GetEntityPassKey()
 {
     return EntityPassKey::Get();
 }

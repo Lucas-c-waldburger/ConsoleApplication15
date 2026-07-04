@@ -53,7 +53,7 @@ TEST_CASE("Texture Repository tests", "[atlas]")
 	auto spriteAtlasIdOp = spriteAtlas.GetSpriteInfo<&SpriteInfo::atlasId>(sprite);
 	REQUIRE(spriteAtlasIdOp.has_value());
 
-	const auto [spriteAtlasId] = *spriteAtlasIdOp;
+	const auto& spriteAtlasId = *spriteAtlasIdOp;
 	CHECK(spriteAtlasId == sprite.resourceHandle.GetAtlasID());
 
 	// retrieve font text writer info

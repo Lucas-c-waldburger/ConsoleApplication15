@@ -15,9 +15,9 @@ void to_json(BasicJson& j, const SpriteSerializerContext& ctx)
 	auto& spriteJ = rendJ["sprite"];
 	auto& profileJ = rendJ["profile"];
 
-	if (const auto nm = ctx.spriteAtlas.GetSpriteInfo<&SpriteInfo::spriteName>(rend.sprite))
+	if (auto nm = ctx.spriteAtlas.GetSpriteInfo<&SpriteInfo::spriteName>(rend.sprite))
 	{
-		spriteJ = std::get<0>(*nm);
+		spriteJ = *nm;
 	}
 
 	to_json(profileJ, rend.profile);
@@ -73,8 +73,7 @@ void to_json(BasicJson& j, const AudioSerializerContext& ctx)
 											  (activeAudio.audioHandle);
 	if (op.has_value())
 	{
-		const auto& [nm] = *op;
-		nameJ = nm;
+		nameJ = *op;
 	}
 
 	to_json(settingsJ, activeAudio.settings);
@@ -142,6 +141,7 @@ void EntitySerializer::SerializeBasicComponents(nlohmann::json& entityJ, const E
 {
 	auto sc = GetSerializeComponentLambda(entityJ, e);
 
+	SERIALIZE_BASIC_COMPONENT(sc, Name);
 	SERIALIZE_BASIC_COMPONENT(sc, Transform);
 	SERIALIZE_BASIC_COMPONENT(sc, CameraTarget);
 	SERIALIZE_BASIC_COMPONENT(sc, EntityFlags);

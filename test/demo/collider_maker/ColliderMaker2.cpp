@@ -1205,7 +1205,7 @@ std::vector<std::string_view> SpriteManager::GetSpriteNames() const
 		auto op = spriteAtlas.GetSpriteInfo<&SpriteInfo::spriteName>(sp);
 		assert(op.has_value());
 
-		return std::string_view{ std::get<0>(*op) };
+		return std::string_view{ *op };
 	}) | std::ranges::to<std::vector>();
 }
 

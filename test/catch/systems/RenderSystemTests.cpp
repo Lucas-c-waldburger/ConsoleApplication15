@@ -54,7 +54,7 @@ TEST_CASE("System handles single sprite", "[rendering][system]")
 
 	const auto spriteName = spriteAtlas.GetSpriteInfo<&SpriteInfo::spriteName>(sprite);
 	CHECK(spriteName.has_value());
-	CHECK(std::get<0>(*spriteName) == "Idle_000");
+	CHECK(*spriteName == "Idle_000");
 
 	auto entity = ECS::CreateEntity();
 	REQUIRE(entity.IsValid());

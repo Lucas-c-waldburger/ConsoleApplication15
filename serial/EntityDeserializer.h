@@ -1,4 +1,5 @@
 #pragma once
+#include "../ecs/EntityAccess.h"
 #include "user_types/ComponentJsonUserType.h"
 #include "../systems/SDLInputSystem.h"
 #include "../audio/AudioBank.h"

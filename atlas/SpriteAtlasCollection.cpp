@@ -280,10 +280,13 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
             std::filesystem::path(descriptor.filepath).stem().string();
     }
 
-    if (spriteNameIndices_.contains(descriptor.spriteName))
+    if (auto it = spriteNameIndices_.find(descriptor.spriteName);
+        it != spriteNameIndices_.end())
     {
-        return MAKE_ERROR_FMT("Sprite name '{}' already exists in atlas",
+        LOG_ERROR_FMT("Sprite name '{}' already exists in atlas. Returning original sprite", 
             descriptor.spriteName);
+
+        return MakeSprite(it->second);
     }
 
     assert(!spriteAtlasTextures_.empty());

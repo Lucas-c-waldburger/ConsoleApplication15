@@ -168,7 +168,11 @@ public:
 		auto& writer = self.GetComponent<TextRenderableComponent>().writer;
 
 		using Cat = ObjectCategory;
-		const auto vel = rigid.body.GetData().GetLinearVelocity();
+		auto vel = rigid.body.GetData().GetLinearVelocity();
+		if (std::abs(lastVelocity_.x - vel.x) < 0.01 && std::abs(lastVelocity_.y - vel.y) < 0.01)
+		{
+			vel = lastVelocity_;
+		}
 
 		writer.text = std::format(kTextDrawFmt,
 			GetAnimStateString(state.animation),
@@ -178,6 +182,7 @@ public:
 			cats[Cat::Ceiling], cats[Cat::Enemy]);
 
 		lastState_ = state;
+		lastVelocity_ = vel;
 	}
 
 	static constexpr std::string_view GetAnimStateString(GirlState::Animation anim)
@@ -200,6 +205,7 @@ private:
 	Entity_t selfId_ = kInvalidEntity;
 	Entity_t targetId_ = kInvalidEntity;
 	GirlState lastState_;
+	SDL_FPoint lastVelocity_ = { 0.0f, 0.0f };
 };
 
 static Result<Void>

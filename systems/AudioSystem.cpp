@@ -55,7 +55,7 @@ void AudioSystem::HandleNewAudioRequests()
 			continue;
 		}
 
-		auto [audioType] = *audioTypeOp;
+		const auto audioType = *audioTypeOp;
 		switch (audioType)
 		{
 		case AudioType::Sound:

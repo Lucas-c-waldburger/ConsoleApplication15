@@ -12,6 +12,7 @@
 #include "platformer/states/CooldownTimer.h"
 #include "platformer/states/JumpQuery.h"
 #include "platformer/GamepadUiOverlay.h"
+#include "../ui/EntityInspector.h"
 
 namespace test {
 
@@ -1017,15 +1018,17 @@ static Result<Void> RunPlatformerDemo(SceneFixture::SharedPtr& fixture)
 
 	assert(fixture->IsSystemRegistered<GuiSystem>());
 
-	auto& guiSys = fixture->GetSystem<GuiSystem>();
+	TRY(ui::EntityInspector2::Setup(fixture));
 
-	EntityMap entities{};
-	entities["girl"] = girlEnt;
-	entities["sword"] = swordEnt;
-	entities["legIron"] = updater.GetLegIronBallEntity();
-	//entities["crate"] = crateEnt;
+	//auto& guiSys = fixture->GetSystem<GuiSystem>();
 
-	TRY(GirlPhysicsEditor::Init(guiSys, entities));
+	//EntityMap entities{};
+	//entities["girl"] = girlEnt;
+	//entities["sword"] = swordEnt;
+	//entities["legIron"] = updater.GetLegIronBallEntity();
+	////entities["crate"] = crateEnt;
+
+	//TRY(GirlPhysicsEditor::Init(guiSys, entities));
 
 #endif
 

@@ -227,7 +227,7 @@ TEST_CASE("Audio System Tests", "[audio][system]")
 	SECTION("Full Sound Stage")
 	{
 		std::array<Entity, 8> ents{};
-		std::generate(ents.begin(), ents.end(), ECS::CreateEntity);
+		std::generate(ents.begin(), ents.end(), [] { return ECS::CreateEntity(); });
 	
 		ents[0].AddComponent(NewAudioRequest{.audioHandle = audioHandleMap[kGateSlamName]});
 		ents[1].AddComponent(NewAudioRequest{.audioHandle = audioHandleMap[kCrowdGaspName]});

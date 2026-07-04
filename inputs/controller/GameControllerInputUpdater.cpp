@@ -173,7 +173,7 @@ void GameControllerInputUpdater::FinalizeAndPushEvents(
 
 			const auto lastState = input.state;
 
-			input.state = (lastState == InputState::Pressed || lastState == InputState::Held)
+			input.state = ((lastState & (InputState::Pressed | InputState::Held)) != 0)
 				? InputState::Held
 				: InputState::None;
 

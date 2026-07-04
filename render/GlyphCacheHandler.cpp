@@ -1,6 +1,7 @@
 #include "GlyphCacheHandler.h"
 #include "../core/commonObjects.h"
 #include "GlyphFormattingUtils.h"
+#include "../systems/util/DebugDrawUtils.h"
 
 //// TODO: Since we calculate rotation center in AddGlyphRenderCalls, do we even need
 // to cache it? Furthermore, if its always just the center of the glyph, can it just be null?
@@ -15,6 +16,123 @@ constexpr SDL_FPoint GetRectCenter(R rect)
 	return { static_cast<float>(rect.x) + (static_cast<float>(rect.w) / 2.0f),
 			 static_cast<float>(rect.y) + (static_cast<float>(rect.h) / 2.0f) };
 }
+
+constexpr SDL_FPoint GetClampedScale(const Transform& tf)
+{
+	return { std::max(tf.scale.x, 0.1f), std::max(tf.scale.y, 0.1f) };
+}
+
+struct TempGlyphRects
+{
+	std::vector<SDL_FRect> rects;
+	SDL_FRect combinedBBox = { 0.0f, 0.0f, 0.0f };
+};
+
+void FillGlyphRects(std::vector<GlyphCacheData>& cache, int fontHeight, const TextFormatting& format)
+{
+	if (cache.empty())
+	{
+		return;
+	}
+
+	std::vector<SDL_FRect> destRects;
+	destRects.reserve(cache.size());
+	std::vector<size_t> rowIndices;
+
+	float xPos = 0.0f;
+	float yPos = 0.0f;
+
+	for (size_t i = 0; i < cache.size(); ++i)
+	{
+		const auto& glyph = cache[i].glyph;
+		assert(glyph.character != Glyph::kInvalidChar);
+
+		if (glyph == FontAtlasTexture::kNewlineGlyph)
+		{
+			rowIndices.emplace_back(i);
+			destRects.emplace_back(xPos, yPos, 0.0f, 0.0f);
+
+			xPos = 0;
+			yPos += static_cast<float>(fontHeight);
+
+			continue;
+		}
+
+		destRects.emplace_back(
+			xPos,
+			yPos,
+			static_cast<float>(glyph.plot.rect.w),
+			static_cast<float>(glyph.plot.rect.h)
+		);
+
+		xPos += static_cast<float>(glyph.advance) * format.letterSpacing;
+	}
+
+	rowIndices.emplace_back(cache.size());
+	destRects.emplace_back(xPos, yPos, 0.0f, 0.0f);
+
+	auto combinedBBox = util::ComputeBoundingBox(destRects);
+
+	const bool doScale = format.scaleToBounds && format.bounds.w > 0 && format.bounds.h > 0;
+	if (doScale)
+	{
+		const float scale = std::min(
+			static_cast<float>(format.bounds.w) / combinedBBox.w,
+			static_cast<float>(format.bounds.h) / combinedBBox.h
+		);
+
+		for (auto& r : destRects)
+		{
+			r.x = (r.x - combinedBBox.x) * scale;
+			r.y = (r.y - combinedBBox.y) * scale;
+			r.w *= scale;
+			r.h *= scale;
+		}
+	}
+
+	if (format.align != TextAlign::Left)
+	{
+		const float boundsW = static_cast<float>(format.bounds.w);
+		const float longestRowWidth = (doScale || boundsW > combinedBBox.w) ? boundsW : combinedBBox.w;
+
+		size_t counter = 0;
+		for (const auto rowIdx : rowIndices)
+		{
+			//if (counter >= destRects.size())
+			//{
+			//	break;
+			//}
+
+			const float rowWidth = destRects[rowIdx].x + destRects[rowIdx].w;
+
+			/* (format.align == TextAlign::Right) */
+			float xShift = longestRowWidth - rowWidth;
+			if (format.align == TextAlign::Center)
+			{
+				xShift /= 2.0f;
+			}
+
+			while (counter <= rowIdx)
+			{
+				destRects[counter].x += xShift;
+				++counter;
+			}
+		}
+	}
+
+	assert(cache.size() + 1 == destRects.size());
+
+	for (size_t i = 0; i < destRects.size() - 1; ++i)
+	{
+		cache[i].destRect = destRects[i];
+	}
+}
+
+//void ScaleRects(TempGlyphRects& temp, SDL_FPoint scale, const Dimensions<int>& bounds,
+//				bool scaleToBounds)
+//{
+//
+//}
 
 void FillGlyphRectsLeftAlign(std::vector<GlyphCacheData>& cache,
 							 const FormatArgs& format)
@@ -134,22 +252,23 @@ void GlyphCacheHandler::ReprojectGlyphCacheGeometry(TextRenderableGlyphCache& ca
 													const TextRenderableComponent& textRenderable,
 													const FontAtlasTexture& glyphAtlas)
 {
-	auto formatArgs = MakeFormatArgs(textRenderable, cacheComponent,
-									 glyphAtlas.GetFontHeight());
+	//auto formatArgs = MakeFormatArgs(textRenderable, cacheComponent,
+	//								 glyphAtlas.GetFontHeight());
 
-	switch (textRenderable.formatting.align)
-	{
-	case TextAlign::Left:
-		FillGlyphRectsLeftAlign(cacheComponent.cache, formatArgs);
-		break;
-	case TextAlign::Right:
-		FillGlyphRectsRightAlign(cacheComponent.cache, formatArgs);
-		break;
-	case TextAlign::Center: default:
-		FillGlyphRectsCenterAlign(textRenderable.writer.text, 
-								  cacheComponent.cache, formatArgs);
-		break;
-	}
+	//switch (textRenderable.formatting.align)
+	//{
+	//case TextAlign::Left:
+	//	FillGlyphRectsLeftAlign(cacheComponent.cache, formatArgs);
+	//	break;
+	//case TextAlign::Right:
+	//	FillGlyphRectsRightAlign(cacheComponent.cache, formatArgs);
+	//	break;
+	//case TextAlign::Center: default:
+	//	FillGlyphRectsCenterAlign(textRenderable.writer.text, 
+	//							  cacheComponent.cache, formatArgs);
+	//	break;
+	//}
+	FillGlyphRects(cacheComponent.cache, glyphAtlas.GetFontHeight(), textRenderable.formatting);
 }
 
 void GlyphCacheHandler::RotateGlyphCache(std::vector<GlyphCacheData>& cache,
@@ -166,7 +285,7 @@ void GlyphCacheHandler::RotateGlyphCache(std::vector<GlyphCacheData>& cache,
 	{
 		SDL_FPoint center = GetRectCenter(destRect);
 
-		// vector from pivot ¨ glyph center
+		// vector from pivot -> glyph center
 		float dx = center.x - textBlockPivotPoint.x;
 		float dy = center.y - textBlockPivotPoint.y;
 
@@ -264,20 +383,22 @@ void GlyphCacheHandler::UpdateGlyphCache(const FontAtlasTexture& glyphAtlas,
 	if (changeLog & kNeedsReprojection)
 	{
 		ReprojectGlyphCacheGeometry(glyphCache, textRenderable, glyphAtlas);
-		ctx.transform.position = { 0.0f, 0.0f };
+		ctx.transform = {};
 		ctx.offset = { 0.0f, 0.0f };
 	}
 
 	// 4) Apply transform.scale if scale changed OR if reprojection produced new layout
 	static constexpr uint8_t kNeedsScaling = (ScaleChanged | kNeedsReprojection);
-	if (changeLog & kNeedsScaling)
+	if (changeLog & kNeedsScaling) 
 	{
-		const SDL_FPoint deltaScale = (transform.scale - ctx.transform.scale) + 1.0f;
+		assert(ctx.transform.scale.x > 0.0f && ctx.transform.scale.y > 0.0f);
+		const SDL_FPoint deltaScale = GetClampedScale(transform) / ctx.transform.scale;
 		ScaleGlyphCache(glyphCache.cache, textRenderable.profile.anchor.scale, deltaScale);
 	}
 
 	// 5) Rotate if rotation changed
-	if (changeLog & RotationChanged)
+	static constexpr uint8_t kNeedsRotate = (RotationChanged | kNeedsScaling);
+	if (changeLog & kNeedsRotate)
 	{
 		const float deltaRotation = transform.rotation - ctx.transform.rotation;
 		RotateGlyphCache(glyphCache.cache, textRenderable.profile.anchor.rotation, deltaRotation);
@@ -285,7 +406,7 @@ void GlyphCacheHandler::UpdateGlyphCache(const FontAtlasTexture& glyphAtlas,
 
 	// 6) Reposition (translate to world) if position or offset changed,
 	//    or if any of reprojection/scale/rotation happened (we need to re-place in world space)
-	static constexpr uint8_t kNeedsReposition = (PositionChanged | RotationChanged | kNeedsScaling);
+	static constexpr uint8_t kNeedsReposition = (PositionChanged | kNeedsRotate);
 	if (changeLog & kNeedsReposition)
 	{
 		RepositionGlyphCache(glyphCache, transform.position, textRenderable.profile.offset);
@@ -293,6 +414,8 @@ void GlyphCacheHandler::UpdateGlyphCache(const FontAtlasTexture& glyphAtlas,
 
 	// 6) update rest of cached content
 	ctx.transform = transform;
+	ctx.transform.scale = GetClampedScale(transform);
+
 	ctx.formatting = textRenderable.formatting; 
 	ctx.offset = textRenderable.profile.offset;
 	ctx.resourceHandle = textRenderable.writer.resourceHandle;

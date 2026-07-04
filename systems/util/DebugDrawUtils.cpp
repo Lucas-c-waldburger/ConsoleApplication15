@@ -169,6 +169,29 @@ SDL_Rect ComputeBoundingBox(const std::vector<SDL_Rect>& rects)
 }
 
 
+SDL_FRect ComputeBoundingBox(const std::vector<SDL_FRect>& rects)
+{
+	if (rects.empty())
+	{
+		return { 0.0f, 0.0f, 0.0f, 0.0f };
+	}
+
+	float minX = rects[0].x;
+	float minY = rects[0].y;
+	float maxX = rects[0].x + rects[0].w;
+	float maxY = rects[0].y + rects[0].h;
+
+	for (size_t i = 1; i < rects.size(); ++i)
+	{
+		minX = std::min(minX, rects[i].x);
+		minY = std::min(minY, rects[i].y);
+		maxX = std::max(maxX, rects[i].x + rects[i].w);
+		maxY = std::max(maxY, rects[i].y + rects[i].h);
+	}
+
+	return { minX, minY, maxX - minX, maxY - minY };
+}
+
 } // util
 
 
