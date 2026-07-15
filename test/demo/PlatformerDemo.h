@@ -12,7 +12,7 @@
 #include "platformer/states/CooldownTimer.h"
 #include "platformer/states/JumpQuery.h"
 #include "platformer/GamepadUiOverlay.h"
-#include "../ui/EntityInspector.h"
+#include "../ui/Editor.h"
 
 namespace test {
 
@@ -1018,7 +1018,8 @@ static Result<Void> RunPlatformerDemo(SceneFixture::SharedPtr& fixture)
 
 	assert(fixture->IsSystemRegistered<GuiSystem>());
 
-	TRY(ui::EntityInspector2::Setup(fixture));
+	TRY(ui::Editor::Init(fixture));
+	//TRY(ui::EntityInspector2::Setup(fixture));
 
 	//auto& guiSys = fixture->GetSystem<GuiSystem>();
 

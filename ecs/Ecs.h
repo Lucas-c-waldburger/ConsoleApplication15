@@ -1,6 +1,7 @@
 #pragma once
 #include "EntityConcepts.h"
 #include "EntityManager.h"
+#include "ComponentCleanup.h"
 #include "ComponentManager.h"
 #include "ComponentMasks.h"
 #include "EntityRelationsHelper.h"
@@ -385,6 +386,12 @@ private:
     {
         if constexpr (SomeComponent<T>)
         {
+            if constexpr (ComponentRequiresCleanup<T>)
+            {
+                CleanupComponent(Entity{ entity, this }, 
+                                 componentManager_.GetComponent<T>(entity));
+            }
+
             return componentManager_.RemoveComponent<T>(entity);
         }
         else

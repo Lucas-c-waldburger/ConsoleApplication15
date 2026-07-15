@@ -1,13 +1,17 @@
 #pragma once
 #include "System.h"
+#include "Pausable.h"
 #include "../audio/AudioManager.h"
 #include "../audio/AudioBank.h"
 
 class Entity;
 
-class AudioSystem : public System
+class AudioSystem : public System,
+				    public Pausable<AudioSystem>
 {
 public:
+	friend class Pausable<AudioSystem>;
+
 	void Update(float dt);
 
 	void EntityDestroyed(Entity& entity);
@@ -18,6 +22,8 @@ public:
 	AudioBank&& SwapAudioBank(AudioBank&& newBank);
 
 private:
+	void SetPausedImpl(bool doPause);
+
 	void HandleAudioUpdateRequests();
 	void HandleNewAudioRequests();
 	void UpdateActiveAudioComponents();

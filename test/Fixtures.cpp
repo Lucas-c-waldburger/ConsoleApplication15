@@ -278,7 +278,7 @@ Result<Void> SceneFixture::RenderScene()
 	assert(systems_.IsSystemRegistered<GuiSystem>());
 
 	systems_.GetSystem<GuiSystem>().NewFrame();
-	systems_.GetSystem<GuiSystem>().Update();
+	systems_.GetSystem<GuiSystem>().Update(GetDeltaTime());
 	systems_.GetSystem<GuiSystem>().RenderPrepare();
 #endif
 

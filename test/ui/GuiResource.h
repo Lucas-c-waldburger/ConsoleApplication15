@@ -5,8 +5,6 @@
 #include "GuiFonts.h"
 #include "../../core/commonObjects.h"
 #include "../../core/Result.h"
-//#include "GuiTexture.h"
-//#include "../Fixtures.h"
 
 namespace ui {
 

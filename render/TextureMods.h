@@ -18,7 +18,7 @@ struct TextureMods
         };
     }
 
-    friend constexpr bool operator==(const TextureMods& lhs, const TextureMods& rhs)
+    friend constexpr bool operator==(const TextureMods& lhs, const TextureMods& rhs) noexcept
     {
         return lhs.color == rhs.color && lhs.blend == rhs.blend;
     }

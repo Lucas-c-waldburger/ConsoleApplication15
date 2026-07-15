@@ -27,7 +27,11 @@ struct Sprite
 	Handle<TextureResource> resourceHandle;
 	AtlasPlot plot;
 
-	bool operator==(const Sprite&) const = default;
+	friend constexpr bool operator==(const Sprite& lhs, const Sprite& rhs) noexcept
+	{
+		return lhs.resourceHandle == rhs.resourceHandle &&
+			   lhs.plot == rhs.plot;
+	}
 };
 
 //struct SpriteInfo

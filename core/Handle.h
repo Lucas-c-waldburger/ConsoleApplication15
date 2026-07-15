@@ -32,8 +32,11 @@ public:
     friend class HandleFactory;
 
     Handle() = default;
-    bool operator==(const Handle& rhs) const { return id_ == rhs.id_ && gen_ == rhs.gen_; }
-    bool operator<(const Handle& rhs) const
+    constexpr bool operator==(const Handle& rhs) const noexcept
+    {
+        return id_ == rhs.id_ && gen_ == rhs.gen_; 
+    }
+    constexpr bool operator<(const Handle& rhs) const noexcept
     {
         return (gen_ != rhs.gen_) ? gen_ < rhs.gen_ : id_ < rhs.id_;
     }

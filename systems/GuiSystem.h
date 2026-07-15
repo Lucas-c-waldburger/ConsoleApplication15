@@ -37,11 +37,21 @@ public:
 		return true;
 	}
 
-	void Update()
+	template <typename Fn> requires std::invocable<Fn, bool>
+	void SetUI(Fn&& fn) { ui_ = std::forward<Fn>(fn); }
+
+	void Update(float dt)
 	{
-		for (auto& cmd : widgetCommands_)
+		if (ui_)
 		{
-			if (cmd) { std::invoke(cmd); }
+			std::invoke(ui_, dt);
+		}
+		else
+		{
+			for (auto& cmd : widgetCommands_)
+			{
+				if (cmd) { std::invoke(cmd); }
+			}
 		}
 	}
 
@@ -61,6 +71,7 @@ public:
 private:
 	UnorderedDictionary<bool> widgetStates_;
 	std::vector<Command> widgetCommands_;
+	fu2::unique_function<void(float)> ui_;
 
 	template <typename Fn> requires std::convertible_to<Fn, Command>
 	Command PrepareWidget(std::string_view widgetName, Fn&& fn, ImGuiWindowFlags flags)

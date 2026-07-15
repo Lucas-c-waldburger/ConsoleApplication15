@@ -10,7 +10,12 @@ struct Glyph
 	char character = kInvalidChar;
 	AtlasPlot plot;
 	int advance = 0;
-	bool operator==(const Glyph&) const = default;
+
+	friend constexpr bool operator==(const Glyph& lhs, const Glyph& rhs) noexcept
+	{
+		return lhs.character == rhs.character && lhs.plot == rhs.plot && 
+			   lhs.advance == rhs.advance;
+	}
 };
 
 struct FontDescriptor
@@ -28,7 +33,10 @@ struct GlyphTextWriter
 	Handle<TextureResource> resourceHandle;
 	std::string text;
 
-	bool operator==(const GlyphTextWriter&) const = default;
+	friend bool operator==(const GlyphTextWriter& lhs, const GlyphTextWriter& rhs) noexcept
+	{
+		return lhs.resourceHandle == rhs.resourceHandle && lhs.text == rhs.text;
+	}
 };
 
 //class GlyphAtlas : public TextureAtlas

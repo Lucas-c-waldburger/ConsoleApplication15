@@ -345,6 +345,10 @@ inline void GuiDrawProperty(const T& val)
 	ImGui::TextUnformatted(txt.c_str());
 }
 
+void GuiDrawProperty(const bool& b);
+void GuiDrawProperty(const SDL_FRect& r);
+void GuiDrawProperty(const SDL_FPoint& p);
+
 /** defgroup Basic data types @{ */
 template <typename T> requires std::is_integral_v<T>
 inline bool GuiEditProperty(T& i, DragArgs<int> args = {})
@@ -467,6 +471,10 @@ inline bool GuiEditProperty(Range<T>& r, Args&&...args)
 {
 	return GuiEditProperties<"min", "max">(std::forward<Args>(args)..., r.min, r.max);
 }
+
+bool GuiEditProperty(Range<SDL_FPoint>& r, DragArgs<float> args = {});
+bool GuiEditProperty(Range<float>& f, DragArgs<float> args = {});
+
 template <typename T>
 inline void GuiDrawProperty(const Handle<T>& h)
 {
@@ -507,6 +515,14 @@ inline bool GuiEditProperty(std::optional<T>& op, Args&&...args)
 	return changed;
 }
 
+struct VecArgs
+{
+	size_t minSize = 0;
+	size_t maxSize = std::numeric_limits<size_t>::max();
+};
+
+bool GuiEditProperty(std::vector<SDL_FPoint>& v, VecArgs args = {});
+
 template <typename C, typename...Args> requires requires(C& c) {
 	{ c.begin() } -> std::same_as<typename C::iterator>;
 	{ c.end() } -> std::same_as<typename C::iterator>;
@@ -543,6 +559,8 @@ inline void GuiDrawProperty(const C& c)
 		ImGui::PopID();
 	}
 }
+
+void GuiDrawProperty(const std::string_view& sv);
 
 /** @} */ 
 

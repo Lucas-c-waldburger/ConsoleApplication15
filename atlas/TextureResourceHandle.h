@@ -84,7 +84,7 @@ public:
     friend class Super;
 
     Handle() = default;
-    bool operator==(const Handle& rhs) const
+    constexpr bool operator==(const Handle& rhs) const noexcept
     {
         return id_ == rhs.id_;
     }

@@ -4,6 +4,11 @@
 
 void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 {
+	if (IsPaused())
+	{
+		return;
+	}
+
 	auto entities = ECS::GetAllEntitiesWith<SpriteRenderableComponent, 
 											SpriteAnimationComponent,
 											NeedsAnimationUpdate>();

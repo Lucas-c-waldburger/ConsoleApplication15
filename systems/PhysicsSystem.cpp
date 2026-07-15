@@ -111,6 +111,11 @@ void UpdateTransformComponents(EventBus& bus)
 
 void PhysicsSystem::Update(B2World* world_, EventBus& bus, float timeStep, int subStepCount)
 {
+	if (IsPaused())
+	{
+		return;
+	}
+
 	if (!world_)
 	{
 		LOG_ERROR("B2World was null");

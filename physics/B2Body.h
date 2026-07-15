@@ -164,7 +164,7 @@ public:
 
     void SetLinearDamping(float newDamp)
     {
-        b2Body_SetLinearDamping(bodyHandle_, newDamp);
+        b2Body_SetLinearDamping(bodyHandle_, std::max(0.0f, newDamp));
     }
     float GetLinearDamping() const
     {
@@ -235,6 +235,18 @@ private:
 
     Handle<B2Body> bodyHandle_;
 };
+
+inline constexpr std::string_view ToString(B2Body::Type type)
+{
+    switch (type)
+    {
+    case B2Body::Type::Static: return "Static";
+    case B2Body::Type::Kinematic: return "Kinematic";
+    case B2Body::Type::Dynamic: return "Dynamic";
+    }
+
+    return "<unknown>";
+}
 
 namespace std {
     template <>

@@ -5,6 +5,22 @@
 
 namespace ui {
 
+namespace {
+
+void BeginDisabledNoStyle(bool doDisable = true)
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 1.0f);
+	ImGui::BeginDisabled(doDisable);
+}
+
+void EndDisabledNoStyle()
+{
+	ImGui::EndDisabled();
+	ImGui::PopStyleVar();
+}
+
+} // unnamed
+
 bool GuiEdit(bool& b, const char* label)
 {
 	return ImGui::Checkbox(label, &b);
@@ -158,6 +174,132 @@ bool GuiEdit(SDL_Color& c, const char* label)
 	return changed;
 }
 
+void GuiDrawProperty(const bool& b)
+{
+	BeginDisabledNoStyle();
+
+	bool bCpy = b;
+	ImGui::Checkbox("##Value", &bCpy);
+
+	EndDisabledNoStyle();
+}
+
+void GuiDrawProperty(const SDL_FRect& r)
+{
+	BeginDisabledNoStyle();
+
+	SDL_FRect rCpy = r;
+	GuiEditProperties<"X", "Y", "W", "H">(rCpy.x, rCpy.y, rCpy.w, rCpy.h);
+
+	EndDisabledNoStyle();
+}
+
+void GuiDrawProperty(const SDL_FPoint& p)
+{
+	BeginDisabledNoStyle();
+
+	SDL_FPoint pCpy = p;
+	GuiEditProperties<"X", "Y">(pCpy.x, pCpy.y);
+
+	EndDisabledNoStyle();
+}
+
+bool GuiEditProperty(Range<SDL_FPoint>& r, DragArgs<float> args)
+{
+	bool b = Property("min", r.min, args);
+	b |= Property("max", r.max, args);
+	return b;
+}
+bool GuiEditProperty(Range<float>& f, DragArgs<float> args)
+{
+	bool b = Property("min", f.min, args);
+	b |= Property("max", f.max, args);
+	return b;
+}
+
+bool GuiEditProperty(std::vector<SDL_FPoint>& v, VecArgs args)
+{
+	bool changed = false;
+	size_t erasedIdx = std::numeric_limits<size_t>::max();
+
+	for (size_t i = 0; i < v.size(); ++i)
+	{
+		auto& p = v[i];
+
+		ImGui::TableNextRow();
+
+		ImGui::TableNextColumn();
+
+		ImGui::AlignTextToFramePadding();
+
+		if (gPropertyDepth > 0)
+		{
+			ImGui::Indent(gPropertyDepth * 12.0f);
+		}
+
+		if (gPropertyDepth > 0)
+		{
+			ImGui::Unindent(gPropertyDepth * 12.0f);
+		}
+
+		ImGui::PushID(i);
+
+		float pv[2] = { p.x, p.y };
+
+		if (ImGui::DragFloat2("##Value", pv))
+		{
+			p.x = pv[0];
+			p.y = pv[1];
+			changed |= true;
+		}
+
+		//changed |= GuiEditProperties<"X", "Y">(p.x, p.y);
+
+		ImGui::TableNextColumn();
+
+		ImGui::SetNextItemWidth(-FLT_MIN);
+
+		const std::string xBtnLabel = std::format("x##{}", i);
+
+		ImGui::BeginDisabled(v.size() < args.minSize);
+
+		if (ImGui::Button(xBtnLabel.c_str()))
+		{
+			changed |= true;
+			erasedIdx = i;
+		}
+
+		ImGui::EndDisabled();
+
+		ImGui::PopID();
+	}
+
+	if (erasedIdx != std::numeric_limits<size_t>::max())
+	{
+		if (v.size() > args.minSize)
+		{
+			assert(erasedIdx < v.size());
+
+			v.erase(v.begin() + erasedIdx);
+		}
+	}
+
+	if (ImGui::Button("Add"))
+	{
+		if (v.size() < args.maxSize)
+		{
+			v.emplace_back(0.0f, 0.0f);
+		}
+	}
+
+	return changed;
+}
+
+void GuiDrawProperty(const std::string_view& sv)
+{
+	ImGui::TextUnformatted(sv.data());
+}
+
 std::string GuiGetEntityString(Entity_t e)
 {
 	return (e == kInvalidEntity) ? "<invalid>" : std::to_string(e);
@@ -200,82 +342,16 @@ bool GuiEditProperty(SDL_Point& p, DragArgs<int> args)
 
 bool GuiEditProperty(SDL_FPoint& p, DragArgs<float> args)
 {
-	//float v[2] = { p.x, p.y };
-
-	//if (ImGui::DragFloat2("##Value", v, args.speed, args.min, args.max))
-	//{
-	//	p.x = v[0];
-	//	p.y = v[1];
-	//	return true;
-	//}
-	//return false;
-
 	return GuiEditProperties<"X", "Y">(p.x, p.y);
-
-	//bool changed = false;
-
-	//const float fieldWidth = GetFieldValueWidth<"x", "y">();
-
-	//ImGui::TextUnformatted("x");
-	//ImGui::SameLine();
-
-	//ImGui::SetNextItemWidth(fieldWidth);
-	//changed |= ImGui::DragFloat("##x", &p.x, args.speed, args.min, args.max);
-
-	//ImGui::SameLine();
-
-	//ImGui::TextUnformatted("y");
-	//ImGui::SameLine();
-
-	//ImGui::SetNextItemWidth(fieldWidth);
-	//changed |= ImGui::DragFloat("##y", &p.y, args.speed, args.min, args.max);
-
-	//return changed;
 }
 
 bool GuiEditProperty(SDL_Rect& r, DragArgs<int> args)
 {
-	//bool b = Property("x", r.x, args);
-	//b |= Property("y", r.y, args);
-	//b |= Property("w", r.w, args);
-	//b |= Property("h", r.h, args);
-	//return b;
-
-	//int v[4] = { r.x, r.y, r.w, r.h };
-
-	//if (ImGui::DragInt4("##Value", v, args.speed, args.min, args.max))
-	//{
-	//	r.x = v[0];
-	//	r.y = v[1];
-	//	r.w = v[2];
-	//	r.h = v[3];
-	//	return true;
-	//}
-	//return false;
-
 	return GuiEditProperties<"X", "Y", "W", "H">(r.x, r.y, r.w, r.h);
 }
 
 bool GuiEditProperty(SDL_FRect& r, DragArgs<float> args)
 {
-	//bool b = Property("x", r.x, args);
-	//b |= Property("y", r.y, args);
-	//b |= Property("w", r.w, args);
-	//b |= Property("h", r.h, args);
-	//return b;
-
-	//float v[4] = { r.x, r.y, r.w, r.h };
-
-	//if (ImGui::DragFloat4("##Value", v, args.speed, args.min, args.max))
-	//{
-	//	r.x = v[0];
-	//	r.y = v[1];
-	//	r.w = v[2];
-	//	r.h = v[3];
-	//	return true;
-	//}
-	//return false;
-
 	return GuiEditProperties<"X", "Y", "W", "H">(r.x, r.y, r.w, r.h);
 }
 

@@ -236,6 +236,20 @@ protected:
     Handle<B2Shape> shapeHandle_;
 };
 
+inline constexpr std::string_view ToString(B2Shape::Type type)
+{
+    switch (type)
+    {
+    case B2Shape::Type::Circle: return "Circle";
+    case B2Shape::Type::Capsule: return "Capsule";
+    case B2Shape::Type::Segment: return "Segment";
+    case B2Shape::Type::Polygon: return "Polygon";
+    case B2Shape::Type::ChainSegment: return "ChainSegment";
+    }
+
+    return "<unknown>";
+}
+
 namespace std {
 template <>
 struct hash<B2Shape> {

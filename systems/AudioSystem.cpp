@@ -38,6 +38,11 @@ inline void AudioSystem::HandleAudioUpdateRequests()
 
 void AudioSystem::HandleNewAudioRequests()
 {
+	if (IsPaused())
+	{
+		return;
+	}
+
 	auto entities = ECS::GetAllEntitiesWith<NewAudioRequest>();
 
 	for (auto& entity : entities)
@@ -244,6 +249,11 @@ Result<Void> AudioSystem::ResolveUpdateRequestInstanceId(Entity& entity)
 
 void AudioSystem::Update(float dt)
 {
+	if (IsPaused())
+	{
+		return;
+	}
+
 	HandleAudioUpdateRequests();
 	HandleNewAudioRequests();
 
@@ -284,7 +294,6 @@ void AudioSystem::CleanupForNewAudioBank()
 	audioManager_.ClearStage();
 }
 
-
 void AudioSystem::SetAudioBank(AudioBank&& bank)
 {
 	CleanupForNewAudioBank();
@@ -299,4 +308,29 @@ AudioBank&& AudioSystem::SwapAudioBank(AudioBank&& newBank)
 	std::swap(audioBank_, newBank);
 
 	return std::move(newBank);
+}
+
+void AudioSystem::SetPausedImpl(bool doPause)
+{
+	auto es = ECS::GetAllEntitiesWith<ActiveAudio>();
+
+	for (auto& e : es)
+	{
+		auto& aa = e.GetComponent<ActiveAudio>();
+
+		if (doPause)
+		{
+			if (aa.status == AudioStatus::Playing || aa.status == AudioStatus::Stopping)
+			{
+				audioManager_.ExecuteAudioCommand(aa.instanceId, AudioPlayCommand::Pause);
+			}
+		}
+		else 
+		{
+			if (aa.status == AudioStatus::Paused)
+			{
+				audioManager_.ExecuteAudioCommand(aa.instanceId, AudioPlayCommand::Resume);
+			}
+		}
+	}
 }

@@ -21,6 +21,11 @@ struct FixedString
 
     constexpr std::size_t size() const { return N; }
     constexpr operator const char* () const { return value; }
+
+    constexpr char operator[](size_t i) const
+    {
+        return value[i];
+    }
 };
 
 namespace detail {

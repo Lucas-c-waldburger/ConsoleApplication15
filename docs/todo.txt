@@ -8,3 +8,5 @@
 4. Add integration between Error and std::errorcode/exceptions
 
 5. Remove GameLoopSystem - UserSystem stuff has made producing events for phases unnecessary 
+
+6. Make "isAwake" a field inside B2BodyParameters, erase default true inside RigidBodyComponentBuilder::Build

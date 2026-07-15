@@ -178,6 +178,7 @@
     <ClCompile Include="deps\imgui\imgui_draw.cpp" />
     <ClCompile Include="deps\imgui\imgui_tables.cpp" />
     <ClCompile Include="deps\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="ecs\ComponentCleanup.cpp" />
     <ClCompile Include="ecs\EntityAccess.cpp" />
     <ClCompile Include="ecs\EntityManager.cpp" />
     <ClCompile Include="ecs\EntityPhysics.cpp" />
@@ -275,16 +276,26 @@
     <ClCompile Include="test\demo\platformer\states\AttackAnimDataReference.cpp" />
     <ClCompile Include="test\demo\platformer\states\GirlStateHandlerImpls.cpp" />
     <ClCompile Include="test\setups\TileSet.cpp" />
+    <ClCompile Include="test\ui\CameraControlUtility.cpp" />
+    <ClCompile Include="test\ui\ComponentEditHistory.cpp" />
     <ClCompile Include="test\ui\ControllerMappingEditor.cpp" />
+    <ClCompile Include="test\ui\Editor.cpp" />
+    <ClCompile Include="test\ui\EntityDragUtility.cpp" />
     <ClCompile Include="test\ui\EntityInspector.cpp" />
     <ClCompile Include="test\ui\FileTreeView.cpp" />
+    <ClCompile Include="test\ui\GuiMouse.cpp" />
     <ClCompile Include="test\ui\GuiResource.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditAudio.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditBasicComponents.cpp" />
+    <ClCompile Include="test\ui\gui_edit\GuiEditComponentBuilders.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditCore.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditInputs.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditPhysics.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditRenderable.cpp" />
+    <ClCompile Include="test\ui\InspectorCommon.cpp" />
+    <ClCompile Include="test\ui\InspectorComponentPanel.cpp" />
+    <ClCompile Include="test\ui\InspectorEntityPanel.cpp" />
+    <ClCompile Include="test\ui\InspectorSystemPanel.cpp" />
     <ClCompile Include="test\ui\MouseWorldNavigator.cpp" />
     <ClCompile Include="test\ui\PhysicsEditor.cpp" />
     <ClCompile Include="test\catch\render\GlyphCacheHandlerTests.cpp" />
@@ -442,6 +453,7 @@
     <ClInclude Include="deps\nlohmann\json.hpp" />
     <ClInclude Include="deps\nlohmann\json_fwd.hpp" />
     <ClInclude Include="deps\rapidhash\rapidhash.h" />
+    <ClInclude Include="ecs\ComponentCleanup.h" />
     <ClInclude Include="ecs\ComponentMasks.h" />
     <ClInclude Include="core\Dictionary.h" />
     <ClInclude Include="core\EvaluationProperty.h" />
@@ -478,6 +490,7 @@
     <ClInclude Include="serial\TextureRepositorySerializer.h" />
     <ClInclude Include="serial\user_types\AudioJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\BitsetJsonUserTypes.h" />
+    <ClInclude Include="systems\Pausable.h" />
     <ClInclude Include="test\demo\audio_lounge\AudioLounge.h" />
     <ClInclude Include="test\demo\audio_lounge\AudioLoungeApp.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMaker2.h" />
@@ -491,12 +504,24 @@
     <ClInclude Include="inputs\keyboard\KeyboardInputSource.h" />
     <ClInclude Include="inputs\keyboard\KeyboardInputUpdater.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMakerCommon.h" />
+    <ClInclude Include="test\ui\CameraControlUtility.h" />
+    <ClInclude Include="test\ui\ComponentEditHistory.h" />
+    <ClInclude Include="test\ui\Editor.h" />
+    <ClInclude Include="test\ui\EntityDragUtility.h" />
+    <ClInclude Include="test\ui\GuiMouse.h" />
     <ClInclude Include="test\ui\GuiResource.h" />
     <ClInclude Include="test\ui\GuiFonts.h" />
     <ClInclude Include="test\ui\gui_edit\GuiComponentNames.h" />
     <ClInclude Include="test\ui\GuiTexture.h" />
     <ClInclude Include="test\ui\gui_edit\GuiEditComponentBuilders.h" />
     <ClInclude Include="test\ui\gui_edit\GuiEditPropertyTable.h" />
+    <ClInclude Include="test\ui\gui_edit\GuiEventNames.h" />
+    <ClInclude Include="test\ui\gui_edit\GuiSystemNames.h" />
+    <ClInclude Include="test\ui\InspectorCommon.h" />
+    <ClInclude Include="test\ui\InspectorComponentPanel.h" />
+    <ClInclude Include="test\ui\InspectorEntityPanel.h" />
+    <ClInclude Include="test\ui\InspectorEventPanel.h" />
+    <ClInclude Include="test\ui\InspectorSystemPanel.h" />
     <ClInclude Include="test\ui\SpritePicker.h" />
     <ClInclude Include="test\demo\gallery\Gallery.h" />
     <ClInclude Include="test\demo\gallery\GalleryApp.h" />
@@ -1100,6 +1125,12 @@
     <Image Include="resources\sprites\ui\controller_btn\btn_b.png" />
     <Image Include="resources\sprites\ui\controller_btn\btn_x.png" />
     <Image Include="resources\sprites\ui\controller_btn\btn_y.png" />
+    <Image Include="resources\sprites\ui\editor\arrows-up-down-left-right-solid.png" />
+    <Image Include="resources\sprites\ui\editor\floppy-disk-solid.png" />
+    <Image Include="resources\sprites\ui\editor\pause_circle.png" />
+    <Image Include="resources\sprites\ui\editor\play_circle.png" />
+    <Image Include="resources\sprites\ui\editor\upload-solid.png" />
+    <Image Include="resources\sprites\ui\editor\xmark-solid.png" />
     <Image Include="resources\sprites\ui\joystick\Joystick.png" />
     <Image Include="resources\sprites\ui\joystick\LargeHandleFilledGrey.png" />
     <Image Include="test\catch\test_images\airborne_series_sprites.png" />
@@ -1164,6 +1195,8 @@
   <ItemGroup>
     <Font Include="resources\fonts\GoNotoKurrent-Bold.ttf" />
     <Font Include="resources\fonts\GoNotoKurrent-Regular.ttf" />
+    <Font Include="resources\fonts\Kenney Future Narrow.ttf" />
+    <Font Include="resources\fonts\Kenney Future.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

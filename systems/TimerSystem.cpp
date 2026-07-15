@@ -23,6 +23,11 @@ void HandleTimerExpiry(Timer& timer, Entity& e)
 
 void TimerSystem::Update(float delta, EventBus& bus)
 {
+	if (IsPaused())
+	{
+		return;
+	}
+
 	auto entities = ECS::GetAllEntitiesWith<Timer>();
 
 	for (auto& entity : entities)

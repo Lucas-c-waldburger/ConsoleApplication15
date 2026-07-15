@@ -30,8 +30,11 @@ struct Dimensions
 {
     T w = static_cast<T>(0);
     T h = static_cast<T>(0);
-
-    constexpr bool operator==(const Dimensions&) const = default;
+    friend constexpr bool operator==(const Dimensions<T>& lhs,
+                                     const Dimensions<T>& rhs)
+    {
+        return lhs.w == rhs.w && lhs.h == rhs.h;
+    }
 };
 
 template <typename T>
@@ -39,6 +42,11 @@ struct Range
 {
     T min;
     T max;
+    friend constexpr bool operator==(const Range<T>& lhs,
+                                     const Range<T>& rhs)
+    {
+        return lhs.min == rhs.min && lhs.max == rhs.max;
+    }
 };
 
 template <typename T>
@@ -121,18 +129,38 @@ public:
     MonoValueOptionalTupleUnwrapper() : tup_(std::nullopt) {}
     explicit MonoValueOptionalTupleUnwrapper(std::optional<std::tuple<T>>&& tup) : tup_(std::move(tup)) {}
 
-    bool has_value() const noexcept { return tup_.has_value(); }
-    operator bool() const noexcept { return has_value(); }
-    bool operator!() const noexcept { return !has_value(); }
+    constexpr bool has_value() const noexcept { return tup_.has_value(); }
+    constexpr operator bool() const noexcept { return has_value(); }
+    constexpr bool operator!() const noexcept { return !has_value(); }
 
-    T& operator*() requires !std::is_const_v<std::remove_reference_t<T>> 
+    template <typename U = std::remove_cv_t<T>>
+    constexpr T value_or(U&& fallback)
+    {
+        if (has_value())
+        {
+            return std::get<0>(*tup_);
+        }
+        return fallback;
+    }
+    template <typename U = std::remove_cv_t<T>>
+    constexpr T value_or(U&& fallback) const
+    {
+        if (has_value())
+        {
+            return std::get<0>(*tup_);
+        }
+        return fallback;
+    }
+
+    constexpr T& operator*() requires !std::is_const_v<std::remove_reference_t<T>> 
     { 
         assert(has_value()); return std::get<0>(*tup_); 
     }
-    const T& operator*() const 
+    constexpr const T& operator*() const 
     { 
         assert(has_value()); return std::get<0>(*tup_);
     }
+
 
 private:
     std::optional<std::tuple<T>> tup_;

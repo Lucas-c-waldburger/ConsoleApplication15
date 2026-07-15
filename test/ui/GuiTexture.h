@@ -14,55 +14,47 @@ namespace ui {
 struct GuiTexture
 {
     ImTextureID textureId = 0;
-    ImVec2 size{ 0, 0 };
-    ImVec2 uv0{ 0, 0 };
-    ImVec2 uv1{ 1, 1 };
+    ImVec2 size;
+    ImVec2 uv0;
+    ImVec2 uv1;
 
-    constexpr bool IsValid() const noexcept { return textureId != 0; }
+    static constexpr GuiTexture Default()
+    {
+        return GuiTexture{
+            .textureId = 0,
+            .size = ImVec2(0, 0),
+            .uv0 = ImVec2(0, 0),
+            .uv1 = ImVec2(1, 1)
+        };
+    }
 };
 
 class GuiTextureConverter
 {
 public:
-    GuiTextureConverter() = default;
-    explicit GuiTextureConverter(const TextureRepository& repo) : repo_(&repo) {}
+    explicit GuiTextureConverter(const TextureRepository& repo) : repo_(repo) {}
 
     GuiTexture FromSprite(const Sprite& sprite) const
     {
-        if (!repo_)
-        {
-            return {};
-        }
-
         if (!sprite.resourceHandle.IsValid())
         {
-            return {};
+            return GuiTexture::Default();
         }
 
-        return MakeGuiTexture(repo_->GetSourceTexture(sprite.resourceHandle), sprite.plot);
+        return MakeGuiTexture(repo_.GetSourceTexture(sprite.resourceHandle), sprite.plot);
     }
 
     GuiTexture FromSprite(std::string_view spriteName) const
     {
-        if (!repo_)
-        {
-            return {};
-        }
-
-        return FromSprite(repo_->GetSpriteAtlas().GetSprite(spriteName));
+        return FromSprite(repo_.GetSpriteAtlas().GetSprite(spriteName));
     }
 
     GuiTexture FromGlyph(const Glyph& glyph, std::string_view fontName) const
     {
-        if (!repo_)
-        {
-            return {};
-        }
-
-        const auto& fnt = repo_->GetFontAtlas().GetFont(fontName);
+        const auto& fnt = repo_.GetFontAtlas().GetFont(fontName);
         if (!fnt.IsLoaded())
         {
-            return {};
+            return GuiTexture::Default();
         }
 
         return MakeGuiTexture(fnt.GetSourceTexture(), glyph.plot);
@@ -70,23 +62,16 @@ public:
 
     GuiTexture FromGlyph(char c, std::string_view fontName) const
     {
-        if (!repo_)
-        {
-            return {};
-        }
-
-        const auto& fnt = repo_->GetFontAtlas().GetFont(fontName);
+        const auto& fnt = repo_.GetFontAtlas().GetFont(fontName);
         if (!fnt.IsLoaded())
         {
-            return {};
+            return GuiTexture::Default();
         }
 
         const auto glyph = fnt.GetGlyph(c);
         
         return MakeGuiTexture(fnt.GetSourceTexture(), glyph.plot);
     }
-
-    void SetTextureRepository(const TextureRepository& repo) noexcept { repo_ = &repo; }
 
 private:
     static Dimensions<float> GetTextureSize(SDL_Texture* tx) 
@@ -101,7 +86,7 @@ private:
     {
         if (!srcTexture)
         {
-            return {};
+            return GuiTexture::Default();
         }
 
         const auto [txW, txH] = GetTextureSize(srcTexture);
@@ -114,14 +99,14 @@ private:
         }
 
         return GuiTexture{
-            0,
-            ImVec2{x, y},
-            ImVec2{x / txW, y / txH},
-            ImVec2{(x + w) / txW, (y + h) / txH}
+            .textureId = (ImTextureID)srcTexture,
+            .size = ImVec2(w, h),
+            .uv0 = ImVec2(x / txW, y / txH),
+            .uv1 = ImVec2((x + w) / txW, (y + h) / txH)
         };
     }
 
-    const TextureRepository* repo_ = nullptr;
+    const TextureRepository& repo_;
 };
 
 constexpr inline ImVec4 SDLToGuiColor(const SDL_Color& clr)
@@ -158,7 +143,7 @@ inline std::string MakeGuiStringID(T* ptr)
 
 inline void GuiImage(const GuiTexture& tx)
 {
-    if (!tx.IsValid())
+    if (tx.textureId == 0)
     {
         return;
     }
@@ -166,19 +151,30 @@ inline void GuiImage(const GuiTexture& tx)
     ImGui::Image(tx.textureId, tx.size, tx.uv0, tx.uv1);
 }
 
-inline void GuiImageButton(const GuiTexture& tx, const SDL_Color& bgClr = {0, 0, 0, 0}, 
-                           const SDL_Color& tintClr = { 255, 255, 255, 255 })
+inline bool GuiImageButton(std::string_view id, const GuiTexture& tx, 
+    const ImVec4& bgClr = ImVec4(0, 0, 0, 0),
+    const ImVec4& tintClr = ImVec4(1, 1, 1, 1))
 {
-    if (!tx.IsValid())
+    if (tx.textureId == 0)
     {
-        return;
+        return false;
     }
 
-    std::string id = MakeGuiStringID(&tx);
-
-    ImGui::ImageButton(id.c_str(), tx.textureId, tx.size, tx.uv0, tx.uv1,
-                       SDLToGuiColor(bgClr), SDLToGuiColor(tintClr));
+    return ImGui::ImageButton(id.data(), tx.textureId, tx.size, tx.uv0, tx.uv1,
+                              bgClr, tintClr);
 }
+
+//inline bool GuiImageButton(std::string_view id, const GuiTexture& tx, const SDL_Color& bgClr = {0, 0, 0, 0}, 
+//                           const SDL_Color& tintClr = { 255, 255, 255, 255 })
+//{
+//    if (tx.textureId == 0)
+//    {
+//        return false;
+//    }
+//
+//    return ImGui::ImageButton(id.data(), tx.textureId, tx.size, tx.uv0, tx.uv1,
+//                              SDLToGuiColor(bgClr), SDLToGuiColor(tintClr));
+//}
 
 } // ui
 

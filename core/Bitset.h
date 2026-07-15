@@ -3,6 +3,38 @@
 #include "../events/EventConcepts.h"
 #include "../components/ComponentConcepts.h"
 
+template <typename>
+class TypeIndexedBitset;
+
+template <template <typename...> class TList, typename...Ts>
+class TypeIndexedBitset<TList<Ts...>>
+{
+private:
+	using Types = TList<Ts...>;
+	using BitsetType = std::bitset<sizeof...(Ts)>;
+
+	template <typename T>
+	static constexpr bool type_in_bitset_v = (std::same_as<T, Ts> || ...);
+
+	template <typename T> requires type_in_bitset_v<T>
+	static constexpr size_t index_v = index_of_v<T, Types>;
+
+	BitsetType bitset_;
+
+public:
+	constexpr TypeIndexedBitset() = default;
+	explicit constexpr TypeIndexedBitset(bool tf) : bitset_(tf ? BitsetType{}.set() : BitsetType{}) {}
+
+	template <typename T> requires type_in_bitset_v<T>
+	void Set(bool tf) { bitset_.set(index_v<T>, tf); }
+
+	template <typename T> requires type_in_bitset_v<T>
+	constexpr bool Test() const { return bitset_.test(index_v<T>); }
+
+	void Reset() { bitset_.reset(); }
+};
+
+
 class EventDataBitset
 {
 public:

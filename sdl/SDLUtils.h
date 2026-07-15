@@ -74,7 +74,7 @@ namespace SDLite
 }
 
 // SDL COLOR OVERLOADS
-inline constexpr bool operator==(const SDL_Color& lhs, const SDL_Color& rhs)
+inline constexpr bool operator==(const SDL_Color& lhs, const SDL_Color& rhs) noexcept
 {
     return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b && lhs.a == rhs.a;
 }
@@ -83,12 +83,12 @@ inline constexpr bool operator==(const SDL_Color& lhs, const SDL_Color& rhs)
 // SDL POINT/RECT OVERLOADS
 // POINT //
 // equality
-inline constexpr bool operator==(const SDL_Point& lhs, const SDL_Point& rhs)
+inline constexpr bool operator==(const SDL_Point& lhs, const SDL_Point& rhs) noexcept
 {
     return lhs.x == rhs.x && lhs.y == rhs.y;
 }
 
-inline constexpr bool operator==(const SDL_FPoint& lhs, const SDL_FPoint& rhs)
+inline constexpr bool operator==(const SDL_FPoint& lhs, const SDL_FPoint& rhs) noexcept
 {
     return EqualsWithTolerance(lhs.x, rhs.x) && EqualsWithTolerance(lhs.y, rhs.y);
 }
@@ -230,7 +230,7 @@ constexpr P abs(P p)
 // RECT //
 // comparison
 template <SDLRectType T>
-inline constexpr bool operator==(const T& lhs, const T& rhs)
+inline constexpr bool operator==(const T& lhs, const T& rhs) noexcept
 {
     return lhs.x == rhs.x && lhs.y == rhs.y && lhs.w == rhs.w && lhs.h == rhs.h;
 }

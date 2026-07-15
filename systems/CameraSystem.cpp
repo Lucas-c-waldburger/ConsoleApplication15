@@ -43,6 +43,11 @@ SDL_FPoint CalculateCameraPositionFromTransform(SDL_FPoint currentCameraPos,
 
 void CameraSystem::Update(float deltaTime)
 {
+	if (IsPaused())
+	{
+		return;
+	}
+
 	auto entities = ECS::GetAllEntitiesWith<CameraTarget, Transform>();
 
 	if (entities.size() > 1)

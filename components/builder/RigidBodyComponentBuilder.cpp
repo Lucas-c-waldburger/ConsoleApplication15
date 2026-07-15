@@ -43,6 +43,8 @@ RigidBody ComponentBuilder<RigidBody>::Build(B2World& world)
     definition.bodyData.position = ToB2VecScaled(bodyParams_.position);
     definition.bodyData.gravityScale = bodyParams_.gravityScale;
     definition.bodyData.fixedRotation = bodyParams_.fixedRotation;
+    //// TODO: make this a field inside B2BodyDefinition
+    definition.bodyData.isAwake = true;
 
     auto result = world.AddBody(definition);
     if (!result.Success())

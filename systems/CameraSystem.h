@@ -1,14 +1,18 @@
 #pragma once
 #include "System.h"
+#include "Pausable.h"
 #include "../camera/Camera.h"
 #include "../components/CameraTargetComponent.h"
 #include <optional>
 
 class Entity;
 
-class CameraSystem : public System
+class CameraSystem : public System,
+					 public Pausable<CameraSystem>
 {
 public:
+	friend class Pausable<CameraSystem>;
+
 	CameraSystem() = default;
 	explicit CameraSystem(Camera cam) : camera_(std::move(cam)) {}
 	explicit CameraSystem(Dimensions<float> vpSize) : camera_(vpSize) {}

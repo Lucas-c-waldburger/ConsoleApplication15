@@ -32,7 +32,7 @@ struct AtlasPlot
 	SDL_Rect rect = { 0, 0, 0, 0 };
 	float rotation = 0.0f;
 
-	friend constexpr bool operator==(const AtlasPlot& lhs, const AtlasPlot& rhs)
+	friend constexpr bool operator==(const AtlasPlot& lhs, const AtlasPlot& rhs) noexcept
 	{
 		return lhs.rect == rhs.rect && lhs.rotation == rhs.rotation;
 	}

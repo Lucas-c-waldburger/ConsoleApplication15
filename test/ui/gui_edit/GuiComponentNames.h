@@ -12,12 +12,16 @@ struct GuiComponentName;
 template <typename T>
 concept HasGuiComponentName = requires() {
 	std::convertible_to<decltype(GuiComponentName<T>::name), std::string_view>;
+	std::convertible_to<decltype(GuiComponentName<T>::label), std::string_view>;
 };
 
 #define DEF_GUI_CMP_NAME(cmp) \
 struct cmp; \
 namespace ui { \
-template <> struct GuiComponentName<cmp> { static constexpr std::string_view name = #cmp; }; \
+template <> struct GuiComponentName<cmp> { \
+ static constexpr std::string_view name = #cmp; \
+ static constexpr std::string_view label = "##"#cmp; \
+}; \
 } // ui
 
 } // ui

@@ -118,7 +118,9 @@ Entity FindShapeEntity(const std::vector<Entity>& entities, const Handle<B2Shape
 {
 	auto it = core::FindIf(entities, [&handle](const auto& entity) {
 		assert(entity.HasComponent<Collider>());
-		return entity.GetComponent<Collider>().shape.GetData().GetHandle() == handle;
+		const auto& shape = entity.GetComponent<Collider>().shape.GetData();
+
+		return shape.IsValid() && shape.GetHandle() == handle;
 	});
 
 	return (it != entities.end()) ? *it : Entity{};
@@ -131,9 +133,17 @@ Entity_t FindOwningBodyEntity(Entity& shapeEnt, const Handle<B2Shape>& handle)
 
 	if (shapeEnt.HasComponent<RigidBody>())
 	{
-		assert(shapeEnt.GetComponent<RigidBody>().body.GetData().OwnsShape(handle));
+		const auto& body = shapeEnt.GetComponent<RigidBody>().body.GetData();
+		if (body.IsValid())
+		{
+			assert(body.OwnsShape(handle));
 
-		return shapeEnt.GetID();
+			return shapeEnt.GetID();
+		}
+		else
+		{
+			return kInvalidEntity;
+		}
 	}
 
 	auto& colliderShape = shapeEnt.GetComponent<Collider>().shape;
@@ -145,9 +155,12 @@ Entity_t FindOwningBodyEntity(Entity& shapeEnt, const Handle<B2Shape>& handle)
 	auto parent = rels.GetParent();
 
 	assert(parent.IsValid());
-	assert(parent.HasComponent<RigidBody>());
-	assert(parent.GetComponent<RigidBody>().body.GetData().GetHandle() == 
-		   parentBodyHandle);
+
+	if (!parent.HasComponent<RigidBody>() || 
+		 parent.GetComponent<RigidBody>().body.GetData().GetHandle() != parentBodyHandle)
+	{
+		return kInvalidEntity;
+	}
 
 	return parent.GetID();
 }

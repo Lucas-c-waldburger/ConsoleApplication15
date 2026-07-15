@@ -453,6 +453,39 @@
     <ClCompile Include="test\ui\GuiResource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\ui\gui_edit\GuiEditComponentBuilders.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\InspectorSystemPanel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\InspectorEntityPanel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\InspectorCommon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\Editor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\InspectorComponentPanel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\GuiMouse.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ecs\ComponentCleanup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\EntityDragUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\CameraControlUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\ComponentEditHistory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -2039,6 +2072,48 @@
     <ClInclude Include="test\ui\gui_edit\GuiEditComponentBuilders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="systems\Pausable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\InspectorSystemPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_edit\GuiSystemNames.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\InspectorEventPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_edit\GuiEventNames.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\InspectorEntityPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\InspectorCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\Editor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\InspectorComponentPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\GuiMouse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ecs\ComponentCleanup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\EntityDragUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\CameraControlUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\ComponentEditHistory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -2866,6 +2941,24 @@
     <Image Include="resources\sprites\shapes\square-128.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="resources\sprites\ui\editor\arrows-up-down-left-right-solid.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\floppy-disk-solid.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\pause_circle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\play_circle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\upload-solid.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\xmark-solid.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\scripts\b2body_test.lua" />
@@ -2954,5 +3047,7 @@
   <ItemGroup>
     <Font Include="resources\fonts\GoNotoKurrent-Bold.ttf" />
     <Font Include="resources\fonts\GoNotoKurrent-Regular.ttf" />
+    <Font Include="resources\fonts\Kenney Future Narrow.ttf" />
+    <Font Include="resources\fonts\Kenney Future.ttf" />
   </ItemGroup>
 </Project>
