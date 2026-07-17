@@ -328,7 +328,7 @@ bool GuiEdit(MouseState& ms)
 
 // GUI EDIT PROPERTY //
 
-bool GuiEditProperty(InputState& is)
+PropertyEditState GuiEditProperty(InputState& is)
 {
 	static constexpr const char* kNames[] = {
 		"None",
@@ -337,10 +337,19 @@ bool GuiEditProperty(InputState& is)
 		"Held"
 	};
 	int cur = is == InputState::None ? 0 :
-		is == InputState::Pressed ? 1 :
-		is == InputState::Released ? 2 : 3;
+		      is == InputState::Pressed ? 1 :
+		      is == InputState::Released ? 2 : 3;
 
-	if (ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames)))
+	const bool changed = ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames));
+
+	PropertyEditState state = PropertyEditState::None;
+
+	if (ImGui::IsItemActivated())
+	{
+		state = PropertyEditState::Started;
+	}
+
+	if (changed)
 	{
 		switch (cur)
 		{
@@ -350,12 +359,17 @@ bool GuiEditProperty(InputState& is)
 		case 3: is = InputState::Held; break;
 		}
 
-		return true;
+		state = PropertyEditState::Finished;
 	}
-	return false;
+	else if (state != PropertyEditState::Started && ImGui::IsItemActive())
+	{
+		state = PropertyEditState::Active;
+	}
+
+	return state;
 }
 
-bool GuiEditProperty(GameControllerInputSource& gcis)
+PropertyEditState GuiEditProperty(GameControllerInputSource& gcis)
 {
 	using Src = GameControllerInputSource;
 
@@ -413,7 +427,16 @@ bool GuiEditProperty(GameControllerInputSource& gcis)
 		gcis == Src::RightStickAxis ? 23 :
 		gcis == Src::LeftTrigger ? 24 : 25;
 
-	if (ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames)))
+	const bool changed = ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames));
+
+	PropertyEditState state = PropertyEditState::None;
+
+	if (ImGui::IsItemActivated())
+	{
+		state = PropertyEditState::Started;
+	}
+
+	if (changed)
 	{
 		switch (cur)
 		{
@@ -445,12 +468,17 @@ bool GuiEditProperty(GameControllerInputSource& gcis)
 		case 25: gcis = Src::RightTrigger; break;
 		}
 
-		return true;
+		state = PropertyEditState::Finished;
 	}
-	return false;
+	else if (state != PropertyEditState::Started && ImGui::IsItemActive())
+	{
+		state = PropertyEditState::Active;
+	}
+
+	return state;
 }
 
-bool GuiEditProperty(MouseInputSource& mis)
+PropertyEditState GuiEditProperty(MouseInputSource& mis)
 {
 	using Src = MouseInputSource;
 
@@ -472,7 +500,16 @@ bool GuiEditProperty(MouseInputSource& mis)
 		mis == Src::X1 ? 5 :
 		mis == Src::X2 ? 6 : 7;
 
-	if (ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames)))
+	const bool changed = ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames));
+
+	PropertyEditState state = PropertyEditState::None;
+
+	if (ImGui::IsItemActivated())
+	{
+		state = PropertyEditState::Started;
+	}
+
+	if (changed)
 	{
 		switch (cur)
 		{
@@ -486,12 +523,17 @@ bool GuiEditProperty(MouseInputSource& mis)
 		case 7: mis = MouseInputSource::Wheel; break;
 		}
 
-		return true;
+		state = PropertyEditState::Finished;
 	}
-	return false;
+	else if (state != PropertyEditState::Started && ImGui::IsItemActive())
+	{
+		state = PropertyEditState::Active;
+	}
+
+	return state;
 }
 
-bool GuiEditProperty(SDL_MouseWheelDirection& mwd)
+PropertyEditState GuiEditProperty(SDL_MouseWheelDirection& mwd)
 {
 	static constexpr const char* kNames[] = {
 		"SDL_MOUSEWHEEL_NORMAL",
@@ -499,7 +541,16 @@ bool GuiEditProperty(SDL_MouseWheelDirection& mwd)
 	};
 	int cur = mwd == SDL_MOUSEWHEEL_NORMAL ? 0 : 1;
 
-	if (ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames)))
+	const bool changed = ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames));
+
+	PropertyEditState state = PropertyEditState::None;
+
+	if (ImGui::IsItemActivated())
+	{
+		state = PropertyEditState::Started;
+	}
+
+	if (changed)
 	{
 		switch (cur)
 		{
@@ -507,42 +558,47 @@ bool GuiEditProperty(SDL_MouseWheelDirection& mwd)
 		case 1: mwd = SDL_MOUSEWHEEL_FLIPPED; break;
 		}
 
-		return true;
+		state = PropertyEditState::Finished;
 	}
-	return false;
+	else if (state != PropertyEditState::Started && ImGui::IsItemActive())
+	{
+		state = PropertyEditState::Active;
+	}
+
+	return state;
 }
 
-bool GuiEditProperty(GameControllerInputFieldValue& gcifv)
+PropertyEditState GuiEditProperty(GameControllerInputFieldValue& gcifv)
 {
-	bool b = Property("trigger", gcifv.trigger);
-	b |= Property("axis", gcifv.axis);
-	return b;
+	auto state = Property("trigger", gcifv.trigger);
+	state |= Property("axis", gcifv.axis);
+	return state;
 }
 
-bool GuiEditProperty(MouseInputValues::CursorValue& mivcv)
+PropertyEditState GuiEditProperty(MouseInputValues::CursorValue& mivcv)
 {
-	bool b = Property("absolutePos", mivcv.absolutePos);
-	b |= Property("relativePos", mivcv.relativePos);
-	return b;
+	auto state = Property("absolutePos", mivcv.absolutePos);
+	state |= Property("relativePos", mivcv.relativePos);
+	return state;
 }
 
-bool GuiEditProperty(MouseInputValues::WheelValue& mivwv)
+PropertyEditState GuiEditProperty(MouseInputValues::WheelValue& mivwv)
 {
-	bool b = Property("scroll", mivwv.scroll);
-	b |= Property("direction", mivwv.direction);
-	return b;
+	auto state = Property("scroll", mivwv.scroll);
+	state |= Property("direction", mivwv.direction);
+	return state;
 }
 
-bool GuiEditProperty(MouseInputValues& miv)
+PropertyEditState GuiEditProperty(MouseInputValues& miv)
 {
-	bool b = PropertyGroup("cursor", [&miv] { return Property("", miv.cursor); });
-	b |= PropertyGroup("wheel", [&miv] { return Property("", miv.wheel); });
-	return b;
+	auto state = PropertyGroup("cursor", [&miv] { return Property("", miv.cursor); });
+	state |= PropertyGroup("wheel", [&miv] { return Property("", miv.wheel); });
+	return state;
 }
 
-bool GuiEditProperty(GameControllerInputMap& map)
+PropertyEditState GuiEditProperty(GameControllerInputMap& map)
 {
-	bool changed = false;
+	auto state = PropertyEditState::None;
 	for (size_t i = enum_start_v<GameControllerInputSource>; i < enum_size_v<GameControllerInputSource>; i++)
 	{
 		const auto k = static_cast<GameControllerInputSource>(i);
@@ -550,15 +606,15 @@ bool GuiEditProperty(GameControllerInputMap& map)
 		ImGui::Text("%s : ", ToString(k));
 		ImGui::SameLine();
 		auto& val = map[k];
-		changed |= GuiEditProperty(val);
+		state |= GuiEditProperty(val);
 		ImGui::PopID();
 	}
-	return changed;
+	return state;
 }
 
-bool GuiEditProperty(MouseInputMap& map)
+PropertyEditState GuiEditProperty(MouseInputMap& map)
 {
-	bool changed = false;
+	PropertyEditState state = PropertyEditState::None;
 	for (size_t i = enum_start_v<MouseInputSource>; i < enum_size_v<MouseInputSource>; i++)
 	{
 		const auto k = static_cast<MouseInputSource>(i);
@@ -566,41 +622,41 @@ bool GuiEditProperty(MouseInputMap& map)
 		ImGui::Text("%s : ", ToString(k));
 		ImGui::SameLine();
 		auto& val = map[k];
-		changed |= GuiEditProperty(val);
+		state |= GuiEditProperty(val);
 		ImGui::PopID();
 	}
-	return changed;
+	return state;
 }
 
-bool GuiEditProperty(GameControllerInputField& gcif)
+PropertyEditState GuiEditProperty(GameControllerInputField& gcif)
 {
-	bool b = Property("source", gcif.source);
-	b |= Property("state", gcif.state);
-	b |= Property("stateDuration", gcif.stateDuration);
-	b |= PropertyGroup("value", [&gcif] { return Property("", gcif.value); });
-	return b;
+	auto state = Property("source", gcif.source);
+	state |= Property("state", gcif.state);
+	state |= Property("stateDuration", gcif.stateDuration);
+	state |= PropertyGroup("value", [&gcif] { return Property("", gcif.value); });
+	return state;
 }
 
-bool GuiEditProperty(MouseInputField& mif)
+PropertyEditState GuiEditProperty(MouseInputField& mif)
 {
-	bool b = Property("source", mif.source);
-	b |= Property("state", mif.state);
-	b |= Property("stateDuration", mif.stateDuration);
-	return b;
+	auto state = Property("source", mif.source);
+	state |= Property("state", mif.state);
+	state |= Property("stateDuration", mif.stateDuration);
+	return state;
 }
 
-bool GuiEditProperty(GameControllerState& gcs)
+PropertyEditState GuiEditProperty(GameControllerState& gcs)
 {
-	bool b = Property("joystickID", gcs.joystickID);
-	b |= PropertyGroup("inputs", [&gcs] { return Property("", gcs.inputs); });
-	return b;
+	auto state = Property("joystickID", gcs.joystickID);
+	state |= PropertyGroup("inputs", [&gcs] { return Property("", gcs.inputs); });
+	return state;
 }
 
-bool GuiEditProperty(MouseState& ms)
+PropertyEditState GuiEditProperty(MouseState& ms)
 {
-	bool b = PropertyGroup("inputs", [&ms] { return Property("", ms.inputs); });
-	b |= PropertyGroup("values", [&ms] { return Property("", ms.values); });
-	return b;
+	auto state = PropertyGroup("inputs", [&ms] { return Property("", ms.inputs); });
+	state |= PropertyGroup("values", [&ms] { return Property("", ms.values); });
+	return state;
 }
 
 } // ui

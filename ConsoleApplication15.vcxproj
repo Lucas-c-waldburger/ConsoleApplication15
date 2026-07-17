@@ -519,6 +519,7 @@
     <ClInclude Include="test\ui\gui_edit\GuiSystemNames.h" />
     <ClInclude Include="test\ui\InspectorCommon.h" />
     <ClInclude Include="test\ui\InspectorComponentPanel.h" />
+    <ClInclude Include="test\ui\PropertyEditState.h" />
     <ClInclude Include="test\ui\InspectorEntityPanel.h" />
     <ClInclude Include="test\ui\InspectorEventPanel.h" />
     <ClInclude Include="test\ui\InspectorSystemPanel.h" />

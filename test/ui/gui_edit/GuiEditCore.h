@@ -9,6 +9,7 @@
 #include <string>
 #include <format>
 #include "../GuiResource.h"
+#include "../PropertyEditState.h"
 #include "../../../core/commonObjects.h"
 #include "../../../core/FixedString.h"
 #include "../../../core/Handle.h"
@@ -339,50 +340,50 @@ inline bool GuiEdit(std::optional<T>& op, const char* label = "")
 // GUI EDIT/DRAW PROPERTY //
 
 template <typename T>
-inline void GuiDrawProperty(const T& val)
+inline PropertyEditState GuiDrawProperty(const T& val)
 {
 	std::string txt = std::format("{}", val);
 	ImGui::TextUnformatted(txt.c_str());
+
+	return PropertyEditState::None;
 }
 
-void GuiDrawProperty(const bool& b);
-void GuiDrawProperty(const SDL_FRect& r);
-void GuiDrawProperty(const SDL_FPoint& p);
+PropertyEditState GuiDrawProperty(const bool& b);
+PropertyEditState GuiDrawProperty(const SDL_FRect& r);
+PropertyEditState GuiDrawProperty(const SDL_FPoint& p);
 
 /** defgroup Basic data types @{ */
 template <typename T> requires std::is_integral_v<T>
-inline bool GuiEditProperty(T& i, DragArgs<int> args = {})
+inline PropertyEditState GuiEditProperty(T& i, DragArgs<int> args = {})
 {
 	int v = static_cast<int>(i);
 	if (ImGui::DragInt("##Value", &v, args.speed, args.min, args.max))
 	{
 		i = static_cast<T>(v);
-		return true;
 	}
-	return false;
+	return EvaluatePropertyState();
 }
 template <typename T> requires std::is_floating_point_v<T>
-inline bool GuiEditProperty(T& f, DragArgs<float> args = {})
+inline PropertyEditState GuiEditProperty(T& f, DragArgs<float> args = {})
 {
 	float v = static_cast<float>(f);
 	if (ImGui::DragFloat("##Value", &v, args.speed, args.min, args.max))
 	{
 		f = static_cast<T>(v);
-		return true;
 	}
-	return false;
+	return EvaluatePropertyState();
 }
 
-bool GuiEditProperty(bool& b);
-bool GuiEditProperty(std::string& str);
-bool GuiEditProperty(SDL_Point& p, DragArgs<int> args = {});
-bool GuiEditProperty(SDL_FPoint& p, DragArgs<float> args = {});
-bool GuiEditProperty(SDL_Rect& r, DragArgs<int> args = {});
-bool GuiEditProperty(SDL_FRect& r, DragArgs<float> args = {});
-bool GuiEditProperty(SDL_Color& c);
+PropertyEditState GuiEditProperty(bool& b);
+PropertyEditState GuiEditProperty(std::string& str);
+PropertyEditState GuiEditProperty(SDL_Point& p, DragArgs<int> args = {});
+PropertyEditState GuiEditProperty(SDL_FPoint& p, DragArgs<float> args = {});
+PropertyEditState GuiEditProperty(SDL_Rect& r, DragArgs<int> args = {});
+PropertyEditState GuiEditProperty(SDL_FRect& r, DragArgs<float> args = {});
+PropertyEditState GuiEditProperty(SDL_Color& c);
 
 template <FixedString...strs, typename...Args> requires (sizeof...(strs) == sizeof...(Args))
-inline bool GuiEditProperties(Args&...args)
+inline PropertyEditState GuiEditProperties(Args&...args)
 {
 	static constexpr auto draw = []<FixedString label>(float w, auto& arg, int itemTrack) {
 		if (itemTrack > 1)
@@ -390,9 +391,7 @@ inline bool GuiEditProperties(Args&...args)
 			ImGui::SameLine();
 		}
 
-		//WithFont(GuiResource::Fonts().regular, [] {
-			ImGui::TextUnformatted(label);
-		//});
+		ImGui::TextUnformatted(label);
 
 		ImGui::SameLine();
 
@@ -403,22 +402,24 @@ inline bool GuiEditProperties(Args&...args)
 		ImGui::SetNextItemWidth(w);
 
 		ImGui::PushID(&arg);
-		const bool changed = GuiEditProperty(arg);
+		const auto state = GuiEditProperty(arg);
 		ImGui::PopID();
 
-		return changed;
+		return state;
 	};
 
 	const float fieldWidth = GetFieldValueWidth<strs...>();
-	bool changed = false;
 	int itemTrack = 1;
-	((changed |= draw.template operator()<strs>(fieldWidth, args, itemTrack++)), ...);
 
-	return changed;
+	PropertyEditState state = PropertyEditState::None;
+
+	((state |= draw.template operator()<strs>(fieldWidth, args, itemTrack++)), ...);
+
+	return state;
 }
 
 template <FixedString...strs, typename T, typename...Args> requires (sizeof...(strs) == sizeof...(Args))
-inline bool GuiEditProperties(const DragArgs<T>& drag, Args&...args)
+inline PropertyEditState GuiEditProperties(const DragArgs<T>& drag, Args&...args)
 {
 	static constexpr auto draw = []<FixedString label>(float w, auto& arg, const auto& drag, int itemTrack) {
 		if (itemTrack > 1)
@@ -439,80 +440,85 @@ inline bool GuiEditProperties(const DragArgs<T>& drag, Args&...args)
 		ImGui::SetNextItemWidth(w);
 
 		ImGui::PushID(&arg);
-		const bool changed = GuiEditProperty(arg, drag);
+		const auto state = GuiEditProperty(arg);
 		ImGui::PopID();
 
-		return changed;
+		return state;
 	};
 
 	const float fieldWidth = GetFieldValueWidth<strs...>();
-	bool changed = false;
 	int itemTrack = 1;
-	((changed |= draw.template operator()<strs>(fieldWidth, args, drag, itemTrack++)), ...);
 
-	return changed;
+	PropertyEditState state = PropertyEditState::None;
+
+	((state |= draw.template operator()<strs>(fieldWidth, args, drag, itemTrack++)), ...);
+
+	return state;
 }
 
 /** @} */
 
 /** @defgroup Core Engine Basic Data Types @{ */
 template <typename T>
-inline bool GuiEditProperty(Dimensions<T>& d, DragArgs<T> args = {})
+inline PropertyEditState GuiEditProperty(Dimensions<T>& d, DragArgs<T> args = {})
 {
 	return GuiEditProperties<"w", "h">(args, d.w, d.h);
 }
 template <typename T, typename...Args>
-inline bool GuiEditProperty(HandedPair<T>& hp, Args&&...args)
+inline PropertyEditState GuiEditProperty(HandedPair<T>& hp, Args&&...args)
 {
 	return GuiEditProperties<"left", "right">(std::forward<Args>(args)..., hp.left, hp.right);
 }
 template <typename T, typename...Args>
-inline bool GuiEditProperty(Range<T>& r, Args&&...args)
+inline PropertyEditState GuiEditProperty(Range<T>& r, Args&&...args)
 {
 	return GuiEditProperties<"min", "max">(std::forward<Args>(args)..., r.min, r.max);
 }
 
-bool GuiEditProperty(Range<SDL_FPoint>& r, DragArgs<float> args = {});
-bool GuiEditProperty(Range<float>& f, DragArgs<float> args = {});
+PropertyEditState GuiEditProperty(Range<SDL_FPoint>& r, DragArgs<float> args = {});
+PropertyEditState GuiEditProperty(Range<float>& f, DragArgs<float> args = {});
 
 template <typename T>
-inline void GuiDrawProperty(const Handle<T>& h)
+inline PropertyEditState GuiDrawProperty(const Handle<T>& h)
 {
-	GuiDrawProperty(h.GetHash());
+	return GuiDrawProperty(h.GetHash());
 }
 template <typename T>
-inline void GuiDrawProperty(const ReadOnly<T>& ro)
+inline PropertyEditState GuiDrawProperty(const ReadOnly<T>& ro)
 {
-	GuiDrawProperty(ro.GetData());
+	return GuiDrawProperty(ro.GetData());
 }
 /** @} */
 
 /** @defgroup Core Std Basic Data Types @{ */ 
 template <typename T, typename...Args>
-inline bool GuiEditProperty(std::optional<T>& op, Args&&...args)
+inline PropertyEditState GuiEditProperty(std::optional<T>& op, Args&&...args)
 {
 	bool hasValue = op.has_value();
-	bool changed = false;
+	PropertyEditState state = PropertyEditState::None;
+
 	if (ImGui::Checkbox("##Op", &hasValue))
 	{
 		if (hasValue && !op.has_value())
 		{
 			op = T{};
-			changed = true;
 		}
 		else if (!hasValue && op.has_value())
 		{
 			op.reset();
-			changed = true;
 		}
 	}
+
+	state |= EvaluatePropertyState();
+
 	if (hasValue)
 	{
 		T& val = *op;
-		changed = GuiEditProperty(val, std::forward<Args>(args)...);
+
+		state |= GuiEditProperty(val, std::forward<Args>(args)...);
 	}
 
-	return changed;
+	return state;
 }
 
 struct VecArgs
@@ -521,33 +527,33 @@ struct VecArgs
 	size_t maxSize = std::numeric_limits<size_t>::max();
 };
 
-bool GuiEditProperty(std::vector<SDL_FPoint>& v, VecArgs args = {});
+PropertyEditState GuiEditProperty(std::vector<SDL_FPoint>& v, VecArgs args = {});
 
 template <typename C, typename...Args> requires requires(C& c) {
 	{ c.begin() } -> std::same_as<typename C::iterator>;
 	{ c.end() } -> std::same_as<typename C::iterator>;
 }
-inline bool GuiEditProperty(C& c, Args&&...args)
+inline PropertyEditState GuiEditProperty(C& c, Args&&...args)
 {
-	bool changed = false;
+	PropertyEditState state = PropertyEditState::None;
 
 	int i = 0;
 	for (auto& elem : c)
 	{
 		ImGui::PushID(i++);
 
-		changed |= GuiEditProperty(elem, std::forward<Args>(args)...);
+		state |= GuiEditProperty(elem, std::forward<Args>(args)...);
 
 		ImGui::PopID();
 	}
 
-	return changed;
+	return state;
 }
 template <typename C> requires requires(const C& c) {
 	{ c.begin() } -> std::same_as<typename C::const_iterator>;
 	{ c.end() } -> std::same_as<typename C::const_iterator>;
 }
-inline void GuiDrawProperty(const C& c)
+inline PropertyEditState GuiDrawProperty(const C& c)
 {
 	int i = 0;
 	for (const auto& elem : c)
@@ -558,9 +564,11 @@ inline void GuiDrawProperty(const C& c)
 
 		ImGui::PopID();
 	}
+
+	return PropertyEditState::None;
 }
 
-void GuiDrawProperty(const std::string_view& sv);
+PropertyEditState GuiDrawProperty(const std::string_view& sv);
 
 /** @} */ 
 

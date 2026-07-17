@@ -158,20 +158,20 @@ bool GuiEdit(ActiveAudio& aa, const char* label)
 
 // GUI EDIT PROPERTY //
 
-bool GuiEditProperty(AudioSpatialData& asd)
+PropertyEditState GuiEditProperty(AudioSpatialData& asd)
 {
-	bool changed = Property("angle", asd.angle);
-	changed |= Property("distance", asd.distance);
-	changed |= Property("panning", asd.panning);
-	return changed;
+	auto state = Property("angle", asd.angle);
+	state |= Property("distance", asd.distance);
+	state |= Property("panning", asd.panning);
+	return state;
 }
  
-bool GuiEditProperty(AudioFadeMs& af)
+PropertyEditState GuiEditProperty(AudioFadeMs& af)
 {
 	return GuiEditProperties<"in", "out">(af.in, af.out);
 }
 
-bool GuiEditProperty(AudioPlayCommand& apc)
+PropertyEditState GuiEditProperty(AudioPlayCommand& apc)
 {
 	static constexpr const char* kNames[] = {
 		"None",
@@ -185,7 +185,16 @@ bool GuiEditProperty(AudioPlayCommand& apc)
 		apc == AudioPlayCommand::Resume ? 2 :
 		apc == AudioPlayCommand::Restart ? 3 : 4;
 
-	if (ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames)))
+	const bool changed = ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames));
+
+	PropertyEditState state = PropertyEditState::None;
+
+	if (ImGui::IsItemActivated())
+	{
+		state = PropertyEditState::Started;
+	}
+
+	if (changed)
 	{
 		switch (cur)
 		{
@@ -196,12 +205,17 @@ bool GuiEditProperty(AudioPlayCommand& apc)
 		case 4: apc = AudioPlayCommand::Stop; break;
 		}
 
-		return true;
+		state = PropertyEditState::Finished;
 	}
-	return false;
+	else if (state != PropertyEditState::Started && ImGui::IsItemActive())
+	{
+		state = PropertyEditState::Active;
+	}
+
+	return state;
 }
 
-bool GuiEditProperty(AudioStatus& as)
+PropertyEditState GuiEditProperty(AudioStatus& as)
 {
 	static constexpr const char* kNames[] = {
 		"Playing",
@@ -215,7 +229,16 @@ bool GuiEditProperty(AudioStatus& as)
 		as == AudioStatus::Stopping ? 2 :
 		as == AudioStatus::Stopped ? 3 : 4;
 
-	if (ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames)))
+	const bool changed = ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames));
+
+	PropertyEditState state = PropertyEditState::None;
+
+	if (ImGui::IsItemActivated())
+	{
+		state = PropertyEditState::Started;
+	}
+
+	if (changed)
 	{
 		switch (cur)
 		{
@@ -226,63 +249,68 @@ bool GuiEditProperty(AudioStatus& as)
 		case 4: as = AudioStatus::Staged; break;
 		}
 
-		return true;
+		state = PropertyEditState::Finished;
 	}
-	return false;
+	else if (state != PropertyEditState::Started && ImGui::IsItemActive())
+	{
+		state = PropertyEditState::Active;
+	}
+
+	return state;
 }
 
-bool GuiEditProperty(AudioChannelSettings& acs)
+PropertyEditState GuiEditProperty(AudioChannelSettings& acs)
 {
-	bool changed = Property("volume", acs.volume);
-	changed |= Property("loopCount", acs.loopCount);
-	changed |= Property("fadeMs", acs.fadeMs);
-	changed |= PropertyGroup("spatial", [&acs] { return Property("", acs.spatial); });
-	changed |= Property("trackPosition", acs.trackPosition);
-	return changed;
+	auto state = Property("volume", acs.volume);
+	state |= Property("loopCount", acs.loopCount);
+	state |= Property("fadeMs", acs.fadeMs);
+	state |= PropertyGroup("spatial", [&acs] { return Property("", acs.spatial); });
+	state |= Property("trackPosition", acs.trackPosition);
+	return state;
 }
 
-bool GuiEditProperty(AudioUpdateSettings& aus)
+PropertyEditState GuiEditProperty(AudioUpdateSettings& aus)
 {
-	bool changed = Property("volume", aus.volume);
-	changed |= Property("loopCount", aus.loopCount);
-	changed |= Property("fadeMs", aus.fadeMs);
-	changed |= PropertyGroup("spatial", [&aus] { return Property("", aus.spatial); });
-	changed |= Property("trackPosition", aus.trackPosition);
-	return changed;
+	auto state = Property("volume", aus.volume);
+	state |= Property("loopCount", aus.loopCount);
+	state |= Property("fadeMs", aus.fadeMs);
+	state |= PropertyGroup("spatial", [&aus] { return Property("", aus.spatial); });
+	state |= Property("trackPosition", aus.trackPosition);
+	return state;
 }
 
-bool GuiEditProperty(NewAudioRequest& nar)
+PropertyEditState GuiEditProperty(NewAudioRequest& nar)
 {
 	const auto& h = nar.audioHandle;
 	Property("audioHandle", h);
 
-	bool changed = PropertyGroup("settings", [&nar] { return Property("", nar.settings); });
-	changed |= Property("force", nar.force);
-	return changed;
+	auto state = PropertyGroup("settings", [&nar] { return Property("", nar.settings); });
+	state |= Property("force", nar.force);
+	return state;
 }
 
-bool GuiEditProperty(AudioUpdateRequest& aur)
+PropertyEditState GuiEditProperty(AudioUpdateRequest& aur)
 {
 	const auto& h = aur.instanceId;
 	Property("instanceId", h);
 
-	bool changed = Property("command", aur.command);
-	changed |= PropertyGroup("settings", [&aur] { return Property("", aur.settings); });
-	changed |= PropertyGroup("spatialData", [&aur] { return Property("", aur.spatialData); });
-	return changed;
+	auto state = Property("command", aur.command);
+	state |= PropertyGroup("settings", [&aur] { return Property("", aur.settings); });
+	state |= PropertyGroup("spatialData", [&aur] { return Property("", aur.spatialData); });
+	return state;
 }
 
-bool GuiEditProperty(ActiveAudio& aa)
+PropertyEditState GuiEditProperty(ActiveAudio& aa)
 {
 	const auto& ah = aa.audioHandle;
 	const auto& ii = aa.instanceId;
 	Property("audioHandle", ah);
 	Property("instanceId", ii);
 
-	bool changed = Property("status", aa.status);
-	changed |= Property("onChannel", aa.onChannel);
-	changed |= PropertyGroup("settings", [&aa] { return Property("", aa.settings); });
-	return changed;
+	auto state = Property("status", aa.status);
+	state |= Property("onChannel", aa.onChannel);
+	state |= PropertyGroup("settings", [&aa] { return Property("", aa.settings); });
+	return state;
 }
 
 } // ui

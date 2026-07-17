@@ -326,7 +326,10 @@ void ECS::DestroyEntity(Entity_t entity)
 //// TODO: Remove "ActiveState" component
 bool ECS::IsEntityActive(Entity_t entity) const
 {
-    assert(GetEntity_tIndex(entity) < kMaxEntities);
+	if (GetEntity_tIndex(entity) >= kMaxEntities)
+	{
+		return false;
+	}
 
 	const auto& sig = componentManager_.GetSignature(entity);
 

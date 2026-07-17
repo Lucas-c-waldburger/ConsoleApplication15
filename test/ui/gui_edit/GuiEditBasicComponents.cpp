@@ -104,37 +104,37 @@ bool GuiEdit(Name& nm)
 }
 
 // GUI EDIT PROPERTY //
-bool GuiEditProperty(Transform& tf)
+PropertyEditState GuiEditProperty(Transform& tf)
 {
-	bool b = Property("position", tf.position);
-	b |= Property("rotation", tf.rotation);
-	b |= Property("scale", tf.scale);
-	return b;
+	auto state = Property("position", tf.position);
+	state |= Property("rotation", tf.rotation);
+	state |= Property("scale", tf.scale);
+	return state;
 }
 
-bool GuiEditProperty(CameraTarget& ct)
+PropertyEditState GuiEditProperty(CameraTarget& ct)
 {
-	bool b = Property("offset", ct.offset);
-	b |= Property("followSpeed", ct.followSpeed);
-	b |= Property("stopRadius", ct.stopRadius);
-	return b;
+	auto state = Property("offset", ct.offset);
+	state |= Property("followSpeed", ct.followSpeed);
+	state |= Property("stopRadius", ct.stopRadius);
+	return state;
 }
 
-bool GuiEditProperty(Parent& p)
+PropertyEditState GuiEditProperty(Parent& p)
 {
 	const std::string eStr = GuiGetEntityString(p.entityId);
 	GuiDrawProperty(eStr);
-	return false;
+	return PropertyEditState::None;
 }
 
-bool GuiEditProperty(Children& ch)
+PropertyEditState GuiEditProperty(Children& ch)
 {
 	const auto& es = ch.childEntityIds;
 	GuiDrawProperty(es);
-	return false;
+	return PropertyEditState::None;
 }
 
-bool GuiEditProperty(Tags& tg)
+PropertyEditState GuiEditProperty(Tags& tg)
 {
 	const auto& tags = tg.tags;
 	GuiDrawProperty(tags);
@@ -147,21 +147,20 @@ bool GuiEditProperty(Tags& tg)
 	if (ImGui::Button("Add"))
 	{
 		tg.tags.insert(entry);
-		return true;
 	}
 
-	return false;
+	return EvaluatePropertyState();
 }
 
-bool GuiEditProperty(Timer& tmr)
+PropertyEditState GuiEditProperty(Timer& tmr)
 {
-	bool b = Property("elapsed", tmr.elapsed);
-	b |= Property("duration", tmr.duration);
-	b |= Property("numRepeats", tmr.numRepeats);
-	return b;
+	auto state = Property("elapsed", tmr.elapsed);
+	state |= Property("duration", tmr.duration);
+	state |= Property("numRepeats", tmr.numRepeats);
+	return state;
 }
 
-bool GuiEditProperty(Name& nm)
+PropertyEditState GuiEditProperty(Name& nm)
 {
 	return Property("value", nm.value);
 }

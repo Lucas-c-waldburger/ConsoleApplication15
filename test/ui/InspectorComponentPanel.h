@@ -32,7 +32,8 @@ public:
 	using GuiBuilderComponentTypeList = filter_types_t<CoreComponentTypeList, GuiBuilderPred>;
 
 	template <typename T>
-	using GuiAddablePred = std::bool_constant<public_mutable_component_v<T> && HasGuiComponentName<T>>;
+	using GuiAddablePred = std::bool_constant<public_mutable_component_v<T> && HasGuiComponentName<T> 
+	&& HasGuiEditProperty<T>>;
 
 	using GuiAddableComponentTypeList = filter_types_t<CoreComponentTypeList, GuiAddablePred>;
 
@@ -43,10 +44,14 @@ public:
 
 	using NamedComponentBitSet = TypeIndexedBitset<GuiNamedComponentTypeList>;
 
+	using EditableComponentBitSet = TypeIndexedBitset<GuiEditableComponentTypeList>;
+
 	struct Buttons
 	{
 		Button<GuiNamedComponentTypeList> remove;
 		Button<GuiNamedComponentTypeList> hide;
+		SimpleButton undo;
+		SimpleButton redo;
 	};
 
 	struct ResourceContext
@@ -56,25 +61,38 @@ public:
 		B2World& world;
 	};
 
+	enum UpdateReport : uint8_t
+	{
+		None = 0,
+		HistoryCursorMoved = 1 << 0
+	};
+
 	static Result<Void> Init(SceneFixture::SharedPtr& scene);
 
-	static void Update(ResourceContext& ctx);
+	static UpdateReport Update(ResourceContext& ctx);
 
 	static void ClearState();
 
 	static Buttons& GetButtons() { return buttons_; }
 	static SpritePicker& GetSpritePicker() { return spritePicker_; }
 	static ComponentBuilderType& GetActiveBuilderType() { return activeBuilderType_; }
-	static NamedComponentBitSet& GetComponentHeaderOpen() { return componentHeaderOpen_; }
+	static EditableComponentBitSet& GetComponentHeaderOpen() { return componentHeaderOpen_; }
 
 private:
 	static inline SpritePicker spritePicker_{};
 	static inline Buttons buttons_{};
 	static inline ComponentBuilderType activeBuilderType_ = ComponentBuilderType::None;
-	static inline NamedComponentBitSet componentHeaderOpen_{};
+	static inline EditableComponentBitSet componentHeaderOpen_{};
 
 	InspectorComponentPanel() = default;
 };
+
+inline constexpr InspectorComponentPanel::UpdateReport& operator|=(
+	InspectorComponentPanel::UpdateReport& lhs, InspectorComponentPanel::UpdateReport rhs)
+{
+	lhs = static_cast<InspectorComponentPanel::UpdateReport>(lhs | rhs);
+	return lhs;
+}
 
 } // ui
 

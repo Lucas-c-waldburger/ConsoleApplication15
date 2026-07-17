@@ -340,24 +340,33 @@ bool GuiEdit(TextRenderableGlyphCache& trgc)
 }
 
 // GUI EDIT PROPERTY //
-bool GuiEditProperty(GlyphTextWriter& wr)
+PropertyEditState GuiEditProperty(GlyphTextWriter& wr)
 {
 	const auto& h = wr.resourceHandle;
 	Property("resourceHandle", h);
 	return Property("text", wr.text);
 }
 
-bool GuiEditProperty(TextAlign& ta)
+PropertyEditState GuiEditProperty(TextAlign& ta)
 {
 	static constexpr const char* kNames[] = {
-	"Left",
-	"Center",
-	"Right"
+		"Left",
+		"Center",
+		"Right"
 	};
 	int cur = ta == TextAlign::Left ? 0 :
 		ta == TextAlign::Center ? 1 : 2;
 
-	if (ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames)))
+	const bool changed = ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames));
+
+	PropertyEditState state = PropertyEditState::None;
+
+	if (ImGui::IsItemActivated())
+	{
+		state = PropertyEditState::Started;
+	}
+
+	if (changed)
 	{
 		switch (cur)
 		{
@@ -366,12 +375,17 @@ bool GuiEditProperty(TextAlign& ta)
 		case 2: ta = TextAlign::Right; break;
 		}
 
-		return true;
+		state = PropertyEditState::Finished;
 	}
-	return false;
+	else if (state != PropertyEditState::Started && ImGui::IsItemActive())
+	{
+		state = PropertyEditState::Active;
+	}
+
+	return state;
 }
 
-bool GuiEditProperty(Anchor& a)
+PropertyEditState GuiEditProperty(Anchor& a)
 {
 	static constexpr const char* kNames[] = {
 		"Left",
@@ -397,7 +411,16 @@ bool GuiEditProperty(Anchor& a)
 		a == Anchor::BottomLeft ? 8 :
 		a == Anchor::BottomRight ? 9 : 10;
 
-	if (ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames)))
+	const bool changed = ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames));
+
+	PropertyEditState state = PropertyEditState::None;
+
+	if (ImGui::IsItemActivated())
+	{
+		state = PropertyEditState::Started;
+	}
+
+	if (changed)
 	{
 		switch (cur)
 		{
@@ -414,26 +437,31 @@ bool GuiEditProperty(Anchor& a)
 		case 10: a = Anchor::Center; break;
 		}
 
-		return true;
+		state = PropertyEditState::Finished;
 	}
-	return false;
+	else if (state != PropertyEditState::Started && ImGui::IsItemActive())
+	{
+		state = PropertyEditState::Active;
+	}
+
+	return state;
 }
 
-bool GuiEditProperty(TextFormatting& f)
+PropertyEditState GuiEditProperty(TextFormatting& f)
 {
-	bool b = Property("bounds", f.bounds);
-	b |= Property("align", f.align);
-	b |= Property("letterSpacing", f.letterSpacing);
-	b |= Property("scaleToBounds", f.scaleToBounds);
-	return b;
+	auto state = Property("bounds", f.bounds);
+	state |= Property("align", f.align);
+	state |= Property("letterSpacing", f.letterSpacing);
+	state |= Property("scaleToBounds", f.scaleToBounds);
+	return state;
 }
 
-bool GuiEditProperty(RGB& c)
+PropertyEditState GuiEditProperty(RGB& c)
 {
 	return GuiEditProperties<"r", "g", "b">(c.r, c.g, c.b);
 }
 
-bool GuiEditProperty(SDL_BlendMode b)
+PropertyEditState GuiEditProperty(SDL_BlendMode b)
 {
 	static constexpr const char* kNames[] = {
 		"SDL_BLENDMODE_NONE",
@@ -446,7 +474,17 @@ bool GuiEditProperty(SDL_BlendMode b)
 			  b == SDL_BLENDMODE_BLEND ? 1 :
 			  b == SDL_BLENDMODE_ADD ? 2 :
 			  b == SDL_BLENDMODE_MOD ? 3 : 4;
-	if (ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames)))
+
+	const bool changed = ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames));
+
+	PropertyEditState state = PropertyEditState::None;
+
+	if (ImGui::IsItemActivated())
+	{
+		state = PropertyEditState::Started;
+	}
+
+	if (changed)
 	{
 		switch (cur)
 		{
@@ -456,12 +494,18 @@ bool GuiEditProperty(SDL_BlendMode b)
 		case 3: b = SDL_BLENDMODE_MOD; break;
 		case 4: b = SDL_BLENDMODE_MUL; break;
 		}
-		return true;
+
+		state = PropertyEditState::Finished;
 	}
-	return false;
+	else if (state != PropertyEditState::Started && ImGui::IsItemActive())
+	{
+		state = PropertyEditState::Active;
+	}
+
+	return state;
 }
 
-bool GuiEditProperty(SDL_RendererFlip& f)
+PropertyEditState GuiEditProperty(SDL_RendererFlip& f)
 {
 	static constexpr const char* kNames[] = {
 		"SDL_FLIP_NONE",
@@ -469,8 +513,18 @@ bool GuiEditProperty(SDL_RendererFlip& f)
 		"SDL_FLIP_VERTICAL"
 	};
 	int cur = f == SDL_FLIP_NONE ? 0 :
-		f == SDL_FLIP_HORIZONTAL ? 1 : 2;
-	if (ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames)))
+			  f == SDL_FLIP_HORIZONTAL ? 1 : 2;
+
+	const bool changed = ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames));
+
+	PropertyEditState state = PropertyEditState::None;
+
+	if (ImGui::IsItemActivated())
+	{
+		state = PropertyEditState::Started;
+	}
+
+	if (changed)
 	{
 		switch (cur)
 		{
@@ -478,61 +532,67 @@ bool GuiEditProperty(SDL_RendererFlip& f)
 		case 1: f = SDL_FLIP_HORIZONTAL; break;
 		case 2: f = SDL_FLIP_VERTICAL; break;
 		}
-		return true;
+
+		state = PropertyEditState::Finished;
 	}
-	return false;
+	else if (state != PropertyEditState::Started && ImGui::IsItemActive())
+	{
+		state = PropertyEditState::Active;
+	}
+
+	return state;
 }
 
-bool GuiEditProperty(TextureMods& tm)
+PropertyEditState GuiEditProperty(TextureMods& tm)
 {
-	bool b = Property("color", tm.color);
-	b |= Property("alpha", tm.alpha);
-	b |= Property("blend", tm.blend);
-	return b;
+	auto state = Property("color", tm.color);
+	state |= Property("alpha", tm.alpha);
+	state |= Property("blend", tm.blend);
+	return state;
 }
 
-bool GuiEditProperty(DebugDraw& dd)
+PropertyEditState GuiEditProperty(DebugDraw& dd)
 {
-	bool b = Property("on", dd.on);
-	b |= Property("color", dd.color);
-	return b;
+	auto state = Property("on", dd.on);
+	state |= Property("color", dd.color);
+	return state;
 }
 
-bool GuiEditProperty(DebugDrawSet& dds)
+PropertyEditState GuiEditProperty(DebugDrawSet& dds)
 {
-	bool b = PropertyGroup("boundingBox", [&dds] { return Property("", dds.boundingBox); });
-	b |= PropertyGroup("collider", [&dds] { return Property("", dds.collider); });
-	return b;
+	auto state = PropertyGroup("boundingBox", [&dds] { return Property("", dds.boundingBox); });
+	state |= PropertyGroup("collider", [&dds] { return Property("", dds.collider); });
+	return state;
 }
 
-bool GuiEditProperty(RenderProfile::Anchors& as)
+PropertyEditState GuiEditProperty(RenderProfile::Anchors& as)
 {
-	bool b = Property("scale", as.scale);
-	b |= Property("rotation", as.rotation);
-	return b;
+	auto state = Property("scale", as.scale);
+	state |= Property("rotation", as.rotation);
+	return state;
 }
 
-bool GuiEditProperty(RenderProfile& rp)
+PropertyEditState GuiEditProperty(RenderProfile& rp)
 {
-	bool b = Property("drawOrder", rp.drawOrder);
-	b |= PropertyGroup("mods", [&rp] { return Property("", rp.mods); });
-	b |= Property("flip", rp.flip);
-	b |= Property("offset", rp.offset);
-	b |= PropertyGroup("debugDraw", [&rp] { return Property("", rp.debugDraw); });
-	b |= Property("isOverlay", rp.isOverlay);
-	b |= Property("parallaxFactor", rp.parallaxFactor);
-	b |= PropertyGroup("anchor", [&rp] { return Property("", rp.anchor); });
-	return b;
+	auto state = Property("drawOrder", rp.drawOrder);
+	state |= PropertyGroup("mods", [&rp] { return Property("", rp.mods); });
+	state |= Property("flip", rp.flip);
+	state |= Property("offset", rp.offset);
+	state |= PropertyGroup("debugDraw", [&rp] { return Property("", rp.debugDraw); });
+	state |= Property("isOverlay", rp.isOverlay);
+	state |= Property("parallaxFactor", rp.parallaxFactor);
+	state |= PropertyGroup("anchor", [&rp] { return Property("", rp.anchor); });
+	return state;
 }
 
-bool GuiEditProperty(AtlasPlot& ap)
+PropertyEditState GuiEditProperty(AtlasPlot& ap)
 {
-	bool b = Property("rect", ap.rect);
-	b |= Property("rotation", ap.rotation);
-	return b;
+	auto state = Property("rect", ap.rect);
+	state |= Property("rotation", ap.rotation);
+	return state;
 }
 
-bool GuiEditProperty(Sprite& sp)
+PropertyEditState GuiEditProperty(Sprite& sp)
 {
 	const auto& h = sp.resourceHandle;
 	Property("resourceHandle", h);
@@ -540,81 +600,71 @@ bool GuiEditProperty(Sprite& sp)
 	return PropertyGroup("plot", [&sp] { return Property("", sp.plot); });
 }
 
-bool GuiEditProperty(SpriteSeriesIndex& ssi)
+PropertyEditState GuiEditProperty(SpriteSeriesIndex& ssi)
 {
-	bool b = Property("current", ssi.current, DragArgs<int>{1.0f, 0, static_cast<int>(ssi.max) });
+	auto state = Property("current", ssi.current, DragArgs<int>{1.0f, 0, static_cast<int>(ssi.max) });
 	const auto& max = ssi.max;
 	Property("max", max);
 
-	return b;
-
-	//int cur = static_cast<int>(ssi.current);
-	//bool changed = false;
-	//if (ImGui::DragInt("##Value", &cur, 1.0f, 0, static_cast<int>(ssi.max)))
-	//{
-	//	ssi.current = static_cast<size_t>(cur);
-	//	changed = true;
-	//}
-	//ImGui::LabelText("max", "%d", ssi.max);
-	//return changed;
+	return state;
 }
 
-bool GuiEditProperty(Glyph& g)
+PropertyEditState GuiEditProperty(Glyph& g)
 {
-	bool b = Property("character", g.character);
-	b |= PropertyGroup("plot", [&g] { return Property("", g.plot); });
-	b |= Property("advance", g.advance);
-	return b;
+	auto state = Property("character", g.character);
+	state |= PropertyGroup("plot", [&g] { return Property("", g.plot); });
+	state |= Property("advance", g.advance);
+	return state;
 }
 
-bool GuiEditProperty(GlyphCacheData& gcd)
+PropertyEditState GuiEditProperty(GlyphCacheData& gcd)
 {
-	bool b = PropertyGroup("glyph", [&gcd] { return Property("", gcd.glyph); });
-	b |= Property("destRect", gcd.destRect);
-	b |= Property("rotationCenter", gcd.rotationCenter);
-	return b;
+	auto state = PropertyGroup("glyph", [&gcd] { return Property("", gcd.glyph); });
+	state |= Property("destRect", gcd.destRect);
+	state |= Property("rotationCenter", gcd.rotationCenter);
+	return state;
 }
 
-bool GuiEditProperty(TextRenderableGlyphCache::CacheContext& ctx)
+PropertyEditState GuiEditProperty(TextRenderableGlyphCache::CacheContext& ctx)
 {
-	bool b = PropertyGroup("transform", [&ctx] { return Property("", ctx.transform); });
-	b |= PropertyGroup("formatting", [&ctx] { return Property("", ctx.formatting); });
-	b |= Property("offset", ctx.offset);
+	auto state = PropertyGroup("transform", [&ctx] { return Property("", ctx.transform); });
+	state |= PropertyGroup("formatting", [&ctx] { return Property("", ctx.formatting); });
+	state |= Property("offset", ctx.offset);
 
 	const auto& h = ctx.resourceHandle;
 	Property("resourceHandle", h);
 
-	b |= Property("textHash", ctx.textHash);
-	return b;
+	state |= Property("textHash", ctx.textHash);
+	return state;
 }
 
-bool GuiEditProperty(TextRenderableComponent& trc)
+PropertyEditState GuiEditProperty(TextRenderableComponent& trc)
 {
-	bool b = PropertyGroup("writer", [&trc] { return Property("", trc.writer); });
-	b |= PropertyGroup("formatting", [&trc] { return Property("", trc.formatting); });
-	b |= PropertyGroup("renderProfile", [&trc] { return Property("", trc.profile); });
-	return b;
+	auto state = PropertyGroup("writer", [&trc] { return Property("", trc.writer); });
+	state |= PropertyGroup("formatting", [&trc] { return Property("", trc.formatting); });
+	state |= PropertyGroup("renderProfile", [&trc] { return Property("", trc.profile); });
+	return state;
 }
 
-bool GuiEditProperty(SpriteRenderableComponent& spc)
+PropertyEditState GuiEditProperty(SpriteRenderableComponent& spc)
 {
-	bool b = PropertyGroup("sprite", [&spc] { return Property("", spc.sprite); });
-	b |= PropertyGroup("profile", [&spc] { return Property("", spc.profile); });
-	return b;
+	auto state = PropertyGroup("sprite", [&spc] { return Property("", spc.sprite); });
+	state |= PropertyGroup("profile", [&spc] { return Property("", spc.profile); });
+	return state;
 }
 
-bool GuiEditProperty(SpriteAnimationComponent& sac)
+PropertyEditState GuiEditProperty(SpriteAnimationComponent& sac)
 {
-	bool b = Property("spriteSeriesName", sac.spriteSeriesName);
-	b |= PropertyGroup("index", [&sac] { return Property("", sac.index); });
-	return b;
+	auto state = Property("spriteSeriesName", sac.spriteSeriesName);
+	state |= PropertyGroup("index", [&sac] { return Property("", sac.index); });
+	return state;
 }
 
-bool GuiEditProperty(TextRenderableGlyphCache& trgc)
+PropertyEditState GuiEditProperty(TextRenderableGlyphCache& trgc)
 {
-	bool b = PropertyGroup("cache", [&trgc] { return Property("", trgc.cache); });
-	b |= PropertyGroup("context", [&trgc] { return Property("", trgc.context); });
-	return b;
+	auto state = PropertyGroup("cache", [&trgc] { return Property("", trgc.cache); });
+	state |= PropertyGroup("context", [&trgc] { return Property("", trgc.context); });
+	return state;
 }
 
 } // ui

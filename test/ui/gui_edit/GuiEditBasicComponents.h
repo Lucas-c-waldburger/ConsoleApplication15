@@ -2,6 +2,7 @@
 #include "../../../FeatureFlags.h"
 
 #if IMGUI_ENABLED
+#include "../PropertyEditState.h"
 #include "../../../components/TransformComponent.h"
 #include "../../../components/CameraTargetComponent.h"
 #include "../../../components/RelationComponents.h"
@@ -19,13 +20,13 @@ bool GuiEdit(Tags& tg);
 bool GuiEdit(Timer& tmr);
 bool GuiEdit(Name& nm);
 
-bool GuiEditProperty(Transform& tf);
-bool GuiEditProperty(CameraTarget& ct);
-bool GuiEditProperty(Parent& p);
-bool GuiEditProperty(Children& ch);
-bool GuiEditProperty(Tags& tg);
-bool GuiEditProperty(Timer& tmr);
-bool GuiEditProperty(Name& nm);
+PropertyEditState GuiEditProperty(Transform& tf);
+PropertyEditState GuiEditProperty(CameraTarget& ct);
+PropertyEditState GuiEditProperty(Parent& p);
+PropertyEditState GuiEditProperty(Children& ch);
+PropertyEditState GuiEditProperty(Tags& tg);
+PropertyEditState GuiEditProperty(Timer& tmr);
+PropertyEditState GuiEditProperty(Name& nm);
 
 } // ui
 

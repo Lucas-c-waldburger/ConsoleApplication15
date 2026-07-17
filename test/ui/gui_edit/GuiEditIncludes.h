@@ -6,6 +6,7 @@
 #include "GuiEditAudio.h"
 #include "GuiEditIncludes.h"
 #include "GuiEditPhysics.h"
+#include "../PropertyEditState.h"
 
 #if IMGUI_ENABLED
 
@@ -18,7 +19,7 @@ concept HasGuiEdit = requires(T& t) {
 
 template <typename T>
 concept HasGuiEditProperty = requires(T & t) {
-	{ GuiEditProperty(t) } -> std::convertible_to<bool>;
+	{ GuiEditProperty(t) } -> std::convertible_to<PropertyEditState>;
 };
 
 

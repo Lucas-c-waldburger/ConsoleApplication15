@@ -36,31 +36,31 @@ bool GuiEdit(BodyLimits& bl, const char* label)
 }
 
 // GUI EDIT PROPERTY //
-bool GuiEditProperty(Force& f)
+PropertyEditState GuiEditProperty(Force& f)
 {
-	bool b = Property("value", f.value);
-	b |= Property("worldPoint", f.worldPoint);
-	return b;
+	auto state = Property("value", f.value);
+	state |= Property("worldPoint", f.worldPoint);
+	return state;
 }
 
-bool GuiEditProperty(ForceRequests& fr)
+PropertyEditState GuiEditProperty(ForceRequests& fr)
 {
-	bool b = PropertyGroup("forces", [&fr] { return Property("", fr.forces); });
-	b |= PropertyGroup("impulses", [&fr] { return Property("", fr.impulses); });
-	return b;
+	auto state = PropertyGroup("forces", [&fr] { return Property("", fr.forces); });
+	state |= PropertyGroup("impulses", [&fr] { return Property("", fr.impulses); });
+	return state;
 }
 
-bool GuiEditProperty(BodyLimits& bl, ImGuiTreeNodeFlags flags)
+PropertyEditState GuiEditProperty(BodyLimits& bl, ImGuiTreeNodeFlags flags)
 {
-	bool b = PropertyGroup("linearVelocity", [&bl] { return Property("", bl.linearVelocity); }, 
+	auto state = PropertyGroup("linearVelocity", [&bl] { return Property("", bl.linearVelocity); }, 
 		{ .flags = flags });
-	b |= PropertyGroup("angularVelocity", [&bl] { return Property("", bl.angularVelocity); }, 
+	state |= PropertyGroup("angularVelocity", [&bl] { return Property("", bl.angularVelocity); },
 		{ .flags = flags });
-	b |= Property("maxImpulse", bl.maxImpulse);
-	return b;
+	state |= Property("maxImpulse", bl.maxImpulse);
+	return state;
 }
 
-bool GuiEditProperty(B2Body::Type& bt)
+PropertyEditState GuiEditProperty(B2Body::Type& bt)
 {
 	static constexpr const char* kNames[] = {
 		"Static",
@@ -71,7 +71,16 @@ bool GuiEditProperty(B2Body::Type& bt)
 			  bt == B2Body::Type::Kinematic ? 1 :
 			  bt == B2Body::Type::Dynamic ? 2 : 3;
 
-	if (ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames)))
+	bool changed = ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames));
+
+	PropertyEditState state = PropertyEditState::None;
+
+	if (ImGui::IsItemActivated())
+	{
+		state = PropertyEditState::Started;
+	}
+
+	if (changed)
 	{
 		switch (cur)
 		{
@@ -80,12 +89,17 @@ bool GuiEditProperty(B2Body::Type& bt)
 		case 2: bt = B2Body::Type::Dynamic; break;
 		}
 
-		return true;
+		state = PropertyEditState::Finished;
 	}
-	return false;
+	else if (state != PropertyEditState::Started && ImGui::IsItemActive())
+	{
+		state = PropertyEditState::Active;
+	}
+	
+	return state;
 }
 
-bool GuiEditProperty(B2Shape::Type& st)
+PropertyEditState GuiEditProperty(B2Shape::Type& st)
 {
 	static constexpr const char* kNames[] = {
 		"Circle",
@@ -99,7 +113,16 @@ bool GuiEditProperty(B2Shape::Type& st)
 			  st == B2Shape::Type::Segment ? 2 :
 			  st == B2Shape::Type::Polygon ? 3 : 4;
 
-	if (ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames)))
+	const bool changed = ImGui::Combo("##Value", &cur, kNames, IM_ARRAYSIZE(kNames));
+
+	PropertyEditState state = PropertyEditState::None;
+
+	if (ImGui::IsItemActivated())
+	{
+		state = PropertyEditState::Started;
+	}
+
+	if (changed)
 	{
 		switch (cur)
 		{
@@ -110,17 +133,22 @@ bool GuiEditProperty(B2Shape::Type& st)
 		case 4: st = B2Shape::Type::ChainSegment; break;
 		}
 
-		return true;
+		state = PropertyEditState::Finished;
 	}
-	return false;
+	else if (state != PropertyEditState::Started && ImGui::IsItemActive())
+	{
+		state = PropertyEditState::Active;
+	}
+
+	return state;
 }
 
-bool GuiEditProperty(RigidBody& rb)
+PropertyEditState GuiEditProperty(RigidBody& rb)
 {
 	auto& body = WriteAccessor<B2Body>{}(rb.body);
 	if (!body.IsValid())
 	{
-		return false;
+		return PropertyEditState::None;
 	}
 
 	const auto mass = body.GetMass();
@@ -136,72 +164,91 @@ bool GuiEditProperty(RigidBody& rb)
 	bool fixedRot = body.IsFixedRotation();
 	bool awake = body.IsAwake();
 
-	bool b = false;
+	auto state = PropertyEditState::None;
 	
 	Property("mass", mass);
 
-	if (Property("bodyType", type))
+	auto st = Property("bodyType", type);
+	if (st != PropertyEditState::None)
 	{
 		body.SetBodyType(type);
-		b |= true;
 	}
-	if (Property("position", pos))
+	state |= st;
+
+	st = Property("position", pos);
+	if (st != PropertyEditState::None)
 	{
 		body.SetPosition(pos);
-		b |= true;
 	}
-	if (Property("angle", angle))
+	state |= st;
+
+	st = Property("angle", angle);
+	if (st != PropertyEditState::None)
 	{
 		body.SetAngle(angle);
-		b |= true;
 	}
-	if (Property("linearVelocity", linVel))
+	state |= st;
+
+	st = Property("linearVelocity", linVel);
+	if (st != PropertyEditState::None)
 	{
 		body.SetLinearVelocity(linVel);
-		b |= true;
 	}
-	if (Property("angularVelocity", angVel))
+	state |= st;
+
+	st = Property("angularVelocity", angVel);
+	if (st != PropertyEditState::None)
 	{
 		body.SetAngularVelocity(angVel);
-		b |= true;
 	}
-	if (Property("linearDamping", linDamp))
+	state |= st;
+
+	st = Property("linearDamping", linDamp);
+	if (st != PropertyEditState::None)
 	{
 		body.SetLinearDamping(linDamp);
-		b |= true;
 	}
-	if (Property("angularDamping", angDamp))
+	state |= st;
+
+	st = Property("angularDamping", angDamp);
+	if (st != PropertyEditState::None)
 	{
 		body.SetAngularDamping(angDamp);
-		b |= true;
 	}
-	if (Property("gravityScale", gravScale))
+	state |= st;
+
+	st = Property("gravityScale", gravScale);
+	if (st != PropertyEditState::None)
 	{
 		body.SetGravityScale(gravScale);
-		b |= true;
 	}
-	if (Property("fixedRotation", fixedRot))
+	state |= st;
+
+	st = Property("fixedRotation", fixedRot);
+	if (st != PropertyEditState::None)
 	{
 		body.SetFixedRotation(fixedRot);
-		b |= true;
 	}
-	if (Property("awake", awake))
+	state |= st;
+
+	st = Property("awake", awake);
+	if (st != PropertyEditState::None)
 	{
 		body.SetAwake(awake);
-		b |= true;
 	}
+	state |= st;
 
-	b |= PropertyGroup("limits", [&rb] { return Property("", rb.limits); });
+	state |= PropertyGroup("limits", [&rb] { return Property("", rb.limits); });
 
-	return b;
+	return state;
 }
 
-bool GuiEditProperty(Collider& col)
+PropertyEditState GuiEditProperty(Collider& col)
 {
 	auto& shape = WriteAccessor<B2Shape>{}(col.shape);
 	if (!shape.IsValid())
 	{
-		return false;
+		return PropertyEditState::None;
 	}
 
 	const B2Shape::Type type = shape.GetShapeType();
@@ -234,25 +281,30 @@ bool GuiEditProperty(Collider& col)
 		Property("center", center);
 	}
 
-	bool b = false;
+	PropertyEditState state = PropertyEditState::None;
 
-	if (Property("density", density))
+	auto st = Property("density", density);
+	if (st != PropertyEditState::None)
 	{
 		shape.SetDensity(density);
-		b |= true;
 	}
-	if (Property("friction", friction))
+	state |= st;
+
+	st = Property("friction", friction);
+	if (st != PropertyEditState::None)
 	{
 		shape.SetFriction(friction);
-		b |= true;
 	}
-	if (Property("restitution", restitution))
+	state |= st;
+
+	st = Property("restitution", restitution);
+	if (st != PropertyEditState::None)
 	{
 		shape.SetRestitution(restitution);
-		b |= true;
 	}
+	state |= st;
 
-	return b;
+	return state |= st;
 }
 
 

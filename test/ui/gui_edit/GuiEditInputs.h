@@ -2,6 +2,7 @@
 #include "../../../FeatureFlags.h"
 
 #if IMGUI_ENABLED
+#include "../PropertyEditState.h"
 #include "../../../components/GameControllerStateComponent.h"
 #include "../../../components/MouseStateComponent.h"
 
@@ -25,23 +26,23 @@ bool GuiEdit(MouseInputField& mif, const char* label = "");
 bool GuiEdit(GameControllerState& gcs);
 bool GuiEdit(MouseState& ms);
 
-bool GuiEditProperty(InputState& is);
-bool GuiEditProperty(GameControllerInputSource& gcis);
-bool GuiEditProperty(MouseInputSource& mis);
-bool GuiEditProperty(GameControllerInputFieldValue& gcifv);
-bool GuiEditProperty(SDL_MouseWheelDirection& mwd);
-bool GuiEditProperty(MouseInputValues::CursorValue& mivcv);
-bool GuiEditProperty(MouseInputValues::WheelValue& mivwv);
-bool GuiEditProperty(MouseInputValues& miv);
+PropertyEditState GuiEditProperty(InputState& is);
+PropertyEditState GuiEditProperty(GameControllerInputSource& gcis);
+PropertyEditState GuiEditProperty(MouseInputSource& mis);
+PropertyEditState GuiEditProperty(GameControllerInputFieldValue& gcifv);
+PropertyEditState GuiEditProperty(SDL_MouseWheelDirection& mwd);
+PropertyEditState GuiEditProperty(MouseInputValues::CursorValue& mivcv);
+PropertyEditState GuiEditProperty(MouseInputValues::WheelValue& mivwv);
+PropertyEditState GuiEditProperty(MouseInputValues& miv);
 
-bool GuiEditProperty(GameControllerInputMap& map);
-bool GuiEditProperty(MouseInputMap& map);
+PropertyEditState GuiEditProperty(GameControllerInputMap& map);
+PropertyEditState GuiEditProperty(MouseInputMap& map);
 
-bool GuiEditProperty(GameControllerInputField& gcif);
-bool GuiEditProperty(MouseInputField& mif);
+PropertyEditState GuiEditProperty(GameControllerInputField& gcif);
+PropertyEditState GuiEditProperty(MouseInputField& mif);
 
-bool GuiEditProperty(GameControllerState& gcs);
-bool GuiEditProperty(MouseState& ms);
+PropertyEditState GuiEditProperty(GameControllerState& gcs);
+PropertyEditState GuiEditProperty(MouseState& ms);
 
 } // ui
 

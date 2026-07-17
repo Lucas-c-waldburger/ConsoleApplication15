@@ -5,19 +5,9 @@
 #include "../../camera/Camera.h"
 #include "GuiMouse.h"
 #include "InspectorCommon.h"
+#include "ComponentEditHistory.h"
 
 namespace ui {
-
-namespace {
-
-bool HasValidBody(const Entity& e)
-{
-	return e.HasComponent<RigidBody>([](const auto& rb) {
-		return rb.body.GetData().IsValid();
-	});
-}
-
-} // unnamed
 
 void EntityDragUtility::SetOverrideDelta(const Entity& e, SDL_FPoint mouseAbsPos)
 {
@@ -28,7 +18,7 @@ void EntityDragUtility::SetOverrideDelta(const Entity& e, SDL_FPoint mouseAbsPos
 
 void EntityDragUtility::AdjustEntityPosition(Entity& e)
 {
-	if (HasValidBody(e))
+	if (e.HasComponent<RigidBody>(HasValidBody))
 	{
 		auto& body = WriteAccessor<B2Body>{}(e.GetComponent<RigidBody>().body);
 
@@ -50,14 +40,21 @@ void EntityDragUtility::Update(Entity& e, const Camera& cam)
 {
 	auto mousePos = GuiMouse::GetPosition();
 
-	if (GuiMouse::InsideEditorWindow())
+	if (!e.HasComponent<Transform>())
 	{
 		isDragging_ = false;
 		return;
 	}
 
-	if (!e.HasComponent<Transform>())
+	if (GuiMouse::InsideEditorWindow())
 	{
+		if (isDragging_)
+		{
+			ComponentEditHistory::EndComponentEdit(e, e.GetComponent<Transform>());
+			LOG_DEBUG_FMT("Ended Component Edit : Transform (Size: {})",
+				ComponentEditHistory::GetRecordsSize());
+		}
+
 		isDragging_ = false;
 		return;
 	}
@@ -70,9 +67,13 @@ void EntityDragUtility::Update(Entity& e, const Camera& cam)
 
 			if (PointInsideRect(r, mousePos))
 			{
+				ComponentEditHistory::BeginComponentEdit(e, e.GetComponent<Transform>());
+				LOG_DEBUG_FMT("Began Component Edit : Transform (Size: {})",
+					ComponentEditHistory::GetRecordsSize());
+
 				isDragging_ = true;
 
-				if (HasValidBody(e))
+				if (e.HasComponent<RigidBody>(HasValidBody))
 				{
 					SetOverrideDelta(e, mousePos);
 				}
@@ -80,20 +81,29 @@ void EntityDragUtility::Update(Entity& e, const Camera& cam)
 		}
 		else
 		{
+			ComponentEditHistory::EndComponentEdit(e, e.GetComponent<Transform>());
+			LOG_DEBUG_FMT("Ended Component Edit : Transform (Size: {})",
+				ComponentEditHistory::GetRecordsSize());
+
 			isDragging_ = false;
 		}
 	}
 	else if (GuiMouse::IsLeftReleased() || !GuiMouse::IsLeftHeld())
 	{
+		if (isDragging_)
+		{
+			ComponentEditHistory::EndComponentEdit(e, e.GetComponent<Transform>());
+			LOG_DEBUG_FMT("Ended Component Edit : Transform (Size: {})",
+				ComponentEditHistory::GetRecordsSize());
+		}
+
 		isDragging_ = false;
 	}
 
-	if (!isDragging_)
+	if (isDragging_)
 	{
-		return;
+		AdjustEntityPosition(e);
 	}
-
-	AdjustEntityPosition(e);
 }
 
 } // ui

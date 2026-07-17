@@ -3,6 +3,7 @@
 
 #if IMGUI_ENABLED
 #include "../../../components/AudioComponents.h"
+#include "../PropertyEditState.h"
 
 namespace ui {
 
@@ -19,18 +20,18 @@ bool GuiEdit(NewAudioRequest& nar, const char* label = "");
 bool GuiEdit(AudioUpdateRequest& aur, const char* label = "");
 bool GuiEdit(ActiveAudio& aa, const char* label = "");
 
-bool GuiEditProperty(AudioSpatialData& asd);
-bool GuiEditProperty(AudioFadeMs& af);
+PropertyEditState GuiEditProperty(AudioSpatialData& asd);
+PropertyEditState GuiEditProperty(AudioFadeMs& af);
 
-bool GuiEditProperty(AudioChannelSettings& acs);
-bool GuiEditProperty(AudioUpdateSettings& aus);
+PropertyEditState GuiEditProperty(AudioChannelSettings& acs);
+PropertyEditState GuiEditProperty(AudioUpdateSettings& aus);
 
-bool GuiEditProperty(AudioPlayCommand& apc);
-bool GuiEditProperty(AudioStatus& as);
+PropertyEditState GuiEditProperty(AudioPlayCommand& apc);
+PropertyEditState GuiEditProperty(AudioStatus& as);
 
-bool GuiEditProperty(NewAudioRequest& nar);
-bool GuiEditProperty(AudioUpdateRequest& aur);
-bool GuiEditProperty(ActiveAudio& aa);
+PropertyEditState GuiEditProperty(NewAudioRequest& nar);
+PropertyEditState GuiEditProperty(AudioUpdateRequest& aur);
+PropertyEditState GuiEditProperty(ActiveAudio& aa);
 
 } // ui
 

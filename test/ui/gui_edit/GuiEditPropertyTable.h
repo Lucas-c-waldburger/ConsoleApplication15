@@ -4,6 +4,7 @@
 #if IMGUI_ENABLED
 #include "GuiEditCore.h"
 #include "../GuiResource.h"
+#include "../PropertyEditState.h"
 
 namespace ui {
 
@@ -58,11 +59,11 @@ bool WithFont(ImFont* font, Fn&& fn)
 
     ImGui::PushFont(font, font->LegacySize);
 
-    const bool changed = std::invoke(fn);
+    const auto state = std::invoke(fn);
      
     ImGui::PopFont();
 
-    return changed;
+    return state;
 }
 
 inline bool BeginPropertyTable(int uniqueId = 0)
@@ -88,8 +89,8 @@ inline void EndPropertyTable()
     ImGui::EndTable();
 }
 
-template <typename Fn> requires std::is_invocable_r_v<bool, Fn>
-bool Property(std::string_view label, Fn&& draw)
+template <typename Fn> requires std::is_invocable_r_v<PropertyEditState, Fn>
+PropertyEditState Property(std::string_view label, Fn&& draw)
 {
     ImGui::TableNextRow();
 
@@ -116,86 +117,84 @@ bool Property(std::string_view label, Fn&& draw)
 
     ImGui::SetNextItemWidth(-FLT_MIN);
 
-    const bool changed = std::invoke(draw);
-
-    return changed;
+    return std::invoke(draw);
 }
 
 template <typename T, typename...Args>
-bool Property(std::string_view label, T& value, Args&&...args)
+PropertyEditState Property(std::string_view label, T& value, Args&&...args)
 {
     return Property(label, [&]{ 
         ImGui::PushID(&value); 
 
-        const bool changed = GuiEditProperty(value, std::forward<Args>(args)...); 
+        const auto state = GuiEditProperty(value, std::forward<Args>(args)...); 
 
         ImGui::PopID();
 
-        return changed;
+        return state;
     });
 }
 
 template <typename T, typename...Args>
-bool Property(std::string_view label, const T& value, Args&&...args)
+PropertyEditState Property(std::string_view label, const T& value, Args&&...args)
 {
     return Property(label, [&]{
         ImGui::PushID(&value);
 
-        GuiDrawProperty(value, std::forward<Args>(args)...);
+        const auto state = GuiDrawProperty(value, std::forward<Args>(args)...);
 
         ImGui::PopID();
 
-        return false;
+        return state;
     });
 }
 
-template <typename Fn>
-inline bool InvokePropFn(Fn&& fn)
-{
-    bool changed = false;
-    if constexpr (std::same_as<std::invoke_result_t<Fn>, bool>)
-    {
-        changed = std::invoke(fn);
-    }
-    else
-    {
-        std::invoke(fn);
-    }
-
-    return changed;
-}
-
-bool PropertyNextRow(auto col0Fn, auto col1Fn)
-{
-    ImGui::TableNextRow();
-
-    ImGui::TableNextColumn();
-
-    ImGui::AlignTextToFramePadding();
-
-    if (gPropertyDepth > 0)
-    {
-        ImGui::Indent(gPropertyDepth * 12.0f);
-    }
-
-    bool changed = InvokePropFn(col0Fn);
-    //{
-    //    ImGui::TextUnformatted(label.data());
-    //}
-
-    if (gPropertyDepth > 0)
-    {
-        ImGui::Unindent(gPropertyDepth * 12.0f);
-    }
-
-    ImGui::TableNextColumn();
-
-    ImGui::SetNextItemWidth(-FLT_MIN);
-
-    changed |= InvokePropFn(col1Fn);
-
-    return changed;
-}
+//template <typename Fn>
+//inline bool InvokePropFn(Fn&& fn)
+//{
+//    bool changed = false;
+//    if constexpr (std::same_as<std::invoke_result_t<Fn>, bool>)
+//    {
+//        changed = std::invoke(fn);
+//    }
+//    else
+//    {
+//        std::invoke(fn);
+//    }
+//
+//    return changed;
+//}
+//
+//bool PropertyNextRow(auto col0Fn, auto col1Fn)
+//{
+//    ImGui::TableNextRow();
+//
+//    ImGui::TableNextColumn();
+//
+//    ImGui::AlignTextToFramePadding();
+//
+//    if (gPropertyDepth > 0)
+//    {
+//        ImGui::Indent(gPropertyDepth * 12.0f);
+//    }
+//
+//    bool changed = InvokePropFn(col0Fn);
+//    //{
+//    //    ImGui::TextUnformatted(label.data());
+//    //}
+//
+//    if (gPropertyDepth > 0)
+//    {
+//        ImGui::Unindent(gPropertyDepth * 12.0f);
+//    }
+//
+//    ImGui::TableNextColumn();
+//
+//    ImGui::SetNextItemWidth(-FLT_MIN);
+//
+//    changed |= InvokePropFn(col1Fn);
+//
+//    return changed;
+//}
 
 //template <typename T, typename...Args>
 //bool Property(T& value, Args&&...args)
@@ -233,25 +232,25 @@ bool PropertyNextRow(auto col0Fn, auto col1Fn)
 //    return changed;
 //}
 
-template <typename Fn> requires std::is_invocable_r_v<bool, Fn>
-bool Component(std::string_view name, Fn&& draw)
-{
-    if (!ImGui::CollapsingHeader(name.data(), ImGuiTreeNodeFlags_SpanFullWidth))
-    {
-        return false;
-    }
-
-    if (BeginPropertyTable())
-    {
-        const bool changed = std::invoke(draw); 
-
-        EndPropertyTable();
-
-        return changed;
-    }
-
-	return false;
-}
+//template <typename Fn> requires std::is_invocable_r_v<bool, Fn>
+//bool Component(std::string_view name, Fn&& draw)
+//{
+//    if (!ImGui::CollapsingHeader(name.data(), ImGuiTreeNodeFlags_SpanFullWidth))
+//    {
+//        return false;
+//    }
+//
+//    if (BeginPropertyTable())
+//    {
+//        const bool changed = std::invoke(draw); 
+//
+//        EndPropertyTable();
+//
+//        return changed;
+//    }
+//
+//	return false;
+//}
 
 struct PropertyGroupOptions
 {
@@ -266,8 +265,8 @@ struct PropertyGroupOptions
     ImGuiTreeNodeFlags flags = 0;
 };
 
-template <typename Fn> requires std::is_invocable_r_v<bool, Fn>
-bool PropertyGroup(std::string_view name, Fn&& draw, PropertyGroupOptions options = {})
+template <typename Fn> requires std::is_invocable_r_v<PropertyEditState, Fn>
+PropertyEditState PropertyGroup(std::string_view name, Fn&& draw, PropertyGroupOptions options = {})
 {
     ImGui::TableNextRow();
 
@@ -291,14 +290,14 @@ bool PropertyGroup(std::string_view name, Fn&& draw, PropertyGroupOptions option
 
     if (!open)
     {
-        return false;
+        return PropertyEditState::None;
     }
 
     ++gPropertyDepth;
 
     ImGui::PushID(name.data());
 
-    std::invoke(draw);
+    const auto state = std::invoke(draw);
 
     ImGui::PopID();
 
@@ -306,44 +305,85 @@ bool PropertyGroup(std::string_view name, Fn&& draw, PropertyGroupOptions option
 
     ImGui::TreePop();
 
-    return true;
+    return state;
 }
 
-template <typename Fn> requires std::is_invocable_r_v<bool, Fn>
-bool InnerPropertyGroup(std::string_view label, Fn&& draw)
+template <typename...Fns> 
+    requires (sizeof...(Fns) > 0 && (std::same_as<std::invoke_result_t<Fns>, PropertyEditState> && ...))
+inline PropertyEditState SplitLine(Fns&&...fns)
 {
-    ImGui::TableNextRow();
+    static constexpr size_t numFns = sizeof...(fns);
 
-    ImGui::TableNextColumn();
+    const float avail = ImGui::GetContentRegionAvail().x;
+    const float colW = avail * (1.0f / static_cast<float>(numFns));
+    size_t cnt = 1;
 
-    auto* fnt = GuiResource::Fonts().semiBold;
-    assert(fnt);
+    auto impl = [&](auto&& fn) {
+        ImGui::BeginGroup();
 
-    const bool open = WithFont(GuiResource::Fonts().semiBold, [&label] {
-        return ImGui::TreeNodeEx(label.data(), (
-            ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_NoTreePushOnOpen | 
-            ImGuiTreeNodeFlags_NoAutoOpenOnLog));
-	});
+        if (cnt >= numFns)
+        {
+            ImGui::PushItemWidth(-FLT_MIN);
+        }
+        else
+        {
+            ImGui::PushItemWidth(colW);
+        }
 
-    ImGui::TableNextColumn();
+        const auto st = std::invoke(fn);
+        ImGui::EndGroup();
 
-    if (!open)
-    {
-        return false;
-    }
+        if (cnt < numFns)
+        {
+            ImGui::SameLine();
+        }
 
-    ++gPropertyDepth;
+        ++cnt;
 
-    ImGui::PushID(label.data());
+        return st;
+    };
 
-    const bool changed = std::invoke(draw);
+    PropertyEditState state = PropertyEditState::None();
+    ((state |= impl(fns)), ...);
 
-    ImGui::PopID();
-
-    --gPropertyDepth;
-
-    return changed;
+    return state;
 }
+
+//template <typename Fn> requires std::is_invocable_r_v<bool, Fn>
+//bool InnerPropertyGroup(std::string_view label, Fn&& draw)
+//{
+//    ImGui::TableNextRow();
+//
+//    ImGui::TableNextColumn();
+//
+//    auto* fnt = GuiResource::Fonts().semiBold;
+//    assert(fnt);
+//
+//    const bool open = WithFont(GuiResource::Fonts().semiBold, [&label] {
+//        return ImGui::TreeNodeEx(label.data(), (
+//            ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_NoTreePushOnOpen | 
+//            ImGuiTreeNodeFlags_NoAutoOpenOnLog));
+//	});
+//
+//    ImGui::TableNextColumn();
+//
+//    if (!open)
+//    {
+//        return false;
+//    }
+//
+//    ++gPropertyDepth;
+//
+//    ImGui::PushID(label.data());
+//
+//    const bool changed = std::invoke(draw);
+//
+//    ImGui::PopID();
+//
+//    --gPropertyDepth;
+//
+//    return changed;
+//}
 
 } // ui
 

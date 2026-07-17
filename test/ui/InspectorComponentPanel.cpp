@@ -5,10 +5,13 @@
 #include "InspectorCommon.h"
 #include "../../ecs/EntityPhysics.h"
 #include "GuiMouse.h"
+#include "ComponentEditHistory.h"
 
 namespace ui {
 
 namespace {
+
+using UpdateReport = InspectorComponentPanel::UpdateReport;
 
 static constexpr std::string_view kNoneName = "<none>";
 
@@ -28,7 +31,11 @@ struct draw_add_component_list<TypeList<Ts...>>
 
 			if (ImGui::Selectable(GuiComponentName<T>::name.data()))
 			{
-				e.AddComponent<T>();
+				const auto& cmp = e.AddComponent<T>();
+
+				ComponentEditHistory::PushAddComponent(e, cmp);
+				LOG_DEBUG_FMT("Pushed Add Component : {} (Size: {})", 
+					GuiComponentName<T>::name, ComponentEditHistory::GetRecordsSize());
 
 				InspectorComponentPanel::GetComponentHeaderOpen().Set<T>(true);
 
@@ -112,7 +119,14 @@ bool DrawRemoveButton(Entity& e, const GuiTextureConverter& converter)
 	{
 		if constexpr (GuiRemovableComponent<T>)
 		{
+			const auto& cmp = e.GetComponent<T>();
+
+			ComponentEditHistory::PushRemoveComponent(e, cmp);
+			LOG_DEBUG_FMT("Pushed Remove Component : {} (Size: {})", 
+				GuiComponentName<T>::name, ComponentEditHistory::GetRecordsSize());
+
 			e.RemoveComponent<T>();
+
 			button.isHovered.Set<T>(false);
 			removed = true;
 		}
@@ -173,48 +187,129 @@ bool DrawHideButton(Entity& e, const GuiTextureConverter& converter)
 	return changed;
 }
 
+bool DrawUndoRedoButtonImpl(const GuiTextureConverter& converter, SimpleButton& button,
+							const char* label, bool beginDisabled)
+{
+	GuiTexture texture{ converter.FromSprite(button.sprite) };
+	auto h = ImGui::GetFrameHeight();
+	texture.size.x = h * 1.05f;
+	texture.size.y = h * 1.05f;
+
+	assert(texture.textureId != 0);
+
+	ImGui::BeginDisabled(beginDisabled);
+
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
+
+	const auto tint = button.isHovered ? ImVec4(1, 1, 1, 1) : ImVec4(.75f, .75f, .75f, 1);
+
+	const bool pressed = GuiImageButton(label, texture, ImVec4(0, 0, 0, 0), tint);
+
+	ImGui::PopStyleColor(3);
+
+	ImGui::EndDisabled();
+
+	button.isHovered = ImGui::IsItemHovered();
+
+	return pressed;
+}
+
+bool DrawUndoButton(const GuiTextureConverter& converter)
+{
+	return DrawUndoRedoButtonImpl(converter, InspectorComponentPanel::GetButtons().undo,
+								  "UndoButton", !ComponentEditHistory::CanUndo());
+}
+
+bool DrawRedoButton(const GuiTextureConverter& converter)
+{
+	return DrawUndoRedoButtonImpl(converter, InspectorComponentPanel::GetButtons().redo,
+								  "RedoButton", !ComponentEditHistory::CanRedo());
+}
+
+UpdateReport HandleUndoRedoButtons(const GuiTextureConverter& converter)
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, ImGui::GetStyle().FramePadding.y));
+
+	const float buttonStartX = GetRightAlignButtonStartX(ImGui::GetFrameHeight(), 2);
+
+	ImGui::SameLine(buttonStartX);
+
+	UpdateReport report = UpdateReport::None;
+
+	if (DrawUndoButton(converter))
+	{
+		const int cursor = ComponentEditHistory::GetCursor();
+		ComponentEditHistory::Undo();
+		LOG_DEBUG_FMT("Undo : {} -> {} (Size: {})", cursor, 
+			ComponentEditHistory::GetCursor(), ComponentEditHistory::GetRecordsSize());
+
+		report = UpdateReport::HistoryCursorMoved;
+	}
+
+	ImGui::SameLine();
+
+	if (DrawRedoButton(converter))
+	{
+		const int cursor = ComponentEditHistory::GetCursor();
+		ComponentEditHistory::Redo();
+		LOG_DEBUG_FMT("Redo : {} -> {} (Size: {})", cursor, 
+			ComponentEditHistory::GetCursor(), ComponentEditHistory::GetRecordsSize());
+
+		report = UpdateReport::HistoryCursorMoved;
+	}
+
+	ImGui::PopStyleVar();
+
+	return report;
+}
+
 template <typename T>
 struct draw_component : EntityFullAccessPrivelage
 {
-	static bool call(InspectorComponentPanel::ResourceContext& ctx)
+	static PropertyEditState call(InspectorComponentPanel::ResourceContext& ctx)
 	{
 		PushPropertyDepth();
 
-		bool changed = Property("", ctx.entity.GetComponent<T>(GetEntityPassKey()));
+		const auto state = Property("", ctx.entity.GetComponent<T>(GetEntityPassKey()));
 
 		PopPropertyDepth();
 
-		return changed;
+		return state;
 	}
 };
 
 template <>
 struct draw_component<SpriteRenderableComponent>
 {
-	static bool call(InspectorComponentPanel::ResourceContext& ctx)
+	static PropertyEditState call(InspectorComponentPanel::ResourceContext& ctx)
 	{
 		assert(ctx.entity.HasComponent<SpriteRenderableComponent>());
 		auto& r = ctx.entity.GetComponent<SpriteRenderableComponent>();
 
-		bool changed = PropertyGroup("sprite", [&] {
-			bool b = false;
+		auto state = PropertyGroup("sprite", [&] {
+			auto st = PropertyEditState::None;
 
 			auto nameOp = ctx.textureRepo.GetSpriteAtlas()
 										 .GetSpriteInfo<&SpriteInfo::spriteName>(r.sprite);
 
 			std::string name = nameOp.value_or(std::string{ kNoneName });
 
-			bool showPicker = Property("name", [&name] {
+			bool showPicker = false;
+
+			Property("name", [&name, &showPicker] {
 				ImGui::SameLine();
-				bool b = ImGui::Button("Browse");
+				showPicker = ImGui::Button("Browse");
 				ImGui::SameLine();
 				GuiEditProperty(name);
 
-				return b;
+				return PropertyEditState::None;
 			});
 			if (showPicker)
 			{
 				ImGui::OpenPopup("DrawPickerPopup");
+				st = PropertyEditState::Started;
 			}
 
 			if (ImGui::BeginPopup("DrawPickerPopup"))
@@ -231,38 +326,44 @@ struct draw_component<SpriteRenderableComponent>
 					r.sprite = std::move(spriteData->sprite);
 
 					spritePicker.Reset();
-					b = true;
+
+					assert(st != PropertyEditState::Started);
+					st = PropertyEditState::Finished;
 
 					ImGui::CloseCurrentPopup();
+				}
+				else if (st != PropertyEditState::Started)
+				{
+					st = PropertyEditState::Active;
 				}
 
 				ImGui::EndPopup();
 			}
 
-			return b;
+			return st;
 		});
 
-		changed |= PropertyGroup("profile", [&] { return Property("", r.profile); });
+		state |= PropertyGroup("profile", [&] { return Property("", r.profile); });
 
-		return changed;
+		return state;
 	}
 };
 
 template <>
 struct draw_component<RigidBody>
 {
-	static bool call(InspectorComponentPanel::ResourceContext& ctx)
+	static PropertyEditState call(InspectorComponentPanel::ResourceContext& ctx)
 	{
 		assert(ctx.entity.HasComponent<RigidBody>());
 		auto& rb = ctx.entity.GetComponent<RigidBody>();
 
-		bool changed = false;
+		auto state = PropertyEditState::None;
 
 		PushPropertyDepth();
 
 		if (rb.body.GetData().IsValid())
 		{
-			changed |= Property("", ctx.entity.GetComponent<RigidBody>());
+			state |= Property("", ctx.entity.GetComponent<RigidBody>());
 		}
 
 		ImGui::TableNextRow();
@@ -271,30 +372,29 @@ struct draw_component<RigidBody>
 		if (ImGui::Button("Build"))
 		{
 			InspectorComponentPanel::GetActiveBuilderType() = ComponentBuilderType::RigidBody;
-			changed = true;
 		}
 
 		PopPropertyDepth();
 
-		return changed;
+		return state;
 	}
 };
 
 template <>
 struct draw_component<Collider>
 {
-	static bool call(InspectorComponentPanel::ResourceContext& ctx)
+	static PropertyEditState call(InspectorComponentPanel::ResourceContext& ctx)
 	{
 		assert(ctx.entity.HasComponent<Collider>());
 		auto& col = ctx.entity.GetComponent<Collider>();
 
-		bool changed = false;
+		auto state = PropertyEditState::None;
 
 		PushPropertyDepth();
 
 		if (col.shape.GetData().IsValid())
 		{
-			changed |= Property("", ctx.entity.GetComponent<Collider>());
+			state |= Property("", ctx.entity.GetComponent<Collider>());
 		}
 
 		ImGui::TableNextRow();
@@ -307,19 +407,18 @@ struct draw_component<Collider>
 		if (ImGui::Button("Build"))
 		{
 			InspectorComponentPanel::GetActiveBuilderType() = ComponentBuilderType::Collider;
-			changed = true;
 		}
 
 		ImGui::EndDisabled();
 
 		PopPropertyDepth();
 
-		return changed;
+		return state;
 	}
 };
 
 template <typename T>
-bool DrawComponent(InspectorComponentPanel::ResourceContext& ctx)
+PropertyEditState DrawComponent(InspectorComponentPanel::ResourceContext& ctx)
 {
 	return draw_component<T>::call(ctx);
 }
@@ -330,14 +429,15 @@ struct draw_components;
 template <typename...Ts>
 struct draw_components<TypeList<Ts...>> : EntityFullAccessPrivelage
 {
-	static bool call(InspectorComponentPanel::ResourceContext& ctx)
+	static void call(InspectorComponentPanel::ResourceContext& ctx, 
+					 InspectorComponentPanel::UpdateReport& report)
 	{
 		static constexpr auto draw = []<typename T>
 		(InspectorComponentPanel::ResourceContext& ctx, const GuiTextureConverter& converter)
 		{
 			if (!ctx.entity.HasComponent<T>())
 			{
-				return false;
+				return;
 			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 6));
@@ -370,44 +470,62 @@ struct draw_components<TypeList<Ts...>> : EntityFullAccessPrivelage
 
 			if (removed)
 			{
-				return true;
+				return;
 			}
 
 			if (!open)
 			{
-				return false;
+				return;
 			}
-
-			//InspectorComponentPanel::GetComponentHeaderOpen().Set<T>(false);
 
 			if (!BeginComponentTable())
 			{
-				return false;
+				return;
 			}
 
-			const bool changed = DrawComponent<T>(ctx);
+			const auto state = DrawComponent<T>(ctx);
+
+			if ((state & PropertyEditState::Started) != 0)
+			{
+				const auto& cmp = ctx.entity.GetComponent<T>();
+				ComponentEditHistory::BeginComponentEdit(ctx.entity, cmp);
+				LOG_DEBUG_FMT("Began Component Edit : {} (Size: {})", 
+					GuiComponentName<T>::name, ComponentEditHistory::GetRecordsSize());
+			}
+
+			if (((state & PropertyEditState::Active) == 0) &&
+				((state & PropertyEditState::Finished) != 0))
+			{
+				const auto& cmp = ctx.entity.GetComponent<T>();
+				ComponentEditHistory::EndComponentEdit(ctx.entity, cmp);
+				LOG_DEBUG_FMT("Ended Component Edit : {} (Size: {})", 
+					GuiComponentName<T>::name, ComponentEditHistory::GetRecordsSize());
+
+			}
 
 			EndComponentTable();
-
-			return changed;
 		};
-
-		assert(ctx.entity.HasComponent<Name>());
-		ImGui::Text(ctx.entity.GetComponent<Name>().value.c_str());
 
 		GuiTextureConverter converter{ ctx.textureRepo };
 
-		bool changed = false;
-		((changed |= (draw.template operator()<Ts>(ctx, converter))), ...);
+		assert(ctx.entity.HasComponent<Name>());
 
-		return changed;
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 6));
+
+		ImGui::Text(ctx.entity.GetComponent<Name>().value.c_str());
+
+		ImGui::PopStyleVar();
+
+		report |= HandleUndoRedoButtons(converter);
+
+		((draw.template operator()<Ts>(ctx, converter)), ...);
 	}
 };
 
-bool DrawComponents(InspectorComponentPanel::ResourceContext& ctx)
+void DrawComponents(InspectorComponentPanel::ResourceContext& ctx, UpdateReport& report)
 {
 	return draw_components<
-		InspectorComponentPanel::GuiEditableComponentTypeList>::call(ctx);
+		InspectorComponentPanel::GuiEditableComponentTypeList>::call(ctx, report);
 }
 
 } // unnamed
@@ -417,6 +535,8 @@ Result<Void> InspectorComponentPanel::Init(SceneFixture::SharedPtr& scene)
 	TRY(ResourcePath::Sprite("ui/editor/delete_icon.png"), deleteIconPath);
 	TRY(ResourcePath::Sprite("ui/editor/visibility_on_icon.png"), visibleOnIconPath);
 	TRY(ResourcePath::Sprite("ui/editor/visibility_off_icon.png"), visibleOffIconPath);
+	TRY(ResourcePath::Sprite("ui/editor/undo_icon.png"), undoIconPath);
+	TRY(ResourcePath::Sprite("ui/editor/redo_icon.png"), redoIconPath);
 
 	auto& spriteAtlas = scene->GetTextureRepository().GetSpriteAtlas();
 
@@ -426,20 +546,26 @@ Result<Void> InspectorComponentPanel::Init(SceneFixture::SharedPtr& scene)
 		scene->GetRenderer(), { .filepath = std::move(visibleOnIconPath) }));
 	TRY_ASSIGN(buttons_.hide.activatedSprite, spriteAtlas.LoadSprite(
 		scene->GetRenderer(), { .filepath = std::move(visibleOffIconPath) }));
+	TRY_ASSIGN(buttons_.undo.sprite, spriteAtlas.LoadSprite(
+		scene->GetRenderer(), { .filepath = std::move(undoIconPath) }));
+	TRY_ASSIGN(buttons_.redo.sprite, spriteAtlas.LoadSprite(
+		scene->GetRenderer(), { .filepath = std::move(redoIconPath) }));
 
 	return kVoid;
 }
 
-void InspectorComponentPanel::Update(ResourceContext& ctx)
+InspectorComponentPanel::UpdateReport InspectorComponentPanel::Update(ResourceContext& ctx)
 {
+	UpdateReport report = UpdateReport::None;
+
 	if (!ctx.entity.IsValid())
 	{
-		return;
+		return report;
 	}
 
 	ImGui::BeginChild("Components", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY);
 
-	DrawComponents(ctx);
+	DrawComponents(ctx, report);
 
 	ImGui::Separator();
 
@@ -485,6 +611,8 @@ void InspectorComponentPanel::Update(ResourceContext& ctx)
 
 		ImGui::EndChild();
 	}
+
+	return report;
 }
 
 void InspectorComponentPanel::ClearState()

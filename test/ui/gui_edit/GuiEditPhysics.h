@@ -3,6 +3,7 @@
 
 #if IMGUI_ENABLED
 #include <imgui.h>
+#include "../PropertyEditState.h"
 #include "../../../components/RigidBodyComponent.h"
 #include "../../../components/ColliderComponent.h"
 
@@ -12,14 +13,14 @@ bool GuiEdit(Force& f, const char* label = "");
 bool GuiEdit(ForceRequests& fr, const char* label = "");
 bool GuiEdit(BodyLimits& bl, const char* label = "");
 
-bool GuiEditProperty(Force& f);
-bool GuiEditProperty(ForceRequests& fr);
-bool GuiEditProperty(BodyLimits& bl, ImGuiTreeNodeFlags flags = 0);
-bool GuiEditProperty(B2Body::Type& bt);
-bool GuiEditProperty(B2Shape::Type& st);
+PropertyEditState GuiEditProperty(Force& f);
+PropertyEditState GuiEditProperty(ForceRequests& fr);
+PropertyEditState GuiEditProperty(BodyLimits& bl, ImGuiTreeNodeFlags flags = 0);
+PropertyEditState GuiEditProperty(B2Body::Type& bt);
+PropertyEditState GuiEditProperty(B2Shape::Type& st);
 
-bool GuiEditProperty(RigidBody& rb);
-bool GuiEditProperty(Collider& col);
+PropertyEditState GuiEditProperty(RigidBody& rb);
+PropertyEditState GuiEditProperty(Collider& col);
 
 } // ui
 

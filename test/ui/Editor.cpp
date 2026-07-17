@@ -7,6 +7,7 @@
 #include "InspectorEntityPanel.h"
 #include "InspectorSystemPanel.h"
 #include "InspectorComponentPanel.h"
+#include "ComponentEditHistory.h"
 
 namespace ui {
 
@@ -16,6 +17,28 @@ bool RightClickedWithComponentPanelOpen()
 {
 	return Editor::GetActivePanel() == Editor::PanelType::Components &&
 		  GuiMouse::IsRightClicked();
+}
+
+void DrawSelectionState()
+{
+	const auto& sel = InspectorEntityPanel::GetSelection();
+	std::string name = "kInvalidEntity";
+	if (auto e = ECS::GetEntityByID(sel.entityId); e.IsValid())
+	{
+		assert(e.HasComponent<Name>());
+		name = e.GetComponent<Name>();
+		while (name.size() < 14)
+		{
+			name += " ";
+		}
+	}
+
+	std::string selType = sel.selectionType == InspectorEntityPanel::SelectionType::Edit ?
+		"Edit " : sel.selectionType == InspectorEntityPanel::SelectionType::Hover ? "Hover" : "None ";
+
+	std::string selReport = std::format("{} : {}", name, selType);
+
+	ImGui::TextUnformatted(selReport.c_str());
 }
 
 } // unnamed
@@ -61,51 +84,55 @@ void Editor::HandleCameraControl(ResourceContext& ctx, float dt)
 	cameraControl_.UpdateZoom(ctx.camera);
 }
 
-struct State
+void Editor::UpdateForHistoryChange()
 {
-	Editor::PanelType startOpen = Editor::PanelType::None;
-	const bool beganWithEntitySelected = InspectorEntityPanel::GetSelection().IsEditing();
-
-	int GetTabFlags(const Editor::PanelType currentPanel) const
+	const Entity_t entityAtCurrentRecord = ComponentEditHistory::GetEntityForCurrentRecord();
+	if (entityAtCurrentRecord != kInvalidEntity)
 	{
-		int flags = 0;
-		if (startOpen == currentPanel)
+		const auto& selection = InspectorEntityPanel::GetSelection();
+		if (selection.entityId != entityAtCurrentRecord ||
+			selection.selectionType != InspectorEntityPanel::SelectionType::Edit)
 		{
-			flags |= ImGuiTabItemFlags_SetSelected;
+			updateState_.forceEntitySelectionForEdit = entityAtCurrentRecord;
+			updateState_.forcePanelOpen = PanelType::Components;
 		}
-		return flags;
-	};
+	}
+}
+
+struct AtUpdateBegin
+{
+	const Entity_t selectedEntity = InspectorEntityPanel::GetSelection().IsEditing()
+		? InspectorEntityPanel::GetSelection().entityId
+		: kInvalidEntity;
+	const int historyCursor = ComponentEditHistory::GetCursor();
 };
 
 void Editor::Update(ResourceContext& ctx, float dt)
 {
 	ImGui::Begin("Editor");
 
-	State state{};
-
 	InspectorEntityPanel::UpdateSelectionBoxPositions(ctx.camera);
+
+	AtUpdateBegin atUpdateBegin{};
+	auto currentState = updateState_.Take();
 
 	if (RightClickedWithComponentPanelOpen())
 	{
 		InspectorEntityPanel::ClearSelection();
 		InspectorComponentPanel::ClearState();
 
-		state.startOpen = PanelType::Entities;
+		currentState.forcePanelOpen = PanelType::Entities;
 	}
-
-	Entity_t selectedEntityAtStart = InspectorEntityPanel::GetSelection().IsEditing()
-		? InspectorEntityPanel::GetSelection().entityId
-		: kInvalidEntity;
+	else if (currentState.forceEntitySelectionForEdit != kInvalidEntity)
+	{
+		InspectorEntityPanel::SetSelectedEntityForEdit(currentState.forceEntitySelectionForEdit);
+		currentState.forcePanelOpen = PanelType::Components;
+	}
 
 	if (ImGui::BeginTabBar("Tabs"))
 	{
-		if (ImGui::BeginTabItem("Entities", nullptr, state.GetTabFlags(PanelType::Entities)))
+		if (ImGui::BeginTabItem("Entities", nullptr, currentState.GetTabFlags(PanelType::Entities)))
 		{
-			if (activePanel_ == PanelType::Components)
-			{
-				//InspectorEntityPanel::ClearSelection();
-			}
-
 			activePanel_ = PanelType::Entities;
 
 			auto entityCtx = InspectorEntityPanel::ResourceContext{ .camera = ctx.camera,
@@ -115,7 +142,7 @@ void Editor::Update(ResourceContext& ctx, float dt)
 			ImGui::EndTabItem();
 		}
 
-		if (ImGui::BeginTabItem("Systems", nullptr, state.GetTabFlags(PanelType::Systems)))
+		if (ImGui::BeginTabItem("Systems", nullptr, currentState.GetTabFlags(PanelType::Systems)))
 		{
 			activePanel_ = PanelType::Systems;
 
@@ -128,14 +155,14 @@ void Editor::Update(ResourceContext& ctx, float dt)
 
 		const bool entitySelected = InspectorEntityPanel::GetSelection().IsEditing();
 
-		if (!state.beganWithEntitySelected && entitySelected)
+		if (atUpdateBegin.selectedEntity == kInvalidEntity && entitySelected)
 		{
-			state.startOpen = PanelType::Components;
+			currentState.forcePanelOpen = PanelType::Components;
 		}
 
 		ImGui::BeginDisabled(!entitySelected);
 		
-		if (ImGui::BeginTabItem("Components", nullptr, state.GetTabFlags(PanelType::Components)))
+		if (ImGui::BeginTabItem("Components", nullptr, currentState.GetTabFlags(PanelType::Components)))
 		{
 			activePanel_ = PanelType::Components;
 
@@ -155,10 +182,15 @@ void Editor::Update(ResourceContext& ctx, float dt)
 
 		ImGui::EndDisabled();
 
+		if (atUpdateBegin.historyCursor != ComponentEditHistory::GetCursor())
+		{
+			UpdateForHistoryChange();
+		}
+
 		ImGui::EndTabBar();
 	}
 
-	HandleEntityDrag(ctx, selectedEntityAtStart);
+	HandleEntityDrag(ctx, atUpdateBegin.selectedEntity);
 	HandleCameraControl(ctx, dt);
 
 	ImGui::End();

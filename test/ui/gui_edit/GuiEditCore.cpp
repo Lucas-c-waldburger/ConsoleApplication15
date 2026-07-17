@@ -174,7 +174,7 @@ bool GuiEdit(SDL_Color& c, const char* label)
 	return changed;
 }
 
-void GuiDrawProperty(const bool& b)
+PropertyEditState GuiDrawProperty(const bool& b)
 {
 	BeginDisabledNoStyle();
 
@@ -182,9 +182,11 @@ void GuiDrawProperty(const bool& b)
 	ImGui::Checkbox("##Value", &bCpy);
 
 	EndDisabledNoStyle();
+
+	return PropertyEditState::None;
 }
 
-void GuiDrawProperty(const SDL_FRect& r)
+PropertyEditState GuiDrawProperty(const SDL_FRect& r)
 {
 	BeginDisabledNoStyle();
 
@@ -192,9 +194,11 @@ void GuiDrawProperty(const SDL_FRect& r)
 	GuiEditProperties<"X", "Y", "W", "H">(rCpy.x, rCpy.y, rCpy.w, rCpy.h);
 
 	EndDisabledNoStyle();
+
+	return PropertyEditState::None;
 }
 
-void GuiDrawProperty(const SDL_FPoint& p)
+PropertyEditState GuiDrawProperty(const SDL_FPoint& p)
 {
 	BeginDisabledNoStyle();
 
@@ -202,24 +206,26 @@ void GuiDrawProperty(const SDL_FPoint& p)
 	GuiEditProperties<"X", "Y">(pCpy.x, pCpy.y);
 
 	EndDisabledNoStyle();
+
+	return PropertyEditState::None;
 }
 
-bool GuiEditProperty(Range<SDL_FPoint>& r, DragArgs<float> args)
+PropertyEditState GuiEditProperty(Range<SDL_FPoint>& r, DragArgs<float> args)
 {
-	bool b = Property("min", r.min, args);
-	b |= Property("max", r.max, args);
-	return b;
+	auto state = Property("min", r.min, args);
+	state |= Property("max", r.max, args);
+	return state;
 }
-bool GuiEditProperty(Range<float>& f, DragArgs<float> args)
+PropertyEditState GuiEditProperty(Range<float>& f, DragArgs<float> args)
 {
-	bool b = Property("min", f.min, args);
-	b |= Property("max", f.max, args);
-	return b;
+	auto state = Property("min", f.min, args);
+	state |= Property("max", f.max, args);
+	return state;
 }
 
-bool GuiEditProperty(std::vector<SDL_FPoint>& v, VecArgs args)
+PropertyEditState GuiEditProperty(std::vector<SDL_FPoint>& v, VecArgs args)
 {
-	bool changed = false;
+	PropertyEditState state = PropertyEditState::None;
 	size_t erasedIdx = std::numeric_limits<size_t>::max();
 
 	for (size_t i = 0; i < v.size(); ++i)
@@ -250,10 +256,9 @@ bool GuiEditProperty(std::vector<SDL_FPoint>& v, VecArgs args)
 		{
 			p.x = pv[0];
 			p.y = pv[1];
-			changed |= true;
 		}
 
-		//changed |= GuiEditProperties<"X", "Y">(p.x, p.y);
+		state |= EvaluatePropertyState();
 
 		ImGui::TableNextColumn();
 
@@ -265,9 +270,10 @@ bool GuiEditProperty(std::vector<SDL_FPoint>& v, VecArgs args)
 
 		if (ImGui::Button(xBtnLabel.c_str()))
 		{
-			changed |= true;
 			erasedIdx = i;
 		}
+
+		state |= EvaluatePropertyState();
 
 		ImGui::EndDisabled();
 
@@ -292,12 +298,16 @@ bool GuiEditProperty(std::vector<SDL_FPoint>& v, VecArgs args)
 		}
 	}
 
-	return changed;
+	state |= EvaluatePropertyState();
+
+	return state;
 }
 
-void GuiDrawProperty(const std::string_view& sv)
+PropertyEditState GuiDrawProperty(const std::string_view& sv)
 {
 	ImGui::TextUnformatted(sv.data());
+
+	return PropertyEditState::None;
 }
 
 std::string GuiGetEntityString(Entity_t e)
@@ -305,13 +315,15 @@ std::string GuiGetEntityString(Entity_t e)
 	return (e == kInvalidEntity) ? "<invalid>" : std::to_string(e);
 }
 
-bool GuiEditProperty(bool& b)
+PropertyEditState GuiEditProperty(bool& b)
 {
-	return ImGui::Checkbox("##Value", &b);
+	ImGui::Checkbox("##Value", &b);
+
+	return EvaluatePropertyState();
 }
 
 // GUI EDIT PROPERTY
-bool GuiEditProperty(std::string& s)
+PropertyEditState GuiEditProperty(std::string& s)
 {
 	assert(s.size() < 256);
 
@@ -321,13 +333,12 @@ bool GuiEditProperty(std::string& s)
 	if (ImGui::InputText("##Value", buf, sizeof(buf)))
 	{
 		s = buf;
-		return true;
 	}
 
-	return false;
+	return EvaluatePropertyState();
 }
 
-bool GuiEditProperty(SDL_Point& p, DragArgs<int> args)
+PropertyEditState GuiEditProperty(SDL_Point& p, DragArgs<int> args)
 {
 	int v[2] = { p.x, p.y };
 
@@ -335,27 +346,26 @@ bool GuiEditProperty(SDL_Point& p, DragArgs<int> args)
 	{
 		p.x = v[0];
 		p.y = v[1];
-		return true;
 	}
-	return false;
+	return EvaluatePropertyState();
 }
 
-bool GuiEditProperty(SDL_FPoint& p, DragArgs<float> args)
+PropertyEditState GuiEditProperty(SDL_FPoint& p, DragArgs<float> args)
 {
 	return GuiEditProperties<"X", "Y">(p.x, p.y);
 }
 
-bool GuiEditProperty(SDL_Rect& r, DragArgs<int> args)
+PropertyEditState GuiEditProperty(SDL_Rect& r, DragArgs<int> args)
 {
 	return GuiEditProperties<"X", "Y", "W", "H">(r.x, r.y, r.w, r.h);
 }
 
-bool GuiEditProperty(SDL_FRect& r, DragArgs<float> args)
+PropertyEditState GuiEditProperty(SDL_FRect& r, DragArgs<float> args)
 {
 	return GuiEditProperties<"X", "Y", "W", "H">(r.x, r.y, r.w, r.h);
 }
 
-bool GuiEditProperty(SDL_Color& c)
+PropertyEditState GuiEditProperty(SDL_Color& c)
 {
 	//bool b = Property("r", c.r);
 	//b |= Property("g", c.g);

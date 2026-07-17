@@ -51,7 +51,7 @@ struct BodyLimits
         return lhs.linearVelocity == rhs.linearVelocity &&
                lhs.angularVelocity == rhs.angularVelocity &&
                lhs.maxImpulse == rhs.maxImpulse;
-    }
+    }  
 };
 
 struct RigidBody : BaseComponent<RigidBody>

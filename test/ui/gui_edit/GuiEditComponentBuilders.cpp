@@ -152,7 +152,7 @@ bool GuiEditComponentBuilder<RigidBody>::Draw(Entity& e, B2World& world)
 				 DragArgs<float>{ 0.05, 0.0f, 100.0f });
 		Property("Fixed Rotation", bodyParams_.fixedRotation);
 
-		return false;
+		return PropertyEditState::None;
 	}, { .flags = ImGuiTreeNodeFlags_DefaultOpen });
 
 	PropertyGroup("Body Limits", [&] {
@@ -288,7 +288,7 @@ bool GuiEditComponentBuilder<Collider>::Draw(Entity& e, ReadOnly<B2Body>& roBody
 			shapeParams_.localRotation.reset();
 		}
 
-		return false;
+		return PropertyEditState::None;
 	});
 
 	PropertyGroup("Collider Settings", [&] {
@@ -301,13 +301,13 @@ bool GuiEditComponentBuilder<Collider>::Draw(Entity& e, ReadOnly<B2Body>& roBody
 			Property("Hit", colliderSettings_.enableEvents.hit);
 			Property("Sensor", colliderSettings_.enableEvents.sensor);
 
-			return false;
+			return PropertyEditState::None;
 		});
 
 		Property("Enable Collision", colliderSettings_.enableCollision);
 		Property("Is Sensor", colliderSettings_.isSensor);
 
-		return false;
+		return PropertyEditState::None;
 	});
 
 	bool canBuild = false;

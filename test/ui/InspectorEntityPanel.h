@@ -74,6 +74,8 @@ public:
 	static const Selection& GetSelection() { return selection_; }
 
 	static void ClearSelection() { selection_.Clear(); }
+	 
+	static bool SetSelectedEntityForEdit(Entity_t id);
 
 	static Buttons& GetButtons() { return buttons_; }
 
@@ -106,8 +108,8 @@ private:
 
 	static void DrawEntitySelections(ResourceContext& ctx);
 	static bool DrawAddEntityButton(const GuiTextureConverter& converter);
-	static bool DrawAddChildButton(Entity& e, const GuiTextureConverter& converter);
-	static bool DrawViewChildrenButton(Entity& e, const GuiTextureConverter& converter);
+	static void DrawAddChildButton(Entity& e, const GuiTextureConverter& converter);
+	//static bool DrawViewChildrenButton(Entity& e, const GuiTextureConverter& converter);
 
 	static void AssignEntityName(Entity& e);
 	static void RemoveStaleEntity(Entity& e);

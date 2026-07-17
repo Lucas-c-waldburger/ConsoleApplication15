@@ -4,105 +4,104 @@
 
 namespace ui {
 
-//bool ComponentEditHistory::Undo(Entity& e)
-//{
-//	if (currentEntity_ != e.GetID())
-//	{
-//		return false;
-//	}
-//	if (currentIndex_ == 0)
-//	{
-//		return false;
-//	}
-//
-//	--currentIndex_;
-//
-//	assert(currentIndex_ < editedComponentSignatures_.size());
-//
-//	const auto bit = editedComponentSignatures_[currentIndex_];
-//
-//	return !std::apply([&](auto&...stacks) {
-//		return ((SetComponentOnEntity(e, stacks, bit, false)) && ...);
-//	}, components_);
-//}
-//
-//bool ComponentEditHistory::Redo(Entity& e)
-//{
-//	if (currentEntity_ != e.GetID())
-//	{
-//		return false;
-//	}
-//	if (currentIndex_ + 1 >= editedComponentSignatures_.size())
-//	{
-//		return false;
-//	}
-//
-//	++currentIndex_;
-//
-//	assert(currentIndex_ < editedComponentSignatures_.size());
-//
-//	const auto bit = editedComponentSignatures_[currentIndex_];
-//
-//	return !std::apply([&](auto&...stacks) {
-//		return ((SetComponentOnEntity(e, stacks, bit, true)) && ...);
-//	}, components_);
-//}
-//
-//void ComponentEditHistory::Clear()
-//{
-//	std::apply([](auto&...stacks) {
-//		(stacks.Clear(), ...);
-//	}, components_);
-//
-//	editedComponentSignatures_.clear();
-//	currentIndex_ = 0;
-//	currentEntity_ = kInvalidEntity;
-//}
-//
-//void ComponentEditHistory::Reset(Entity_t newE)
-//{
-//	Clear();
-//	currentEntity_ = newE;
-//}
-//
-//bool ComponentEditHistory::AtSomePreviousState()
-//{
-//	return !editedComponentSignatures_.empty() &&
-//		currentIndex_ < editedComponentSignatures_.size() - 1;
-//}
-//
-//bool ComponentEditHistory::AtEarliestState()
-//{
-//	return !editedComponentSignatures_.empty() && currentIndex_ == 0;
-//}
-//
-//bool ComponentEditHistory::NeedToCycleOutOldHistory()
-//{
-//	return !AtSomePreviousState() && editedComponentSignatures_.size() >= kMaxRecords;
-//}
-//
-//void ComponentEditHistory::CycleOutOldHistory()
-//{
-//	while (editedComponentSignatures_.size() > kMaxRecords)
-//	{
-//		const auto bit = editedComponentSignatures_.front();
-//
-//		std::apply([&](auto&...stacks) {
-//			return ((RemoveOldComponentEntry(stacks, bit)) && ...);
-//		}, components_);
-//
-//		editedComponentSignatures_.pop_front();
-//	}
-//}
-//
-//void ComponentEditHistory::SetCurrentIndexAsHead()
-//{
-//	std::apply([](auto&...stacks) {
-//		(stacks.Reduce(), ...);
-//	}, components_);
-//
-//	editedComponentSignatures_.resize(currentIndex_);
-//}
+void ComponentEditHistory::Undo()
+{
+	if (!CanUndo())
+	{
+		return;
+	}
+
+	auto& record = records_[static_cast<size_t>(cursor_)];
+
+	auto e = ECS::GetEntityByID(record.entity);
+	if (e.IsValid())
+	{
+		record.undo(e);
+	}
+
+	--cursor_;
+}
+
+void ComponentEditHistory::Redo()
+{
+	if (!CanRedo())
+	{
+		return;
+	}
+
+	++cursor_;
+
+	auto& record = records_[static_cast<size_t>(cursor_)];
+
+	auto e = ECS::GetEntityByID(record.entity);
+	if (e.IsValid())
+	{
+		record.redo(e);
+	}
+}
+
+bool ComponentEditHistory::Empty()
+{
+	if (records_.empty())
+	{
+		assert(CursorAtEarliest());
+		return true;
+	}
+	return false;
+}
+
+void ComponentEditHistory::Reset()
+{
+	records_.clear();
+	cursor_ = -1;
+}
+
+bool ComponentEditHistory::CanUndo()
+{
+	return !Empty() && !CursorAtEarliest();
+}
+
+bool ComponentEditHistory::CanRedo()
+{
+	return !Empty() && !CursorAtHead();
+}
+
+Entity_t ComponentEditHistory::GetEntityForCurrentRecord()
+{
+	assert(CursorValid());
+
+	return (!Empty() && cursor_ > -1)
+		? records_[static_cast<size_t>(cursor_)].entity
+		: kInvalidEntity;
+}
+
+bool ComponentEditHistory::CursorValid()
+{
+	return cursor_ >= -1 && cursor_ < RecordsSize();
+}
+
+bool ComponentEditHistory::CursorAtHead()
+{
+	assert(CursorValid());
+	return cursor_ == RecordsSize() - 1;
+}
+
+bool ComponentEditHistory::CursorAtEarliest()
+{
+	return cursor_ == -1;
+}
+
+void ComponentEditHistory::SetCursorAsHead()
+{
+	assert(CursorValid());
+	records_.resize(cursor_ + 1);
+}
+
+bool ComponentEditHistory::CursorEarlierThanHead()
+{
+	assert(CursorValid());
+	return cursor_ < RecordsSize() - 1;
+}
 
 } // ui
 

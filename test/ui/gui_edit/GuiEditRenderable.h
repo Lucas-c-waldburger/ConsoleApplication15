@@ -1,6 +1,7 @@
 #include "../../../FeatureFlags.h"
 
 #if IMGUI_ENABLED
+#include "../PropertyEditState.h"
 #include "../../../components/RenderableComponent.h"
 #include "../../../components/SpriteAnimationsComponent.h"
 
@@ -30,29 +31,29 @@ bool GuiEdit(SpriteRenderableComponent& spc);
 bool GuiEdit(SpriteAnimationComponent& sac);
 bool GuiEdit(TextRenderableGlyphCache& trgc);
 
-bool GuiEditProperty(GlyphTextWriter& wr);
-bool GuiEditProperty(TextAlign& ta);
-bool GuiEditProperty(Anchor& a);
-bool GuiEditProperty(TextFormatting& f);
-bool GuiEditProperty(RGB& c);
-bool GuiEditProperty(SDL_BlendMode b);
-bool GuiEditProperty(SDL_RendererFlip& f);
-bool GuiEditProperty(TextureMods& tm);
-bool GuiEditProperty(DebugDraw& dd);
-bool GuiEditProperty(DebugDrawSet& dds);
-bool GuiEditProperty(RenderProfile::Anchors& as);
-bool GuiEditProperty(RenderProfile& rp);
-bool GuiEditProperty(AtlasPlot& ap);
-bool GuiEditProperty(Sprite& sp);
-bool GuiEditProperty(SpriteSeriesIndex& ssi);
-bool GuiEditProperty(Glyph& g);
-bool GuiEditProperty(GlyphCacheData& gcd);
-bool GuiEditProperty(TextRenderableGlyphCache::CacheContext& ctx);
+PropertyEditState GuiEditProperty(GlyphTextWriter& wr);
+PropertyEditState GuiEditProperty(TextAlign& ta);
+PropertyEditState GuiEditProperty(Anchor& a);
+PropertyEditState GuiEditProperty(TextFormatting& f);
+PropertyEditState GuiEditProperty(RGB& c);
+PropertyEditState GuiEditProperty(SDL_BlendMode b);
+PropertyEditState GuiEditProperty(SDL_RendererFlip& f);
+PropertyEditState GuiEditProperty(TextureMods& tm);
+PropertyEditState GuiEditProperty(DebugDraw& dd);
+PropertyEditState GuiEditProperty(DebugDrawSet& dds);
+PropertyEditState GuiEditProperty(RenderProfile::Anchors& as);
+PropertyEditState GuiEditProperty(RenderProfile& rp);
+PropertyEditState GuiEditProperty(AtlasPlot& ap);
+PropertyEditState GuiEditProperty(Sprite& sp);
+PropertyEditState GuiEditProperty(SpriteSeriesIndex& ssi);
+PropertyEditState GuiEditProperty(Glyph& g);
+PropertyEditState GuiEditProperty(GlyphCacheData& gcd);
+PropertyEditState GuiEditProperty(TextRenderableGlyphCache::CacheContext& ctx);
 
-bool GuiEditProperty(TextRenderableComponent& trc);
-bool GuiEditProperty(SpriteRenderableComponent& spc);
-bool GuiEditProperty(SpriteAnimationComponent& sac);
-bool GuiEditProperty(TextRenderableGlyphCache& trgc);
+PropertyEditState GuiEditProperty(TextRenderableComponent& trc);
+PropertyEditState GuiEditProperty(SpriteRenderableComponent& spc);
+PropertyEditState GuiEditProperty(SpriteAnimationComponent& sac);
+PropertyEditState GuiEditProperty(TextRenderableGlyphCache& trgc);
 
 } // ui
 
