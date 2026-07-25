@@ -1,0 +1,147 @@
+{
+    "audio": [],
+    "entities": [
+        {
+            "EntityFlags": {
+                "componentVisibilityFlags": 18446744073709551615,
+                "eventProductionFlags": "11111111111111111111111111"
+            },
+            "Name": {
+                "value": "Girl"
+            },
+            "SpriteRenderableComponent": {
+                "profile": {
+                    "anchor": {
+                        "rotation": "Center",
+                        "scale": "Center"
+                    },
+                    "debugDraw": {
+                        "boundingBox": {
+                            "color": {
+                                "a": 255,
+                                "b": 0,
+                                "g": 0,
+                                "r": 255
+                            },
+                            "on": false
+                        },
+                        "collider": {
+                            "color": {
+                                "a": 255,
+                                "b": 255,
+                                "g": 0,
+                                "r": 0
+                            },
+                            "on": false
+                        }
+                    },
+                    "drawOrder": 0,
+                    "flip": "SDL_FLIP_NONE",
+                    "isOverlay": false,
+                    "mods": {
+                        "alpha": 255,
+                        "blend": "SDL_BLENDMODE_BLEND",
+                        "color": {
+                            "b": 255,
+                            "g": 255,
+                            "r": 255
+                        }
+                    },
+                    "offset": {
+                        "x": 0.0,
+                        "y": 0.0
+                    },
+                    "parallaxFactor": 0.0
+                },
+                "sprite": "girl_jump_001"
+            },
+            "Transform": {
+                "position": {
+                    "x": 662.0,
+                    "y": 481.0
+                },
+                "rotation": 0.0,
+                "scale": {
+                    "x": 2.0,
+                    "y": 2.0
+                }
+            },
+            "entityId": 4294967297
+        }
+    ],
+    "sceneName": "test",
+    "textures": {
+        "fontAtlas": [],
+        "spriteAtlas": [
+            {
+                "data": [
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\ui/editor/add_entity_icon.png",
+                        "spriteName": "add_entity_icon"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\ui/editor/add_child_icon.png",
+                        "spriteName": "add_child_icon"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\ui/editor/view_children_icon.png",
+                        "spriteName": "view_children_icon"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\ui/editor/pause_circle.png",
+                        "spriteName": "pause_circle"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\ui/editor/play_circle.png",
+                        "spriteName": "play_circle"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\ui/editor/delete_icon.png",
+                        "spriteName": "delete_icon"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\ui/editor/visibility_on_icon.png",
+                        "spriteName": "visibility_on_icon"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\ui/editor/visibility_off_icon.png",
+                        "spriteName": "visibility_off_icon"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\ui/editor/undo_icon.png",
+                        "spriteName": "undo_icon"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\ui/editor/redo_icon.png",
+                        "spriteName": "redo_icon"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\girl\\jump\\girl_jump_000.png",
+                        "spriteName": "girl_jump_000"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\girl\\jump\\girl_jump_001.png",
+                        "spriteName": "girl_jump_001"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\girl\\jump\\girl_jump_002.png",
+                        "spriteName": "girl_jump_002"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\girl\\jump\\girl_jump_003.png",
+                        "spriteName": "girl_jump_003"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\girl\\jump\\girl_jump_004.png",
+                        "spriteName": "girl_jump_004"
+                    },
+                    {
+                        "filepath": "C:\\Users\\Lucas\\source\\repos\\ConsoleApplication15\\resources\\sprites\\girl\\jump\\girl_jump_005.png",
+                        "spriteName": "girl_jump_005"
+                    }
+                ],
+                "seriesName": ""
+            }
+        ]
+    }
+}

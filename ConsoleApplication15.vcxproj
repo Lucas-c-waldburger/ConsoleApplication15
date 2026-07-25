@@ -178,6 +178,7 @@
     <ClCompile Include="deps\imgui\imgui_draw.cpp" />
     <ClCompile Include="deps\imgui\imgui_tables.cpp" />
     <ClCompile Include="deps\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="deps\tinyfiledialogs\tinyfiledialogs.c" />
     <ClCompile Include="ecs\ComponentCleanup.cpp" />
     <ClCompile Include="ecs\EntityAccess.cpp" />
     <ClCompile Include="ecs\EntityManager.cpp" />
@@ -243,6 +244,7 @@
     <ClCompile Include="systems\GameLoopSystem.cpp" />
     <ClCompile Include="systems\RenderablePreProcessorSystem.cpp" />
     <ClCompile Include="systems\NewRenderSystem.cpp" />
+    <ClCompile Include="systems\ScriptSystem.cpp" />
     <ClCompile Include="systems\SerializationSystem.cpp" />
     <ClCompile Include="systems\util\DebugDrawUtils.cpp" />
     <ClCompile Include="systems\util\RenderUtils.cpp" />
@@ -255,6 +257,7 @@
     <ClCompile Include="test\catch\core\StableSOATests.cpp" />
     <ClCompile Include="test\catch\ecs\EntityEventTests.cpp" />
     <ClCompile Include="test\catch\ecs\EntityPhysicsTests.cpp" />
+    <ClCompile Include="test\catch\ecs\EntitySignalingTests.cpp" />
     <ClCompile Include="test\catch\ecs\UserComponentBridgeTests.cpp" />
     <ClCompile Include="test\catch\events\InputEventTests.cpp" />
     <ClCompile Include="test\catch\serial\SerializationTests.cpp" />
@@ -314,6 +317,7 @@
     <ClCompile Include="test\catch\test_utils\ImageUtilities.cpp" />
     <ClCompile Include="test\Fixtures.cpp" />
     <ClCompile Include="test\Premades.cpp" />
+    <ClCompile Include="test\ui\SaveSceneUtility.cpp" />
     <ClCompile Include="user\UserComponentBridge.cpp" />
     <ClCompile Include="user\UserSystemScheduler.cpp" />
   </ItemGroup>
@@ -390,10 +394,12 @@
     <ClInclude Include="components\EntityFlagsComponent.h" />
     <ClInclude Include="components\MarkedDestroyedComponent.h" />
     <ClInclude Include="components\NameComponent.h" />
+    <ClInclude Include="components\ScriptComponent.h" />
     <ClInclude Include="components\SignalTokenStorageComponent.h" />
     <ClInclude Include="components\UserComponents.h" />
     <ClInclude Include="core\Anchor.h" />
     <ClInclude Include="core\FixedString.h" />
+    <ClInclude Include="core\formatters.h" />
     <ClInclude Include="core\InlineStorage.h" />
     <ClInclude Include="core\Hash.h" />
     <ClInclude Include="core\MacroUtils.h" />
@@ -453,6 +459,7 @@
     <ClInclude Include="deps\nlohmann\json.hpp" />
     <ClInclude Include="deps\nlohmann\json_fwd.hpp" />
     <ClInclude Include="deps\rapidhash\rapidhash.h" />
+    <ClInclude Include="deps\tinyfiledialogs\tinyfiledialogs.h" />
     <ClInclude Include="ecs\ComponentCleanup.h" />
     <ClInclude Include="ecs\ComponentMasks.h" />
     <ClInclude Include="core\Dictionary.h" />
@@ -484,13 +491,21 @@
     <ClInclude Include="file\FilePathUtility.h" />
     <ClInclude Include="games\bullet_heaven\Terrain.h" />
     <ClInclude Include="render\TextFormatExpressionParser.h" />
+    <ClInclude Include="scripting\user_types\CameraTargetUserType.h" />
+    <ClInclude Include="scripting\user_types\CoreLuaUserTypes.h" />
+    <ClInclude Include="scripting\user_types\EventUserTypes.h" />
+    <ClInclude Include="scripting\user_types\NameUserType.h" />
+    <ClInclude Include="scripting\user_types\PhysicsUserTypes.h" />
+    <ClInclude Include="scripting\user_types\TimerComponentUserType.h" />
     <ClInclude Include="serial\AudioBankSerializer.h" />
     <ClInclude Include="serial\EntityDeserializer.h" />
     <ClInclude Include="serial\EntitySerializer.h" />
     <ClInclude Include="serial\TextureRepositorySerializer.h" />
     <ClInclude Include="serial\user_types\AudioJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\BitsetJsonUserTypes.h" />
+    <ClInclude Include="systems\Observers.h" />
     <ClInclude Include="systems\Pausable.h" />
+    <ClInclude Include="systems\ScriptSystem.h" />
     <ClInclude Include="test\demo\audio_lounge\AudioLounge.h" />
     <ClInclude Include="test\demo\audio_lounge\AudioLoungeApp.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMaker2.h" />
@@ -504,6 +519,7 @@
     <ClInclude Include="inputs\keyboard\KeyboardInputSource.h" />
     <ClInclude Include="inputs\keyboard\KeyboardInputUpdater.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMakerCommon.h" />
+    <ClInclude Include="test\SceneRegistry.h" />
     <ClInclude Include="test\ui\CameraControlUtility.h" />
     <ClInclude Include="test\ui\ComponentEditHistory.h" />
     <ClInclude Include="test\ui\Editor.h" />
@@ -523,6 +539,7 @@
     <ClInclude Include="test\ui\InspectorEntityPanel.h" />
     <ClInclude Include="test\ui\InspectorEventPanel.h" />
     <ClInclude Include="test\ui\InspectorSystemPanel.h" />
+    <ClInclude Include="test\ui\SaveSceneUtility.h" />
     <ClInclude Include="test\ui\SpritePicker.h" />
     <ClInclude Include="test\demo\gallery\Gallery.h" />
     <ClInclude Include="test\demo\gallery\GalleryApp.h" />
@@ -1168,6 +1185,7 @@
     <None Include="test\catch\test_json\entities.json" />
     <None Include="test\catch\test_json\textures.json" />
     <None Include="test\catch\test_json\user_components.json" />
+    <None Include="test\catch\test_scripts\entity_test.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc" />

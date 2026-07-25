@@ -1,6 +1,7 @@
 #pragma once
 #include "../LuaUserType.h"
 #include <SDL_rect.h>
+#include <SDL_pixels.h>
 
 DEF_LUA_USERTYPE(SDL_Point) {
 	lua.def_type(sol::constructors<SDL_Point(), SDL_Point(int, int)>(), 
@@ -17,4 +18,11 @@ DEF_LUA_USERTYPE(SDL_Rect) {
 DEF_LUA_USERTYPE(SDL_FRect) {
 	lua.def_type(sol::constructors<SDL_Rect(), SDL_Rect(float, float, float, float)>(),
 				 "x", &SDL_FRect::x, "y", &SDL_FRect::y, "w", &SDL_FRect::w, "h", &SDL_FRect::h);
+}
+
+DEF_LUA_USERTYPE(SDL_Color) {
+	lua.def_type("r", &SDL_Color::r,
+				 "g", &SDL_Color::g,
+				 "b", &SDL_Color::b,
+				 "a", &SDL_Color::a);
 }

@@ -138,12 +138,7 @@ struct TextRenderableComponent : BaseComponent<TextRenderableComponent>
     TextFormatting formatting;
     RenderProfile profile = kDefaultTextRenderProfile;
 
-    friend bool operator==(const TextRenderableComponent& lhs, 
-                           const TextRenderableComponent& rhs) noexcept
-    {
-        return lhs.writer == rhs.writer && lhs.formatting == rhs.formatting &&
-               lhs.profile == rhs.profile;
-    }
+    bool operator==(const TextRenderableComponent&) const = default;
 };
 
 struct SpriteRenderableComponent : BaseComponent<SpriteRenderableComponent>
@@ -151,11 +146,7 @@ struct SpriteRenderableComponent : BaseComponent<SpriteRenderableComponent>
     Sprite sprite;
     RenderProfile profile;
 
-    friend constexpr bool operator==(const SpriteRenderableComponent& lhs, 
-                                     const SpriteRenderableComponent& rhs) noexcept
-    {
-        return lhs.sprite == rhs.sprite && lhs.profile == rhs.profile;
-    }
+    bool operator==(const SpriteRenderableComponent&) const = default;
 };
 
 

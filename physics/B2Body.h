@@ -223,6 +223,8 @@ public:
     bool OwnsShape(b2ShapeId shapeId) const;
     bool OwnsShape(const Handle<B2Shape>& shapeHandle) const;
 
+    size_t DestroyShapes();
+
     std::vector<B2ContactData> GetContactData() const;
     std::vector<B2ContactData> GetContactDataWith(const Handle<B2Body>& query) const;
     std::vector<B2ContactData> GetContactDataWith(const Handle<B2Shape>& query) const;

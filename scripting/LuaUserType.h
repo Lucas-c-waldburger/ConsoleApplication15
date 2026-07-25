@@ -3,7 +3,6 @@
 #include <sol/sol.hpp>
 #include <lua.hpp>
 
-//
 template <typename...Ts>
 using Dependencies = TypeList<Ts...>;
 

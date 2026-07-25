@@ -29,6 +29,8 @@ public:
     template <typename Fn>
     SignalToken ConnectTextureObserver(TextureObserverPassKey pk, Fn&& fn)
     {
+        signal_ = {};
+
         return signal_.Connect(pk, std::forward<Fn>(fn));
     }
 

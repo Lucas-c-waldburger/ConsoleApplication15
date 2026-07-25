@@ -32,8 +32,11 @@ public:
 	{
 		if (this != &other)
 		{
+			Disconnect();
+
 			id_ = other.id_;
 			disconnectView_ = other.disconnectView_;
+
 			other.id_ = -1;
 			other.disconnectView_ = nullptr;
 		}
@@ -53,6 +56,12 @@ public:
 			id_ = -1;
 			disconnectView_ = nullptr;
 		}
+	}
+
+	void Reset()
+	{
+		disconnectView_ = nullptr;
+		id_ = -1;
 	}
 
 	bool operator==(const SignalToken& rhs) const {
@@ -120,6 +129,8 @@ public:
 			disconnectFn_ = GetDisconnectLambda();
 			other.disconnectFn_ = nullptr;
 		}
+
+		return *this;
 	}
 
 

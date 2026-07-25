@@ -530,7 +530,22 @@ void DrawComponents(InspectorComponentPanel::ResourceContext& ctx, UpdateReport&
 
 } // unnamed
 
-Result<Void> InspectorComponentPanel::Init(SceneFixture::SharedPtr& scene)
+Result<Void> InspectorComponentPanel::ResetForNewScene(SceneFixture& scene)
+{
+	componentHeaderOpen_.Reset();
+	activeBuilderType_ = ComponentBuilderType::None;
+
+	const auto& spriteAtlas = scene.GetTextureRepository().GetSpriteAtlas();
+	buttons_.remove.defaultSprite = spriteAtlas.GetSprite("delete_icon");
+	buttons_.hide.defaultSprite = spriteAtlas.GetSprite("visibility_on_icon");
+	buttons_.hide.activatedSprite = spriteAtlas.GetSprite("visibility_off_icon");
+	buttons_.undo.sprite = spriteAtlas.GetSprite("undo_icon");
+	buttons_.redo.sprite = spriteAtlas.GetSprite("redo_icon");
+
+	return kVoid;
+}
+
+Result<Void> InspectorComponentPanel::LoadResources(SceneFixture& scene)
 {
 	TRY(ResourcePath::Sprite("ui/editor/delete_icon.png"), deleteIconPath);
 	TRY(ResourcePath::Sprite("ui/editor/visibility_on_icon.png"), visibleOnIconPath);
@@ -538,18 +553,25 @@ Result<Void> InspectorComponentPanel::Init(SceneFixture::SharedPtr& scene)
 	TRY(ResourcePath::Sprite("ui/editor/undo_icon.png"), undoIconPath);
 	TRY(ResourcePath::Sprite("ui/editor/redo_icon.png"), redoIconPath);
 
-	auto& spriteAtlas = scene->GetTextureRepository().GetSpriteAtlas();
+	auto& spriteAtlas = scene.GetTextureRepository().GetSpriteAtlas();
 
 	TRY_ASSIGN(buttons_.remove.defaultSprite, spriteAtlas.LoadSprite(
-		scene->GetRenderer(), { .filepath = std::move(deleteIconPath) }));
+		scene.GetRenderer(), { .filepath = std::move(deleteIconPath) }));
 	TRY_ASSIGN(buttons_.hide.defaultSprite, spriteAtlas.LoadSprite(
-		scene->GetRenderer(), { .filepath = std::move(visibleOnIconPath) }));
+		scene.GetRenderer(), { .filepath = std::move(visibleOnIconPath) }));
 	TRY_ASSIGN(buttons_.hide.activatedSprite, spriteAtlas.LoadSprite(
-		scene->GetRenderer(), { .filepath = std::move(visibleOffIconPath) }));
+		scene.GetRenderer(), { .filepath = std::move(visibleOffIconPath) }));
 	TRY_ASSIGN(buttons_.undo.sprite, spriteAtlas.LoadSprite(
-		scene->GetRenderer(), { .filepath = std::move(undoIconPath) }));
+		scene.GetRenderer(), { .filepath = std::move(undoIconPath) }));
 	TRY_ASSIGN(buttons_.redo.sprite, spriteAtlas.LoadSprite(
-		scene->GetRenderer(), { .filepath = std::move(redoIconPath) }));
+		scene.GetRenderer(), { .filepath = std::move(redoIconPath) }));
+
+	return kVoid;
+}
+
+Result<Void> InspectorComponentPanel::Init(SceneFixture& scene)
+{
+	TRY(LoadResources(scene));
 
 	return kVoid;
 }

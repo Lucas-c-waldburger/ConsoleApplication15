@@ -272,6 +272,59 @@ Result<std::vector<Error>> SceneFixture::DeserializeState(SerializationSystem::F
 	);
 }
 
+void SceneFixture::SerializeStateToJson(nlohmann::json& j) const
+{
+	assert(systems_.IsSystemRegistered<SerializationSystem>());
+	assert(systems_.IsSystemRegistered<AudioSystem>());
+
+	systems_.GetSystem<SerializationSystem>().SerializeStateToJson(
+		j, textureRepo_, systems_.GetSystem<AudioSystem>().GetAudioBank());
+
+	SerializeSceneToJson(j);
+}
+
+std::vector<Error> SceneFixture::DeserializeStateFromJson(const nlohmann::json& j)
+{
+	assert(systems_.IsSystemRegistered<SerializationSystem>());
+	assert(systems_.IsSystemRegistered<SDLInputSystem>());
+	assert(systems_.IsSystemRegistered<AudioSystem>());
+
+	if (auto res = DeserializeSceneFromJson(j); !res.Success())
+	{
+		return { std::move(res).GetError() };
+	}
+
+	auto errs = systems_.GetSystem<SerializationSystem>().DeserializeStateFromJson(
+		j, world_, textureRepo_, systems_.GetSystem<SDLInputSystem>(),
+		systems_.GetSystem<AudioSystem>().GetAudioBank(), GetRenderer()
+	);
+
+	return errs;
+}
+
+void SceneFixture::SerializeSceneToJson(nlohmann::json& j) const
+{
+	j["sceneName"] = sceneRegistry_.GetActiveScene();
+}
+
+Result<Void> SceneFixture::DeserializeSceneFromJson(const nlohmann::json& j)
+{
+	if (!j.contains("sceneName"))
+	{
+		return MAKE_ERROR("Json did not contain a field named 'sceneName'");
+	}
+
+	std::string sceneName;
+	try {
+		from_json(j.at("sceneName"), sceneName);
+	}
+	catch (nlohmann::json::exception& ex) {
+		return MAKE_ERROR_FMT("Error parsing sceneName: '{}'", ex.what());
+	}
+
+	return LoadScene(sceneName);
+}
+
 Result<Void> SceneFixture::RenderScene()
 {
 #if IMGUI_ENABLED
@@ -321,14 +374,51 @@ void SceneFixture::TearDown()
 	Logger::EndSession();
 }
 
-Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance()
+
+void SceneFixture::ResetForNewScene(const SceneConfiguration& config)
+{
+	auto es = ECS::GetAllActiveEntities();
+	for (auto& e : es)
+	{
+		if (!e.GetRelations().IsChild())
+		{
+			e.Destroy();
+		}
+	}
+
+	systems_.ClearUserSystems();
+
+	eventBus_.DiscardEvents();
+
+	world_.Destroy();
+	world_ = B2World::Create(config.worldGravity.x, config.worldGravity.y);
+
+	textureRepo_ = {};
+
+	if (IsSystemRegistered<AudioSystem>())
+	{
+		GetSystem<AudioSystem>().SetAudioBank({});
+	}
+
+	if (IsSystemRegistered<CameraSystem>())
+	{
+		GetCamera().SetPosition(SDLite::Window().GetLocalCenter<SDL_FPoint>());
+	}
+
+	config_ = config;
+}
+
+Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance(const SceneConfiguration& config)
 {
 	Logger::StartSession();
 	SDLite::Start();
 
 	auto fixture = std::make_shared<SceneFixture>();
 
-	fixture->world_ = B2World::Create(0, 9.8f);
+	fixture->config_ = config;
+
+	fixture->world_ = B2World::Create(config.worldGravity.x, 
+									  config.worldGravity.y);
 
 #if IMGUI_ENABLED
 	TRY(GuiContext::Init(fixture->GetWindow(), fixture->GetRenderer()));

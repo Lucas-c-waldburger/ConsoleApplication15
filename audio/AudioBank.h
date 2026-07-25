@@ -32,13 +32,15 @@ public:
 
     static constexpr size_t kDefaultAudioInfoCapacity = 40;
 
-	AudioBank() : audioBankInstanceId_(audioBankInstanceIdCounter_++) {}
+	AudioBank() : audioBankInstanceId_(audioBankInstanceIdCounter_++) { 
+        audioInfo_.Reserve(kDefaultAudioInfoCapacity);
+    }
 	~AudioBank() = default;
 
 	AudioBank(const AudioBank&) = delete;
 	AudioBank& operator=(const AudioBank&) = delete;
-    AudioBank(AudioBank&&) = default;
-	AudioBank& operator=(AudioBank&&) = default;
+    AudioBank(AudioBank&&) noexcept = default;
+    AudioBank& operator=(AudioBank&&) noexcept = default;
 
     Handle<Audio> GetAudio(std::string_view name) const;
 
@@ -94,11 +96,14 @@ public:
 
 	std::vector<AudioDescriptor> ExportAudioDescriptors() const;
 
+    size_t GetAudioInfoSize() const { return audioInfo_.Size(); }
+    size_t GetAudioInfoCapacity() const { return audioInfo_.Capacity(); }
+
 private:
     Result<SoundInstanceResource> GetSoundInstanceResouce(const Handle<Audio>& handle);
     Result<MusicInstanceResource> GetMusicInstanceResource(const Handle<Audio>& handle);
 
-    void RepopulateAudioNameIndexMap(size_t newSize);
+    //void RepopulateAudioNameIndexMap(size_t newSize);
 
     template <typename T> requires (std::same_as<T, Mix_Chunk> ||
                                     std::same_as<T, Mix_Music>)
@@ -141,8 +146,8 @@ private:
 
     std::vector<SoundPtr> sounds_;
     std::vector<MusicPtr> music_;
-    std::unordered_map<std::string_view, size_t> nameToInfoIdx_;
     AudioInfoSOA audioInfo_;
+    UnorderedDictionary<size_t> nameToInfoIdx_;
 };
 
 template <typename T> requires (std::same_as<T, Mix_Chunk> ||

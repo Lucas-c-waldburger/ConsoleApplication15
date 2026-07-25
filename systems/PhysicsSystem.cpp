@@ -107,7 +107,16 @@ void UpdateTransformComponents(EventBus& bus)
 	}
 }
 
+bool ValidBody(const RigidBody& rb) { return rb.body.GetData().IsValid(); }
+bool ValidShape(const Collider& col) { return col.shape.GetData().IsValid(); }
+
 } // unnamed namespace
+
+PhysicsSystem::PhysicsSystem()
+{
+	ObserveEntityDestroyed();
+	ObserveComponentRemoved();
+}
 
 void PhysicsSystem::Update(B2World* world_, EventBus& bus, float timeStep, int subStepCount)
 {
@@ -159,4 +168,28 @@ void PhysicsSystem::UpdateForces()
 	}
 }
 
+void PhysicsSystem::OnEntityDestroyed(Entity e)
+{
+	if (e.HasComponent<RigidBody>(&ValidBody))
+	{
+		auto& body = GetWriteAccess(e.GetComponent<RigidBody>().body);
 
+		body.Destroy();
+	}
+	else if (e.HasComponent<Collider>(&ValidShape))
+	{
+		auto& shape = GetWriteAccess(e.GetComponent<Collider>().shape);
+
+		shape.Destroy();
+	}
+}
+
+void PhysicsSystem::OnComponentRemoved(Entity e, ComponentSignature sig)
+{
+	if ((sig & (RigidBody::componentBit | Collider::componentBit)) == 0)
+	{
+		return;
+	}
+
+	OnEntityDestroyed(e);
+}

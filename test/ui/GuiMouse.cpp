@@ -31,6 +31,7 @@ void GuiMouse::Init()
 
 	entity_.AddComponent<InspectorTag>();
 	entity_.AddComponent<MouseState>();
+	entity_.AddComponent<Name>().value = "GuiMouse";
 }
 
 SDL_FPoint GuiMouse::GetPosition()

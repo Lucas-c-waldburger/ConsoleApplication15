@@ -23,13 +23,13 @@ public:
     using SliceType = Class;
     using ViewType = std::tuple<
         typename member_ptr_traits<MemberPtrs>::value_type&
-    ...>;
+    ...>; 
     using ConstViewType = std::tuple<
         const typename member_ptr_traits<MemberPtrs>::value_type&
     ...>;
 
-    StableSOA() = default;
-    ~StableSOA() = default;
+    //StableSOA() = default;
+    //~StableSOA() = default;
 
     size_t Size() const
     {

@@ -67,7 +67,7 @@ public:
 		HistoryCursorMoved = 1 << 0
 	};
 
-	static Result<Void> Init(SceneFixture::SharedPtr& scene);
+	static Result<Void> Init(SceneFixture& scene);
 
 	static UpdateReport Update(ResourceContext& ctx);
 
@@ -78,7 +78,11 @@ public:
 	static ComponentBuilderType& GetActiveBuilderType() { return activeBuilderType_; }
 	static EditableComponentBitSet& GetComponentHeaderOpen() { return componentHeaderOpen_; }
 
+	static Result<Void> ResetForNewScene(SceneFixture& scene);
+
 private:
+	static Result<Void> LoadResources(SceneFixture& scene);
+
 	static inline SpritePicker spritePicker_{};
 	static inline Buttons buttons_{};
 	static inline ComponentBuilderType activeBuilderType_ = ComponentBuilderType::None;

@@ -1,206 +1,129 @@
 #pragma once
-#include "../LuaTypesRegistry.h"
-#include "../LuaUserType.h"
+#include "CoreLuaUserTypes.h"
 #include "../../components/RenderableComponent.h"
 
+// ATLAS
+DEF_LUA_USERTYPE(AtlasPlot, Dependencies<SDL_Rect>) {
+	lua.def_type("rect", &AtlasPlot::rect,
+				 "rotation", &AtlasPlot::rotation);
+}
+
 // RENDER PROFILE
-template <> inline void RegisterLuaUserType<SDL_RendererFlip>(sol::state& lua)
-{
-	if (!lua["SDL_RendererFlip"].valid())
-	{
-		lua.new_enum("SDL_RendererFlip",
-			"SDL_FLIP_NONE", SDL_FLIP_NONE,
-			"SDL_FLIP_HORIZONTAL", SDL_FLIP_HORIZONTAL,
-			"SDL_FLIP_VERTICAL", SDL_FLIP_VERTICAL);
-	}
+DEF_LUA_USERTYPE(SDL_RendererFlip) {
+	lua.def_enum("SDL_FLIP_NONE", SDL_FLIP_NONE,
+			     "SDL_FLIP_HORIZONTAL", SDL_FLIP_HORIZONTAL,
+			     "SDL_FLIP_VERTICAL", SDL_FLIP_VERTICAL);
 }
 
-template <> inline void RegisterLuaUserType<SDL_BlendMode>(sol::state& lua)
-{
-	if (!lua["SDL_BlendMode"].valid())
-	{
-		lua.new_enum("SDL_BlendMode",
-			"SDL_BLENDMODE_NONE", SDL_BLENDMODE_NONE,
-			"SDL_BLENDMODE_BLEND", SDL_BLENDMODE_BLEND,
-			"SDL_BLENDMODE_ADD", SDL_BLENDMODE_ADD,
-			"SDL_BLENDMODE_MOD", SDL_BLENDMODE_MOD,
-			"SDL_BLENDMODE_MUL", SDL_BLENDMODE_MUL,
-			"SDL_BLENDMODE_INVALID", SDL_BLENDMODE_INVALID);
-	}
+DEF_LUA_USERTYPE(SDL_BlendMode) {
+	lua.def_enum("SDL_BLENDMODE_NONE", SDL_BLENDMODE_NONE,
+				 "SDL_BLENDMODE_BLEND", SDL_BLENDMODE_BLEND,
+				 "SDL_BLENDMODE_ADD", SDL_BLENDMODE_ADD,
+				 "SDL_BLENDMODE_MOD", SDL_BLENDMODE_MOD,
+				 "SDL_BLENDMODE_MUL", SDL_BLENDMODE_MUL,
+				 "SDL_BLENDMODE_INVALID", SDL_BLENDMODE_INVALID);
 }
 
-template <> inline void RegisterLuaUserType<TextureMods>(sol::state& lua)
-{
-	if (!lua["RGB"].valid())
-	{
-		lua.new_usertype<RGB>("RGB",
-			"r", &RGB::r,
-			"g", &RGB::g,
-			"b", &RGB::b);
-	}
-	if (!lua["TextureMods"].valid())
-	{
-		lua.new_usertype<TextureMods>("TextureMods",
-			"color", &TextureMods::color,
-			"alpha", &TextureMods::alpha,
-			"blend", &TextureMods::blend);
-	}
+DEF_LUA_USERTYPE(RGB) {
+	lua.def_type("r", &RGB::r,
+				 "g", &RGB::g,
+				 "b", &RGB::b);
 }
 
-template <> inline void RegisterLuaUserType<DebugDraw>(sol::state& lua)
-{
-	if (!lua["DebugDraw"].valid())
-	{
-		lua.new_usertype<DebugDraw>("DebugDraw", 
-			"on", &DebugDraw::on, 
-			"color", &DebugDraw::color);
-	}
+DEF_LUA_USERTYPE(TextureMods, Dependencies<RGB, SDL_BlendMode>) {
+	lua.def_type("color", &TextureMods::color,
+				 "alpha", &TextureMods::alpha,
+				 "blend", &TextureMods::blend);
 }
 
-template <> inline void RegisterLuaUserType<DebugDrawSet>(sol::state& lua)
-{
-	if (!lua["DebugDrawSet"].valid())
-	{
-		lua.new_usertype<DebugDrawSet>("DebugDrawSet",
-			"boundingBox", &DebugDrawSet::boundingBox,
-			"collider", &DebugDrawSet::collider);
-	}
+DEF_LUA_USERTYPE(DebugDraw, Dependencies<SDL_Color>) {
+	lua.def_type("on", &DebugDraw::on, 
+				 "color", &DebugDraw::color);
 }
 
-template <> inline void RegisterLuaUserType<RenderProfile>(sol::state& lua)
-{
-	if (!lua["RenderProfile"].valid())
-	{
-		lua.new_usertype<RenderProfile>("RenderProfile",
-			"drawOrder", &RenderProfile::drawOrder,
-			"mods", &RenderProfile::mods,
-			"flip", &RenderProfile::flip,
-			"offset", &RenderProfile::offset,
-			"debugDraw", &RenderProfile::debugDraw);
-	}
+DEF_LUA_USERTYPE(DebugDrawSet, Dependencies<DebugDraw>) {
+	lua.def_type("boundingBox", &DebugDrawSet::boundingBox,
+				 "collider", &DebugDrawSet::collider);
+}
+
+DEF_LUA_USERTYPE(Anchor) {
+	lua.def_enum("Left", Anchor::Left,
+				 "Right", Anchor::Right,
+				 "Top", Anchor::Top,
+				 "Bottom", Anchor::Bottom,
+		         "Center", Anchor::Center);
+}
+
+using RenderProfileAnchors = RenderProfile::Anchors;
+DEF_LUA_USERTYPE(RenderProfileAnchors, Dependencies<Anchor>) {
+	lua.def_type("scale", &RenderProfileAnchors::scale,
+				 "rotation", &RenderProfileAnchors::rotation);
+}
+
+DEF_LUA_USERTYPE(RenderProfile, Dependencies<TextureMods, SDL_RendererFlip, SDL_FPoint, 
+											 DebugDrawSet, RenderProfileAnchors>) {
+	lua.def_type("drawOrder", &RenderProfile::drawOrder,
+				 "mods", &RenderProfile::mods,
+				 "flip", &RenderProfile::flip,
+				 "offset", &RenderProfile::offset,
+				 "debugDraw", &RenderProfile::debugDraw,
+				 "isOverlay", &RenderProfile::isOverlay,
+				 "parallaxFactor", &RenderProfile::parallaxFactor,
+				 "anchors", &RenderProfile::anchor);
 }
 
 // TEXT RENDERABLE
-template <> inline void RegisterLuaUserType<TextAlign>(sol::state& lua)
-{
-	if (!lua["TextAlign"].valid())
-	{
-		lua.new_enum("TextAlign",
-			"Left", TextAlign::Left,
-			"Right", TextAlign::Right,
-			"Center", TextAlign::Center);
-	}
+DEF_LUA_USERTYPE(TextAlign) {
+	lua.def_enum("Left", TextAlign::Left,
+				 "Right", TextAlign::Right,
+				 "Center", TextAlign::Center);
 }
 
-template <> inline void RegisterLuaUserType<Glyph>(sol::state& lua)
-{
-	if (!lua["GlyphInfo"].valid())
-	{
-		lua.new_usertype<Glyph>("GlyphInfo",
-			"character", &Glyph::character,
-			"plot", &Glyph::plot,
-			"advance", &Glyph::advance);
-	}
+DEF_LUA_USERTYPE(Glyph, Dependencies<AtlasPlot>) {
+	lua.def_type("character", &Glyph::character,
+				 "plot", &Glyph::plot,
+				 "advance", &Glyph::advance);
 }
 
-template <> inline void RegisterLuaUserType<GlyphCacheData>(sol::state& lua)
-{
-	if (!lua["GlyphCacheData"].valid())
-	{
-		lua.new_usertype<GlyphCacheData>("GlyphCacheData",
-			"glyph", &GlyphCacheData::glyph,
-			"destRect", &GlyphCacheData::destRect,
-			"rotationCenter", &GlyphCacheData::rotationCenter);
-	}
+DEF_LUA_USERTYPE(GlyphCacheData, Dependencies<Glyph, SDL_Rect, SDL_FPoint>) {
+	lua.def_type("glyph", &GlyphCacheData::glyph,
+				 "destRect", &GlyphCacheData::destRect,
+				 "rotationCenter", &GlyphCacheData::rotationCenter);
 }
 
-template <> inline void RegisterLuaUserType<Handle<FontAtlasTexture>>(sol::state& lua)
-{
-	if (!lua["Handle<GlyphAtlas>"].valid())
-	{
-		lua.new_usertype<Handle<FontAtlasTexture>>("Handle<GlyphAtlas>",
-			sol::meta_function::equal_to, &Handle<FontAtlasTexture>::operator==);
-
-		lua["Handle<GlyphAtlas>"]["__ne"] = 
-			[](const Handle<FontAtlasTexture>& lhs, const Handle<FontAtlasTexture>& rhs) {
-				return lhs != rhs;
-		};
-	}
+using TextureResourceHandle = Handle<TextureResource>;
+DEF_LUA_USERTYPE(TextureResourceHandle) {
+	lua.def_type(sol::meta_function::equal_to, &TextureResourceHandle::operator==);
 }
 
-template <> inline void RegisterLuaUserType<TextRenderable>(sol::state& lua)
-{
-	if (!lua["DirtyFlag"].valid())
-	{
-		lua.new_enum("DirtyFlag",
-			"NewText", TextRenderable::Flag::DirtyText,
-			"NewTransforms", TextRenderable::Flag::DirtyTransform);
-	}
-	if (!lua["TextRenderable"].valid())
-	{
-		lua.new_usertype<TextRenderable>("TextRenderable",
-			"sourceAtlas", &TextRenderable::resourceHandle,
-			"text", &TextRenderable::text,
-			"dimensions", &TextRenderable::dimensions,
-			"align", &TextRenderable::align,
-			"glyphCache", &TextRenderable::glyphCache,
-			"dirtyFlags", &TextRenderable::flags);
-	}
+DEF_LUA_USERTYPE(TextFormatting, Dependencies<IDimensions, TextAlign>) {
+	lua.def_type("bounds", &TextFormatting::bounds,
+				 "align", &TextFormatting::align,
+				 "letterSpacing", &TextFormatting::letterSpacing,
+				 "scaleToBounds", &TextFormatting::scaleToBounds);
 }
 
-// SPRITE RENDERABLE
-template <> inline void RegisterLuaUserType<Handle<SpriteSeriesAtlas>>(sol::state& lua)
-{
-	if (!lua["Handle<SpriteSeriesAtlas>"].valid())
-	{
-		lua.new_usertype<Handle<SpriteSeriesAtlas>>("Handle<SpriteSeriesAtlas>",
-			sol::meta_function::equal_to, &Handle<SpriteSeriesAtlas>::operator==);
+// Probably dont need the glyph cache component
 
-		lua["Handle<SpriteSeriesAtlas>"]["__ne"] =
-			[](const Handle<SpriteSeriesAtlas>& lhs, const Handle<SpriteSeriesAtlas>& rhs) {
-				return lhs != rhs;
-		};
-	}
+DEF_LUA_USERTYPE(Sprite, Dependencies<TextureResourceHandle, AtlasPlot>) {
+	lua.def_type("resourceHandle", &Sprite::resourceHandle,
+				 "plot", &Sprite::plot);
 }
 
-template <> inline void RegisterLuaUserType<SpriteRenderable>(sol::state& lua)
-{
-	if (!lua["SpriteRenderable"].valid())
-	{
-		lua.new_usertype<SpriteRenderable>("SpriteRenderable",
-			"sourceAtlas", &SpriteRenderable::resourceHandle,
-			"sourcePlot", &SpriteRenderable::sourcePlot);
-	}
+DEF_LUA_USERTYPE(GlyphTextWriter, Dependencies<TextureResourceHandle>) {
+	lua.def_type("resourceHandle", &GlyphTextWriter::resourceHandle,
+				 "text", &GlyphTextWriter::text);
 }
 
-// NEW RENDERABLE COMPONENT
-template <> inline void RegisterLuaUserType<Renderable>(sol::state& lua)
-{
-	if (!lua["Renderable"].valid())
-	{
-		lua.new_usertype<Renderable>("Renderable",
-			"renderData", &Renderable::renderData,
-			"profile", &Renderable::profile);
-	}
+DEF_LUA_USERTYPE(TextRenderableComponent, Dependencies<GlyphTextWriter, TextFormatting, RenderProfile>) {
+	lua.def_type("writer", &TextRenderableComponent::writer,
+				 "formatting", &TextRenderableComponent::formatting,
+				 "profile", &TextRenderableComponent::profile,
+				 sol::meta_function::equal_to, &TextRenderableComponent::operator==);
 }
 
-
-namespace lua::usergroup {
-
-//using RenderableUsergroup = TypeList<
-//	SDL_BlendMode, 
-//	SDL_RendererFlip, 
-//	TextureMods,
-//	DebugDraw,
-//	DebugDrawSet,
-//	RenderProfile,
-//	TextAlign,
-//	Glyph,
-//	Handle<GlyphAtlas>,
-//	TextRenderable,
-//	Handle<SpriteSeriesAtlas>,
-//	SpriteRenderable,
-//	NewRenderable
-//>;
-
-} // lua::usergroup
+DEF_LUA_USERTYPE(SpriteRenderableComponent, Dependencies<Sprite, RenderProfile>) {
+	lua.def_type("sprite", &SpriteRenderableComponent::sprite,
+				 "profile", &SpriteRenderableComponent::profile,
+				 sol::meta_function::equal_to, &SpriteRenderableComponent::operator==);
+}

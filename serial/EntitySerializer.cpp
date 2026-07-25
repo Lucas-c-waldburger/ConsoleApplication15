@@ -125,9 +125,34 @@ Result<Void> EntitySerializer::SerializeEntities(const std::string& jsonFilepath
 		ECS::SerializeUserComponents(entityJ, e);
 	}
 
+	ClearContexts();
+
 	file << std::setw(4) << j;
 
 	return kVoid;
+}
+
+void EntitySerializer::SerializeEntitiesToJson(nlohmann::json& masterJ)
+{
+	assert(!masterJ.contains("entities"));
+
+	auto& entitiesJ = masterJ["entities"] = nlohmann::json::array();
+
+	auto entities = ECS::GetAllActiveEntities();
+	for (const auto& e : entities)
+	{
+		UpdateContexts(e);
+
+		auto& entityJ = entitiesJ.emplace_back(nlohmann::json::object());
+
+		entityJ["entityId"] = e.GetID();
+
+		SerializeBasicComponents(entityJ, e);
+		SerializeContextComponents(entityJ);
+		ECS::SerializeUserComponents(entityJ, e);
+	}
+
+	ClearContexts();
 }
 
 void EntitySerializer::UpdateContexts(const Entity& e)
@@ -135,6 +160,13 @@ void EntitySerializer::UpdateContexts(const Entity& e)
 	spriteContext_.entity = e;
 	textContext_.entity = e;
 	audioContext_.entity = e;
+}
+
+void EntitySerializer::ClearContexts()
+{
+	spriteContext_.entity = {};
+	textContext_.entity = {};
+	audioContext_.entity = {};
 }
 
 void EntitySerializer::SerializeBasicComponents(nlohmann::json& entityJ, const Entity& e)

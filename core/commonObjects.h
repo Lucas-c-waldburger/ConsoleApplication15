@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <optional>
 #include "CommonFunctions.h"
+#include "formatters.h"
 
 #define STR(x) #x
 #define NAME_AND_CALL(fn, ...) #fn, fn(__VA_ARGS__)

@@ -11,7 +11,11 @@ concept SomeComponent =
   * or Accessed through non-const GetComponent() 
   */
 template <SomeComponent T>
-struct TriggersUpdate { using UpdateType = T; };
+struct TriggersUpdate 
+{ 
+    using UpdateType = T; 
+    constexpr bool operator==(const TriggersUpdate&) const = default;
+};
 
 template <typename T>
 concept SomeUpdateTriggeringComponent = requires() {

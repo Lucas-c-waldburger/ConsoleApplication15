@@ -290,8 +290,8 @@ public:
 	TextureRepository(const TextureRepository&) = delete;
 	TextureRepository& operator=(const TextureRepository&) = delete;
 
-	TextureRepository(TextureRepository&&) noexcept = default;
-	TextureRepository& operator=(TextureRepository&&) noexcept = default;
+	TextureRepository(TextureRepository&&) noexcept;
+	TextureRepository& operator=(TextureRepository&&) noexcept;
 
 	SpriteAtlas& GetSpriteAtlas() { return spriteAtlasCollection_; }
 	const SpriteAtlas& GetSpriteAtlas() const { return spriteAtlasCollection_; }
@@ -308,7 +308,6 @@ private:
 	{
 		SignalToken spriteTextureCreated;
 		SignalToken glyphTextureCreated;
-		SignalToken rebuildTextures;
 	};
 
 	auto GetTextureCreatedCallback()
@@ -321,6 +320,6 @@ private:
 
 	SpriteAtlas spriteAtlasCollection_;
 	FontAtlas glyphAtlasCollection_;
-	Tokens tokens_;
 	TextureMap sourceTextureMap_;
+	Tokens tokens_;
 };

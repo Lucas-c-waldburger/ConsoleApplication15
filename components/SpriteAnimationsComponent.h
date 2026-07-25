@@ -20,11 +20,8 @@ struct SpriteSeriesIndex
         idx.current = (idx.current == 0) ? idx.max : idx.current - 1;
         return idx.current;
     }
-    friend constexpr bool operator==(const SpriteSeriesIndex& lhs, 
-                                     const SpriteSeriesIndex& rhs) noexcept
-    {
-        return lhs.current == rhs.current && lhs.max == rhs.max;
-    };
+
+    constexpr bool operator==(const SpriteSeriesIndex&) const = default;
 };
 
 struct SpriteAnimationComponent : BaseComponent<SpriteAnimationComponent>,
@@ -33,11 +30,6 @@ struct SpriteAnimationComponent : BaseComponent<SpriteAnimationComponent>,
     std::string spriteSeriesName;
     SpriteSeriesIndex index;
 
-    friend bool operator==(const SpriteAnimationComponent& lhs, 
-                           const SpriteAnimationComponent& rhs) noexcept
-    {
-        return lhs.spriteSeriesName == rhs.spriteSeriesName &&
-               lhs.index == rhs.index;
-    }
+    bool operator==(const SpriteAnimationComponent&) const = default;
 };
 

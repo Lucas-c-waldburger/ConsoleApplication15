@@ -85,7 +85,7 @@ std::vector<events::EntityDestroyed> GetAllEntitiesToDestroy(EntityManager& enti
 
 } // unnamed
 
-
+ 
 void EntityDestructor::EntityDestroyed(EntityManager& entityManager, ComponentManager& componentManager,
 									   /*EventBus2& bus, */Entity_t entityId)
 {

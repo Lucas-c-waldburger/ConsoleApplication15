@@ -242,6 +242,19 @@ void InspectorEntityPanel::DrawAddChildButton(Entity& e, const GuiTextureConvert
 	ImGui::Unindent();
 }
 
+void InspectorEntityPanel::ClearSelectionBoxes()
+{
+	for (auto& [_, boxId] : selectionBoxes_)
+	{
+		if (auto e = ECS::GetEntityByID(boxId); e.IsValid())
+		{
+			e.Destroy();
+		}
+	}
+
+	selectionBoxes_.clear();
+}
+
 void InspectorEntityPanel::DrawEntitySelections(ResourceContext& ctx)
 {
 	GuiTextureConverter converter{ ctx.textureRepo };
@@ -480,27 +493,58 @@ void InspectorEntityPanel::Update(ResourceContext& resourceCtx)
 	}
 }
 
-Result<Void> InspectorEntityPanel::Init(SceneFixture::SharedPtr& scene)
+Result<Void> InspectorEntityPanel::ResetForNewScene(SceneFixture& scene)
+{
+	ClearSelectionBoxes();
+	selection_.Clear();
+	hoverStack_.Clear();
+	buttons_.ClearHoverStates();
+
+	const auto& spriteAtlas = scene.GetTextureRepository().GetSpriteAtlas();
+	buttons_.addEntity.sprite = spriteAtlas.GetSprite("add_entity_icon");
+	buttons_.addChild.sprite = spriteAtlas.GetSprite("add_child_icon");
+	buttons_.viewChildren.sprite = spriteAtlas.GetSprite("view_children_icon");
+
+	scene.RegisterSystem<SelectionBoxRenderer>(Phase::Presentation);
+
+	return kVoid;
+}
+
+Result<Void> InspectorEntityPanel::LoadResources(SceneFixture& scene)
 {
 	TRY(ResourcePath::Sprite("ui/editor/add_entity_icon.png"), addEntityIconPath);
 	TRY(ResourcePath::Sprite("ui/editor/add_child_icon.png"), addChildIconPath);
 	TRY(ResourcePath::Sprite("ui/editor/view_children_icon.png"), viewChildrenIconPath);
 
-	auto& spriteAtlas = scene->GetTextureRepository().GetSpriteAtlas();
+	auto& spriteAtlas = scene.GetTextureRepository().GetSpriteAtlas();
 
 	TRY_ASSIGN(buttons_.addEntity.sprite, spriteAtlas.LoadSprite(
-		scene->GetRenderer(), { .filepath = std::move(addEntityIconPath) }));
+		scene.GetRenderer(), { .filepath = std::move(addEntityIconPath) }));
 	TRY_ASSIGN(buttons_.addChild.sprite, spriteAtlas.LoadSprite(
-		scene->GetRenderer(), { .filepath = std::move(addChildIconPath) }));
+		scene.GetRenderer(), { .filepath = std::move(addChildIconPath) }));
 	TRY_ASSIGN(buttons_.viewChildren.sprite, spriteAtlas.LoadSprite(
-		scene->GetRenderer(), { .filepath = std::move(viewChildrenIconPath) }));
+		scene.GetRenderer(), { .filepath = std::move(viewChildrenIconPath) }));
+
+	return kVoid;
+}
+
+Result<Void> InspectorEntityPanel::Init(SceneFixture& scene)
+{
+	TRY(LoadResources(scene));
 
 	bool registered = ECS::RegisterComponent<SelectionBox>();
 	assert(registered);
 
-	scene->RegisterSystem<SelectionBoxRenderer>(Phase::Presentation);
+	scene.RegisterSystem<SelectionBoxRenderer>(Phase::Presentation);
 
 	return kVoid;
+}
+
+void InspectorEntityPanel::Buttons::ClearHoverStates()
+{
+	addEntity.isHovered = false;
+	addChild.isHovered = false;
+	viewChildren.isHovered.clear();
 }
 
 } // ui

@@ -31,6 +31,13 @@ Result<Void> UserComponentSerializationHelper::DeserializeComponentData(const nl
 	return kVoid;
 }
 
+void UserComponentSerializationHelper::Reset()
+{
+	serializeFns_.clear();
+	deserializeFns_.clear();
+	userComponentNames_.clear();
+}
+
 /** UserComponentBridge */
 size_t UserComponentBridge::GetAvailableComponentCount() const
 {
@@ -75,4 +82,11 @@ Result<Void> UserComponentBridge::DeserializeComponentData(const nlohmann::json&
 														   ComponentManager& cmpManager)
 {
 	return serializationHelper_.DeserializeComponentData(j, e, *this, cmpManager);
+}
+
+void UserComponentBridge::Reset()
+{
+	userComponentListIndexForDataType_.clear();
+	nextFreeComponentIndex_ = 0;
+	serializationHelper_.Reset();
 }

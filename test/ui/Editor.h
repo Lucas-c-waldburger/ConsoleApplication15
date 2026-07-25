@@ -26,16 +26,6 @@ public:
 		Components 
 	};
 
-	struct ResourceContext
-	{
-		Camera& camera;
-		TextureRepository& textureRepo;
-		B2World& world;
-		SystemManager& systemManager;
-
-		static ResourceContext Create(SceneFixture::SharedPtr& scene);
-	};
-
 	struct UpdateState
 	{
 		PanelType forcePanelOpen = PanelType::None;
@@ -61,9 +51,15 @@ public:
 		}
 	};
 
+	enum class ToolbarResponse
+	{
+		None,
+		ResetForNewScene
+	};
+
 	static Result<Void> Init(SceneFixture::SharedPtr& scene);
 
-	static void Update(ResourceContext& ctx, float dt);
+	static void Update(SceneFixture::WeakPtr weakScene, float dt);
 
 	static PanelType GetActivePanel() { return activePanel_; }
 
@@ -74,8 +70,13 @@ public:
 private:
 	Editor() = default;
 
-	static void HandleEntityDrag(const ResourceContext& ctx, Entity_t selectedEntityAtUpdateStart);
-	static void HandleCameraControl(ResourceContext& ctx, float dt);
+	static void DestroyEditorEntities();
+
+	static Result<Void> ResetForNewScene(SceneFixture& scene);
+
+	static void HandleEntityDrag(const Camera& cam, Entity_t selectedEntityAtUpdateStart);
+	static void HandleCameraControl(Camera& cam, float dt);
+	static void DrawToolbar(SceneFixture& scene);
 
 	static void UpdateForHistoryChange();
 	
@@ -83,7 +84,6 @@ private:
 	static inline EntityDragUtility entityDrag_{};
 	static inline CameraControlUtility cameraControl_{};
 	static inline UpdateState updateState_{};
-
 };
 
 } // ui

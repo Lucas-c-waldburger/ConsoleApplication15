@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <cassert>
 #include <typeindex>
+#include <deque>
+#include "SceneRegistry.h"
 #include "../physics/B2World.h"
 #include "../scripting/ScriptManager.h"
 #include "../core/Monitoring.h"
@@ -28,16 +30,12 @@ public:
 		Handle<HookAttachment> hookAttachmentHandle;
 	};
 
-	enum FixtureFlag : uint8_t
-	{
-		ImGuiEnabled = 1 << 0
-	};
-
 	struct SceneConfiguration
 	{
 		SDL_Color screenColor = SDLite::kColorBlack;
+		SDL_FPoint worldGravity = { 0, 9.8f };
 	};
-
+	   
 	SceneFixture() = default;
 	~SceneFixture();
 
@@ -59,7 +57,7 @@ public:
 	Result<Void> UpdateUi();
 	void LoopEnd();
 
-	// getters
+	// systems
 	SystemManager& GetSystemManager() { return systems_; }
 	const SystemManager& GetSystemManager() const { return systems_; }
 
@@ -70,6 +68,38 @@ public:
 
 	template <typename T>
 	bool IsSystemRegistered() { return systems_.IsSystemRegistered<T>(); }
+
+	template <typename T, typename...Args>
+	T& RegisterSystem(Args&&...args)
+	{
+		return systems_.RegisterSystem<T>(std::forward<Args>(args)...);
+	}
+
+	// scenes
+	template <typename Fn> requires std::convertible_to<Fn, SceneInitializer>
+	bool RegisterScene(std::string sceneName, Fn&& init)
+	{
+		return sceneRegistry_.RegisterScene(std::move(sceneName), std::forward<Fn>(init));
+	}
+
+	Result<Void> LoadScene(const std::string& sceneName, const SceneConfiguration& config = {})
+	{
+		if (!sceneRegistry_.IsSceneRegistered(sceneName))
+		{
+			return MAKE_ERROR_FMT("Scene with name '{}' not registered", sceneName);
+		}
+
+		ResetForNewScene(config);
+
+		return sceneRegistry_.InitScene(sceneName, *this);
+	}
+
+	bool IsSceneRegistered(const std::string& sceneName) const
+	{
+		return sceneRegistry_.IsSceneRegistered(sceneName);
+	}
+
+	const std::string& GetActiveScene() const { return sceneRegistry_.GetActiveScene(); }
 
 	HookManager& GetHooks() { return hooks_; }
 	TextureRepository& GetTextureRepository() { return textureRepo_; }
@@ -86,27 +116,29 @@ public:
 	Result<Void> SerializeState(SerializationSystem::Filepaths fps = {});
 	Result<std::vector<Error>> DeserializeState(SerializationSystem::Filepaths fps = {});
 
+	void SerializeStateToJson(nlohmann::json& j) const;
+	std::vector<Error> DeserializeStateFromJson(const nlohmann::json& j);
+
 	float GetDeltaTime() const { return systems_.GetSystem<GameLoopSystem>().GetDeltaTime(); }
 	
 	template <typename...Ts>
 	void SetTestScriptFile(std::string_view scriptFileName, std::function<void(Lua&)>&& setupFn);
 
 	// create/destroy
-	static Result<std::shared_ptr<SceneFixture>> GetInstance();
+	static Result<std::shared_ptr<SceneFixture>> GetInstance(const SceneConfiguration& config = {});
+
 	void TearDown();
 
-	// system scheduling
-	template <typename T, typename...Args>
-	T& RegisterSystem(Args&&...args)
-	{
-		return systems_.RegisterSystem<T>(std::forward<Args>(args)...);
-	}
+	void ResetForNewScene(const SceneConfiguration& config);
 
 private:
 	void UpdateTimers();
 	Result<Void> RenderScene();
 
 	Result<bool> RunGameLoopImpl();
+
+	void SerializeSceneToJson(nlohmann::json& j) const;
+	Result<Void> DeserializeSceneFromJson(const nlohmann::json& j);
 
 	TextureRepository textureRepo_;
 	SystemManager systems_;
@@ -115,6 +147,7 @@ private:
 	ScriptManager scripts_;
 	TestScript testScript_;
 	EventBus eventBus_;
+	SceneRegistry sceneRegistry_;
 	SceneConfiguration config_;
 };
 

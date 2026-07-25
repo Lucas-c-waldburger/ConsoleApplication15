@@ -14,6 +14,7 @@
 #include "../../../core/SizedEnum.h"
 #include "../SandDemo.h"
 #include "../grapple/Grapple.h"
+#include "GamepadUiOverlay.h"
 
 namespace test {
 
@@ -209,19 +210,19 @@ private:
 };
 
 static Result<Void>
-SetUpGirlStateReporter(Entity& target, SceneFixture::SharedPtr& fixture)
+SetUpGirlStateReporter(Entity& target, SceneFixture& fixture)
 {
-	auto& atlas = fixture->GetTextureRepository().GetFontAtlas();
+	//auto& atlas = fixture->GetTextureRepository().GetFontAtlas();
 
-	TRY(LoadFonts(atlas, fixture->GetRenderer()));
+	//TRY(LoadFonts(atlas, fixture->GetRenderer()));
 
-	auto writer = atlas.GetTextWriter("GoNotoKurrent-Bold");
+	auto writer = fixture.GetTextureRepository().GetFontAtlas().GetTextWriter("GoNotoKurrent-Bold");
 	if (!writer.resourceHandle.IsValid())
 	{
 		return MAKE_ERROR("Font not found");
 	}
 
-	fixture->RegisterSystem<GirlStateReporter>(
+	fixture.RegisterSystem<GirlStateReporter>(
 		Phase::Input, target, std::move(writer), SDLite::kColorWhite
 	);
 
@@ -265,21 +266,41 @@ static Entity MakeStaticBox(B2World& world, SDL_Color color,
 	return e;
 }
 
-static Result<Void> SetUpEnvironment(SceneFixture::SharedPtr& fixture)
+static Result<Void> LoadEnvironmentSprites(SpriteAtlas& atlas, SDL_Renderer* renderer)
 {
 	TRY(ResourcePath::Sprite("environment/caverns/background.png"), backgroundPath);
 	TRY(ResourcePath::Sprite("environment/caverns/back-walls.png"), backWallsPath);
 	TRY(ResourcePath::Sprite("environment/caverns/tiles.png"), tilesPath);
 
-	auto& atlas = fixture->GetTextureRepository().GetSpriteAtlas();
-	auto* renderer = fixture->GetRenderer();
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(backgroundPath) }));
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(backWallsPath) }));
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(tilesPath) }));
 
-	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(backgroundPath) }),
-		backgroundSprite);
-	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(backWallsPath) }),
-		backWallSprite);
-	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(tilesPath) }),
-		tilesSprite);
+	return kVoid;
+}
+
+static Result<Void> SetUpEnvironment(SceneFixture& fixture)
+{
+	//TRY(ResourcePath::Sprite("environment/caverns/background.png"), backgroundPath);
+	//TRY(ResourcePath::Sprite("environment/caverns/back-walls.png"), backWallsPath);
+	//TRY(ResourcePath::Sprite("environment/caverns/tiles.png"), tilesPath);
+
+	auto& atlas = fixture.GetTextureRepository().GetSpriteAtlas();
+	//auto* renderer = fixture->GetRenderer();
+
+	//TRY(atlas.LoadSprite(renderer, { .filepath = std::move(backgroundPath) }),
+	//	backgroundSprite);
+	//TRY(atlas.LoadSprite(renderer, { .filepath = std::move(backWallsPath) }),
+	//	backWallSprite);
+	//TRY(atlas.LoadSprite(renderer, { .filepath = std::move(tilesPath) }),
+	//	tilesSprite);
+
+	auto backgroundSprite = atlas.GetSprite("background");
+	assert(backgroundSprite.resourceHandle.IsValid());
+	auto backWallSprite = atlas.GetSprite("back-walls");
+	assert(backWallSprite.resourceHandle.IsValid());
+	auto tilesSprite = atlas.GetSprite("tiles");
+	assert(tilesSprite.resourceHandle.IsValid());
 
 	auto winCenter = SDLite::Window().GetLocalCenter<SDL_FPoint>();
 	auto [winW, winH] = SDLite::Window().GetSize();
@@ -354,7 +375,7 @@ static Result<Void> SetUpEnvironment(SceneFixture::SharedPtr& fixture)
 		});
 
 	// floor
-	auto floorEnt = MakeFloor(fixture->GetWorld(),
+	auto floorEnt = MakeFloor(fixture.GetWorld(),
 		SDLite::kColorGreen, 50.0f, 169.0f);
 	assert(floorEnt.IsValid());
 
@@ -373,12 +394,12 @@ static Result<Void> SetUpEnvironment(SceneFixture::SharedPtr& fixture)
 		172.0f
 	};
 
-	auto wallEnt1 = MakeStaticBox(fixture->GetWorld(), SDLite::kColorOrange,
+	auto wallEnt1 = MakeStaticBox(fixture.GetWorld(), SDLite::kColorOrange,
 		wallDims, wall1PosOffset);
 	assert(wallEnt1.IsValid());
 	wallEnt1.AddComponent(ObjectCategory{ .value = ObjectCategory::Wall });
 
-	auto wallEnt2 = MakeStaticBox(fixture->GetWorld(), SDLite::kColorOrange,
+	auto wallEnt2 = MakeStaticBox(fixture.GetWorld(), SDLite::kColorOrange,
 		wallDims, wall2PosOffset);
 	assert(wallEnt2.IsValid());
 	wallEnt2.AddComponent(ObjectCategory{ .value = ObjectCategory::Wall });
@@ -391,7 +412,7 @@ static Result<Void> SetUpEnvironment(SceneFixture::SharedPtr& fixture)
 		-30.8f, 20.0f
 	};
 
-	auto platformEnt1 = MakeStaticBox(fixture->GetWorld(), SDLite::kColorGreen,
+	auto platformEnt1 = MakeStaticBox(fixture.GetWorld(), SDLite::kColorGreen,
 		platformDims, platform1PosOffset);
 	assert(platformEnt1.IsValid());
 	platformEnt1.AddComponent(ObjectCategory{ .value = ObjectCategory::Ground });
@@ -583,15 +604,26 @@ static void SetUpGirlEntityCallbacks(Entity& e, EventBus& bus)
 	addBasicIntentLambda.template operator()<&Act::ballFreezeIntent, Src::LeftTrigger>();
 }
 
+static Result<Void> LoadCrateSprite(SpriteAtlas& spriteAtlas, SDL_Renderer* renderer)
+{
+	TRY(ResourcePath::Sprite("environment/sCrate.png"), cratePath);
+
+	TRY(spriteAtlas.LoadSprite(renderer, SpriteDescriptor{ .filepath = std::move(cratePath) }));
+
+	return kVoid;
+}
+
 static Result<Entity> MakeCrateEntity(SceneFixture::SharedPtr& fixture,
 									  SDL_FPoint startingPos)
 {
 	static constexpr float kCrateScale = 2.0f;
 
-	TRY(ResourcePath::Sprite("environment/sCrate.png"), cratePath);
-	TRY(fixture->GetTextureRepository().GetSpriteAtlas().LoadSprite(
-		fixture->GetRenderer(), SpriteDescriptor{ .filepath = std::move(cratePath) }
-	), crateSprite);
+	//TRY(ResourcePath::Sprite("environment/sCrate.png"), cratePath);
+	//TRY(fixture->GetTextureRepository().GetSpriteAtlas().LoadSprite(
+	//	fixture->GetRenderer(), SpriteDescriptor{ .filepath = std::move(cratePath) }
+	//), crateSprite);
+	auto crateSprite = fixture->GetTextureRepository().GetSpriteAtlas().GetSprite("sCrate");
+	assert(crateSprite.resourceHandle.IsValid());
 
 	auto e = ECS::CreateEntity();
 	assert(e.IsValid());
@@ -627,11 +659,11 @@ static Result<Entity> MakeCrateEntity(SceneFixture::SharedPtr& fixture,
 }
 
 
-static Result<Entity> MakeGirlEntity(SceneFixture::SharedPtr& fixture,
+static Result<Entity> MakeGirlEntity(SceneFixture& fixture,
 									 SDL_FPoint startingPos)
 {
-	TRY(LoadGirlSprites(fixture->GetTextureRepository().GetSpriteAtlas(),
-		fixture->GetRenderer()));
+	//TRY(LoadGirlSprites(fixture->GetTextureRepository().GetSpriteAtlas(),
+	//	fixture->GetRenderer()));
 
 	auto e = ECS::CreateEntity();
 	assert(e.IsValid());
@@ -649,7 +681,7 @@ static Result<Entity> MakeGirlEntity(SceneFixture::SharedPtr& fixture,
 		.position = startingPos,
 		.gravityScale = kGirlNormalGravityScale,
 		.fixedRotation = true
-	}).Build(fixture->GetWorld()));
+	}).Build(fixture.GetWorld()));
 
 	B2CollisionFilter filter{};
 	filter.categories = ObjectCategory::Player;
@@ -674,12 +706,12 @@ static Result<Entity> MakeGirlEntity(SceneFixture::SharedPtr& fixture,
 	e.AddComponent<AnimationDeltas>() = kGirlBaseAnimationDeltas;
 	e.AddComponent(GirlState{ .animation = GirlState::Animation::Idle });
 
-	SetUpGirlEntityCallbacks(e, fixture->GetEventBus());
+	SetUpGirlEntityCallbacks(e, fixture.GetEventBus());
 
 	return e;
 }
 
-static Result<Entity> MakeSwordEntity(SceneFixture::SharedPtr& fixture, Entity& girl)
+static Result<Entity> MakeSwordEntity(SceneFixture& fixture, Entity& girl)
 {
 	assert(girl.HasComponent<RigidBody>());
 	assert(girl.HasComponent<Collider>());
@@ -698,7 +730,7 @@ static Result<Entity> MakeSwordEntity(SceneFixture::SharedPtr& fixture, Entity& 
 	.WithBodyParameters({
 		.bodyType = B2Body::Type::Static,
 		.position = gBody.GetPosition()
-	}).Build(fixture->GetWorld()));
+	}).Build(fixture.GetWorld()));
 
 	sw.AddComponent(ComponentBuilder<Collider>{}
 	.WithFilter({
@@ -720,7 +752,7 @@ static Result<Entity> MakeSwordEntity(SceneFixture::SharedPtr& fixture, Entity& 
 	sw.AddComponent<SpriteRenderableComponent>();
 	sw.AddComponent<CollisionCache>();
 
-	SetUpSwordEntityCallbacks(sw, fixture->GetEventBus());
+	SetUpSwordEntityCallbacks(sw, fixture.GetEventBus());
 
 	return sw;
 }
@@ -780,9 +812,20 @@ inline Result<Void> RegisterCollisionCacheCallbacks(EntityEvents& entEvs)
 	return kVoid;
 }
 
-inline Result<LegIron> MakeLegIronEntity(SceneFixture::SharedPtr& fixture, Entity& girl, SDL_FPoint girlStartPos)
+inline Result<Void> LoadLegIronSprites(SpriteAtlas& atlas, SDL_Renderer* renderer)
 {
-	TRY(LegIron::Create(fixture->GetWorld(), fixture->GetTextureRepository(),
+	TRY(ResourcePath::Sprite("shapes/circle_icon.png"), circlePath);
+	TRY(ResourcePath::Sprite("shapes/spike_ball.png"), spikeBallPath);
+
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(circlePath) }));
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(spikeBallPath) }));
+
+	return kVoid;
+}
+
+inline Result<LegIron> MakeLegIronEntity(SceneFixture& fixture, Entity& girl, SDL_FPoint girlStartPos)
+{
+	TRY(LegIron::Create(fixture.GetWorld(), fixture.GetTextureRepository(),
 		girl, {
 			.headPos = { girlStartPos.x + 5.0f, girlStartPos.y},
 			.numLinks = 11,
@@ -800,7 +843,7 @@ inline Result<LegIron> MakeLegIronEntity(SceneFixture::SharedPtr& fixture, Entit
 	ballE.AddComponent<ObjectCategory>().value = ObjectCategory::PlayerLegIron;
 	ballE.AddComponent<CollisionCategoryTracker>();
 
-	auto evs = ballE.GetEvents(fixture->GetEventBus());
+	auto evs = ballE.GetEvents(fixture.GetEventBus());
 
 	//evs.OnEvent([](const events::SensorCollisionBegin& ev, Collider& col, CollisionCache& cache) {
 	//	if (auto resolved = ResolveCollisionData(col, ev))
@@ -820,5 +863,22 @@ inline Result<LegIron> MakeLegIronEntity(SceneFixture::SharedPtr& fixture, Entit
 
 	return legIron;
 }
+
+inline Result<Void> LoadAllResources(SceneFixture& fixture)
+{
+	auto& spriteAtlas = fixture.GetTextureRepository().GetSpriteAtlas();
+	auto& fontAtlas = fixture.GetTextureRepository().GetFontAtlas();
+	auto* renderer = fixture.GetRenderer();
+
+	TRY(LoadFonts(fontAtlas, renderer));
+	TRY(LoadGirlSprites(spriteAtlas, renderer));
+	TRY(LoadEnvironmentSprites(spriteAtlas, renderer));
+	TRY(LoadCrateSprite(spriteAtlas, renderer));
+	TRY(LoadLegIronSprites(spriteAtlas, renderer));
+	TRY(LoadGamepadUiDrawSprites(spriteAtlas, renderer));
+
+	return kVoid;
+}
+
 
 } // test

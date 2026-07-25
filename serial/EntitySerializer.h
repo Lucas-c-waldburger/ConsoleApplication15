@@ -32,11 +32,14 @@ public:
 
 	Result<Void> SerializeEntities(const std::string& jsonFilepath);
 
+	void SerializeEntitiesToJson(nlohmann::json& masterJ);
+
 private:
 	static void SerializeBasicComponents(nlohmann::json& entityJ, const Entity& e);
 	void SerializeContextComponents(nlohmann::json& entityJ);
 
 	void UpdateContexts(const Entity& e);
+	void ClearContexts();
 
 	SpriteSerializerContext spriteContext_;
 	TextSerializerContext textContext_;

@@ -29,6 +29,27 @@ static constexpr float kControllerButtonSpritePosOffset = 50.0f;
 static constexpr float kControllerButtonSpriteScale = 1.0f;
 static constexpr uint8_t kControllerButtonTransparentAlpha = 100;
 
+static inline Result<Void> LoadGamepadUiDrawSprites(SpriteAtlas& atlas, SDL_Renderer* renderer)
+{
+	TRY(ResourcePath::Sprite(kThumbstickOuterSpritePath), outerPath);
+	TRY(ResourcePath::Sprite(kThumbstickInnerSpritePath), innerPath);
+
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(outerPath) }));
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(innerPath) }));
+
+	TRY(ResourcePath::Sprite(kControllerButtonSpriteAPath), aPath);
+	TRY(ResourcePath::Sprite(kControllerButtonSpriteBPath), bPath);
+	TRY(ResourcePath::Sprite(kControllerButtonSpriteXPath), xPath);
+	TRY(ResourcePath::Sprite(kControllerButtonSpriteYPath), yPath);
+
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(aPath) }));
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(bPath) }));
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(xPath) }));
+	TRY(atlas.LoadSprite(renderer, { .filepath = std::move(yPath) }));
+
+	return kVoid;
+}
+
 class ThumbstickUiDraw
 {
 public:
@@ -85,17 +106,22 @@ public:
 	}
 
 	static Result<Void> CreateAndConnect(const Entity& girlE, 
-		SceneFixture::SharedPtr& fixture, 
+		SceneFixture& fixture, 
 		std::optional<SDL_FPoint> pos = std::nullopt)
 	{
-		TRY(ResourcePath::Sprite(kThumbstickOuterSpritePath), outerPath);
-		TRY(ResourcePath::Sprite(kThumbstickInnerSpritePath), innerPath);
+		//TRY(ResourcePath::Sprite(kThumbstickOuterSpritePath), outerPath);
+		//TRY(ResourcePath::Sprite(kThumbstickInnerSpritePath), innerPath);
 
-		auto& atlas = fixture->GetTextureRepository().GetSpriteAtlas();
-		TRY(atlas.LoadSprite(fixture->GetRenderer(), { .filepath = std::move(outerPath) }),
-			outerSprite);
-		TRY(atlas.LoadSprite(fixture->GetRenderer(), { .filepath = std::move(innerPath) }),
-			innerSprite);
+		auto& atlas = fixture.GetTextureRepository().GetSpriteAtlas();
+		//TRY(atlas.LoadSprite(fixture->GetRenderer(), { .filepath = std::move(outerPath) }),
+		//	outerSprite);
+		//TRY(atlas.LoadSprite(fixture->GetRenderer(), { .filepath = std::move(innerPath) }),
+		//	innerSprite);
+
+		auto outerSprite = atlas.GetSprite("Joystick");
+		assert(outerSprite.resourceHandle.IsValid());
+		auto innerSprite = atlas.GetSprite("LargeHandleFilledGrey");
+		assert(innerSprite.resourceHandle.IsValid());
 		
 		auto outE = ECS::CreateEntity();
 		auto inE = ECS::CreateEntity();
@@ -135,7 +161,7 @@ public:
 
 		//TRY(SetUpEvents(inE, fixture->GetEventBus(), *pos));
 
-		fixture->RegisterSystem<ThumbstickUiDraw>(Phase::Input, girlE, outE, inE, *pos);
+		fixture.RegisterSystem<ThumbstickUiDraw>(Phase::Input, girlE, outE, inE, *pos);
 
 		return kVoid;
 	}
@@ -208,19 +234,28 @@ public:
 	}
 
 	static Result<Void> CreateAndConnect(const Entity& girlE,
-		SceneFixture::SharedPtr& fixture,
+		SceneFixture& fixture,
 		std::optional<SDL_FPoint> pos = std::nullopt)
 	{
-		TRY(ResourcePath::Sprite(kControllerButtonSpriteAPath), aPath);
-		TRY(ResourcePath::Sprite(kControllerButtonSpriteBPath), bPath);
-		TRY(ResourcePath::Sprite(kControllerButtonSpriteXPath), xPath);
-		TRY(ResourcePath::Sprite(kControllerButtonSpriteYPath), yPath);
+		//TRY(ResourcePath::Sprite(kControllerButtonSpriteAPath), aPath);
+		//TRY(ResourcePath::Sprite(kControllerButtonSpriteBPath), bPath);
+		//TRY(ResourcePath::Sprite(kControllerButtonSpriteXPath), xPath);
+		//TRY(ResourcePath::Sprite(kControllerButtonSpriteYPath), yPath);
 
-		auto& atlas = fixture->GetTextureRepository().GetSpriteAtlas();
-		TRY(atlas.LoadSprite(fixture->GetRenderer(), {.filepath = std::move(aPath)}), aSprite);
-		TRY(atlas.LoadSprite(fixture->GetRenderer(), {.filepath = std::move(bPath)}), bSprite);
-		TRY(atlas.LoadSprite(fixture->GetRenderer(), {.filepath = std::move(xPath)}), xSprite);
-		TRY(atlas.LoadSprite(fixture->GetRenderer(), {.filepath = std::move(yPath)}), ySprite);
+		auto& atlas = fixture.GetTextureRepository().GetSpriteAtlas();
+		//TRY(atlas.LoadSprite(fixture->GetRenderer(), {.filepath = std::move(aPath)}), aSprite);
+		//TRY(atlas.LoadSprite(fixture->GetRenderer(), {.filepath = std::move(bPath)}), bSprite);
+		//TRY(atlas.LoadSprite(fixture->GetRenderer(), {.filepath = std::move(xPath)}), xSprite);
+		//TRY(atlas.LoadSprite(fixture->GetRenderer(), {.filepath = std::move(yPath)}), ySprite);
+
+		auto aSprite = atlas.GetSprite("btn_a");
+		assert(aSprite.resourceHandle.IsValid());
+		auto bSprite = atlas.GetSprite("btn_b");
+		assert(bSprite.resourceHandle.IsValid());
+		auto xSprite = atlas.GetSprite("btn_x");
+		assert(xSprite.resourceHandle.IsValid());
+		auto ySprite = atlas.GetSprite("btn_y");
+		assert(ySprite.resourceHandle.IsValid());
 
 		if (!pos.has_value())
 		{
@@ -264,7 +299,7 @@ public:
 		makeEnt(X, std::move(xSprite), -kControllerButtonSpritePosOffset, 0.0f);
 		makeEnt(Y, std::move(ySprite), 0.0f, -kControllerButtonSpritePosOffset);
 
-		fixture->RegisterSystem<ControllerButtonUiDraw>(
+		fixture.RegisterSystem<ControllerButtonUiDraw>(
 			Phase::Input, girlE, std::move(map));
 
 		return kVoid;

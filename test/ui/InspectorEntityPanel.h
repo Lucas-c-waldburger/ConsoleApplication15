@@ -57,6 +57,8 @@ public:
 		SimpleButton addEntity;
 		SimpleButton addChild;
 		MapButton<Entity_t> viewChildren;
+
+		void ClearHoverStates();
 	};
 
 	struct ResourceContext
@@ -65,7 +67,7 @@ public:
 		const TextureRepository& textureRepo;
 	};
 
-	static Result<Void> Init(SceneFixture::SharedPtr& scene);
+	static Result<Void> Init(SceneFixture& scene);
 
 	static void Update(ResourceContext& resourceCtx);
 
@@ -78,6 +80,8 @@ public:
 	static bool SetSelectedEntityForEdit(Entity_t id);
 
 	static Buttons& GetButtons() { return buttons_; }
+
+	static Result<Void> ResetForNewScene(SceneFixture& scene);
 
 private:
 	struct HoverStack
@@ -100,6 +104,12 @@ private:
 			currentIndex = currentIndex <= 0
 				? entityIds.size() - 1 : currentIndex - 1;
 		}
+
+		void Clear()
+		{
+			entityIds.clear();
+			currentIndex = 0;
+		}
 	};
 
 	static Entity_t MakeSelectionBox();
@@ -109,10 +119,12 @@ private:
 	static void DrawEntitySelections(ResourceContext& ctx);
 	static bool DrawAddEntityButton(const GuiTextureConverter& converter);
 	static void DrawAddChildButton(Entity& e, const GuiTextureConverter& converter);
-	//static bool DrawViewChildrenButton(Entity& e, const GuiTextureConverter& converter);
+	static void ClearSelectionBoxes();
 
 	static void AssignEntityName(Entity& e);
 	static void RemoveStaleEntity(Entity& e);
+
+	static Result<Void> LoadResources(SceneFixture& scene);
 
 	static inline std::unordered_map<Entity_t, Entity_t> selectionBoxes_;
 	static inline Selection selection_;

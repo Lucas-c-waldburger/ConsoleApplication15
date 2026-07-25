@@ -18,6 +18,17 @@ SerializationSystem::SerializeState(const Filepaths& filepaths, const TextureRep
 	return kVoid;
 }
 
+void SerializationSystem::SerializeStateToJson(nlohmann::json& masterJ, 
+											   const TextureRepository& textureRepo,
+											   const AudioBank& audioBank)
+{
+	TextureRepositorySerializer::SerializeToJson(masterJ, textureRepo);
+	AudioBankSerializer::SerializeToJson(masterJ, audioBank);
+
+	auto entSerializer = EntitySerializer{ textureRepo, audioBank };
+	entSerializer.SerializeEntitiesToJson(masterJ);
+}
+
 std::vector<Error>
 SerializationSystem::DeserializeState(const Filepaths& filepaths, B2World& world,
 									  TextureRepository& textureRepo, SDLInputSystem& inputSystem,
@@ -29,6 +40,33 @@ SerializationSystem::DeserializeState(const Filepaths& filepaths, B2World& world
 		filepaths.audioPath, audioBank);
 	auto entityErrors = EntityDeserializer{ world, textureRepo, inputSystem, audioBank }
 		.DeserializeEntities(filepaths.entitiesPath);
+
+	const size_t totalErrorCount = textureErrors.size() + audioErrors.size() + entityErrors.size();
+	if (totalErrorCount == 0)
+	{
+		return {};
+	}
+
+	std::vector<Error> allErrors{};
+	allErrors.reserve(totalErrorCount);
+	allErrors.append_range(std::move(textureErrors));
+	allErrors.append_range(std::move(audioErrors));
+	allErrors.append_range(std::move(entityErrors));
+
+	return allErrors;
+}
+
+std::vector<Error>
+SerializationSystem::DeserializeStateFromJson(const nlohmann::json& masterJ, B2World& world,
+											  TextureRepository& textureRepo, SDLInputSystem& inputSystem,
+											  AudioBank& audioBank, SDL_Renderer* renderer)
+{
+	auto textureErrors = TextureRepositorySerializer::DeserializeFromJson(
+		masterJ, textureRepo, renderer);
+	auto audioErrors = AudioBankSerializer::DeserializeFromJson(
+		masterJ, audioBank);
+	auto entityErrors = EntityDeserializer{ world, textureRepo, inputSystem, audioBank }
+	.DeserializeEntitiesFromJson(masterJ);
 
 	const size_t totalErrorCount = textureErrors.size() + audioErrors.size() + entityErrors.size();
 	if (totalErrorCount == 0)

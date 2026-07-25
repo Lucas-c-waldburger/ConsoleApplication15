@@ -8,6 +8,7 @@
 #include "EntityAccess.h"
 #include "../components/ComponentConcepts.h"
 #include "../core/Logger.h"
+#include "../core/Signal.h"
 #include "../user/UserComponentBridge.h"
 #include <cassert>
 #include <functional>
@@ -317,6 +318,14 @@ public:
     static void SerializeUserComponents(nlohmann::json& j, const Entity& e);
 	static Result<Void> DeserializeUserComponents(const nlohmann::json& j, Entity& e);
 
+    template <typename Fn> 
+        requires std::convertible_to<Fn, typename Signal<Entity>::SlotCallbackType>
+    static SignalToken ObserveEntityDestroyed(Fn&& fn);
+
+    template <typename Fn> 
+        requires std::convertible_to<Fn, typename Signal<Entity, ComponentSignature>::SlotCallbackType>
+    static SignalToken ObserveComponentRemoved(Fn&& fn);
+
 private:
     template <typename T>
     ComponentSignature GetComponentBit() const
@@ -384,11 +393,13 @@ private:
     template <typename T>
     void RemoveComponent(Entity_t entity)
     {
+        EmitComponentRemovedSignal<T>(Entity{ entity, *this });
+
         if constexpr (SomeComponent<T>)
         {
             if constexpr (ComponentRequiresCleanup<T>)
             {
-                CleanupComponent(Entity{ entity, this }, 
+                CleanupComponent(Entity{ entity, *this }, 
                                  componentManager_.GetComponent<T>(entity));
             }
 
@@ -675,6 +686,11 @@ private:
     bool IsEntityNameUnique(std::string_view name) const;
     void AddEntityName(Entity_t e, std::string_view name);
 
+    void EmitEntityDestroyedSignal(Entity&& e);
+
+    template <typename T>
+    void EmitComponentRemovedSignal(Entity&& e);
+
     EntityManager& GetEntityManager() { return entityManager_; }
     const EntityManager& GetEntityManager() const { return entityManager_; }
 
@@ -688,7 +704,53 @@ private:
     EntityManager entityManager_;
     ComponentManager componentManager_;
     UserComponentBridge userComponentBridge_;
+
+    Signal<Entity> entityDestroyedSignal_;
+    Signal<Entity, ComponentSignature> componentRemovedSignal_;
 };
+
+// ECS DEFS //
+
+/** @defgroup Static @{ */
+template <typename Fn> requires std::convertible_to<Fn, typename Signal<Entity>::SlotCallbackType>
+SignalToken ECS::ObserveEntityDestroyed(Fn&& fn)
+{
+    auto& ecs = ECS::Get();
+
+    return ecs.entityDestroyedSignal_.Connect(std::forward<Fn>(fn));
+}
+
+template <typename Fn>
+    requires std::convertible_to<Fn, typename Signal<Entity, ComponentSignature>::SlotCallbackType>
+SignalToken ECS::ObserveComponentRemoved(Fn&& fn)
+{
+    auto& ecs = ECS::Get();
+
+    return ecs.componentRemovedSignal_.Connect(std::forward<Fn>(fn));
+}
+
+/** @} */
+
+/** @defgroup Member @{ */
+template <typename T>
+void ECS::EmitComponentRemovedSignal(Entity&& e)
+{
+    ComponentSignature sig = 0;
+    if constexpr (SomeComponent<T>)
+    {
+        sig = T::componentBit;
+    }
+    else
+    {
+        sig = userComponentBridge_.GetComponentDataSignature<T>();
+    }
+
+    if (sig != 0)
+    {
+        componentRemovedSignal_.Emit(e, sig);
+    }
+}
+/** @} */
 
 // ENTITY DEFS //
 template <typename T> requires public_mutable_component_v<std::remove_cvref_t<T>>
@@ -703,6 +765,9 @@ inline T& Entity::AddComponent(T&& cmp)
 template <typename T> requires public_mutable_component_v<T>
 inline T& Entity::AddComponent()
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>, 
+        "template argument must have no cv-ref qualifiers");
+
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
@@ -721,6 +786,9 @@ inline T& Entity::AddComponent(T&& cmp, EntityPassKey)
 template <typename T>
 inline T& Entity::AddComponent(EntityPassKey)
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>,
+        "template argument must have no cv-ref qualifiers");
+
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
@@ -730,6 +798,9 @@ inline T& Entity::AddComponent(EntityPassKey)
 template <typename T> requires public_mutable_component_v<T>
 inline void Entity::RemoveComponent()
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>,
+        "template argument must have no cv-ref qualifiers");
+
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
@@ -739,6 +810,9 @@ inline void Entity::RemoveComponent()
 template <typename T>
 inline void Entity::RemoveComponent(EntityPassKey)
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>,
+        "template argument must have no cv-ref qualifiers");
+
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
@@ -748,6 +822,9 @@ inline void Entity::RemoveComponent(EntityPassKey)
 template <typename T> requires public_mutable_component_v<T>
 inline T& Entity::GetComponent()
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>,
+        "template argument must have no cv-ref qualifiers");
+
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
@@ -757,6 +834,9 @@ inline T& Entity::GetComponent()
 template <typename T>
 inline T& Entity::GetComponent(EntityPassKey)
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>,
+        "template argument must have no cv-ref qualifiers");
+
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
@@ -766,6 +846,9 @@ inline T& Entity::GetComponent(EntityPassKey)
 template <typename T>
 inline const T& Entity::GetComponent() const
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>,
+        "template argument must have no cv-ref qualifiers");
+
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
@@ -775,6 +858,9 @@ inline const T& Entity::GetComponent() const
 template <typename T> requires public_mutable_component_v<T>
 inline Result<std::reference_wrapper<T>> Entity::TryGetComponent()
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>,
+        "template argument must have no cv-ref qualifiers");
+
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
@@ -789,6 +875,9 @@ inline Result<std::reference_wrapper<T>> Entity::TryGetComponent()
 template <typename T>
 inline Result<std::reference_wrapper<const T>> Entity::TryGetComponent() const
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>,
+        "template argument must have no cv-ref qualifiers");
+
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
@@ -804,6 +893,9 @@ template <typename...Ts> requires (!(is_tuple_or_typelist_v<Ts> && ...) &&
                                     (public_mutable_component_v<Ts> && ...))
 inline std::tuple<Ts&...> Entity::GetComponents()
 {
+    static_assert((std::same_as<std::remove_cvref_t<Ts>, Ts> && ...),
+        "template arguments must have no cv-ref qualifiers");
+
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
@@ -813,6 +905,9 @@ inline std::tuple<Ts&...> Entity::GetComponents()
 template <typename...Ts> requires (!(is_tuple_or_typelist_v<Ts> && ...))
 inline std::tuple<Ts&...> Entity::GetComponents(EntityPassKey)
 {
+    static_assert((std::same_as<std::remove_cvref_t<Ts>, Ts> && ...),
+        "template arguments must have no cv-ref qualifiers");
+
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
@@ -822,6 +917,9 @@ inline std::tuple<Ts&...> Entity::GetComponents(EntityPassKey)
 template <typename...Ts> requires (!(is_tuple_or_typelist_v<Ts> && ...))
 inline std::tuple<const Ts&...> Entity::GetComponents() const
 {
+    static_assert((std::same_as<std::remove_cvref_t<Ts>, Ts> && ...),
+        "template arguments must have no cv-ref qualifiers");
+
     assert(ecs_);
     assert(id_ != kInvalidEntity);
 
@@ -855,18 +953,27 @@ Entity::GetComponents(EntityPassKey k)
 template <typename T>
 inline bool Entity::HasComponent() const
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>,
+        "template argument must have no cv-ref qualifiers");
+
     return IsValid() && ecs_->HasComponent<T>(id_);
 }
 
 template <typename...Ts>
 inline bool Entity::HasComponents() const
 {
+    static_assert((std::same_as<std::remove_cvref_t<Ts>, Ts> && ...),
+        "template arguments must have no cv-ref qualifiers");
+
     return IsValid() && (ecs_->HasComponent<Ts>(id_) && ...);
 }
 
 template <typename T, typename Fn> requires FnReturningBool<Fn, const T&>
 bool Entity::HasComponent(Fn&& fn) const
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>,
+        "template argument must have no cv-ref qualifiers");
+
     return HasComponent<T>() &&
            std::invoke(std::forward<Fn>(fn), GetComponent<T>());
 }
@@ -874,6 +981,9 @@ bool Entity::HasComponent(Fn&& fn) const
 template <typename...Ts, typename Fn> requires FnReturningBool<Fn, const Ts&...>
 bool Entity::HasComponents(Fn&& fn) const
 {
+    static_assert((std::same_as<std::remove_cvref_t<Ts>, Ts> && ...),
+        "template arguments must have no cv-ref qualifiers");
+
     return HasComponents<Ts...>() &&
            std::invoke(std::forward<Fn>(fn), GetComponent<Ts>()...);
 }
@@ -881,6 +991,9 @@ bool Entity::HasComponents(Fn&& fn) const
 template <typename T>
 inline bool Entity::GetComponentVisibility() const
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>,
+        "template argument must have no cv-ref qualifiers");
+
     assert(HasComponent<EntityFlags>());
 
     const auto& visibilityFlags = 
@@ -892,6 +1005,9 @@ inline bool Entity::GetComponentVisibility() const
 template <typename...Ts> requires (public_mutable_component_v<Ts> && ...)
 inline void Entity::SetComponentVisibility(bool vis)
 {
+    static_assert((std::same_as<std::remove_cvref_t<Ts>, Ts> && ...),
+        "template arguments must have no cv-ref qualifiers");
+
     assert(HasComponent<EntityFlags>());
 
     auto& visibilityFlags = 
@@ -921,6 +1037,9 @@ inline void Entity::SetComponentVisibility(bool vis)
 template <SomeEventData T>
 inline bool Entity::ShouldProduceEvent() const
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>,
+        "template argument must have no cv-ref qualifiers");
+
     assert(HasComponent<EntityFlags>());
 
     const auto& eventProductionFlags = ecs_->GetComponent<EntityFlags>(id_).eventProductionFlags;
@@ -931,6 +1050,9 @@ inline bool Entity::ShouldProduceEvent() const
 template <SomeEventData T>
 inline void Entity::SetEventProduction(bool tf)
 {
+    static_assert(std::same_as<std::remove_cvref_t<T>, T>,
+        "template argument must have no cv-ref qualifiers");
+
     assert(HasComponent<EntityFlags>());
 
     auto& eventProductionFlags = ecs_->GetComponent<EntityFlags>(id_).eventProductionFlags;

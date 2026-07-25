@@ -157,6 +157,11 @@ PropertyEditState GuiEditProperty(Timer& tmr)
 	auto state = Property("elapsed", tmr.elapsed);
 	state |= Property("duration", tmr.duration);
 	state |= Property("numRepeats", tmr.numRepeats);
+
+	bool rmvOnExpiry = tmr.flags & Timer::RemoveOnExpiry;
+	state |= Property("removeOnExpiry", rmvOnExpiry);
+	tmr.flags = (tmr.flags & ~Timer::RemoveOnExpiry) | (-rmvOnExpiry & Timer::RemoveOnExpiry);
+
 	return state;
 }
 

@@ -273,29 +273,29 @@ Result<Void> FontAtlasTexture::RebuildSourceTexture(SDL_Renderer* renderer,
 }
 
 // FONT ATLAS
-FontAtlas::FontAtlas(FontAtlas&& other) noexcept :
-    TextureCreationNotifier(std::move(other)),
-    fontAtlasTextures_(std::move(other.fontAtlasTextures_)),
-    fontInfo_(std::move(other.fontInfo_))
-{
-    RepopulateFontNameIndexMap(other.fontNameIndices_.size());
-}
-
-FontAtlas& FontAtlas::operator=(FontAtlas&& other) noexcept
-{
-    if (this == &other)
-    {
-        return *this;
-    }
-
-    TextureCreationNotifier::operator=(std::move(other));
-    fontAtlasTextures_ = std::move(other.fontAtlasTextures_);
-    fontInfo_ = std::move(other.fontInfo_);
-
-    RepopulateFontNameIndexMap(other.fontNameIndices_.size());
-
-    return *this;
-}
+//FontAtlas::FontAtlas(FontAtlas&& other) noexcept :
+//    TextureCreationNotifier(std::move(other)),
+//    fontAtlasTextures_(std::move(other.fontAtlasTextures_)),
+//    fontInfo_(std::move(other.fontInfo_))
+//{
+//    RepopulateFontNameIndexMap(other.fontNameIndices_.size());
+//}
+//
+//FontAtlas& FontAtlas::operator=(FontAtlas&& other) noexcept
+//{
+//    if (this == &other)
+//    {
+//        return *this;
+//    }
+//
+//    TextureCreationNotifier::operator=(std::move(other));
+//    fontAtlasTextures_ = std::move(other.fontAtlasTextures_);
+//    fontInfo_ = std::move(other.fontInfo_);
+//
+//    RepopulateFontNameIndexMap(other.fontNameIndices_.size());
+//
+//    return *this;
+//}
 
 Result<Handle<TextureResource>> FontAtlas::LoadFont(SDL_Renderer* renderer, 
 								                    FontDescriptor&& fontDescriptor)
@@ -314,14 +314,14 @@ Result<Handle<TextureResource>> FontAtlas::LoadFont(SDL_Renderer* renderer,
 
 	NotifyTextureCreated(newAtlas.GetAtlasID(), newAtlas.GetSourceTexture());
 
-    bool needRepopulateViews = fontInfo_.Size() == fontInfo_.Capacity();
-    if (needRepopulateViews)
-    {
-        const size_t newSize = fontInfo_.Size() + kDefaultFrontInfoCapacity;
+    //bool needRepopulateViews = fontInfo_.Size() == fontInfo_.Capacity();
+    //if (needRepopulateViews)
+    //{
+    //    const size_t newSize = fontInfo_.Size() + kDefaultFrontInfoCapacity;
 
-        fontInfo_.Reserve(newSize);
-        RepopulateFontNameIndexMap(newSize);
-    }
+    //    fontInfo_.Reserve(newSize);
+    //    RepopulateFontNameIndexMap(newSize);
+    //}
 
     const size_t fontIdx = fontInfo_.PushBack(FontInfo{
         .atlasId = newAtlas.GetAtlasID(),
@@ -468,16 +468,16 @@ size_t FontAtlas::GetTextureCount() const
     return fontAtlasTextures_.size();
 }
 
-void FontAtlas::RepopulateFontNameIndexMap(size_t newSize)
-{
-    fontNameIndices_.clear();
-    fontNameIndices_.reserve(newSize);
-
-    for (size_t i = 0; i < fontInfo_.Size(); ++i)
-    {
-        const auto& name = fontInfo_.GetView<&FontInfo::fontName>(i);
-
-        auto [_, inserted] = fontNameIndices_.try_emplace(name, i);
-        assert(inserted);
-    }
-}
+//void FontAtlas::RepopulateFontNameIndexMap(size_t newSize)
+//{
+//    fontNameIndices_.clear();
+//    fontNameIndices_.reserve(newSize);
+//
+//    for (size_t i = 0; i < fontInfo_.Size(); ++i)
+//    {
+//        const auto& name = fontInfo_.GetView<&FontInfo::fontName>(i);
+//
+//        auto [_, inserted] = fontNameIndices_.try_emplace(name, i);
+//        assert(inserted);
+//    }
+//}

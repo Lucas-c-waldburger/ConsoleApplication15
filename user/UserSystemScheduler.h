@@ -376,6 +376,8 @@ public:
 		return sysId < systems_.size() && systems_[sysId] != nullptr;
 	}
 
+	void Reset();
+
 	void UpdateSystems(Phase phase, float dt);
 
 private:

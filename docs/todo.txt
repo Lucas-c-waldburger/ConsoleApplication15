@@ -10,3 +10,5 @@
 5. Remove GameLoopSystem - UserSystem stuff has made producing events for phases unnecessary 
 
 6. Make "isAwake" a field inside B2BodyParameters, erase default true inside RigidBodyComponentBuilder::Build
+
+7. Figure out a good way to clear out user-registered components for a scene change

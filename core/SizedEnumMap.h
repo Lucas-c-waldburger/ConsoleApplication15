@@ -10,6 +10,10 @@ template <SomeSizedEnum EnumKey, typename Value>
 class SizedEnumMap
 {
 public:
+	using key_type = EnumKey;
+	using mapped_type = Value;
+	using value_type = std::pair<const EnumKey, Value>;
+
 	using MapType = std::array<Value, enum_size_v<EnumKey>>;
 
 	template <typename V>
@@ -148,6 +152,20 @@ public:
 	constexpr const auto& operator()() const { return map_[static_cast<size_t>(e)]; }
 
 	constexpr size_t Size() const { return enum_size_v<EnumKey>; }
+
+	template <typename T, typename U>
+	constexpr std::pair<iterator, bool> emplace(T&& k, U&& v) 
+	{
+		const auto idx = static_cast<size_t>(k);
+		if (idx >= map_.size())
+		{
+			return std::make_pair(end(), false);
+		}
+
+		map_[idx] = std::forward<U>(v);
+
+		return std::make_pair(iterator(&map_, idx), true);
+	}
 
 private:
 	MapType map_;

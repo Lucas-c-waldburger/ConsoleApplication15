@@ -19,5 +19,6 @@
 #include "SignalTokenStorageComponent.h"
 #include "UserComponents.h"
 #include "NameComponent.h"
+#include "ScriptComponent.h"
 
 

@@ -5,5 +5,6 @@
 DEF_LUA_USERTYPE(Transform, Dependencies<SDL_FPoint>) {
 	lua.def_type("position", &Transform::position,
 				 "rotation", &Transform::rotation,
-				 "scale", &Transform::scale);
+				 "scale", &Transform::scale,
+				 sol::meta_function::equal_to, &Transform::operator==);
 }

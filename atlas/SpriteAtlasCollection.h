@@ -68,8 +68,8 @@ private:
 class SpriteAtlas : public TextureCreationNotifier
 {
 public:
-	using SpriteIndexMap = std::unordered_map<std::string_view, size_t>;
-	using SeriesRangeMap = std::unordered_map<std::string_view, Range<size_t>>;
+	using SpriteIndexMap = UnorderedDictionary<size_t>;
+	using SeriesRangeMap = UnorderedDictionary<Range<size_t>>;
 
 	static constexpr size_t kDefaultSpriteInfoCapacity = 50;
 
@@ -82,8 +82,8 @@ public:
 	SpriteAtlas(const SpriteAtlas&) = delete;
 	SpriteAtlas& operator=(const SpriteAtlas&) = delete;
 
-	SpriteAtlas(SpriteAtlas&& other) noexcept;
-	SpriteAtlas& operator=(SpriteAtlas&& other) noexcept;
+	SpriteAtlas(SpriteAtlas&& other) noexcept = default;
+	SpriteAtlas& operator=(SpriteAtlas&& other) noexcept = default;
 
 	Result<Sprite> LoadSprite(SDL_Renderer* renderer, 
 							  SpriteDescriptor&& descriptor);
@@ -206,9 +206,6 @@ private:
 												SpriteDescriptors&& descriptors);
 
 	Sprite MakeSprite(size_t spriteIndex) const;
-
-	void RepopulateSpriteNameIndexMap(size_t newSize);
-	void RepopulateSpriteSeriesRangeMap(size_t newSize);
 
 	std::vector<SpriteAtlasTexture> spriteAtlasTextures_;
 	SpriteInfoSOA spriteInfo_;

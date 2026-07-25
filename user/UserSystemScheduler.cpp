@@ -1,18 +1,15 @@
 #include "UserSystemScheduler.h"
 
-//void UserSystemScheduler::UpdateSystems(Phase phase, float dt)
-//{
-//	for (const size_t idx : phaseIndices_[phase])
-//	{
-//		assert(idx < updateSlots_.size());
-//
-//		auto& slot = updateSlots_[idx];
-//		assert(slot.updateFn);
-//		assert(slot.instance);
-//
-//		std::invoke(slot.updateFn, slot.instance, dt);
-//	}
-//}
+void UserSystemScheduler::Reset()
+{
+	for (size_t i = enum_start_v<Phase>; i < enum_size_v<Phase>; ++i)
+	{
+		phaseToSlotKeys_[static_cast<Phase>(i)].clear();
+	}
+
+	systems_.clear();
+	slots_.clear();
+}
 
 void UserSystemScheduler::UpdateSystems(Phase phase, float dt)
 {

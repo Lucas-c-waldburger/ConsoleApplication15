@@ -993,45 +993,73 @@ private:
 	std::optional<SDL_FPoint> ballLockPosition_;
 };
 
+static Result<Void> SetUpPlatformerDemo(SceneFixture::SharedPtr& fx)
+{
+	TRY(LoadAllResources(*fx));
+
+	TRY(SetUpEnvironment(*fx));
+
+	const auto [winCenterX, winCenterY] =
+		SDLite::Window().GetLocalCenter<SDL_FPoint>();
+
+	const SDL_FPoint girlStartPos = { winCenterX, winCenterY - 60.0f };
+
+	TRY(MakeGirlEntity(*fx, girlStartPos), girlEnt);
+	TRY(MakeSwordEntity(*fx, girlEnt), swordEnt);
+	//TRY(MakeCrateEntity(fixture, { girlStartPos.x + 60.0f, girlStartPos.y}), crateEnt);
+	TRY(MakeLegIronEntity(*fx, girlEnt, girlStartPos), legIron);
+
+	auto& updater = fx->RegisterSystem<GirlStateUpdater>(Phase::Input,
+		girlEnt.GetID(), swordEnt.GetID(), fx->GetEventBus(), std::move(legIron));
+
+	TRY(SetUpGirlStateReporter(girlEnt, *fx));
+	TRY(ThumbstickUiDraw::CreateAndConnect(girlEnt, *fx));
+	TRY(ControllerButtonUiDraw::CreateAndConnect(girlEnt, *fx));
+
+	return kVoid;
+}
+
 static Result<Void> RunPlatformerDemo(SceneFixture::SharedPtr& fixture)
 {
-	TRY(SetUpEnvironment(fixture));
+	TRY(LoadAllResources(*fixture));
+
+	TRY(SetUpEnvironment(*fixture));
 
 	const auto [winCenterX, winCenterY] = 
 		SDLite::Window().GetLocalCenter<SDL_FPoint>();
 
 	const SDL_FPoint girlStartPos = { winCenterX, winCenterY - 60.0f };
 
-	TRY(MakeGirlEntity(fixture, girlStartPos), girlEnt);
-	TRY(MakeSwordEntity(fixture, girlEnt), swordEnt);
+	TRY(MakeGirlEntity(*fixture, girlStartPos), girlEnt);
+	TRY(MakeSwordEntity(*fixture, girlEnt), swordEnt);
 	//TRY(MakeCrateEntity(fixture, { girlStartPos.x + 60.0f, girlStartPos.y}), crateEnt);
-	TRY(MakeLegIronEntity(fixture, girlEnt, girlStartPos), legIron);
+	TRY(MakeLegIronEntity(*fixture, girlEnt, girlStartPos), legIron);
 
 	auto& updater = fixture->RegisterSystem<GirlStateUpdater>(Phase::Input, 
 		girlEnt.GetID(), swordEnt.GetID(), fixture->GetEventBus(), std::move(legIron));
 
-	TRY(SetUpGirlStateReporter(girlEnt, fixture));
-	TRY(ThumbstickUiDraw::CreateAndConnect(girlEnt, fixture));
-	TRY(ControllerButtonUiDraw::CreateAndConnect(girlEnt, fixture));
+	TRY(SetUpGirlStateReporter(girlEnt, *fixture));
+	TRY(ThumbstickUiDraw::CreateAndConnect(girlEnt, *fixture));
+	TRY(ControllerButtonUiDraw::CreateAndConnect(girlEnt, *fixture));
 
-#if IMGUI_ENABLED
-
-	assert(fixture->IsSystemRegistered<GuiSystem>());
-
-	TRY(ui::Editor::Init(fixture));
-	//TRY(ui::EntityInspector2::Setup(fixture));
-
-	//auto& guiSys = fixture->GetSystem<GuiSystem>();
-
-	//EntityMap entities{};
-	//entities["girl"] = girlEnt;
-	//entities["sword"] = swordEnt;
-	//entities["legIron"] = updater.GetLegIronBallEntity();
-	////entities["crate"] = crateEnt;
-
-	//TRY(GirlPhysicsEditor::Init(guiSys, entities));
-
-#endif
+//#if IMGUI_ENABLED
+//
+//	assert(fixture->IsSystemRegistered<GuiSystem>());
+//
+//	TRY(ui::Editor::Init(fixture));
+//	//TRY(ui::EntityInspector2::Setup(fixture));
+//
+//	//auto& guiSys = fixture->GetSystem<GuiSystem>();
+//
+//	//EntityMap entities{};
+//	//entities["girl"] = girlEnt;
+//	//entities["sword"] = swordEnt;
+//	//entities["legIron"] = updater.GetLegIronBallEntity();
+//	////entities["crate"] = crateEnt;
+//
+//	//TRY(GirlPhysicsEditor::Init(guiSys, entities));
+//
+//#endif
 
 	return fixture->RunGameLoop();
 }

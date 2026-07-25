@@ -29,6 +29,8 @@ public:
 	Result<Void> DeserializeComponentData(const nlohmann::json& j, Entity_t e,
 										  UserComponentBridge& bridge, ComponentManager& cmpManager);
 
+	void Reset();
+
 private:
 	std::vector<SerializeFn> serializeFns_;
 	std::vector<DeserializeFn> deserializeFns_;
@@ -72,6 +74,8 @@ public:
 
 	Result<Void> DeserializeComponentData(const nlohmann::json& j, Entity_t e,
 										  ComponentManager& cmpManager);
+
+	void Reset();
 
 private:
 	bool IsComponentDataRegisteredInternal(size_t typeId) const;

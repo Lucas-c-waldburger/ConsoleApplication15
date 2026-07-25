@@ -2,6 +2,7 @@
 #include "System.h"
 #include "../file/FilePathUtility.h"
 #include "../core/commonObjects.h"
+#include "../deps/nlohmann/json.hpp"
 
 class B2World;
 class TextureRepository;
@@ -27,4 +28,13 @@ public:
 	DeserializeState(const Filepaths& filepaths, B2World& world, 
 					 TextureRepository& textureRepo, SDLInputSystem& inputSystem,
 					 AudioBank& audioBank, SDL_Renderer* renderer);
+
+	static void
+	SerializeStateToJson(nlohmann::json& masterJ, const TextureRepository& textureRepo,
+						 const AudioBank& audioBank);
+
+	static std::vector<Error>
+	DeserializeStateFromJson(const nlohmann::json& masterJ, B2World& world,
+							 TextureRepository& textureRepo, SDLInputSystem& inputSystem,
+							 AudioBank& audioBank, SDL_Renderer* renderer);
 };

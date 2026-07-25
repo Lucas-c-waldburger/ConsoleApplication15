@@ -1,6 +1,5 @@
 #pragma once
 #include "../LuaUserType.h"
-#include "../LuaTypesRegistry.h"
 #include "../../components/AudioComponents.h"
 
 using AudioHandle = Handle<Audio>;
@@ -18,7 +17,7 @@ DEF_LUA_USERTYPE(AudioFadeMs) {
 
 using Panning = HandedPair<uint8_t>;
 DEF_LUA_USERTYPE(Panning) {
-	lua.def_type(&Panning::left, "right", &Panning::right);
+	lua.def_type("left", &Panning::left, "right", &Panning::right);
 }
 
 DEF_LUA_USERTYPE(AudioSpatialData, Dependencies<Panning>) {
@@ -31,14 +30,16 @@ DEF_LUA_USERTYPE(AudioChannelSettings, Dependencies<AudioFadeMs, AudioSpatialDat
 	lua.def_type("volume", &AudioChannelSettings::volume,
 			     "loopCount", &AudioChannelSettings::loopCount,
 			     "fadeMs", &AudioChannelSettings::fadeMs,
-			     "spatial", &AudioChannelSettings::spatial);
+			     "spatial", &AudioChannelSettings::spatial,
+				 "trackPosition", &AudioChannelSettings::trackPosition);
 }
 
 DEF_LUA_USERTYPE(AudioUpdateSettings, Dependencies<AudioFadeMs, AudioSpatialData>) {
-	lua.def_type("volume", &AudioChannelSettings::volume,
-				 "loopCount", &AudioChannelSettings::loopCount,
-				 "fadeMs", &AudioChannelSettings::fadeMs,
-				 "spatial", &AudioChannelSettings::spatial);
+	lua.def_type("volume", &AudioUpdateSettings::volume,
+				 "loopCount", &AudioUpdateSettings::loopCount,
+				 "fadeMs", &AudioUpdateSettings::fadeMs,
+				 "spatial", &AudioUpdateSettings::spatial,
+				 "trackPosition", &AudioUpdateSettings::trackPosition);
 }
 
 DEF_LUA_USERTYPE(AudioPlayCommand) {

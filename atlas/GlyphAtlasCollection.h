@@ -1,6 +1,7 @@
 #pragma once
 #include "NewGlyphAtlas.h"
 #include "../core/Hash.h"
+#include "../core/Dictionary.h"
 #include "../core/StableSOA.h"
 #include "TextureObserverSignal.h"
 
@@ -88,7 +89,7 @@ class FontAtlas : public TextureCreationNotifier
 public:
 	static inline const FontAtlasTexture kInvalidGlyphAtlas{};
 
-	using FontIndexMap = std::unordered_map<std::string_view, size_t>;
+	using FontIndexMap = UnorderedDictionary<size_t>;
 
 	static constexpr size_t kDefaultFrontInfoCapacity = 20;
 
@@ -98,8 +99,8 @@ public:
 	FontAtlas(const FontAtlas&) = delete;
 	FontAtlas& operator=(const FontAtlas&) = delete;
 
-	FontAtlas(FontAtlas&& other) noexcept;
-	FontAtlas& operator=(FontAtlas&& other) noexcept;
+	FontAtlas(FontAtlas&& other) noexcept = default;
+	FontAtlas& operator=(FontAtlas&& other) noexcept = default;
 
 	Result<Handle<TextureResource>> LoadFont(SDL_Renderer* renderer, 
 											 FontDescriptor&& fontDescriptor);
@@ -247,7 +248,7 @@ public:
 	}
 
 private:
-	void RepopulateFontNameIndexMap(size_t newSize);
+	//void RepopulateFontNameIndexMap(size_t newSize);
 
 	std::vector<FontAtlasTexture> fontAtlasTextures_;
 	FontInfoSOA fontInfo_;

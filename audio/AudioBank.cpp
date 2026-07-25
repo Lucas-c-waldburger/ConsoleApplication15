@@ -1,6 +1,27 @@
 #include "AudioBank.h"
 #include <filesystem>
 
+//AudioBank::AudioBank(AudioBank&& other) noexcept : audioBankInstanceId_(other.audioBankInstanceId_),
+//    sounds_(std::move(other.sounds_)), music_(std::move(other.music_)), 
+//    audioInfo_(std::move(other.audioInfo_))
+//{
+//    RepopulateAudioNameIndexMap(audioInfo_.Capacity());
+//}
+//
+//AudioBank& AudioBank::operator=(AudioBank&& other) noexcept
+//{
+//    if (this == &other) { return *this; }
+//
+//    audioBankInstanceId_ = other.audioBankInstanceId_;
+//    sounds_ = std::move(other.sounds_);
+//    music_ = std::move(other.music_);
+//    audioInfo_ = std::move(other.audioInfo_);
+//
+//    RepopulateAudioNameIndexMap(audioInfo_.Capacity());
+//
+//    return *this;
+//}
+
 Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
 {
     if (!std::filesystem::exists(desc.filepath))
@@ -30,14 +51,14 @@ Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
 
         ptrContainer.emplace_back(std::move(newPtr));
 
-        bool needRepopulateViews = audioInfo_.Size() == audioInfo_.Capacity();
-        if (needRepopulateViews)
-        {
-            const size_t newSize = audioInfo_.Size() + kDefaultAudioInfoCapacity;
+        //bool needRepopulateViews = audioInfo_.Size() == audioInfo_.Capacity();
+        //if (needRepopulateViews)
+        //{
+        //    const size_t newSize = audioInfo_.Size() + kDefaultAudioInfoCapacity;
 
-            audioInfo_.Reserve(newSize);
-            RepopulateAudioNameIndexMap(newSize);
-        }
+        //    audioInfo_.Reserve(newSize);
+        //    RepopulateAudioNameIndexMap(newSize);
+        //}
 
         const size_t newResourceIdx = audioInfo_.PushBack({
             .audioType = desc.audioType,
@@ -115,16 +136,16 @@ std::vector<AudioDescriptor> AudioBank::ExportAudioDescriptors() const
 	return descriptors; 
  }
 
-void AudioBank::RepopulateAudioNameIndexMap(size_t newSize)
-{
-    nameToInfoIdx_.clear();
-    nameToInfoIdx_.reserve(newSize);
-
-    for (size_t i = 0; i < audioInfo_.Size(); ++i)
-    {
-        const auto& name = audioInfo_.GetView<&AudioInfo::name>(i);
-
-        auto [_, inserted] = nameToInfoIdx_.try_emplace(name, i);
-        assert(inserted);
-    }
-}
+//void AudioBank::RepopulateAudioNameIndexMap(size_t newSize)
+//{
+//    nameToInfoIdx_.clear();
+//    nameToInfoIdx_.reserve(newSize);
+//
+//    for (size_t i = 0; i < audioInfo_.Size(); ++i)
+//    {
+//        const auto& name = audioInfo_.GetView<&AudioInfo::name>(i);
+//
+//        auto [_, inserted] = nameToInfoIdx_.try_emplace(name, i);
+//        assert(inserted);
+//    }
+//}

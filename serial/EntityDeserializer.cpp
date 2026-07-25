@@ -613,6 +613,30 @@ std::vector<Error> EntityDeserializer::DeserializeEntities(const std::string& js
 	return deserializationErrors_;
 }
 
+std::vector<Error> EntityDeserializer::DeserializeEntitiesFromJson(const nlohmann::json& masterJ)
+{
+	if (!masterJ.contains("entities") || !masterJ.at("entities").is_array())
+	{
+		return { MAKE_ERROR_FMT("Master JSON must contain an array field named 'entities'") };
+	}
+
+	for (auto& entityJ : masterJ.at("entities"))
+	{
+		auto e = ECS::CreateEntity();
+
+		UpdateContexts(e);
+
+		DeserializeBasicComponents(entityJ, e);
+		DeserializeContextComponents(entityJ);
+		DeserializeUserComponents(entityJ, e);
+	}
+
+	ResolveRelations();
+	ResolvePhysics();
+
+	return deserializationErrors_;
+}
+
 void EntityDeserializer::ResolvePhysics()
 {
 	for (auto& [childEnt, parentBodyId, colliderBuilder] : physicsContext_.childCollidersToResolve)

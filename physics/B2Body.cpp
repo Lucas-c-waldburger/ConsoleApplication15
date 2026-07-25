@@ -289,3 +289,28 @@ B2Body::GetContactDataWith(const Handle<B2Shape>& query) const
 {
     return GetContactDataImpl(bodyHandle_, query);
 }
+
+size_t B2Body::DestroyShapes()
+{
+    if (!bodyHandle_.IsValid())
+    {
+        return {};
+    }
+
+    b2ShapeId shapeIds[B2Body::kMaxShapesPerBody];
+
+    int count = b2Body_GetShapes(bodyHandle_, shapeIds, B2Body::kMaxShapesPerBody);
+    if (count <= 0)
+    {
+        return 0;
+    }
+
+    for (int i = 0; i < count; i++)
+    {
+        const bool updateMass = i == count - 1;
+
+        b2DestroyShape(shapeIds[i], updateMass);
+    }
+
+    return count;
+}

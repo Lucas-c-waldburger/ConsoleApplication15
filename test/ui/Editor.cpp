@@ -8,6 +8,7 @@
 #include "InspectorSystemPanel.h"
 #include "InspectorComponentPanel.h"
 #include "ComponentEditHistory.h"
+#include "SaveSceneUtility.h"
 
 namespace ui {
 
@@ -43,17 +44,19 @@ void DrawSelectionState()
 
 } // unnamed
 
-auto Editor::ResourceContext::Create(SceneFixture::SharedPtr& scene) -> ResourceContext
+void Editor::DestroyEditorEntities()
 {
-	return {
-		.camera = scene->GetCamera(),
-		.textureRepo = scene->GetTextureRepository(),
-		.world = scene->GetWorld(),
-		.systemManager = scene->GetSystemManager()
-	};
+	auto es = ECS::GetAllActiveEntities();
+	for (auto& e : es)
+	{
+		if (e.HasComponent<InspectorTag>())
+		{
+			e.Destroy();
+		}
+	}
 }
 
-void Editor::HandleEntityDrag(const ResourceContext& ctx, Entity_t selectedEntityAtUpdateStart)
+void Editor::HandleEntityDrag(const Camera& cam, Entity_t selectedEntityAtUpdateStart)
 {
 	if (InspectorEntityPanel::GetSelection().IsEditing())
 	{
@@ -65,11 +68,11 @@ void Editor::HandleEntityDrag(const ResourceContext& ctx, Entity_t selectedEntit
 		auto e = ECS::GetEntityByID(InspectorEntityPanel::GetSelection().entityId);
 		assert(e.IsValid());
 
-		entityDrag_.Update(e, ctx.camera);
+		entityDrag_.Update(e, cam);
 	}
 }
 
-void Editor::HandleCameraControl(ResourceContext& ctx, float dt)
+void Editor::HandleCameraControl(Camera& cam, float dt)
 {
 	if (entityDrag_.IsDragging())
 	{
@@ -77,11 +80,85 @@ void Editor::HandleCameraControl(ResourceContext& ctx, float dt)
 	}
 	else
 	{
-		cameraControl_.UpdateScroll(ctx.camera, dt);
+		cameraControl_.UpdateScroll(cam, dt);
 	}
 
+	cameraControl_.UpdateZoom(cam);
+}
 
-	cameraControl_.UpdateZoom(ctx.camera);
+void Editor::DrawToolbar(SceneFixture& fixture)
+{
+	assert(fixture.IsSystemRegistered<AudioSystem>());
+	assert(fixture.IsSystemRegistered<SDLInputSystem>());
+
+	if (ImGui::BeginMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::Selectable("Open"))
+			{
+				auto selectedFile = SceneSaveUtility::QuerySceneOpen();
+				if (selectedFile.has_value())
+				{
+					const auto currentFile = SceneSaveUtility::GetCurrentSceneFilepath();
+
+					auto openScene = [&fixture](const auto& path) {
+						DestroyEditorEntities();
+
+						auto response = SceneSaveUtility::HandleSceneOpen(path, fixture);
+
+						for (const auto& err : response.errors)
+						{
+							LOG_ERROR(err.GetMessage());
+						}
+
+						return response.success;
+					};
+
+					if (!openScene(*selectedFile))
+					{
+						LOG_ERROR("Could not open new scene. Attempting to reopen last scene");
+
+						openScene(currentFile);
+					}
+					 
+					LOG_IF_ERROR(ResetForNewScene(fixture));
+				}
+			}
+
+			if (ImGui::Selectable("Save"))
+			{
+				LOG_IF_ERROR(SceneSaveUtility::HandleSceneSave(fixture));
+			}
+
+			if (ImGui::Selectable("Save As..."))
+			{
+				LOG_IF_ERROR(SceneSaveUtility::HandleSceneSaveAs(fixture));
+			}
+
+			ImGui::EndMenu();
+		}
+
+		ImGui::EndMenuBar();
+	}
+}
+
+Result<Void> Editor::ResetForNewScene(SceneFixture& fixture)
+{
+	entityDrag_.Reset();
+	cameraControl_.Reset();
+
+	GuiMouse::Init();
+
+	ComponentEditHistory::Reset();
+	TRY(InspectorComponentPanel::ResetForNewScene(fixture));
+	TRY(InspectorEntityPanel::ResetForNewScene(fixture));
+	TRY(InspectorSystemPanel::ResetForNewScene(fixture));
+
+	updateState_.forceEntitySelectionForEdit = kInvalidEntity;
+	updateState_.forcePanelOpen = PanelType::Entities;
+
+	return kVoid;
 }
 
 void Editor::UpdateForHistoryChange()
@@ -107,11 +184,19 @@ struct AtUpdateBegin
 	const int historyCursor = ComponentEditHistory::GetCursor();
 };
 
-void Editor::Update(ResourceContext& ctx, float dt)
+void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 {
-	ImGui::Begin("Editor");
+	auto scene = weakScene.lock();
+	if (!scene)
+	{
+		return;
+	}
 
-	InspectorEntityPanel::UpdateSelectionBoxPositions(ctx.camera);
+	ImGui::Begin("Editor", nullptr, ImGuiWindowFlags_MenuBar);
+
+	DrawToolbar(*scene);
+
+	InspectorEntityPanel::UpdateSelectionBoxPositions(scene->GetCamera());
 
 	AtUpdateBegin atUpdateBegin{};
 	auto currentState = updateState_.Take();
@@ -135,8 +220,10 @@ void Editor::Update(ResourceContext& ctx, float dt)
 		{
 			activePanel_ = PanelType::Entities;
 
-			auto entityCtx = InspectorEntityPanel::ResourceContext{ .camera = ctx.camera,
-																	.textureRepo = ctx.textureRepo };
+			auto entityCtx = InspectorEntityPanel::ResourceContext{ 
+				.camera = scene->GetCamera(),
+				.textureRepo = scene->GetTextureRepository()
+			};
 			InspectorEntityPanel::Update(entityCtx);
 
 			ImGui::EndTabItem();
@@ -146,8 +233,10 @@ void Editor::Update(ResourceContext& ctx, float dt)
 		{
 			activePanel_ = PanelType::Systems;
 
-			auto sysCtx = InspectorSystemPanel::ResourceContext{ .systemManager = ctx.systemManager,
-																 .textureRepo = ctx.textureRepo };
+			auto sysCtx = InspectorSystemPanel::ResourceContext{ 
+				.systemManager = scene->GetSystemManager(),
+				.textureRepo = scene->GetTextureRepository()
+			};
 			InspectorSystemPanel::Update(sysCtx);
 
 			ImGui::EndTabItem();
@@ -171,9 +260,11 @@ void Editor::Update(ResourceContext& ctx, float dt)
 				auto e = ECS::GetEntityByID(InspectorEntityPanel::GetSelection().entityId);
 				assert(e.IsValid());
 
-				auto cmpCtx = InspectorComponentPanel::ResourceContext{ .entity = e,
-																		.textureRepo = ctx.textureRepo,
-																		.world = ctx.world };
+				auto cmpCtx = InspectorComponentPanel::ResourceContext{ 
+					.entity = e,
+					.textureRepo = scene->GetTextureRepository(),
+					.world = scene->GetWorld()
+				};
 				InspectorComponentPanel::Update(cmpCtx);
 			}
 
@@ -190,14 +281,16 @@ void Editor::Update(ResourceContext& ctx, float dt)
 		ImGui::EndTabBar();
 	}
 
-	HandleEntityDrag(ctx, atUpdateBegin.selectedEntity);
-	HandleCameraControl(ctx, dt);
+	HandleEntityDrag(scene->GetCamera(), atUpdateBegin.selectedEntity);
+	HandleCameraControl(scene->GetCamera(), dt);
 
 	ImGui::End();
 }
 
 Result<Void> Editor::Init(SceneFixture::SharedPtr& scene)
 {
+	assert(scene);
+
 	const bool registered = ECS::RegisterComponent<InspectorTag>();
 	assert(registered);
 
@@ -206,16 +299,18 @@ Result<Void> Editor::Init(SceneFixture::SharedPtr& scene)
 
 	AssignGuiStyles();
 
-	TRY(InspectorEntityPanel::Init(scene));
-	TRY(InspectorSystemPanel::Init(scene));
-	TRY(InspectorComponentPanel::Init(scene));
+	TRY(InspectorEntityPanel::Init(*scene));
+	TRY(InspectorSystemPanel::Init(*scene));
+	TRY(InspectorComponentPanel::Init(*scene));
 
 	TRY(cameraControl_.Init());
 
 	assert(scene->IsSystemRegistered<GuiSystem>());
 	auto& guiSys = scene->GetSystem<GuiSystem>();
 
-	guiSys.SetUI([ctx = ResourceContext::Create(scene)](float dt) mutable { Update(ctx, dt); });
+	guiSys.SetUI([weakScene = std::weak_ptr{scene}](float dt) mutable { 
+		Update(weakScene, dt); 
+	});
 
 	return kVoid;
 }

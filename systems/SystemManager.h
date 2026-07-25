@@ -96,6 +96,11 @@ public:
 		}
 	}
 
+	void ClearUserSystems()
+	{
+		userSystems_.Reset();
+	}
+
 	void RunSystemUpdates(Phase ph, float dt)
 	{
 		userSystems_.UpdateSystems(ph, dt);

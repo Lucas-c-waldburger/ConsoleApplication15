@@ -4,6 +4,7 @@
 #include "../../file/FilePathUtility.h"
 #include "GuiResource.h"
 #include "GuiTexture.h"
+#include "InspectorComponentPanel.h"
 
 namespace ui {
 
@@ -122,32 +123,36 @@ auto InspectorSystemPanel::ResourceContext::Create(SceneFixture::SharedPtr& scen
 
 void InspectorSystemPanel::Update(ResourceContext& ctx)
 {
-	//ImGui::Begin("Inspector System Panel");
-
 	DrawSystems(ctx.systemManager, ctx.textureRepo);
-
-	//ImGui::End();
 }
 
-Result<Void> InspectorSystemPanel::Init(SceneFixture::SharedPtr& scene)
+Result<Void> InspectorSystemPanel::ResetForNewScene(SceneFixture& scene)
 {
-	//TRY(GuiResource::Init());
+	const auto& spriteAtlas = scene.GetTextureRepository().GetSpriteAtlas();
+	buttons_.playPause.defaultSprite = spriteAtlas.GetSprite("pause_circle.png");
+	buttons_.playPause.activatedSprite = spriteAtlas.GetSprite("play_circle.png");
 
+	return kVoid;
+}
+
+Result<Void> InspectorSystemPanel::LoadResources(SceneFixture& scene)
+{
 	TRY(ResourcePath::Sprite("ui/editor/play_circle.png"), playCirclePath);
 	TRY(ResourcePath::Sprite("ui/editor/pause_circle.png"), pauseCirclePath);
 
-	auto& spriteAtlas = scene->GetTextureRepository().GetSpriteAtlas();
+	auto& spriteAtlas = scene.GetTextureRepository().GetSpriteAtlas();
 
 	TRY_ASSIGN(buttons_.playPause.defaultSprite, spriteAtlas.LoadSprite(
-		scene->GetRenderer(), { .filepath = std::move(pauseCirclePath) }));
+		scene.GetRenderer(), { .filepath = std::move(pauseCirclePath) }));
 	TRY_ASSIGN(buttons_.playPause.activatedSprite, spriteAtlas.LoadSprite(
-		scene->GetRenderer(), { .filepath = std::move(playCirclePath) }));
+		scene.GetRenderer(), { .filepath = std::move(playCirclePath) }));
 
-	//assert(scene->IsSystemRegistered<GuiSystem>());
+	return kVoid;
+}
 
-	//scene->GetSystem<GuiSystem>().SetUI([ctx = ResourceContext::Create(scene)] mutable {
-	//	InspectorSystemPanel::Update(ctx);
-	//});
+Result<Void> InspectorSystemPanel::Init(SceneFixture& scene)
+{
+	LoadResources(scene);
 
 	return kVoid;
 }

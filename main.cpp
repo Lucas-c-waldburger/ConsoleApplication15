@@ -212,14 +212,32 @@ int main(int argc, char* argv[])
     auto fixtureResult = SceneFixture::GetInstance();
     ASSERT_RESULT(fixtureResult);
 
+    auto& fixture = fixtureResult.GetValue();
+
+#if IMGUI_ENABLED
+    if (fixture->IsSystemRegistered<GuiSystem>())
+    {
+        auto editorResult = ui::Editor::Init(fixture);
+        ASSERT_RESULT(editorResult);
+    }
+#endif
+
     //auto runResult = test::RunSandDemo(fixtureResult.GetValue());
-    auto runResult = test::RunPlatformerDemo(fixtureResult.GetValue());
+    //auto runResult = test::RunPlatformerDemo(fixtureResult.GetValue());
     //auto runResult = test::RunColliderMaker(fixtureResult.GetValue());
     //auto runResult = test::RunGalleryDemo(fixtureResult.GetValue());
     //auto runResult = test::RunAudioLoungeApp(fixtureResult.GetValue());
-    ASSERT_RESULT(runResult);
+    //ASSERT_RESULT(runResult);
 
-    fixtureResult.GetValue().reset();
+    //fixtureResult.GetValue().reset();
+
+    //auto setupResult = test::SetUpPlatformerDemo(fixture);
+    //ASSERT_RESULT(setupResult);
+
+    fixture->RegisterScene("test", nullptr);
+
+    auto runResult = fixture->RunGameLoop();
+    ASSERT_RESULT(runResult);
 
 #endif
     return 0;

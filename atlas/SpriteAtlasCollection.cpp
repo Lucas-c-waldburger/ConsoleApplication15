@@ -186,36 +186,30 @@ Result<Void> SpriteAtlasTexture::RebuildSourceTexture(SDL_Renderer* renderer,
 }
 
 // SPRITE ATLAS
-SpriteAtlas::SpriteAtlas(SpriteAtlas&& other) noexcept : 
-    TextureCreationNotifier(std::move(other)),
-    spriteAtlasTextures_(std::move(other.spriteAtlasTextures_)),
-    spriteInfo_(std::move(other.spriteInfo_)),
-    rebuildTexturesSignalToken_(std::move(other.rebuildTexturesSignalToken_)),
-    textureSize_(other.textureSize_), growthPolicy_(other.growthPolicy_)
-{
-    RepopulateSpriteNameIndexMap(other.spriteNameIndices_.size());
-    RepopulateSpriteSeriesRangeMap(other.seriesNameRanges_.size());
-}
+//SpriteAtlas::SpriteAtlas(SpriteAtlas&& other) noexcept : 
+//    TextureCreationNotifier(std::move(other)),
+//    spriteAtlasTextures_(std::move(other.spriteAtlasTextures_)),
+//    spriteInfo_(std::move(other.spriteInfo_)),
+//    rebuildTexturesSignalToken_(std::move(other.rebuildTexturesSignalToken_)),
+//    textureSize_(other.textureSize_), growthPolicy_(other.growthPolicy_)
+//{}
 
-SpriteAtlas& SpriteAtlas::operator=(SpriteAtlas&& other) noexcept
-{
-    if (this == &other)
-    {
-        return *this;
-    }
-
-    TextureCreationNotifier::operator=(std::move(other));
-    spriteAtlasTextures_ = std::move(other.spriteAtlasTextures_);
-    spriteInfo_ = std::move(other.spriteInfo_);
-    rebuildTexturesSignalToken_ = std::move(other.rebuildTexturesSignalToken_);
-    textureSize_ = other.textureSize_;
-    growthPolicy_ = other.growthPolicy_;
-
-    RepopulateSpriteNameIndexMap(other.spriteNameIndices_.size());
-    RepopulateSpriteSeriesRangeMap(other.seriesNameRanges_.size());
-
-    return *this;
-}
+//SpriteAtlas& SpriteAtlas::operator=(SpriteAtlas&& other) noexcept
+//{
+//    if (this == &other)
+//    {
+//        return *this;
+//    }
+//
+//    TextureCreationNotifier::operator=(std::move(other));
+//    spriteAtlasTextures_ = std::move(other.spriteAtlasTextures_);
+//    spriteInfo_ = std::move(other.spriteInfo_);
+//    rebuildTexturesSignalToken_ = std::move(other.rebuildTexturesSignalToken_);
+//    textureSize_ = other.textureSize_;
+//    growthPolicy_ = other.growthPolicy_;
+//
+//    return *this;
+//}
 
 Result<Sprite> SpriteAtlas::LoadSprite(SDL_Renderer* renderer,
                                        SpriteDescriptor&& descriptor)
@@ -266,6 +260,14 @@ void SpriteAtlas::SetTextureGrowthPolicy(TextureGrowthPolicy policy)
     growthPolicy_ = policy;
 }
 
+//void SpriteAtlas::FillTextureMap(TextureObserverPassKey pk, TextureMap& map)
+//{
+//    for (auto& spriteAtlasTexture : spriteAtlasTextures_)
+//    {
+//        map[spriteAtlasTexture.GetAtlasID()] = spriteAtlasTexture.GetSourceTexture();
+//    }
+//}
+
 Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
 										   SpriteDescriptor&& descriptor)
 {
@@ -283,7 +285,7 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
     if (auto it = spriteNameIndices_.find(descriptor.spriteName);
         it != spriteNameIndices_.end())
     {
-        LOG_ERROR_FMT("Sprite name '{}' already exists in atlas. Returning original sprite", 
+        LOG_INFO_FMT("Sprite name '{}' already exists in atlas. Returning original sprite", 
             descriptor.spriteName);
 
         return MakeSprite(it->second);
@@ -331,16 +333,6 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
     auto& newSpriteInfo = loadOutcome.spriteInfo;
     newSpriteInfo.spriteName = std::move(descriptor.spriteName);
     newSpriteInfo.filepath = std::move(descriptor.filepath);
-
-    const bool needRepopulateViews = spriteInfo_.Size() == spriteInfo_.Capacity();
-    if (needRepopulateViews)
-    {
-        const size_t newSize = spriteInfo_.Size() + kDefaultSpriteInfoCapacity;
-
-        spriteInfo_.Reserve(newSize);
-        RepopulateSpriteNameIndexMap(newSize);
-        RepopulateSpriteSeriesRangeMap(newSize / 2);
-    }
 
     size_t spriteIdx = spriteInfo_.PushBack(std::move(newSpriteInfo));
 
@@ -655,56 +647,56 @@ SpriteDescriptorPackage SpriteAtlas::ExportSpriteDescriptors() const
     return package;
 }
 
-void SpriteAtlas::RepopulateSpriteNameIndexMap(size_t newSize)
-{
-    spriteNameIndices_.clear();
-    spriteNameIndices_.reserve(newSize);
+//void SpriteAtlas::RepopulateSpriteNameIndexMap(size_t newSize)
+//{
+//    spriteNameIndices_.clear();
+//    spriteNameIndices_.reserve(std::max(newSize, spriteNameIndices_.size()));
+//
+//    for (size_t i = 0; i < spriteInfo_.Size(); ++i)
+//    {
+//        const auto& name = spriteInfo_.GetView<&SpriteInfo::spriteName>(i);
+//
+//        auto [_, inserted] = spriteNameIndices_.try_emplace(name, i);
+//        assert(inserted);
+//    }
+//}
 
-    for (size_t i = 0; i < spriteInfo_.Size(); ++i)
-    {
-        const auto& name = spriteInfo_.GetView<&SpriteInfo::spriteName>(i);
-
-        auto [_, inserted] = spriteNameIndices_.try_emplace(name, i);
-        assert(inserted);
-    }
-}
-
-void SpriteAtlas::RepopulateSpriteSeriesRangeMap(size_t newSize)
-{
-    seriesNameRanges_.clear();
-    seriesNameRanges_.reserve(newSize);
-
-    std::string_view currentSeries;
-    size_t seriesStartIdx = 0;
-    for (size_t i = 0; i < spriteInfo_.Size(); ++i)
-    {
-        const auto& series = spriteInfo_.GetView<&SpriteInfo::seriesName>(i);
-        if (series != currentSeries)
-        {
-            if (!currentSeries.empty())
-            {
-                assert(i > 0);
-
-                auto [_, inserted] = seriesNameRanges_.try_emplace(
-                    currentSeries, Range<size_t>{seriesStartIdx, i - 1}
-                );
-                assert(inserted);
-            }
-
-            currentSeries = series;
-            seriesStartIdx = i;
-        }
-        else if (series.empty())
-        {
-            seriesStartIdx = i;
-        }
-    }
-
-    if (!currentSeries.empty()) // finished on a series, cap it
-    {
-        auto [_, inserted] = seriesNameRanges_.try_emplace(
-            currentSeries, Range<size_t>{seriesStartIdx, spriteInfo_.Size() - 1}
-        );
-        assert(inserted);
-    }
-}
+//void SpriteAtlas::RepopulateSpriteSeriesRangeMap(size_t newSize)
+//{
+//    seriesNameRanges_.clear();
+//    seriesNameRanges_.reserve(std::max(newSize, seriesNameRanges_.size()));
+//
+//    std::string_view currentSeries;
+//    size_t seriesStartIdx = 0;
+//    for (size_t i = 0; i < spriteInfo_.Size(); ++i)
+//    {
+//        const auto& series = spriteInfo_.GetView<&SpriteInfo::seriesName>(i);
+//        if (series != currentSeries)
+//        {
+//            if (!currentSeries.empty())
+//            {
+//                assert(i > 0);
+//
+//                auto [_, inserted] = seriesNameRanges_.try_emplace(
+//                    currentSeries, Range<size_t>{seriesStartIdx, i - 1}
+//                );
+//                assert(inserted);
+//            }
+//
+//            currentSeries = series;
+//            seriesStartIdx = i;
+//        }
+//        else if (series.empty())
+//        {
+//            seriesStartIdx = i;
+//        }
+//    }
+//
+//    if (!currentSeries.empty()) // finished on a series, cap it
+//    {
+//        auto [_, inserted] = seriesNameRanges_.try_emplace(
+//            currentSeries, Range<size_t>{seriesStartIdx, spriteInfo_.Size() - 1}
+//        );
+//        assert(inserted);
+//    }
+//}

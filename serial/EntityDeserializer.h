@@ -91,6 +91,8 @@ public:
 
 	std::vector<Error> DeserializeEntities(const std::string& jsonFilepath);
 
+	std::vector<Error> DeserializeEntitiesFromJson(const nlohmann::json& masterJ);
+
 private:
 	void DeserializeBasicComponents(const nlohmann::json& entityJ, Entity& e);
 	void DeserializeContextComponents(const nlohmann::json& entityJ);

@@ -13,6 +13,8 @@ struct BaseComponent
 {
     static constexpr uint64_t componentBit = 
         1ull << index_of_v<Derived, ComponentTypeList>;
+
+    constexpr bool operator==(const BaseComponent&) const = default;
 };
 
 

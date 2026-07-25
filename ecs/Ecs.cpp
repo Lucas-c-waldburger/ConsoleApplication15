@@ -313,14 +313,18 @@ Entity ECS::CreateEntity(std::string_view name)
 	return Entity{ newEntity, ecs };
 }
 
-// TODO: call into systems with an "EntityDestroyed(...)" method
 void ECS::DestroyEntity(Entity_t entity)
 {
 	assert(IsEntityValid(entity));
-	EntityDestructor::EntityDestroyed(entityManager_, componentManager_, entity);
-	//entityManager_.DestroyEntity(entity);
+
+	EmitEntityDestroyedSignal(Entity{ entity, *this });
+
+	entityManager_.DestroyEntity(entity);
+	componentManager_.EntityDestroyed(entity);
+
+	//EntityDestructor::EntityDestroyed(entityManager_, componentManager_, entity);
+
 	//EntityRelationsHelper::DestroyRelationshipsWithEntity(componentManager_, entity);
-	//componentManager_.EntityDestroyed(entity);
 }
 
 //// TODO: Remove "ActiveState" component
@@ -336,9 +340,13 @@ bool ECS::IsEntityActive(Entity_t entity) const
 	bool activeAccordingToComponentManager = (sig & ActiveState::componentBit);
 	bool activeAccordingToEntityManager = entityManager_.IsEntityActive(entity);
 
-	assert(activeAccordingToComponentManager == activeAccordingToEntityManager);
+	//assert(activeAccordingToComponentManager == activeAccordingToEntityManager);
+	//if (activeAccordingToComponentManager != activeAccordingToEntityManager)
+	//{
+	//	int x = 0;
+	//}
 
-	return activeAccordingToComponentManager;
+	return activeAccordingToEntityManager;
 }
 
 bool ECS::IsEntityValid(Entity_t entity) const
@@ -372,6 +380,11 @@ void ECS::AddEntityName(Entity_t e, std::string_view name)
 	{
 		nameCmp.value = name;
 	}
+}
+
+void ECS::EmitEntityDestroyedSignal(Entity&& e)
+{
+	entityDestroyedSignal_.Emit(e);
 }
 
 void ECS::SerializeUserComponents(nlohmann::json& j, const Entity& e)

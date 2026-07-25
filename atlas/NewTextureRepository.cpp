@@ -11,8 +11,41 @@ TextureRepository::TextureRepository() : tokens_{
 
 TextureRepository::~TextureRepository()
 {
-	tokens_.spriteTextureCreated.Disconnect();
-	tokens_.glyphTextureCreated.Disconnect();
+	tokens_.spriteTextureCreated.Reset();
+	tokens_.glyphTextureCreated.Reset();
+}
+
+TextureRepository::TextureRepository(TextureRepository&& other) noexcept :
+	spriteAtlasCollection_(std::move(other.spriteAtlasCollection_)),
+	glyphAtlasCollection_(std::move(other.glyphAtlasCollection_)),
+	sourceTextureMap_(std::move(other.sourceTextureMap_)),
+	tokens_{
+		.spriteTextureCreated{
+			spriteAtlasCollection_.ConnectTextureObserver(
+				GetTextureObserverPassKey(), GetTextureCreatedCallback())},
+		.glyphTextureCreated{
+			glyphAtlasCollection_.ConnectTextureObserver(
+				GetTextureObserverPassKey(), GetTextureCreatedCallback())} }
+
+{}
+
+TextureRepository& TextureRepository::operator=(TextureRepository&& other) noexcept
+{
+	if (this == &other) { return *this; }
+
+	tokens_ = {};
+
+	spriteAtlasCollection_ = std::move(other.spriteAtlasCollection_);
+	glyphAtlasCollection_ = std::move(other.glyphAtlasCollection_);
+
+	sourceTextureMap_ = std::move(other.sourceTextureMap_);
+
+	tokens_.spriteTextureCreated = spriteAtlasCollection_.ConnectTextureObserver(
+		GetTextureObserverPassKey(), GetTextureCreatedCallback());
+	tokens_.glyphTextureCreated = glyphAtlasCollection_.ConnectTextureObserver(
+		GetTextureObserverPassKey(), GetTextureCreatedCallback());
+
+	return *this;
 }
 
 SDL_Texture* 

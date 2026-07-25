@@ -33,11 +33,15 @@ public:
 
 	static void Update(ResourceContext& resourceCtx);
 
-	static Result<Void> Init(SceneFixture::SharedPtr& scene);
+	static Result<Void> Init(SceneFixture& scene);
 
 	static Buttons& GetButtons() { return buttons_; }
 
+	static Result<Void> ResetForNewScene(SceneFixture& scene);
+
 private:
+	static Result<Void> LoadResources(SceneFixture& scene);
+
 	static inline Buttons buttons_{};
 };
 

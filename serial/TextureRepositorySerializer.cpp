@@ -33,6 +33,27 @@ TextureRepositorySerializer::Serialize(const std::string& jsonFilepath, const Te
 	return kVoid;
 }
 
+void TextureRepositorySerializer::SerializeToJson(nlohmann::json& masterJ, const TextureRepository& repo)
+{
+	assert(!masterJ.contains("textures"));
+
+	auto& texturesJ = masterJ["textures"] = nlohmann::json::object();
+
+	auto& spritesJ = texturesJ["spriteAtlas"] = nlohmann::json::array();
+	auto spritePackage = repo.GetSpriteAtlas().ExportSpriteDescriptors();
+	for (const auto& descriptors : spritePackage)
+	{
+		spritesJ.push_back(descriptors);
+	}
+
+	auto& fontsJ = texturesJ["fontAtlas"] = nlohmann::json::array();
+	auto fontPackage = repo.GetFontAtlas().ExportFontDescriptors();
+	for (const auto& descriptors : fontPackage)
+	{
+		fontsJ.push_back(descriptors);
+	}
+}
+
 std::vector<Error>
 TextureRepositorySerializer::Deserialize(const std::string& jsonFilepath, TextureRepository& repo,
 										 SDL_Renderer* renderer)
@@ -54,6 +75,94 @@ TextureRepositorySerializer::Deserialize(const std::string& jsonFilepath, Textur
 		return { MAKE_ERROR("JSON file does not contain 'textures' field") };
 	}
 	const auto& texturesJ = j.at("textures");
+
+	std::vector<Error> errors{};
+
+	if (texturesJ.contains("spriteAtlas"))
+	{
+		const auto& spriteAtlasJ = texturesJ.at("spriteAtlas");
+		if (!spriteAtlasJ.is_array())
+		{
+			errors.emplace_back(MAKE_ERROR("'spriteAtlas' field in JSON file was not of type array"));
+		}
+		else
+		{
+			SpriteDescriptorPackage spritePackage;
+			spritePackage.reserve(spriteAtlasJ.size());
+
+			try
+			{
+				from_json(spriteAtlasJ, spritePackage);
+			}
+			catch (const nlohmann::json::exception& err)
+			{
+				errors.emplace_back(
+					MAKE_ERROR_FMT("Error parsing sprite atlas descriptors: '{}'", err.what())
+				);
+			}
+
+			for (auto&& descriptors : spritePackage)
+			{
+				auto loadResult = repo.GetSpriteAtlas().LoadSprites(renderer, std::move(descriptors));
+				if (!loadResult.Success())
+				{
+					errors.emplace_back(std::move(loadResult.GetError()));
+				}
+			}
+		}
+	}
+	else
+	{
+		errors.emplace_back(MAKE_ERROR("JSON file does not contain 'spriteAtlas' field"));
+	}
+
+	if (texturesJ.contains("fontAtlas"))
+	{
+		const auto& fontAtlasJ = texturesJ.at("fontAtlas");
+		if (!fontAtlasJ.is_array())
+		{
+			errors.emplace_back(MAKE_ERROR("'fontAtlas' field in JSON file was not of type array"));
+		}
+		else
+		{
+			FontDescriptors fontDescriptors;
+			fontDescriptors.reserve(fontAtlasJ.size());
+
+			try
+			{
+				from_json(fontAtlasJ, fontDescriptors);
+			}
+			catch (const nlohmann::json::exception& err)
+			{
+				errors.emplace_back(
+					MAKE_ERROR_FMT("Error parsing font atlas descriptors: '{}'", err.what())
+				);
+			}
+
+			auto loadResult = repo.GetFontAtlas().LoadFonts(renderer, std::move(fontDescriptors));
+			if (!loadResult.Success())
+			{
+				errors.emplace_back(std::move(loadResult.GetError()));
+			}
+		}
+	}
+	else
+	{
+		errors.emplace_back(MAKE_ERROR("JSON file does not contain 'fontAtlas' field"));
+	}
+
+	return errors;
+}
+
+std::vector<Error> TextureRepositorySerializer::DeserializeFromJson(const nlohmann::json& masterJ, 
+																	TextureRepository& repo, 
+																    SDL_Renderer* renderer)
+{
+	if (!masterJ.contains("textures"))
+	{
+		return { MAKE_ERROR("JSON file does not contain 'textures' field") };
+	}
+	const auto& texturesJ = masterJ.at("textures");
 
 	std::vector<Error> errors{};
 

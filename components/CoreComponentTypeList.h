@@ -24,6 +24,7 @@ struct MarkedDestroyed;
 struct SpriteAnimationComponent;
 struct NeedsAnimationUpdate;
 struct Name;
+struct Script;
 
 using CoreComponentTypeList = TypeList<
 	ActiveState,
@@ -48,5 +49,6 @@ using CoreComponentTypeList = TypeList<
 	MarkedDestroyed,
 	SpriteAnimationComponent,
 	NeedsAnimationUpdate,
-	Name
+	Name,
+	Script
 >;
