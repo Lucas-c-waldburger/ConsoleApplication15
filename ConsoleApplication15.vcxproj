@@ -196,6 +196,7 @@
     <ClCompile Include="render\GlyphCacheHandler.cpp" />
     <ClCompile Include="render\RenderBatchHandler.cpp" />
     <ClCompile Include="render\TextFormatExpressionParser.cpp" />
+    <ClCompile Include="scripting\ScriptTable.cpp" />
     <ClCompile Include="serial\AudioBankSerializer.cpp" />
     <ClCompile Include="serial\EntityDeserializer.cpp" />
     <ClCompile Include="serial\EntitySerializer.cpp" />
@@ -260,6 +261,7 @@
     <ClCompile Include="test\catch\ecs\EntitySignalingTests.cpp" />
     <ClCompile Include="test\catch\ecs\UserComponentBridgeTests.cpp" />
     <ClCompile Include="test\catch\events\InputEventTests.cpp" />
+    <ClCompile Include="test\catch\scripting\ScriptTableTests.cpp" />
     <ClCompile Include="test\catch\serial\SerializationTests.cpp" />
     <ClCompile Include="test\catch\systems\SpriteAnimationSystemTests.cpp" />
     <ClCompile Include="test\catch\systems\UserSystemSchedulerTests.cpp" />
@@ -397,7 +399,9 @@
     <ClInclude Include="components\ScriptComponent.h" />
     <ClInclude Include="components\SignalTokenStorageComponent.h" />
     <ClInclude Include="components\UserComponents.h" />
+    <ClInclude Include="components\util\ComponentValidPreds.h" />
     <ClInclude Include="core\Anchor.h" />
+    <ClInclude Include="core\DirtyValue.h" />
     <ClInclude Include="core\FixedString.h" />
     <ClInclude Include="core\formatters.h" />
     <ClInclude Include="core\InlineStorage.h" />
@@ -491,6 +495,9 @@
     <ClInclude Include="file\FilePathUtility.h" />
     <ClInclude Include="games\bullet_heaven\Terrain.h" />
     <ClInclude Include="render\TextFormatExpressionParser.h" />
+    <ClInclude Include="scripting\ScriptHandle.h" />
+    <ClInclude Include="scripting\ScriptSignature.h" />
+    <ClInclude Include="scripting\ScriptTable.h" />
     <ClInclude Include="scripting\user_types\CameraTargetUserType.h" />
     <ClInclude Include="scripting\user_types\CoreLuaUserTypes.h" />
     <ClInclude Include="scripting\user_types\EventUserTypes.h" />

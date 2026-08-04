@@ -4,6 +4,8 @@
 #include "../inputs/InputState.h"
 #include "../core/FuncTraits.h"
 #include "../events/data/EntityEventConcept.h"
+#include "../components/util/ComponentValidPreds.h"
+#include "../components/ScriptComponent.h"
 
 namespace detail {
 
@@ -127,6 +129,10 @@ inline constexpr bool valid_event_callback_base_sig_v =
 	(fn_returns_void_v<Fn> && func_traits<Fn>::argCount > 0
 	 && is_const_reference_v<typename func_traits<Fn>::template arg_at<0>>);
 
+template <typename Fn>
+inline constexpr bool valid_event_script_callback_base_sig_v =
+	(fn_returns_void_v<Fn> && func_traits<Fn>::argCount > 0);
+
 template <typename Fn> requires fn_returns_void_v<Fn>
 struct ev_callback_sig
 {
@@ -153,6 +159,16 @@ struct ev_callback_sig
 	static constexpr bool with_const_components_v = (func_traits<Fn>::argCount >= 2 &&
 		no_args_are_entities_v<pop_front_t<typename func_traits<resolved_fn>::arg_types>> &&
 		all_args_const_refs_v<pop_front_t<typename func_traits<resolved_fn>::arg_types>>);
+
+	//static constexpr bool with_event_data_only_script_v = func_traits<Fn>::argCount == 1 &&
+	//	!std::same_as<std::remove_cvref_t<typename func_traits<resolved_fn>::template arg_at<0>>, Entity>);
+
+	//static constexpr bool with_entity_only_script_v = func_traits<Fn>::argCount == 1 &&
+	//	std::same_as<typename func_traits<resolved_fn>::template arg_at<0>, Entity&>);
+
+	//static constexpr bool with_event_data_and_entity_script_v = (func_traits<Fn>::argCount == 2 &&
+	//	!std::same_as<std::remove_cvref_t<typename func_traits<resolved_fn>::template arg_at<0>>, Entity> &&
+	//	std::same_as<typename func_traits<resolved_fn>::template arg_at<1>, Entity&>)
 };
 
 template <typename Fn>
@@ -173,6 +189,14 @@ inline constexpr bool valid_input_callback_sig_v = (
 	std::same_as<extract_input_event_src_type_t<
 		std::remove_cvref_t<typename func_traits<Fn>::template arg_at<0>>>, Src>
 );
+
+//template <typename Fn>
+//inline constexpr bool valid_event_script_callback_sig_v = (
+//	valid_event_script_callback_base_sig_v<Fn> &&
+//	ev_callback_sig<Fn>::with_event_data_only_script_v ||
+//	ev_callback_sig<Fn>::with_entity_only_script_v ||
+//	ev_callback_sig<Fn>::with_event_data_and_entity_script_v
+//);
 
 template <typename Fn> requires fn_returns_void_v<Fn>
 struct timer_ev_callback_sig
@@ -202,6 +226,10 @@ inline constexpr bool valid_timer_event_callback_sig_v = (
 	timer_ev_callback_sig<Fn>::with_components_v ||
 	timer_ev_callback_sig<Fn>::with_const_components_v
 );
+
+template <SomeInputSourceEnum Src, SomeInputEvent EvT>
+inline constexpr bool input_src_matches_input_event_v = 
+	std::same_as<extract_input_event_src_type_t<EvT>, Src>;
 
 class EntityEvents
 {
@@ -235,7 +263,26 @@ public:
 	template <typename Fn> requires valid_timer_event_callback_sig_v<Fn>
 	Result<Void> MakeTimer(float durationSec, Fn&& fn, int numRepeats = 0);
 
+	// scripts
+	template <typename EvT>
+	Result<Void> OnEventScript(std::string_view scriptCallable, FilterDef filterDef = {});
+
+	template <SomeInputEvent EvT, typename Src> requires input_src_matches_input_event_v<Src, EvT>
+	Result<Void> OnInputScript(Src src, std::string_view scriptCallable, FilterDef filterDef = {});
+
+	template <SomeInputEvent EvT, typename Src> requires input_src_matches_input_event_v<Src, EvT>
+	Result<Void> OnInputScript(Src src, InputState state, std::string_view scriptCallable, 
+							   FilterDef filterDef = {});
+
 private:
+	template <typename EvT>
+	static auto MakeEventScriptCallback(Entity& e, std::string_view scriptCallable,
+										FilterDef&& filterDef);
+
+	template <typename EvT>
+	static auto MakeInputScriptCallback(Entity& e, InputState st, std::string_view scriptCallable,
+										FilterDef&& filterDef);
+
 	Entity entity_;
 	EventBus* bus_ = nullptr;
 };
@@ -609,5 +656,126 @@ Result<Void> EntityEvents::MakeTimer(float durationSec, Fn&& fn, int numRepeats)
 
 	return kVoid;
 }
+
+template <typename EvT>
+inline auto ScriptCallbackImpl(Entity& e, const std::string& script, const EvT& ev)
+{
+	if (!e.HasComponent<Script>(&ComponentValid))
+	{
+		return;
+	}
+
+	auto func = e.GetComponent<Script>().table[script];
+	if (!func.IsValid())
+	{
+		return;
+	}
+
+	sol::protected_function_result result;
+	if (func.MatchesArguments<Entity&>())
+	{
+		result = func(e);
+	}
+	else if (func.MatchesArguments<const EvT&, Entity&>())
+	{
+		result = func(e, ev);
+	}
+	else if (func.MatchesArguments<Entity&, const EvT&>())
+	{
+		result = func(ev, e);
+	}
+	else
+	{
+		LOG_ERROR("Script function '{}' has invalid signature for event callback", script);
+	}
+
+	if (!result.valid())
+	{
+		sol::error err = result;
+		LOG_ERROR_FMT("Error calling script function '{}': {}", script, err.what());
+	}
+}
+
+template <typename EvT>
+inline auto EntityEvents::MakeEventScriptCallback(Entity& e, std::string_view scriptCallable, 
+												  FilterDef&& filterDef)
+{
+	return [e, script = std::string{ scriptCallable }, def = std::move(filterDef)](const EvT& ev) {
+		if (!IsEventRelevant(e, ev, def))
+		{
+			return;
+		}
+		
+		ScriptCallbackImpl(e, script, ev);
+	};
+}
+
+template <typename EvT>
+inline auto EntityEvents::MakeInputScriptCallback(Entity& e, InputState st, 
+												  std::string_view scriptCallable, FilterDef&& filterDef)
+{
+	return [e, st, script = std::string{ scriptCallable }, def = std::move(filterDef)](const EvT& ev) {
+		if (!(InputStateMatches(ev, st) && IsEventRelevant(e, ev, def)))
+		{
+			return;
+		}
+		
+		ScriptCallbackImpl(e, script, ev);
+	};
+}
+
+template <typename EvT>
+inline Result<Void> EntityEvents::OnEventScript(std::string_view scriptCallable, FilterDef filterDef)
+{
+	if (!entity_.IsValid())
+	{
+		return MAKE_ERROR("Internal Entity was invalid");
+	}
+	if (!bus_)
+	{
+		return MAKE_ERROR("Internal EventBus was null");
+	}
+
+	auto& tks = entity_.AddComponent<SignalTokenStorage>().signalTokens;
+
+	auto& tk = tks.emplace_back(bus_->ConnectToEvent(
+		MakeEventScriptCallback<EvT>(entity_, scriptCallable, std::move(filterDef)))
+	);
+	tk.type = EntityCallbackToken::Type::Script;
+
+	return kVoid;
+}
+
+template <SomeInputEvent EvT, typename Src> requires input_src_matches_input_event_v<Src, EvT>
+inline Result<Void> EntityEvents::OnInputScript(Src src, InputState state, std::string_view scriptCallable,
+												FilterDef filterDef)
+{
+	if (!entity_.IsValid())
+	{
+		return MAKE_ERROR("Internal Entity was invalid");
+	}
+	if (!bus_)
+	{
+		return MAKE_ERROR("Internal EventBus was null");
+	}
+
+	auto& tks = entity_.AddComponent<SignalTokenStorage>().signalTokens;
+
+	auto& tk = tks.emplace_back(bus_->ConnectToInput(src,
+		MakeInputScriptCallback<EvT>(entity_, state, scriptCallable, std::move(filterDef)))
+	);
+	tk.type = EntityCallbackToken::Type::Script;
+
+	return kVoid;
+} 
+
+template <SomeInputEvent EvT, typename Src> requires input_src_matches_input_event_v<Src, EvT>
+inline Result<Void> EntityEvents::OnInputScript(Src src, std::string_view scriptCallable, 
+												FilterDef filterDef)
+{
+	return OnInputScript<EvT>(src, InputState::AnyInput, scriptCallable, std::move(filterDef));
+}
+
+
 
 

@@ -10,7 +10,7 @@ protected:
 	{
 		signalToken_ = ECS::ObserveEntityDestroyed([this](Entity e) {
 			static_cast<Derived*>(this)->OnEntityDestroyed(e);
-			});
+		});
 	}
 
 private:
@@ -26,7 +26,7 @@ protected:
 	{
 		signalToken_ = ECS::ObserveComponentRemoved([this](Entity e, ComponentSignature sig) {
 			static_cast<Derived*>(this)->OnComponentRemoved(e, sig);
-			});
+		});
 	}
 
 private:

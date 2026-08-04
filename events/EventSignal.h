@@ -58,23 +58,8 @@ public:
 	template <SomeEventData T>
 	void Emit(const T& ev)
 	{
-		if constexpr (std::same_as<std::remove_cvref_t<T>, events::ContactCollisionBegin>)
-		{
-			int i = 0;
-		}
 		return std::get<EventSignal<T>>(signals_).Emit(ev);
 	}
-
-	//template <typename Fn, typename...Ts> requires std::invocable<Fn, Ts...>
-	//void TransformAndEmit(Fn&& fn, Ts&&...ts)
-	//{
-	//	using EvT = std::remove_cvref_t<std::invoke_result_t<Fn, Ts...>>;
-	//	static_assert(SomeEventData<EvT>);
-
-	//	EvT ev = std::invoke(std::forward<Fn>(fn), std::forward<Ts>(ts)...);
-
-	//	return std::get<EventSignal<T>>(signals_).Emit(ev);
-	//}
 
 private:
 	event_signal_list_t signals_;

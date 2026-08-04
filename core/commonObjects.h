@@ -167,4 +167,11 @@ private:
     std::optional<std::tuple<T>> tup_;
 };
 
+// NULL
+template <typename T> requires std::is_default_constructible_v<T>
+inline constexpr const T& Null()
+{
+    static const T nullValue{};
+    return nullValue;
+}
 

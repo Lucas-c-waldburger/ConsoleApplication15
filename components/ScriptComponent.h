@@ -1,14 +1,10 @@
 #pragma once
 #include "BaseComponent.h"
-#include <sol/sol.hpp>
-#include "../core/Handle.h"
-
-struct LuaState;
+#include "../scripting/ScriptTable.h"
 
 struct Script : BaseComponent<Script>
 {
-	Handle<LuaState> stateHandle;
-	sol::table table;
+	ScriptTableView table;
 
 	bool operator==(const Script&) const = default;
 };
