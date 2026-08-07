@@ -200,6 +200,7 @@
     <ClCompile Include="serial\AudioBankSerializer.cpp" />
     <ClCompile Include="serial\EntityDeserializer.cpp" />
     <ClCompile Include="serial\EntitySerializer.cpp" />
+    <ClCompile Include="serial\ScriptSystemSerializer.cpp" />
     <ClCompile Include="serial\TextureRepositorySerializer.cpp" />
     <ClCompile Include="components\util\TagsComponentUtils.cpp" />
     <ClCompile Include="core\WeightGenerator.cpp" />
@@ -263,6 +264,7 @@
     <ClCompile Include="test\catch\events\InputEventTests.cpp" />
     <ClCompile Include="test\catch\scripting\ScriptTableTests.cpp" />
     <ClCompile Include="test\catch\serial\SerializationTests.cpp" />
+    <ClCompile Include="test\catch\systems\ScriptSystemTests.cpp" />
     <ClCompile Include="test\catch\systems\SpriteAnimationSystemTests.cpp" />
     <ClCompile Include="test\catch\systems\UserSystemSchedulerTests.cpp" />
     <ClCompile Include="test\demo\audio_lounge\AudioLounge.cpp" />
@@ -294,12 +296,14 @@
     <ClCompile Include="test\ui\gui_edit\GuiEditBasicComponents.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditComponentBuilders.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditCore.cpp" />
+    <ClCompile Include="test\ui\gui_edit\GuiEditEvents.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditInputs.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditPhysics.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditRenderable.cpp" />
     <ClCompile Include="test\ui\InspectorCommon.cpp" />
     <ClCompile Include="test\ui\InspectorComponentPanel.cpp" />
     <ClCompile Include="test\ui\InspectorEntityPanel.cpp" />
+    <ClCompile Include="test\ui\InspectorEventPanel.cpp" />
     <ClCompile Include="test\ui\InspectorSystemPanel.cpp" />
     <ClCompile Include="test\ui\MouseWorldNavigator.cpp" />
     <ClCompile Include="test\ui\PhysicsEditor.cpp" />
@@ -507,9 +511,11 @@
     <ClInclude Include="serial\AudioBankSerializer.h" />
     <ClInclude Include="serial\EntityDeserializer.h" />
     <ClInclude Include="serial\EntitySerializer.h" />
+    <ClInclude Include="serial\ScriptSystemSerializer.h" />
     <ClInclude Include="serial\TextureRepositorySerializer.h" />
     <ClInclude Include="serial\user_types\AudioJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\BitsetJsonUserTypes.h" />
+    <ClInclude Include="serial\user_types\ScriptJsonUserTypes.h" />
     <ClInclude Include="systems\Observers.h" />
     <ClInclude Include="systems\Pausable.h" />
     <ClInclude Include="systems\ScriptSystem.h" />
@@ -537,6 +543,7 @@
     <ClInclude Include="test\ui\gui_edit\GuiComponentNames.h" />
     <ClInclude Include="test\ui\GuiTexture.h" />
     <ClInclude Include="test\ui\gui_edit\GuiEditComponentBuilders.h" />
+    <ClInclude Include="test\ui\gui_edit\GuiEditEvents.h" />
     <ClInclude Include="test\ui\gui_edit\GuiEditPropertyTable.h" />
     <ClInclude Include="test\ui\gui_edit\GuiEventNames.h" />
     <ClInclude Include="test\ui\gui_edit\GuiSystemNames.h" />
@@ -1150,11 +1157,26 @@
     <Image Include="resources\sprites\ui\controller_btn\btn_b.png" />
     <Image Include="resources\sprites\ui\controller_btn\btn_x.png" />
     <Image Include="resources\sprites\ui\controller_btn\btn_y.png" />
+    <Image Include="resources\sprites\ui\editor\add_child_icon.png" />
+    <Image Include="resources\sprites\ui\editor\add_circle.png" />
+    <Image Include="resources\sprites\ui\editor\add_entity_icon.png" />
     <Image Include="resources\sprites\ui\editor\arrows-up-down-left-right-solid.png" />
+    <Image Include="resources\sprites\ui\editor\bolt_icon.png" />
+    <Image Include="resources\sprites\ui\editor\build_circle.png" />
+    <Image Include="resources\sprites\ui\editor\camera_icon.png" />
+    <Image Include="resources\sprites\ui\editor\delete_icon.png" />
     <Image Include="resources\sprites\ui\editor\floppy-disk-solid.png" />
+    <Image Include="resources\sprites\ui\editor\image_icon.png" />
     <Image Include="resources\sprites\ui\editor\pause_circle.png" />
     <Image Include="resources\sprites\ui\editor\play_circle.png" />
+    <Image Include="resources\sprites\ui\editor\redo_icon.png" />
+    <Image Include="resources\sprites\ui\editor\text_icon.png" />
+    <Image Include="resources\sprites\ui\editor\transform_icon.png" />
+    <Image Include="resources\sprites\ui\editor\undo_icon.png" />
     <Image Include="resources\sprites\ui\editor\upload-solid.png" />
+    <Image Include="resources\sprites\ui\editor\view_children_icon.png" />
+    <Image Include="resources\sprites\ui\editor\visibility_off_icon.png" />
+    <Image Include="resources\sprites\ui\editor\visibility_on_icon.png" />
     <Image Include="resources\sprites\ui\editor\xmark-solid.png" />
     <Image Include="resources\sprites\ui\joystick\Joystick.png" />
     <Image Include="resources\sprites\ui\joystick\LargeHandleFilledGrey.png" />
@@ -1192,6 +1214,7 @@
     <None Include="test\catch\test_json\entities.json" />
     <None Include="test\catch\test_json\textures.json" />
     <None Include="test\catch\test_json\user_components.json" />
+    <None Include="test\catch\test_scripts\empty.lua" />
     <None Include="test\catch\test_scripts\entity_test.lua" />
   </ItemGroup>
   <ItemGroup>

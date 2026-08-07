@@ -231,13 +231,17 @@ int main(int argc, char* argv[])
 
     //fixtureResult.GetValue().reset();
 
-    //auto setupResult = test::SetUpPlatformerDemo(fixture);
-    //ASSERT_RESULT(setupResult);
+    auto setupResult = test::SetUpPlatformerDemo(fixture);
+    ASSERT_RESULT(setupResult);
 
     fixture->RegisterScene("test", nullptr);
 
-    auto runResult = fixture->RunGameLoop();
+    auto runResult = fixture->Update();
     ASSERT_RESULT(runResult);
+
+#if IMGUI_ENABLED
+    ui::Editor::TearDown();
+#endif
 
 #endif
     return 0;

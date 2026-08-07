@@ -7,6 +7,7 @@
 #include "InspectorEntityPanel.h"
 #include "InspectorSystemPanel.h"
 #include "InspectorComponentPanel.h"
+#include "InspectorEventPanel.h"
 #include "ComponentEditHistory.h"
 #include "SaveSceneUtility.h"
 
@@ -154,6 +155,7 @@ Result<Void> Editor::ResetForNewScene(SceneFixture& fixture)
 	TRY(InspectorComponentPanel::ResetForNewScene(fixture));
 	TRY(InspectorEntityPanel::ResetForNewScene(fixture));
 	TRY(InspectorSystemPanel::ResetForNewScene(fixture));
+	TRY(InspectorEventPanel::ResetForNewScene(fixture));
 
 	updateState_.forceEntitySelectionForEdit = kInvalidEntity;
 	updateState_.forcePanelOpen = PanelType::Entities;
@@ -273,6 +275,19 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 
 		ImGui::EndDisabled();
 
+		if (ImGui::BeginTabItem("Events", nullptr, currentState.GetTabFlags(PanelType::Events)))
+		{
+			activePanel_ = PanelType::Events;
+
+			auto evCtx = InspectorEventPanel::ResourceContext{
+				.eventBus = scene->GetEventBus(),
+				.textureRepo = scene->GetTextureRepository()
+			};
+			InspectorEventPanel::Update(evCtx);
+
+			ImGui::EndTabItem();
+		}
+
 		if (atUpdateBegin.historyCursor != ComponentEditHistory::GetCursor())
 		{
 			UpdateForHistoryChange();
@@ -302,6 +317,7 @@ Result<Void> Editor::Init(SceneFixture::SharedPtr& scene)
 	TRY(InspectorEntityPanel::Init(*scene));
 	TRY(InspectorSystemPanel::Init(*scene));
 	TRY(InspectorComponentPanel::Init(*scene));
+	TRY(InspectorEventPanel::Init(*scene));
 
 	TRY(cameraControl_.Init());
 
@@ -313,6 +329,11 @@ Result<Void> Editor::Init(SceneFixture::SharedPtr& scene)
 	});
 
 	return kVoid;
+}
+
+void Editor::TearDown()
+{
+	InspectorEventPanel::TearDown();
 }
 
 } // ui

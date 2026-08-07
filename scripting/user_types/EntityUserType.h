@@ -15,9 +15,18 @@
 	"has"	 #cmpType, [](const Entity& e) { return e.HasComponent<cmpType>(); }, \
 	"add"	 #cmpType, [](Entity& e) -> cmpType& { return e.AddComponent<cmpType>(); }, \
 	"remove" #cmpType, [](Entity& e) { return e.RemoveComponent<cmpType>(); }
- 
-DEF_LUA_USERTYPE(Entity, Dependencies<Transform, SpriteRenderableComponent, TextRenderableComponent,
-									  SpriteAnimationComponent>)
+
+
+using EntityLuaUserTypeDependencies = Dependencies<
+	Transform, 
+	SpriteRenderableComponent, 
+	TextRenderableComponent,
+	SpriteAnimationComponent, 
+	Name, 
+	Timer
+>;
+
+DEF_LUA_USERTYPE(Entity, EntityLuaUserTypeDependencies)
 {
 	lua.def_type(DEF_LUA_COMPONENT_METHODS(Transform),
 				 DEF_LUA_COMPONENT_METHODS(SpriteRenderableComponent),

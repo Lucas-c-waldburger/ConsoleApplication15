@@ -8,6 +8,8 @@ class ScriptTableView;
 class ScriptTable
 {
 public:
+    using TableId = uint32_t;
+
     struct CallableWrapper
     {
     public:
@@ -48,7 +50,11 @@ public:
         sol::function fn_;
     };
 
-    using TableId = uint32_t;
+    struct Descriptor
+    {
+        std::vector<std::string> functionNames;
+        std::vector<uint64_t> scriptSignatures;
+    };
 
     ScriptTable() = default;
 	~ScriptTable() = default;
@@ -57,20 +63,12 @@ public:
 	ScriptTable(ScriptTable&&) noexcept = default;
 	ScriptTable& operator=(ScriptTable&&) noexcept = default;
 
+    bool RegisterFunction(std::string_view fnName, const ScriptSignature& scriptSig);
+
     template <HasFuncTraits Sig>
     bool RegisterFunction(std::string_view fnName)
     {
-        if (registeredSignatures_.contains(fnName))
-        {
-            return false;
-        }
-
-        if (!ValidateFunction(fnName))
-        {
-            return false;
-        }
-
-        return registeredSignatures_.emplace(fnName, ScriptSignature::Create<Sig>()).second;
+        return RegisterFunction(fnName, ScriptSignature::Create<Sig>());
     }
 
     template <HasFuncTraits Sig>
@@ -105,6 +103,10 @@ public:
 
         return scriptTable;
     }
+
+    void SetTable(sol::table&& table) { table_ = std::move(table); }
+
+    Descriptor ExportTableDescriptor() const;
 
 private:
     bool ValidateFunction(std::string_view fnName)

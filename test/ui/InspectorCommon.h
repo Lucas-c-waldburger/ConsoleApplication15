@@ -39,6 +39,13 @@ struct Button
 	TypeIndexedBitset<TList> isHovered;
 };
 
+template <typename TList>
+struct SingleSpriteButton
+{
+	Sprite sprite;
+	TypeIndexedBitset<TList> isHovered;
+};
+
 template <typename T, typename TList>
 bool DrawButton(Button<TList>& button, const GuiTexture& texture, 
 				std::string_view label, bool disabled)

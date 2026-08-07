@@ -504,6 +504,18 @@
     <ClCompile Include="test\catch\scripting\ScriptTableTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\catch\systems\ScriptSystemTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="serial\ScriptSystemSerializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\InspectorEventPanel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\gui_edit\GuiEditEvents.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -2189,6 +2201,15 @@
     <ClInclude Include="scripting\ScriptTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="serial\ScriptSystemSerializer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="serial\user_types\ScriptJsonUserTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_edit\GuiEditEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -3034,6 +3055,51 @@
     <Image Include="resources\sprites\ui\editor\xmark-solid.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="resources\sprites\ui\editor\add_child_icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\add_circle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\add_entity_icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\build_circle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\camera_icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\delete_icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\image_icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\redo_icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\text_icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\transform_icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\undo_icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\view_children_icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\visibility_off_icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\visibility_on_icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\sprites\ui\editor\bolt_icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\scripts\b2body_test.lua" />
@@ -3059,6 +3125,7 @@
     <None Include="resources\json\persistence\textures.json" />
     <None Include="test\catch\test_json\audio.json" />
     <None Include="test\catch\test_scripts\entity_test.lua" />
+    <None Include="test\catch\test_scripts\empty.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

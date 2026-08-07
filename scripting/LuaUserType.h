@@ -50,13 +50,19 @@ struct lua_helper
 	template <typename...Args>
 	void def_type(Args&&...args) 
 	{
-		lua_.new_usertype<T>(lua_user_type_name<T>::value, std::forward<Args>(args)...);
+		if (lua_[lua_user_type_name<T>::value] == sol::lua_nil)
+		{
+			lua_.new_usertype<T>(lua_user_type_name<T>::value, std::forward<Args>(args)...);
+		}
 	}
 
 	template <typename...Args> requires std::is_enum_v<T>
 	void def_enum(Args&&...args) 
 	{
-		lua_.new_enum(lua_user_type_name<T>::value, std::forward<Args>(args)...);
+		if (lua_[lua_user_type_name<T>::value] == sol::lua_nil)
+		{
+			lua_.new_enum(lua_user_type_name<T>::value, std::forward<Args>(args)...);
+		}
 	}
 
 private:

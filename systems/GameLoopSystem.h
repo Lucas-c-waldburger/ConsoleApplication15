@@ -6,6 +6,8 @@
 class GameLoopSystem : public System
 {
 public:
+	void UpdateCounter();
+
 	void UpdateLoopStepStart(EventBus& bus);
 	void UpdateLoopStepRender(EventBus& bus);
 	void UpdateLoopStepEnd(EventBus& bus);

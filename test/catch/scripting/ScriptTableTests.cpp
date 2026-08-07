@@ -2,7 +2,7 @@
 #include "../../../scripting/ScriptTable.h"
 #include <string>
 
-TEST_CASE("ScriptSignature Tests", "[script][a]")
+TEST_CASE("ScriptSignature Tests", "[script]")
 {
 	auto sig1 = ScriptSignature::Create<int(float, double)>();
 	auto sig2 = ScriptSignature::Create<void(const std::string&)>();
@@ -62,7 +62,7 @@ struct StructA { int valueInt = 0; };
 struct StructB { std::string valueString; };
 struct StructC { double valueDouble = 0.0; uint8_t valueUint = 0; };
 
-TEST_CASE("ScriptTable Tests", "[script][a]")
+TEST_CASE("ScriptTable Tests", "[script]")
 {
 	sol::state state{};
 

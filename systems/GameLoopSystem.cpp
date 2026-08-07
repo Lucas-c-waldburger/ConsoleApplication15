@@ -1,6 +1,11 @@
 #include "GameLoopSystem.h"
 #include "../events/EventDataTypeList.h"
 
+void GameLoopSystem::UpdateCounter()
+{
+	counter_.Update();
+}
+
 void GameLoopSystem::UpdateLoopStepStart(EventBus& bus)
 {
 	counter_.Update();

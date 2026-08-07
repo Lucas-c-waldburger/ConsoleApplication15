@@ -6,12 +6,12 @@
 #include "../../core/commonObjects.h"
 #include "EntityDragUtility.h"
 #include "CameraControlUtility.h"
-//#include "InspectorComponentPanel.h"
 
 class Camera;
 class TextureRepository;
 class SystemManager;
 class B2World;
+class EventBus;
 
 namespace ui {
 
@@ -23,7 +23,8 @@ public:
 		None,
 		Entities,
 		Systems,
-		Components 
+		Components,
+		Events
 	};
 
 	struct UpdateState
@@ -66,6 +67,8 @@ public:
 	static void SetActivePanel(PanelType panelType) { activePanel_ = panelType; }
 
 	static const UpdateState& GetUpdateState() { return updateState_; }
+
+	static void TearDown();
 
 private:
 	Editor() = default;

@@ -2,6 +2,7 @@
 #include "user_types/ComponentJsonUserType.h"
 #include "../atlas/NewTextureRepository.h"
 #include "../audio/AudioBank.h"
+#include "../systems/ScriptSystem.h"
 
 struct SpriteSerializerContext 
 {
@@ -19,6 +20,12 @@ struct AudioSerializerContext
 {
 	Entity entity;
 	const AudioBank& audioBank;
+};
+
+struct ScriptSerializerContext
+{
+	Entity entity;
+	const ScriptSystem& scriptSystem;
 };
 
 class EntitySerializer : EntityFullAccessPrivelage

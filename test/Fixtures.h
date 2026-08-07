@@ -35,11 +35,65 @@ public:
 		SDL_Color screenColor = SDLite::kColorBlack;
 		SDL_FPoint worldGravity = { 0, 9.8f };
 	};
+
+	class GameLoopController
+	{
+	public:
+		enum class State
+		{
+			Run = 1,
+			Pause,
+			Step
+		};
+
+		void Run() noexcept { tempState_ = State::Run; }
+		void Pause() noexcept { tempState_ = State::Pause; }
+		void Step() noexcept { tempState_ = State::Step; }
+
+		State GetState() const noexcept { return canonicalState_; }
+
+	private:
+		friend class SceneFixture;
+
+		static constexpr State kNoNewStateRequested = static_cast<State>(0);
+
+		void ClearTempState() { tempState_ = kNoNewStateRequested; }
+
+		bool ShouldPauseAfterStep() const
+		{ 
+			return canonicalState_ == State::Step && tempState_ == kNoNewStateRequested;
+		}
+
+		void UpdateCanonicalState() 
+		{ 
+			if (tempState_ != kNoNewStateRequested)
+			{
+				canonicalState_ = tempState_;
+			}
+		}
+
+		State canonicalState_ = State::Run;
+		State tempState_ = kNoNewStateRequested;
+	};
+
+	//class FrameCapture
+	//{
+	//public:
+	//	void Capture(const SceneFixture& fixture);
+	//	void Restore(SceneFixture& fixture);
+	//	void Clear();
+
+	//private:
+	//	nlohmann::json frameJson_;
+	//};
 	   
 	SceneFixture() = default;
 	~SceneFixture();
 
 	// main loop
+	Result<Void> Update();
+	GameLoopController& GameLoop() { return gameLoopController_; }
+
 	Result<Void> RunGameLoop();
 	Result<Void> StepGameLoop(int count);
 	Result<Void> RunGameLoopMs(int ms);
@@ -67,7 +121,7 @@ public:
 	const T& GetSystem() const { return systems_.GetSystem<T>(); }
 
 	template <typename T>
-	bool IsSystemRegistered() { return systems_.IsSystemRegistered<T>(); }
+	bool IsSystemRegistered() const { return systems_.IsSystemRegistered<T>(); }
 
 	template <typename T, typename...Args>
 	T& RegisterSystem(Args&&...args)
@@ -103,6 +157,7 @@ public:
 
 	HookManager& GetHooks() { return hooks_; }
 	TextureRepository& GetTextureRepository() { return textureRepo_; }
+	const TextureRepository& GetTextureRepository() const { return textureRepo_; }
 	B2World& GetWorld() { return world_; }
 	ScriptManager& GetScripts() { return scripts_; }
 	SDL_Renderer* GetRenderer() { return SDLite::Renderer(); }
@@ -111,6 +166,7 @@ public:
 	EventBus& GetEventBus() { return eventBus_; }
 	Camera& GetCamera();
 	AudioBank& GetAudioBank();
+	const AudioBank& GetAudioBank() const;
 	MouseState GetMouseState() const;
 
 	Result<Void> SerializeState(SerializationSystem::Filepaths fps = {});
@@ -137,11 +193,14 @@ private:
 
 	Result<bool> RunGameLoopImpl();
 
+	Result<bool> UpdateImpl();
+
+	bool ProcessLimitedInputs();
+
 	void SerializeSceneToJson(nlohmann::json& j) const;
 	Result<Void> DeserializeSceneFromJson(const nlohmann::json& j);
 
 	TextureRepository textureRepo_;
-	SystemManager systems_;
 	HookManager hooks_;
 	B2World world_;
 	ScriptManager scripts_;
@@ -149,6 +208,8 @@ private:
 	EventBus eventBus_;
 	SceneRegistry sceneRegistry_;
 	SceneConfiguration config_;
+	GameLoopController gameLoopController_;
+	SystemManager systems_;
 };
 
 template<typename Fn> requires std::is_invocable_r_v<bool, Fn>

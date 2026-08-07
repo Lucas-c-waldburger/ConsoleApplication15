@@ -1,4 +1,5 @@
 #pragma once
+#include "SDLUsertypes.h"
 #include "../LuaUserType.h"
 #include "../../components/TransformComponent.h"
 

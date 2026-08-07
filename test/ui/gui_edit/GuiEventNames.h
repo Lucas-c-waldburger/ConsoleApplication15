@@ -36,5 +36,6 @@ DEF_GUI_EVENT_NAME(GameControllerDisconnected)
 DEF_GUI_EVENT_NAME(GameControllerInput)
 DEF_GUI_EVENT_NAME(MouseInput)
 DEF_GUI_EVENT_NAME(KeyboardInput)
+DEF_GUI_EVENT_NAME(TimerFired)
 
 #endif

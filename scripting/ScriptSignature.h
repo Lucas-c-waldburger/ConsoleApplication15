@@ -27,6 +27,7 @@ public:
     static constexpr uint8_t kMaxArguments = 6;
 
     constexpr ScriptSignature() = default;
+    explicit constexpr ScriptSignature(uint64_t bits) : bits_(bits) {}
 
     constexpr ScriptArgumentId ReturnType() const
     {

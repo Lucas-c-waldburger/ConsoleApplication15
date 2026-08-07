@@ -8,9 +8,11 @@ end
 
 function table.changePos(e)
     if e:hasTransform() then
-        pos = e:getTransform().position
-        pos.x = 500
-        pos.y = 500
+        local t = e:getTransform()
+        local p = t.position
+
+        p.x = 500.0
+        p.y = 500.0
     end               
 end
 

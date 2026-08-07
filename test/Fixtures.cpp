@@ -28,6 +28,84 @@ Result<bool> SceneFixture::RunGameLoopImpl()
 	return true;
 }
 
+bool SceneFixture::ProcessLimitedInputs()
+{
+	SDL_Event ev;
+	while (SDL_PollEvent(&ev))
+	{
+#if IMGUI_ENABLED
+		if (GuiContext::IsInitialized())
+		{
+			GuiContext::ProcessEvent(ev);
+		}
+#endif
+
+		if (ev.type == SDL_QUIT)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+Result<bool> SceneFixture::UpdateImpl()
+{
+	using State = GameLoopController::State;
+	
+	assert(gameLoopController_.GetState() != GameLoopController::kNoNewStateRequested);
+	gameLoopController_.ClearTempState();
+
+	assert(IsSystemRegistered<GameLoopSystem>());
+	systems_.GetSystem<GameLoopSystem>().UpdateCounter();
+
+	if (gameLoopController_.GetState() == State::Pause)
+	{
+		if (!ProcessLimitedInputs())
+		{
+			return false;
+		}
+	}
+	else
+	{
+		TRY(UpdateSDLInputs(), cont);
+		if (!cont)
+		{
+			return false;
+		}
+	}
+
+	if (gameLoopController_.GetState() != State::Pause)
+	{
+		TRY(UpdatePhysics());
+		TRY(UpdateAudio());
+		TRY(UpdateCamera());
+	}
+
+	//// TODO: only call Render phase system updates from RenderScene() if not paused
+	TRY(RenderScene());
+
+	if (gameLoopController_.ShouldPauseAfterStep())
+	{
+		gameLoopController_.Pause();
+	}
+
+	gameLoopController_.UpdateCanonicalState();
+
+	return true;
+}
+
+Result<Void> SceneFixture::Update()
+{
+	bool run = true;
+	while (run)
+	{ 
+		TRY_ASSIGN(run, UpdateImpl());
+	}
+
+	return kVoid;
+}
+
 Result<Void> SceneFixture::RunGameLoopMs(int ms)
 {
 	assert(ms > 0);
@@ -203,6 +281,12 @@ Camera& SceneFixture::GetCamera()
 }
 
 AudioBank& SceneFixture::GetAudioBank()
+{
+	assert(systems_.IsSystemRegistered<AudioSystem>());
+	return systems_.GetSystem<AudioSystem>().GetAudioBank();
+}
+
+const AudioBank& SceneFixture::GetAudioBank() const
 {
 	assert(systems_.IsSystemRegistered<AudioSystem>());
 	return systems_.GetSystem<AudioSystem>().GetAudioBank();
@@ -438,6 +522,44 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance(const SceneConfi
 	fixture->systems_.RegisterSystem<CameraSystem>(cameraVp);
 
 	fixture->GetCamera().SetPosition(SDLite::Window().GetLocalCenter<SDL_FPoint>());
-
+	 
 	return Result<std::shared_ptr<SceneFixture>>{ std::move(fixture) };
 }
+
+//void SceneFixture::FrameCapture::Capture(const SceneFixture& fixture)
+//{
+//	assert(fixture.IsSystemRegistered<SerializationSystem>());
+//	assert(fixture.IsSystemRegistered<AudioSystem>());
+//
+//	fixture.GetSystem<SerializationSystem>().SerializeStateToJson(
+//		frameJson_, 
+//		fixture.GetTextureRepository(), 
+//		fixture.GetAudioBank()
+//	);
+//}
+//
+//void SceneFixture::FrameCapture::Restore(SceneFixture& fixture)
+//{
+//	assert(fixture.IsSystemRegistered<SerializationSystem>());
+//	assert(fixture.IsSystemRegistered<SDLInputSystem>());
+//	assert(fixture.IsSystemRegistered<AudioSystem>());
+//
+//	auto errs = fixture.GetSystem<SerializationSystem>().DeserializeStateFromJson(
+//		frameJson_, 
+//		fixture.GetWorld(), 
+//		fixture.GetTextureRepository(), 
+//		fixture.GetSystem<SDLInputSystem>(),
+//		fixture.GetAudioBank(), 
+//		fixture.GetRenderer()
+//	);
+//
+//	for (const auto& err : errs)
+//	{
+//		LOG_ERROR(err.GetMessage());
+//	}
+//}
+//
+//void SceneFixture::FrameCapture::Clear()
+//{
+//	frameJson_.clear();
+//}

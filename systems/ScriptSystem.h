@@ -8,6 +8,14 @@
 #include <unordered_map>
 #include <filesystem>
 
+struct ScriptDataDescriptor
+{
+	std::string filepath;
+	ScriptTable::Descriptor tableDescriptor;
+};
+
+using ScriptDataPackage = std::vector<ScriptDataDescriptor>;
+
 class ScriptSystem : public System
 {
 public:
@@ -55,7 +63,11 @@ public:
 	template <SomeLuaUserType...Ts>
 	void InitState();
 
+	Result<ScriptTable::TableId> AddTable(const std::string& pathStr);
 	Result<ScriptTable::TableId> AddTable(const std::filesystem::path& path);
+
+	bool RegisterTableFunction(ScriptTable::TableId tableId, std::string_view fnName,
+							   const ScriptSignature& scriptSig);
 
 	template <HasFuncTraits Sig>
 	bool RegisterTableFunction(ScriptTable::TableId tableId, std::string_view fnName);
@@ -71,12 +83,19 @@ public:
 
 	bool ContainsTable(ScriptTable::TableId tableId) const;
 
-private:
-	State state_;
+	Result<bool> ReloadTable(ScriptTable::TableId tableId);
 
-	std::vector<std::string> filepaths_;
-	std::vector<ScriptTable> tables_;
-	std::unordered_map<ScriptTable::TableId, size_t> tableIndexMap_;
+	ScriptDataPackage ExportScriptDataPackage() const;
+
+private:
+	struct TableData
+	{
+		ScriptTable table;
+		std::string filepath;
+	};
+
+	State state_;
+	std::unordered_map<ScriptTable::TableId, TableData> tableData_;
 };
 
 template <SomeLuaUserType...Ts>
@@ -98,11 +117,16 @@ void ScriptSystem::InitState()
 template <HasFuncTraits Sig>
 bool ScriptSystem::RegisterTableFunction(ScriptTable::TableId tableId, std::string_view fnName)
 {
-	if (auto it = tableIndexMap_.find(tableId); it != tableIndexMap_.end())
-	{
-		assert(it->second < tables_.size());
+	//if (auto it = tableIndexMap_.find(tableId); it != tableIndexMap_.end())
+	//{
+	//	assert(it->second < tables_.size());
 
-		return tables_[it->second].RegisterFunction<Sig>(fnName);
+	//	return tables_[it->second].RegisterFunction<Sig>(fnName);
+	//}
+
+	if (auto it = tableData_.find(tableId); it != tableData_.end())
+	{
+		return it->second.table.RegisterFunction<Sig>(fnName);
 	}
 
 	return false;

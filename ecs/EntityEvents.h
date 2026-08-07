@@ -660,7 +660,7 @@ Result<Void> EntityEvents::MakeTimer(float durationSec, Fn&& fn, int numRepeats)
 template <typename EvT>
 inline auto ScriptCallbackImpl(Entity& e, const std::string& script, const EvT& ev)
 {
-	if (!e.HasComponent<Script>(&ComponentValid))
+	if (!e.HasComponent<Script>(&ScriptValid))
 	{
 		return;
 	}
