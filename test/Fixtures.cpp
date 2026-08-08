@@ -2,6 +2,7 @@
 #include "../ecs/Ecs.h"
 #include "../physics/B2World.h"
 #include "../gui/GuiContext.h"
+#include "../scripting/user_types/LuaUserTypeIncludes.h"
 
 SceneFixture::~SceneFixture()
 {
@@ -517,13 +518,37 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance(const SceneConfi
 	fixture->systems_.RegisterSystem<NewRenderSystem>();
 	fixture->systems_.RegisterSystem<SerializationSystem>();
 	fixture->systems_.RegisterSystem<SpriteAnimationSystem>();
+	fixture->systems_.RegisterSystem<CameraSystem>(SDLite::Window().GetSize<float>());
+	fixture->systems_.RegisterSystem<ScriptSystem>();
 
-	Dimensions<float> cameraVp = SDLite::Window().GetSize<float>();
-	fixture->systems_.RegisterSystem<CameraSystem>(cameraVp);
-
+	fixture->InitScriptSystemState();
 	fixture->GetCamera().SetPosition(SDLite::Window().GetLocalCenter<SDL_FPoint>());
 	 
 	return Result<std::shared_ptr<SceneFixture>>{ std::move(fixture) };
+}
+
+void SceneFixture::InitScriptSystemState(SceneFixture::SharedPtr& fixture)
+{
+	assert(fixture);
+
+	if (!fixture->IsSystemRegistered<ScriptSystem>())
+	{
+		return;
+	}
+
+	auto& state = fixture->GetSystem<ScriptSystem>().GetState();
+	state.Init<Entity, Camera, TextureRepository>();
+
+	static constexpr auto getRepo = [](const SceneFixture& fx) -> const TextureRepository& {
+		return fx.GetTextureRepository();
+	};
+
+	state.AddUserType<SceneFixture>("SceneFixture",
+		"camera", sol::property(&SceneFixture::GetCamera),
+		"textures", sol::property(getRepo)
+	);
+
+	state["engine"] = fixture;
 }
 
 //void SceneFixture::FrameCapture::Capture(const SceneFixture& fixture)

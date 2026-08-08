@@ -43,6 +43,11 @@ public:
 			return data_.new_enum(name, std::forward<Args>(args)...);
 		}
 
+		decltype(auto) operator[](std::string ident)
+		{
+			return data_[ident];
+		}
+
 	private:
 		friend class ScriptSystem;
 

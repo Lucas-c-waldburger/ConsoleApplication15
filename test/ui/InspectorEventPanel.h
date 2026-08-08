@@ -25,7 +25,7 @@ public:
 
 	struct Buttons
 	{
-		SingleSpriteButton<GuiEventTypeList> fire;
+		Button<GuiEventTypeList> fire;
 	};
 
 	struct ResourceContext

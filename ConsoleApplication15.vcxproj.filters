@@ -2210,6 +2210,15 @@
     <ClInclude Include="test\ui\gui_edit\GuiEditEvents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="scripting\user_types\CameraLuaUserType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\user_types\LuaUserTypeIncludes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\user_types\TextureRepositoryLuaUserTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -3100,6 +3109,9 @@
     <Image Include="resources\sprites\ui\editor\bolt_icon.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="resources\sprites\ui\editor\bolt_icon_fill.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="resources\scripts\b2body_test.lua" />
@@ -3126,6 +3138,7 @@
     <None Include="test\catch\test_json\audio.json" />
     <None Include="test\catch\test_scripts\entity_test.lua" />
     <None Include="test\catch\test_scripts\empty.lua" />
+    <None Include="resources\scripts\textbox_test.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

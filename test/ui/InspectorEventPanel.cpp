@@ -9,6 +9,7 @@
 #include "gui_edit/GuiEditPropertyTable.h"
 #include "../../components/util/ComponentValidPreds.h"
 #include "../../core/Algorithms.h"
+#include "gui_edit/GuiEditEvents.h"
 
 namespace ui {
 
@@ -57,11 +58,12 @@ struct init_event_fired_list_callbacks<TList<Ts...>>
 };
 
 template <typename T>
-bool DrawFireButton(const GuiTextureConverter& converter)
+bool DrawFireButton(const GuiTextureConverter& converter, bool fired)
 {
 	auto& button = InspectorEventPanel::GetButtons().fire;
+	const auto& sprite = fired ? button.activatedSprite : button.defaultSprite;
 
-	GuiTexture texture{ converter.FromSprite(button.sprite) };
+	GuiTexture texture{ converter.FromSprite(sprite) };
 	auto h = ImGui::GetFrameHeight();
 	texture.size.x = h * 1.05f;
 	texture.size.y = h * 1.05f;
@@ -72,7 +74,9 @@ bool DrawFireButton(const GuiTextureConverter& converter)
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
 
-	const auto tint = button.isHovered.Test<T>() ? ImVec4(1, 1, 1, 1) : ImVec4(.75f, .75f, .75f, 1);
+	const auto tint = (button.isHovered.Test<T>() || fired)
+		? ImVec4(1, 1, 1, 1) 
+		: ImVec4(.75f, .75f, .75f, 1);
 
 	const bool pressed = GuiImageButton(GuiEventName<T>::label, texture, ImVec4(0, 0, 0, 0), tint);
 
@@ -119,50 +123,50 @@ std::string_view GetEntityName(Entity_t entityId)
 	return e.GetComponent<Name>().value;
 }
 
-struct CollisionDataShapeInfo
-{
-	struct Elem
-	{
-		std::string label;
-		Entity_t entityId = kInvalidEntity;
-		Handle<B2Shape> handle;
-	};
+//struct CollisionDataShapeInfo
+//{
+//	struct Elem
+//	{
+//		std::string label;
+//		Entity_t entityId = kInvalidEntity;
+//		Handle<B2Shape> handle;
+//	};
+//
+//	Elem current;
+//	std::vector<Elem> all;
+//};
 
-	Elem current;
-	std::vector<Elem> all;
-};
-
-std::vector<Entity> GetAllColliderEntities(Entity& e)
-{
-	const auto& body = e.GetComponent<RigidBody>().body.GetData();
-	std::vector<Entity> colliderEs;
-
-	if (e.HasComponent<Collider>(&ColliderValid))
-	{
-		colliderEs.emplace_back(e);
-	}
-
-	auto rels = e.GetRelations();
-	if (rels.HasChildren())
-	{
-		auto chs = rels.GetAllChildrenWith<Collider>();
-		for (const auto& ch : chs)
-		{
-			if (ch.HasComponent<Collider>() &&
-				ch.GetComponent<Collider>().shape.GetData().GetParentBodyHandle() ==
-				body.GetHandle())
-			{
-				colliderEs.emplace_back(ch);
-			}
-		}
-	}
-
-	//std::sort(colliderEs.begin(), colliderEs.end(), [](const auto& a, const auto& b) {
-	//	return a.GetID() < b.GetID();
-	//});
-
-	return colliderEs;
-}
+//std::vector<Entity> GetAllColliderEntities(Entity& e)
+//{
+//	const auto& body = e.GetComponent<RigidBody>().body.GetData();
+//	std::vector<Entity> colliderEs;
+//
+//	if (e.HasComponent<Collider>(&ColliderValid))
+//	{
+//		colliderEs.emplace_back(e);
+//	}
+//
+//	auto rels = e.GetRelations();
+//	if (rels.HasChildren())
+//	{
+//		auto chs = rels.GetAllChildrenWith<Collider>();
+//		for (const auto& ch : chs)
+//		{
+//			if (ch.HasComponent<Collider>() &&
+//				ch.GetComponent<Collider>().shape.GetData().GetParentBodyHandle() ==
+//				body.GetHandle())
+//			{
+//				colliderEs.emplace_back(ch);
+//			}
+//		}
+//	}
+//
+//	//std::sort(colliderEs.begin(), colliderEs.end(), [](const auto& a, const auto& b) {
+//	//	return a.GetID() < b.GetID();
+//	//});
+//
+//	return colliderEs;
+//}
 
 std::vector<Entity> GetRigidBodyEntities()
 {
@@ -172,61 +176,204 @@ std::vector<Entity> GetRigidBodyEntities()
 	}) | std::ranges::to<std::vector>();
 }
 
-bool IsValidCollisionParticipant(const Entity& e)
-{
-	return e.IsValid() && e.HasComponent<Name>() && e.HasComponent<RigidBody>(&RigidBodyValid);
-}
+//bool IsValidCollisionParticipant(const Entity& e)
+//{
+//	return e.IsValid() && e.HasComponent<Name>() && e.HasComponent<RigidBody>(&RigidBodyValid);
+//}
 
-CollisionDataShapeInfo GetCollisionDataShapeInfo(Entity& e, const CollisionData& data)
-{
-	if (!IsValidCollisionParticipant(e))
-	{
-		return {};
-	}
+//CollisionDataShapeInfo GetCollisionDataShapeInfo(Entity& e, const CollisionData& data)
+//{
+//	if (!IsValidCollisionParticipant(e))
+//	{
+//		return {};
+//	}
+//
+//	auto colEs = GetAllColliderEntities(e);
+//
+//	std::sort(colEs.begin(), colEs.end(), [](const Entity& a, const Entity& b) {
+//		const auto shA = a.GetComponent<Collider>().shape.GetData();
+//		const auto shB = b.GetComponent<Collider>().shape.GetData();
+//		if (shA.GetShapeType() == shB.GetShapeType())
+//		{
+//			return shA.GetHandle() < shB.GetHandle();
+//		}
+//		return shA.GetShapeType() < shB.GetShapeType();
+//	});
+//
+//	CollisionDataShapeInfo info{};
+//	info.all.reserve(colEs.size());
+//	
+//	size_t counter = 0;
+//	B2Shape::Type lastType = B2Shape::Type::Invalid;
+//	for (const auto& colE : colEs)
+//	{
+//		const auto& sh = colE.GetComponent<Collider>().shape.GetData();
+//
+//		if (sh.GetShapeType() != lastType)
+//		{
+//			counter = 0;
+//		}
+//	
+//		auto& elem = info.all.emplace_back(
+//			std::format("{} {}", ToString(sh.GetShapeType()), counter), 
+//			colE.GetID(),
+//			sh.GetHandle()
+//		);
+//	
+//		if (data.shapeHandle == elem.handle)
+//		{
+//			assert(data.entity == elem.entityId);
+//			info.current = elem;
+//		}
+//	
+//		++counter;
+//	}
+//	
+//	return info;
+//}
 
-	auto colEs = GetAllColliderEntities(e);
-
-	std::sort(colEs.begin(), colEs.end(), [](const Entity& a, const Entity& b) {
-		const auto shA = a.GetComponent<Collider>().shape.GetData();
-		const auto shB = b.GetComponent<Collider>().shape.GetData();
-		if (shA.GetShapeType() == shB.GetShapeType())
-		{
-			return shA.GetHandle() < shB.GetHandle();
-		}
-		return shA.GetShapeType() < shB.GetShapeType();
-	});
-
-	CollisionDataShapeInfo info{};
-	info.all.reserve(colEs.size());
-	
-	size_t counter = 0;
-	B2Shape::Type lastType = B2Shape::Type::Invalid;
-	for (const auto& colE : colEs)
-	{
-		const auto& sh = colE.GetComponent<Collider>().shape.GetData();
-
-		if (sh.GetShapeType() != lastType)
-		{
-			counter = 0;
-		}
-	
-		auto& elem = info.all.emplace_back(
-			std::format("{} {}", ToString(sh.GetShapeType()), counter), 
-			colE.GetID(),
-			sh.GetHandle()
-		);
-	
-		if (data.shapeHandle == elem.handle)
-		{
-			assert(data.entity == elem.entityId);
-			info.current = elem;
-		}
-	
-		++counter;
-	}
-	
-	return info;
-}
+//template <typename Ev>
+//PropertyEditState DrawCollisionEvent(Ev& ev)
+//{
+//	static constexpr FixedString kParticipantALabel = "participant A";
+//	static constexpr FixedString kParticipantBLabel = "participant B";
+//	static constexpr FixedString kShapeALabel = "shape##A";
+//	static constexpr FixedString kShapeBLabel = "shape##B";
+//
+//	const float participantALabelWidth = GetFieldValueWidth<kParticipantALabel, kShapeALabel>();
+//	const float participantBLabelWidth = GetFieldValueWidth<kParticipantBLabel, kShapeBLabel>();
+//
+//	Entity participantA = ECS::GetEntityByID(ev.entity<0>());
+//	Entity participantB = ECS::GetEntityByID(ev.entity<1>());
+//
+//	std::string curNameA;
+//	std::string curNameB;
+//
+//	if (IsValidCollisionParticipant(participantA))
+//	{
+//		curNameA = participantA.GetComponent<Name>();
+//	}
+//	if (IsValidCollisionParticipant(participantB))
+//	{
+//		curNameB = participantB.GetComponent<Name>();
+//	}
+//
+//	auto es = GetRigidBodyEntities();
+//
+//	ImGui::TextUnformatted(kParticipantALabel);
+//	ImGui::SameLine();
+//	ImGui::SetNextItemWidth(participantALabelWidth);
+//
+//	// PARTICIPANT A
+//	if (ImGui::BeginCombo("participant A", curNameA.c_str()))
+//	{
+//		for (const auto& e : es)
+//		{
+//			assert(e.HasComponent<Name>());
+//			const auto& name = e.GetComponent<Name>().value;
+//
+//			if (name == curNameB)
+//			{
+//				continue;
+//			}
+//
+//			const bool selected = (name == curNameA);
+//			if (ImGui::Selectable(name.c_str(), &selected))
+//			{
+//				ev.entity<0>() = e.GetID();
+//				participantA = e;
+//				curNameA = name;
+//			}
+//		}
+//
+//		ImGui::EndCombo();
+//	}
+//
+//	ImGui::TableNextColumn();
+//	//ImGui::SetNextItemWidth(-FLT_MIN);
+//
+//	auto aInfo = GetCollisionDataShapeInfo(participantA, ev.a);
+//
+//	if (ImGui::BeginCombo("shape##a", aInfo.current.label.c_str()))
+//	{
+//		if (!IsValidCollisionParticipant(participantA))
+//		{
+//			ev.entity<0>() = kInvalidEntity;
+//		}
+//		else
+//		{
+//			for (const auto& infoElem : aInfo.all)
+//			{
+//				bool selected = (infoElem.handle == aInfo.current.handle);
+//
+//				if (ImGui::Selectable(infoElem.label.c_str(), &selected))
+//				{
+//					ev.a.entity = infoElem.entityId;
+//					ev.a.shapeHandle = infoElem.handle;
+//				}
+//			}
+//		}
+//
+//		ImGui::EndCombo();
+//	}
+//
+//	ImGui::TableNextRow();
+//	ImGui::TableNextColumn();
+//
+//	// PARTICIPANT B
+//	if (ImGui::BeginCombo("participant B", curNameB.c_str()))
+//	{
+//		for (const auto& e : es)
+//		{
+//			assert(e.HasComponent<Name>());
+//			const auto& name = e.GetComponent<Name>().value;
+//
+//			if (name == curNameA)
+//			{
+//				continue;
+//			}
+//
+//			const bool selected = (name == curNameB);
+//			if (ImGui::Selectable(name.c_str(), &selected))
+//			{
+//				ev.entity<1>() = e.GetID();
+//				participantB = e;
+//			}
+//		}
+//
+//		ImGui::EndCombo();
+//	}
+//
+//	ImGui::TableNextColumn();
+//	ImGui::SetNextItemWidth(-FLT_MIN);
+//
+//	auto bInfo = GetCollisionDataShapeInfo(participantB, ev.b);
+//
+//	if (ImGui::BeginCombo("shape##b", bInfo.current.label.c_str()))
+//	{
+//		if (!IsValidCollisionParticipant(participantB))
+//		{
+//			ev.entity<1>() = kInvalidEntity;
+//		}
+//		else
+//		{
+//			for (const auto& infoElem : bInfo.all)
+//			{
+//				bool selected = (infoElem.handle == bInfo.current.handle);
+//
+//				if (ImGui::Selectable(infoElem.label.c_str(), &selected))
+//				{
+//					ev.b.entity = infoElem.entityId;
+//					ev.b.shapeHandle = infoElem.handle;
+//				}
+//			}
+//		}
+//
+//		ImGui::EndCombo();
+//	}
+//
+//	return PropertyEditState::None;
+//}
 
 template <typename Ev>
 PropertyEditState DrawCollisionEvent(Ev& ev)
@@ -248,118 +395,47 @@ PropertyEditState DrawCollisionEvent(Ev& ev)
 
 	auto es = GetRigidBodyEntities();
 
-	ImGui::TableNextRow();
-	ImGui::TableNextColumn();
+	CollisionEventParticipantContext participantCtxA{
+		.invisibleLabel = "##participantA",
+		.allEntities = es,
+		.currentName = curNameA,
+		.nameToTest = curNameB,
+		.participantEntity = participantA,
+		.eventParticipantId = ev.entity<0>()
+	};
 
-	// PARTICIPANT A
-	if (ImGui::BeginCombo("participant A", curNameA.c_str()))
-	{
-		for (const auto& e : es)
-		{
-			assert(e.HasComponent<Name>());
-			const auto& name = e.GetComponent<Name>().value;
+	CollisionEventShapesContext shapesCtxA{
+		.invisibleLabel = "##shapesA",
+		.collisionData = ev.a,
+		.participantEntity = participantA,
+		.eventParticipantId = ev.entity<0>()
+	};
 
-			if (name == curNameB)
-			{
-				continue;
-			}
+	auto state = Property("", [&participantCtxA, &shapesCtxA] {
+		return GuiEditProperties<"participant A", "shapes">(participantCtxA, shapesCtxA);
+	});
 
-			const bool selected = (name == curNameA);
-			if (ImGui::Selectable(name.c_str(), &selected))
-			{
-				ev.entity<0>() = e.GetID();
-				participantA = e;
-				curNameA = name;
-			}
-		}
+	CollisionEventParticipantContext participantCtxB{
+		.invisibleLabel = "##participantB",
+		.allEntities = es,
+		.currentName = curNameB,
+		.nameToTest = curNameA,
+		.participantEntity = participantB,
+		.eventParticipantId = ev.entity<1>()
+	};
 
-		ImGui::EndCombo();
-	}
+	CollisionEventShapesContext shapesCtxB{
+		.invisibleLabel = "##shapesB",
+		.collisionData = ev.b,
+		.participantEntity = participantB,
+		.eventParticipantId = ev.entity<1>()
+	};
 
-	ImGui::TableNextColumn();
-	//ImGui::SetNextItemWidth(-FLT_MIN);
+	state |= Property("", [&participantCtxB, &shapesCtxB] {
+		return GuiEditProperties<"participant B", "shapes">(participantCtxB, shapesCtxB);
+	});
 
-	auto aInfo = GetCollisionDataShapeInfo(participantA, ev.a);
-
-	if (ImGui::BeginCombo("shape##a", aInfo.current.label.c_str()))
-	{
-		if (!IsValidCollisionParticipant(participantA))
-		{
-			ev.entity<0>() = kInvalidEntity;
-		}
-		else
-		{
-			for (const auto& infoElem : aInfo.all)
-			{
-				bool selected = (infoElem.handle == aInfo.current.handle);
-
-				if (ImGui::Selectable(infoElem.label.c_str(), &selected))
-				{
-					ev.a.entity = infoElem.entityId;
-					ev.a.shapeHandle = infoElem.handle;
-				}
-			}
-		}
-
-		ImGui::EndCombo();
-	}
-
-	ImGui::TableNextRow();
-	ImGui::TableNextColumn();
-
-	// PARTICIPANT B
-	if (ImGui::BeginCombo("participant B", curNameB.c_str()))
-	{
-		for (const auto& e : es)
-		{
-			assert(e.HasComponent<Name>());
-			const auto& name = e.GetComponent<Name>().value;
-
-			if (name == curNameA)
-			{
-				continue;
-			}
-
-			const bool selected = (name == curNameB);
-			if (ImGui::Selectable(name.c_str(), &selected))
-			{
-				ev.entity<1>() = e.GetID();
-				participantB = e;
-			}
-		}
-
-		ImGui::EndCombo();
-	}
-
-	ImGui::TableNextColumn();
-	ImGui::SetNextItemWidth(-FLT_MIN);
-
-	auto bInfo = GetCollisionDataShapeInfo(participantB, ev.b);
-
-	if (ImGui::BeginCombo("shape##b", bInfo.current.label.c_str()))
-	{
-		if (!IsValidCollisionParticipant(participantB))
-		{
-			ev.entity<1>() = kInvalidEntity;
-		}
-		else
-		{
-			for (const auto& infoElem : bInfo.all)
-			{
-				bool selected = (infoElem.handle == bInfo.current.handle);
-
-				if (ImGui::Selectable(infoElem.label.c_str(), &selected))
-				{
-					ev.b.entity = infoElem.entityId;
-					ev.b.shapeHandle = infoElem.handle;
-				}
-			}
-		}
-
-		ImGui::EndCombo();
-	}
-
-	return PropertyEditState::None;
+	return state;
 }
 
 template <typename T> requires type_in_list_v<T, events::CollisionEventGroup>
@@ -395,26 +471,13 @@ struct draw_event_list<TList<Ts...>>
 													const GuiTextureConverter& converter, EventBus& bus)
 		{
 			const bool fired = firedList.Test<T>();
-
 			firedList.Set<T>(false);
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,
 				ImVec2(ImGui::GetStyle().FramePadding.x, 6));
 
-			if (fired)
-			{
-				ImGui::PushStyleColor(ImGuiCol_Header, kFiredHeaderColor);
-				ImGui::PushStyleColor(ImGuiCol_HeaderHovered, kFiredHeaderColor);
-				ImGui::PushStyleColor(ImGuiCol_HeaderActive, kFiredHeaderColor);
-			}
-
 			const bool open = ImGui::CollapsingHeader(GuiEventName<T>::name.data(),
 				ImGuiTreeNodeFlags_AllowOverlap | ImGuiTreeNodeFlags_DrawLinesFull);
-
-			if (fired)
-			{
-				ImGui::PopStyleColor(3);
-			}
 
 			ImGui::PopStyleVar();
 
@@ -424,7 +487,7 @@ struct draw_event_list<TList<Ts...>>
 
 			ImGui::SameLine(buttonStartX);
 
-			const bool pressedFire = DrawFireButton<T>(converter);
+			const bool pressedFire = DrawFireButton<T>(converter, fired);
 
 			ImGui::PopStyleVar();
 
@@ -476,11 +539,14 @@ Result<Void> InspectorEventPanel::ResetForNewScene(SceneFixture& fixture)
 Result<Void> InspectorEventPanel::LoadResources(SceneFixture& fixture)
 {
 	TRY(ResourcePath::Sprite("ui/editor/bolt_icon.png"), boltIconPath);
+	TRY(ResourcePath::Sprite("ui/editor/bolt_icon_fill.png"), boltIconFillPath);
 
 	auto& spriteAtlas = fixture.GetTextureRepository().GetSpriteAtlas();
 
-	TRY_ASSIGN(buttons_.fire.sprite, spriteAtlas.LoadSprite(
+	TRY_ASSIGN(buttons_.fire.defaultSprite, spriteAtlas.LoadSprite(
 		fixture.GetRenderer(), { .filepath = std::move(boltIconPath) }));
+	TRY_ASSIGN(buttons_.fire.activatedSprite, spriteAtlas.LoadSprite(
+		fixture.GetRenderer(), { .filepath = std::move(boltIconFillPath) }));
 
 	return kVoid;
 }

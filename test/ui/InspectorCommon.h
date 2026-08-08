@@ -6,6 +6,8 @@
 #include "../../atlas/SpriteAtlasCollection.h"
 #include "GuiResource.h"
 #include "GuiTexture.h"
+#include "../../physics/B2Handle.h"
+#include "../../ecs/EntityT.h"
 
 class Entity;
 class Camera;
@@ -13,6 +15,7 @@ struct GlyphCacheData;
 struct Collider;
 struct RigidBody;
 struct SpriteRenderableComponent;
+struct CollisionData;
 
 namespace ui {
 
@@ -86,6 +89,25 @@ SDL_FRect GetScreenRectForEntity(const Entity& e, const Camera& cam);
 bool HasValidBody(const RigidBody& rb);
 bool HasValidShape(const Collider& col);
 bool HasValidResourceHandle(const SpriteRenderableComponent& sp);
+
+struct CollisionDataShapeInfo
+{
+	struct Elem
+	{
+		std::string label;
+		Entity_t entityId = kInvalidEntity;
+		Handle<B2Shape> handle;
+	};
+
+	Elem current;
+	std::vector<Elem> all;
+};
+
+bool IsValidCollisionParticipant(const Entity& e);
+
+std::vector<Entity> GetAllColliderEntitiesForRigidBodyEntity(Entity& e);
+
+CollisionDataShapeInfo GetCollisionDataShapeInfo(Entity& e, const CollisionData& data);
 
 } // ui
 

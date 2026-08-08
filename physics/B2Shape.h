@@ -124,6 +124,7 @@ public:
     }
     void SetDensity(float density, bool updateBody = true)
     {
+        density = std::max(density, 0.0f);
         b2Shape_SetDensity(shapeHandle_, density, updateBody);
     }
 
@@ -133,6 +134,7 @@ public:
     }
     void SetFriction(float friction)
     {
+        friction = std::max(friction, 0.0f);
         b2Shape_SetFriction(shapeHandle_, friction);
     }
 
@@ -142,7 +144,7 @@ public:
     }
     void SetRestitution(float restitution)
     {
-        b2Shape_SetFriction(shapeHandle_, restitution);
+        b2Shape_SetRestitution(shapeHandle_, restitution);
     }
 
     B2CollisionFilter GetCollisionFilter() const

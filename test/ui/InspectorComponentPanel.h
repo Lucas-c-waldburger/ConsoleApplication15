@@ -13,6 +13,8 @@
 
 namespace ui {
 
+struct EventCallbackSpoofComponent;
+
 class InspectorComponentPanel
 {
 public:

@@ -200,6 +200,8 @@ private:
 	void SerializeSceneToJson(nlohmann::json& j) const;
 	Result<Void> DeserializeSceneFromJson(const nlohmann::json& j);
 
+	static void InitScriptSystemState(SceneFixture::SharedPtr& fixture);
+
 	TextureRepository textureRepo_;
 	HookManager hooks_;
 	B2World world_;

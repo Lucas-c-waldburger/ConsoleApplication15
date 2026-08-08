@@ -11,6 +11,7 @@
 #include "GameLoopSystem.h"
 #include "AudioSystem.h"
 #include "SerializationSystem.h"
+#include "ScriptSystem.h"
 
 #if IMGUI_ENABLED
 #include "GuiSystem.h"
@@ -25,7 +26,8 @@ using CoreSystemTypeList = TypeList<
 	GameLoopSystem,
 	AudioSystem,
 	NewRenderSystem,
-	SerializationSystem
+	SerializationSystem,
+	ScriptSystem
 >;
 
 #if IMGUI_ENABLED

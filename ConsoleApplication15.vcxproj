@@ -502,11 +502,14 @@
     <ClInclude Include="scripting\ScriptHandle.h" />
     <ClInclude Include="scripting\ScriptSignature.h" />
     <ClInclude Include="scripting\ScriptTable.h" />
+    <ClInclude Include="scripting\user_types\CameraLuaUserType.h" />
     <ClInclude Include="scripting\user_types\CameraTargetUserType.h" />
     <ClInclude Include="scripting\user_types\CoreLuaUserTypes.h" />
     <ClInclude Include="scripting\user_types\EventUserTypes.h" />
+    <ClInclude Include="scripting\user_types\LuaUserTypeIncludes.h" />
     <ClInclude Include="scripting\user_types\NameUserType.h" />
     <ClInclude Include="scripting\user_types\PhysicsUserTypes.h" />
+    <ClInclude Include="scripting\user_types\TextureRepositoryLuaUserTypes.h" />
     <ClInclude Include="scripting\user_types\TimerComponentUserType.h" />
     <ClInclude Include="serial\AudioBankSerializer.h" />
     <ClInclude Include="serial\EntityDeserializer.h" />
@@ -1162,6 +1165,7 @@
     <Image Include="resources\sprites\ui\editor\add_entity_icon.png" />
     <Image Include="resources\sprites\ui\editor\arrows-up-down-left-right-solid.png" />
     <Image Include="resources\sprites\ui\editor\bolt_icon.png" />
+    <Image Include="resources\sprites\ui\editor\bolt_icon_fill.png" />
     <Image Include="resources\sprites\ui\editor\build_circle.png" />
     <Image Include="resources\sprites\ui\editor\camera_icon.png" />
     <Image Include="resources\sprites\ui\editor\delete_icon.png" />
@@ -1208,6 +1212,7 @@
     <None Include="resources\scripts\game_controller_test.lua" />
     <None Include="resources\scripts\sprite_render_test.lua" />
     <None Include="resources\scripts\test_physics.lua" />
+    <None Include="resources\scripts\textbox_test.lua" />
     <None Include="resources\scripts\text_render_test.lua" />
     <None Include="resources\sprites\particles\2d_lights_and_shadows_neutral_point_light.webp" />
     <None Include="test\catch\test_json\audio.json" />

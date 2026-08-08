@@ -1,7 +1,6 @@
 #pragma once
 #include "../IEventData.h"
-#include "../EventConcepts.h"
-#include "../../ecs/EntityT.h"
+#include "EntityEventConcept.h"
 #include "../../physics/B2Handle.h"
 
 

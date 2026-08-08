@@ -5,6 +5,9 @@
 #include <deque>
 #include "../../camera/Camera.h"
 #include "../../systems/util/DebugDrawUtils.h"
+#include "../../ecs/Ecs.h"
+#include "../../components/util/ComponentValidPreds.h"
+#include "../../events/data/EntityCollision.h"
 
 namespace ui {
 
@@ -194,6 +197,96 @@ bool HasValidShape(const Collider& col)
 bool HasValidResourceHandle(const SpriteRenderableComponent& sp)
 {
 	return sp.sprite.resourceHandle.IsValid();
+}
+
+bool IsValidCollisionParticipant(const Entity& e)
+{
+	return e.IsValid() && e.HasComponent<Name>() && e.HasComponent<RigidBody>(&RigidBodyValid);
+}
+
+std::vector<Entity> GetAllColliderEntitiesForRigidBodyEntity(Entity& e)
+{
+	if (!e.HasComponent<RigidBody>(&RigidBodyValid))
+	{
+		return {};
+	}
+
+	const auto& body = e.GetComponent<RigidBody>().body.GetData();
+	std::vector<Entity> colliderEs;
+
+	if (e.HasComponent<Collider>(&ColliderValid))
+	{
+		colliderEs.emplace_back(e);
+	}
+
+	auto rels = e.GetRelations();
+	if (rels.HasChildren())
+	{
+		auto chs = rels.GetAllChildrenWith<Collider>();
+		for (const auto& ch : chs)
+		{
+			if (ch.GetComponent<Collider>().shape.GetData().GetParentBodyHandle() ==
+				body.GetHandle())
+			{
+				colliderEs.emplace_back(ch);
+			}
+		}
+	}
+
+	return colliderEs;
+}
+
+CollisionDataShapeInfo GetCollisionDataShapeInfo(Entity& e, const CollisionData& data)
+{
+	if (!IsValidCollisionParticipant(e))
+	{
+		return {};
+	}
+
+	auto colEs = GetAllColliderEntitiesForRigidBodyEntity(e);
+
+	std::sort(colEs.begin(), colEs.end(), [](const Entity& a, const Entity& b) {
+		const auto shA = a.GetComponent<Collider>().shape.GetData();
+		const auto shB = b.GetComponent<Collider>().shape.GetData();
+
+		if (shA.GetShapeType() == shB.GetShapeType())
+		{
+			return shA.GetHandle() < shB.GetHandle();
+		}
+
+		return shA.GetShapeType() < shB.GetShapeType();
+	});
+
+	CollisionDataShapeInfo info{};
+	info.all.reserve(colEs.size());
+
+	size_t counter = 0;
+	B2Shape::Type lastType = B2Shape::Type::Invalid;
+	for (const auto& colE : colEs)
+	{
+		const auto& sh = colE.GetComponent<Collider>().shape.GetData();
+
+		if (sh.GetShapeType() != lastType)
+		{
+			counter = 0;
+		}
+
+		auto& elem = info.all.emplace_back(
+			std::format("{} {}", ToString(sh.GetShapeType()), counter),
+			colE.GetID(),
+			sh.GetHandle()
+		);
+
+		if (data.shapeHandle == elem.handle)
+		{
+			assert(data.entity == elem.entityId);
+			info.current = elem;
+		}
+
+		++counter;
+	}
+
+	return info;
 }
 
 
