@@ -196,6 +196,7 @@
     <ClCompile Include="render\GlyphCacheHandler.cpp" />
     <ClCompile Include="render\RenderBatchHandler.cpp" />
     <ClCompile Include="render\TextFormatExpressionParser.cpp" />
+    <ClCompile Include="scripting\ScriptHandle.cpp" />
     <ClCompile Include="scripting\ScriptTable.cpp" />
     <ClCompile Include="serial\AudioBankSerializer.cpp" />
     <ClCompile Include="serial\EntityDeserializer.cpp" />
@@ -282,6 +283,12 @@
     <ClCompile Include="test\demo\platformer\Setup.cpp" />
     <ClCompile Include="test\demo\platformer\states\AttackAnimDataReference.cpp" />
     <ClCompile Include="test\demo\platformer\states\GirlStateHandlerImpls.cpp" />
+    <ClCompile Include="test\FixtureLua.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="test\setups\TileSet.cpp" />
     <ClCompile Include="test\ui\CameraControlUtility.cpp" />
     <ClCompile Include="test\ui\ComponentEditHistory.cpp" />
@@ -300,6 +307,7 @@
     <ClCompile Include="test\ui\gui_edit\GuiEditInputs.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditPhysics.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditRenderable.cpp" />
+    <ClCompile Include="test\ui\gui_edit\GuiEditScripts.cpp" />
     <ClCompile Include="test\ui\InspectorCommon.cpp" />
     <ClCompile Include="test\ui\InspectorComponentPanel.cpp" />
     <ClCompile Include="test\ui\InspectorEntityPanel.cpp" />
@@ -319,7 +327,12 @@
     <ClCompile Include="test\catch\ecs\Entity_tTests.cpp" />
     <ClCompile Include="test\catch\events\EventBusTests.cpp" />
     <ClCompile Include="test\catch\render\RendererTests.cpp" />
-    <ClCompile Include="test\catch\scripting\LuaFunctionTests.cpp" />
+    <ClCompile Include="test\catch\scripting\LuaFunctionTests.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="test\catch\test_utils\ImageUtilities.cpp" />
     <ClCompile Include="test\Fixtures.cpp" />
     <ClCompile Include="test\Premades.cpp" />
@@ -457,6 +470,9 @@
     <ClInclude Include="deps\boost\pfr\traits.hpp" />
     <ClInclude Include="deps\boost\pfr\traits_fwd.hpp" />
     <ClInclude Include="deps\boost\pfr\tuple_size.hpp" />
+    <ClInclude Include="deps\ctre\ctre-unicode.hpp" />
+    <ClInclude Include="deps\ctre\ctre.hpp" />
+    <ClInclude Include="deps\ctre\unicode-db.hpp" />
     <ClInclude Include="deps\imgui-master\examples\libs\emscripten\emscripten_mainloop_stub.h" />
     <ClInclude Include="deps\imgui-master\examples\libs\glfw\include\GLFW\glfw3.h" />
     <ClInclude Include="deps\imgui-master\examples\libs\glfw\include\GLFW\glfw3native.h" />
@@ -502,6 +518,7 @@
     <ClInclude Include="scripting\ScriptHandle.h" />
     <ClInclude Include="scripting\ScriptSignature.h" />
     <ClInclude Include="scripting\ScriptTable.h" />
+    <ClInclude Include="scripting\user_types\AudioBankLuaUserType.h" />
     <ClInclude Include="scripting\user_types\CameraLuaUserType.h" />
     <ClInclude Include="scripting\user_types\CameraTargetUserType.h" />
     <ClInclude Include="scripting\user_types\CoreLuaUserTypes.h" />
@@ -535,6 +552,7 @@
     <ClInclude Include="inputs\keyboard\KeyboardInputSource.h" />
     <ClInclude Include="inputs\keyboard\KeyboardInputUpdater.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMakerCommon.h" />
+    <ClInclude Include="test\FixtureLua.h" />
     <ClInclude Include="test\SceneRegistry.h" />
     <ClInclude Include="test\ui\CameraControlUtility.h" />
     <ClInclude Include="test\ui\ComponentEditHistory.h" />
@@ -548,6 +566,7 @@
     <ClInclude Include="test\ui\gui_edit\GuiEditComponentBuilders.h" />
     <ClInclude Include="test\ui\gui_edit\GuiEditEvents.h" />
     <ClInclude Include="test\ui\gui_edit\GuiEditPropertyTable.h" />
+    <ClInclude Include="test\ui\gui_edit\GuiEditScripts.h" />
     <ClInclude Include="test\ui\gui_edit\GuiEventNames.h" />
     <ClInclude Include="test\ui\gui_edit\GuiSystemNames.h" />
     <ClInclude Include="test\ui\InspectorCommon.h" />
@@ -557,6 +576,7 @@
     <ClInclude Include="test\ui\InspectorEventPanel.h" />
     <ClInclude Include="test\ui\InspectorSystemPanel.h" />
     <ClInclude Include="test\ui\SaveSceneUtility.h" />
+    <ClInclude Include="test\ui\ScriptPicker.h" />
     <ClInclude Include="test\ui\SpritePicker.h" />
     <ClInclude Include="test\demo\gallery\Gallery.h" />
     <ClInclude Include="test\demo\gallery\GalleryApp.h" />

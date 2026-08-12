@@ -3,32 +3,26 @@
 
 #if IMGUI_ENABLED
 #include <imgui.h>
+#include "../InspectorCommon.h"
 #include "../../../components/builder/RigidBodyComponentBuilder.h"
 #include "../../../components/builder/ColliderComponentBuilder.h"
 
 class B2World;
 class Entity;
+class ScriptSystem;
+class EventBus;
 
 namespace ui {
 
 template <typename T>
 class GuiEditComponentBuilder;
 
-//template <typename T = void>
-//class GuiEditComponentBuilder
-//{
-//public:
-//	struct ResourceContext
-//	{
-//
-//	};
-//};
-
 enum class ComponentBuilderType
 {
 	None,
 	RigidBody,
-	Collider
+	Collider,
+	EventCallback
 };
 
 template <typename T>
@@ -81,6 +75,31 @@ private:
 	static inline B2ShapeParameters shapeParams_{ .shapeType = B2Shape::Type::Polygon };
 	static inline ColliderSettings colliderSettings_{};
 
+	static inline bool isActive_ = false;
+};
+
+template <>
+class GuiEditComponentBuilder<CallbackInfo>
+{
+public:
+	static bool Draw(Entity& e, ScriptSystem& scriptSys, EventBus& bus);
+
+	static bool IsActive() { return isActive_; }
+
+	static void SetIsActive(bool active);
+
+	static constexpr ComponentBuilderType GetBuilderType() { return ComponentBuilderType::EventCallback; }
+
+private:
+	static bool CanAddCallback();
+
+	static void UpdateEntityScriptTable(Entity& e, const ScriptSystem& scriptSys);
+	static void UpdateEntityCallbackInfo(Entity& e);
+	static void ClearSelections();
+
+	static inline std::string_view selectedEventName_{};
+	static inline std::string selectedScriptFile_{};
+	static inline std::string selectedTableFunction_{};
 	static inline bool isActive_ = false;
 };
 

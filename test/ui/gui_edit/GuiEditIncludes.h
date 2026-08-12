@@ -7,6 +7,7 @@
 #include "GuiEditIncludes.h"
 #include "GuiEditPhysics.h"
 #include "GuiEditEvents.h"
+#include "GuiEditScripts.h"
 #include "../PropertyEditState.h"
 
 #if IMGUI_ENABLED

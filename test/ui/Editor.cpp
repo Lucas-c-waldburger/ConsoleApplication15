@@ -259,13 +259,21 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 
 			if (entitySelected)
 			{
-				auto e = ECS::GetEntityByID(InspectorEntityPanel::GetSelection().entityId);
+				const auto selectedEntityId = InspectorEntityPanel::GetSelection().entityId;
+				if (selectedEntityId != atUpdateBegin.selectedEntity)
+				{
+					InspectorComponentPanel::SetActiveBuilderType(ComponentBuilderType::None);
+				}
+
+				auto e = ECS::GetEntityByID(selectedEntityId);
 				assert(e.IsValid());
 
 				auto cmpCtx = InspectorComponentPanel::ResourceContext{ 
 					.entity = e,
 					.textureRepo = scene->GetTextureRepository(),
-					.world = scene->GetWorld()
+					.world = scene->GetWorld(),
+					.scriptSys = scene->GetSystem<ScriptSystem>(),
+					.eventBus = scene->GetEventBus()
 				};
 				InspectorComponentPanel::Update(cmpCtx);
 			}
@@ -281,7 +289,7 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 
 			auto evCtx = InspectorEventPanel::ResourceContext{
 				.eventBus = scene->GetEventBus(),
-				.textureRepo = scene->GetTextureRepository()
+				.textureRepo = scene->GetTextureRepository(),
 			};
 			InspectorEventPanel::Update(evCtx);
 
@@ -306,8 +314,8 @@ Result<Void> Editor::Init(SceneFixture::SharedPtr& scene)
 {
 	assert(scene);
 
-	const bool registered = ECS::RegisterComponent<InspectorTag>();
-	assert(registered);
+	ECS::RegisterComponent<InspectorTag>();
+	ECS::RegisterComponent<CallbackInfo>();
 
 	GuiResource::Init();
 	GuiMouse::Init();

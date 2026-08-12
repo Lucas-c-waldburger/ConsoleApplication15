@@ -24,6 +24,15 @@ template <> struct GuiComponentName<cmp> { \
 }; \
 } // ui
 
+#define DEF_GUI_CMP_CUSTOM_NAME(cmp, customName) \
+struct cmp; \
+namespace ui { \
+template <> struct GuiComponentName<cmp> { \
+ static constexpr std::string_view name = customName; \
+ static constexpr std::string_view label = "##"#customName; \
+}; \
+} // ui
+
 } // ui
 
 //DEF_GUI_CMP_NAME(ActiveState);
@@ -38,7 +47,6 @@ DEF_GUI_CMP_NAME(GameControllerState)
 DEF_GUI_CMP_NAME(CameraTarget)
 DEF_GUI_CMP_NAME(Timer);
 //DEF_GUI_CMP_NAME(EntityFlags);
-//DEF_GUI_CMP_NAME(SignalTokenStorage);
 DEF_GUI_CMP_NAME(NewAudioRequest)
 DEF_GUI_CMP_NAME(AudioUpdateRequest)
 DEF_GUI_CMP_NAME(ActiveAudio)
@@ -48,6 +56,8 @@ DEF_GUI_CMP_NAME(SpriteRenderableComponent)
 //DEF_GUI_CMP_NAME(MarkedDestroyed);
 DEF_GUI_CMP_NAME(SpriteAnimationComponent)
 //DEF_GUI_CMP_NAME(NeedsAnimationUpdate);
-DEF_GUI_CMP_NAME(Name);
+DEF_GUI_CMP_NAME(Name)
+
+DEF_GUI_CMP_CUSTOM_NAME(SignalTokenStorage, "Callbacks")
 
 #endif
