@@ -23,7 +23,8 @@ using EntityLuaUserTypeDependencies = Dependencies<
 	TextRenderableComponent,
 	SpriteAnimationComponent, 
 	Name, 
-	Timer
+	Timer,
+	NewAudioRequest
 >;
 
 DEF_LUA_USERTYPE(Entity, EntityLuaUserTypeDependencies)

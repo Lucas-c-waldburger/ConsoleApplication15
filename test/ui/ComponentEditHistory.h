@@ -102,7 +102,8 @@ inline TypeErasedRecord MakeRecord(Entity_t e, Args&&...args)
 
 template <typename T>
 struct GuiRedoUndoableComponentPred : std::bool_constant<
-	(public_mutable_component_v<T> && HasGuiComponentName<T> && !std::same_as<T, Name>)
+	(public_mutable_component_v<T> && HasGuiComponentName<T> && !std::same_as<T, Name> &&
+	 !std::same_as<T, SignalTokenStorage>)
 >{};
 
 using GuiRedoUndoableComponentTypeList = 

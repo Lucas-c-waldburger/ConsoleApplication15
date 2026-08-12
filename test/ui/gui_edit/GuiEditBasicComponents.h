@@ -9,6 +9,7 @@
 #include "../../../components/TagsComponent.h"
 #include "../../../components/TimerComponent.h"
 #include "../../../components/NameComponent.h"
+#include "../../../components/SignalTokenStorageComponent.h"
 
 namespace ui {
 
@@ -27,6 +28,7 @@ PropertyEditState GuiEditProperty(Children& ch);
 PropertyEditState GuiEditProperty(Tags& tg);
 PropertyEditState GuiEditProperty(Timer& tmr);
 PropertyEditState GuiEditProperty(Name& nm);
+PropertyEditState GuiEditProperty(SignalTokenStorage&);
 
 } // ui
 

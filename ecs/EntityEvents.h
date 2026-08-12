@@ -700,7 +700,8 @@ template <typename EvT>
 inline auto EntityEvents::MakeEventScriptCallback(Entity& e, std::string_view scriptCallable, 
 												  FilterDef&& filterDef)
 {
-	return [e, script = std::string{ scriptCallable }, def = std::move(filterDef)](const EvT& ev) {
+	return [e, script = std::string{ scriptCallable }, def = std::move(filterDef)]
+	(const EvT& ev) mutable {
 		if (!IsEventRelevant(e, ev, def))
 		{
 			return;
@@ -714,7 +715,8 @@ template <typename EvT>
 inline auto EntityEvents::MakeInputScriptCallback(Entity& e, InputState st, 
 												  std::string_view scriptCallable, FilterDef&& filterDef)
 {
-	return [e, st, script = std::string{ scriptCallable }, def = std::move(filterDef)](const EvT& ev) {
+	return [e, st, script = std::string{ scriptCallable }, def = std::move(filterDef)]
+	(const EvT& ev) mutable {
 		if (!(InputStateMatches(ev, st) && IsEventRelevant(e, ev, def)))
 		{
 			return;

@@ -418,6 +418,40 @@ inline PropertyEditState GuiEditProperties(Args&...args)
 	return state;
 }
 
+template <FixedString...strs, typename...Args> requires (sizeof...(strs) == sizeof...(Args))
+inline PropertyEditState GuiDrawProperties(const Args&...args)
+{
+	static constexpr auto draw = []<FixedString label>(float w, const auto& arg, int itemTrack) {
+		if (itemTrack > 1)
+		{
+			ImGui::SameLine();
+		}
+
+		ImGui::TextUnformatted(label);
+
+		ImGui::SameLine();
+
+		if (itemTrack >= sizeof...(strs))
+		{
+			w = -FLT_MIN;
+		}
+		ImGui::SetNextItemWidth(w);
+
+		ImGui::PushID(&arg);
+		GuiDrawProperty(arg);
+		ImGui::PopID();
+
+		return PropertyEditState::None;
+	};
+
+	const float fieldWidth = GetFieldValueWidth<strs...>();
+	int itemTrack = 1;
+
+	((draw.template operator()<strs>(fieldWidth, args, itemTrack++)), ...);
+
+	return PropertyEditState::None;
+}
+
 template <FixedString...strs, typename T, typename...Args> requires (sizeof...(strs) == sizeof...(Args))
 inline PropertyEditState GuiEditProperties(const DragArgs<T>& drag, Args&...args)
 {

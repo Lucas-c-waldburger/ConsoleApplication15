@@ -35,7 +35,7 @@ public:
 
 	template <typename T>
 	using GuiAddablePred = std::bool_constant<public_mutable_component_v<T> && HasGuiComponentName<T> 
-	&& HasGuiEditProperty<T>>;
+						   && HasGuiEditProperty<T>>;
 
 	using GuiAddableComponentTypeList = filter_types_t<CoreComponentTypeList, GuiAddablePred>;
 
@@ -61,6 +61,8 @@ public:
 		Entity entity;
 		TextureRepository& textureRepo;
 		B2World& world;
+		ScriptSystem& scriptSys;
+		EventBus& eventBus;
 	};
 
 	enum UpdateReport : uint8_t
@@ -77,7 +79,8 @@ public:
 
 	static Buttons& GetButtons() { return buttons_; }
 	static SpritePicker& GetSpritePicker() { return spritePicker_; }
-	static ComponentBuilderType& GetActiveBuilderType() { return activeBuilderType_; }
+	static const ComponentBuilderType& GetActiveBuilderType() { return activeBuilderType_; }
+	static void SetActiveBuilderType(ComponentBuilderType type) { activeBuilderType_ = type; }
 	static EditableComponentBitSet& GetComponentHeaderOpen() { return componentHeaderOpen_; }
 
 	static Result<Void> ResetForNewScene(SceneFixture& scene);

@@ -6,6 +6,7 @@
 #include "../../ecs/EntityPhysics.h"
 #include "GuiMouse.h"
 #include "ComponentEditHistory.h"
+#include "../../components/util/ComponentValidPreds.h"
 
 namespace ui {
 
@@ -371,7 +372,7 @@ struct draw_component<RigidBody>
 
 		if (ImGui::Button("Build"))
 		{
-			InspectorComponentPanel::GetActiveBuilderType() = ComponentBuilderType::RigidBody;
+			InspectorComponentPanel::SetActiveBuilderType(ComponentBuilderType::RigidBody);
 		}
 
 		PopPropertyDepth();
@@ -406,7 +407,7 @@ struct draw_component<Collider>
 
 		if (ImGui::Button("Build"))
 		{
-			InspectorComponentPanel::GetActiveBuilderType() = ComponentBuilderType::Collider;
+			InspectorComponentPanel::SetActiveBuilderType(ComponentBuilderType::Collider);
 		}
 
 		ImGui::EndDisabled();
@@ -414,6 +415,37 @@ struct draw_component<Collider>
 		PopPropertyDepth();
 
 		return state;
+	}
+};
+
+template <>
+struct draw_component<SignalTokenStorage>
+{
+	static PropertyEditState call(InspectorComponentPanel::ResourceContext& ctx)
+	{
+		PushPropertyDepth();
+
+		auto& cbInfo = ctx.entity.AddComponent<CallbackInfo>();
+		assert(cbInfo.eventNames.size() == cbInfo.scriptFileNames.size());
+		assert(cbInfo.eventNames.size() == cbInfo.tableFunctionNames.size());
+
+		for (size_t i = 0; i < cbInfo.eventNames.size(); ++i)
+		{
+			GuiDrawProperties<"event", "table", "function">(
+				cbInfo.eventNames[i], cbInfo.scriptFileNames[i], cbInfo.tableFunctionNames);
+		}
+
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+
+		if (ImGui::Button("Build"))
+		{
+			InspectorComponentPanel::SetActiveBuilderType(ComponentBuilderType::EventCallback);
+		}
+
+		PopPropertyDepth();
+
+		return PropertyEditState::None;
 	}
 };
 
@@ -610,9 +642,7 @@ InspectorComponentPanel::UpdateReport InspectorComponentPanel::Update(ResourceCo
 		}
 		case ComponentBuilderType::Collider:
 		{
-			if (!ctx.entity.HasComponent<RigidBody>([](const auto& rb) {
-				return rb.body.GetData().IsValid();
-			}))
+			if (!ctx.entity.HasComponent<RigidBody>(&RigidBodyValid))
 			{
 				activeBuilderType_ = ComponentBuilderType::None;
 			}
@@ -620,6 +650,11 @@ InspectorComponentPanel::UpdateReport InspectorComponentPanel::Update(ResourceCo
 			auto& body = ctx.entity.GetComponent<RigidBody>().body;
 
 			built = GuiEditComponentBuilder<Collider>::Draw(ctx.entity, body);
+			break;
+		}
+		case ComponentBuilderType::EventCallback:
+		{
+			built = GuiEditComponentBuilder<CallbackInfo>::Draw(ctx.entity, ctx.scriptSys, ctx.eventBus);
 			break;
 		}
 		default:

@@ -19,7 +19,15 @@ struct CollisionData;
 
 namespace ui {
 
+/** @defgroup Editor Components @{ */
 struct InspectorTag {};
+struct CallbackInfo
+{
+	std::vector<std::string_view> eventNames;
+	std::vector<std::string> scriptFileNames;
+	std::vector<std::string> tableFunctionNames;
+};
+/** @} */
 
 struct SimpleButton
 {

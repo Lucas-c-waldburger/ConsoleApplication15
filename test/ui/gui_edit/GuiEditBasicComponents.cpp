@@ -170,6 +170,8 @@ PropertyEditState GuiEditProperty(Name& nm)
 	return Property("value", nm.value);
 }
 
+PropertyEditState GuiEditProperty(SignalTokenStorage&) { return PropertyEditState::None; }
+
 } // ui
 
 #endif

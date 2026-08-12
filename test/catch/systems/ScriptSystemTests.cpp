@@ -21,7 +21,7 @@ TEST_CASE("ScriptSystem Tests", "[sys][script]")
 {
 	ScriptSystem scriptSystem{};
 
-	scriptSystem.GetState().Init<Entity>();
+	scriptSystem.InitState<Entity>();
 
 	auto entityTestFilepath = MakeScriptTestPath("entity_test.lua");
 	REQUIRE(std::filesystem::exists(entityTestFilepath));
@@ -83,7 +83,7 @@ TEST_CASE("ScriptSystem::RemoveTable", "[sys][script][a]")
 {
 	ScriptSystem scriptSystem{};
 
-	scriptSystem.GetState().Init<Entity>();
+	scriptSystem.InitState<Entity>();
 
 	auto testFilepath1 = MakeScriptTestPath("entity_test.lua");
 	REQUIRE(std::filesystem::exists(testFilepath1));

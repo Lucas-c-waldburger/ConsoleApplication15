@@ -114,57 +114,14 @@ DEF_LUA_USERTYPE(GlyphTextWriter, Dependencies<TextureResourceHandle>) {
 }
 
 DEF_LUA_USERTYPE(TextRenderableComponent, Dependencies<GlyphTextWriter, TextFormatting, RenderProfile>) {
-
-	static constexpr auto setFont = [](TextRenderableComponent& r, std::string font, 
-									   sol::this_state st) {
-		sol::state_view view{ st };
-		sol::table eng = view["engine"];
-		if (eng != sol::nil)
-		{
-			sol::table tx = eng["textures"];
-			if (tx != sol::nil)
-			{
-				std::string tempText = std::move(r.writer.text);
-				r.writer = tx["getTextWriter"](font);
-				r.writer.text = std::move(tempText);
-
-				if (!r.writer.resourceHandle.IsValid())
-				{
-					LOG_ERROR_FMT("Font '{}' not found");
-				}
-			}
-		} 
-	};
-
 	lua.def_type("writer", &TextRenderableComponent::writer,
-				 "setFont", setFont,
 				 "formatting", &TextRenderableComponent::formatting,
 				 "profile", &TextRenderableComponent::profile,
 				 sol::meta_function::equal_to, &TextRenderableComponent::operator==);
 }
 
 DEF_LUA_USERTYPE(SpriteRenderableComponent, Dependencies<Sprite, RenderProfile>) {
-
-	static constexpr auto setSprite = [](SpriteRenderableComponent& r, std::string name, 
-										 sol::this_state st) {
-		sol::state_view view{ st };
-		sol::table eng = view["engine"];
-		if (eng != sol::nil)
-		{
-			sol::table tx = eng["textures"];
-			if (tx != sol::nil)
-			{
-				r.sprite = tx["getSprite"](name);
-				if (!r.sprite.resourceHandle.IsValid())
-				{
-					LOG_ERROR_FMT("Sprite '{}' not found");
-				}
-			}
-		}
-	};
-
 	lua.def_type("sprite", &SpriteRenderableComponent::sprite,
 				 "profile", &SpriteRenderableComponent::profile,
-				 "setSprite", setSprite,
 				 sol::meta_function::equal_to, &SpriteRenderableComponent::operator==);
 }

@@ -19,42 +19,13 @@ using ScriptDataPackage = std::vector<ScriptDataDescriptor>;
 class ScriptSystem : public System
 {
 public:
-	class State
+	struct TableData
 	{
-	public:
-		~State() = default;
-		State(const State&) = delete;
-		State& operator=(const State&) = delete;
-		State(State&&) noexcept = delete;
-		State& operator=(State&&) noexcept = delete;
-
-		template <SomeLuaUserType...Ts>
-		void Init();
-
-		template <typename Class, typename...Args>
-		decltype(auto) AddUserType(Args&&...args)
-		{
-			return data_.new_usertype<Class>(std::forward<Args>(args)...);
-		}
-
-		template <typename...Args>
-		decltype(auto) AddEnum(std::string_view name, Args&&...args)
-		{
-			return data_.new_enum(name, std::forward<Args>(args)...);
-		}
-
-		decltype(auto) operator[](std::string ident)
-		{
-			return data_[ident];
-		}
-
-	private:
-		friend class ScriptSystem;
-
-		State() = default;
-
-		sol::state data_;
+		ScriptTable table;
+		std::string filepath;
 	};
+
+	using TableDataMap = std::unordered_map<ScriptTable::TableId, TableData>;
 
 	ScriptSystem() = default;
 	~ScriptSystem();
@@ -63,7 +34,7 @@ public:
 	ScriptSystem(ScriptSystem&&) noexcept = delete;
 	ScriptSystem& operator=(ScriptSystem&&) noexcept = delete;
 
-	State& GetState() { return state_; }
+	sol::state& GetState() { return state_; }
 
 	template <SomeLuaUserType...Ts>
 	void InitState();
@@ -92,31 +63,19 @@ public:
 
 	ScriptDataPackage ExportScriptDataPackage() const;
 
+	const TableDataMap& GetTableDataMap() const { return tableData_; }
+
 private:
-	struct TableData
-	{
-		ScriptTable table;
-		std::string filepath;
-	};
-
-	State state_;
-	std::unordered_map<ScriptTable::TableId, TableData> tableData_;
+	sol::state state_;
+	TableDataMap tableData_;
 };
-
-template <SomeLuaUserType...Ts>
-void ScriptSystem::State::Init()
-{
-	data_.open_libraries(sol::lib::base);
-
-	((LuaUserType<Ts>::Register(data_)), ...);
-}
 
 template <SomeLuaUserType...Ts>
 void ScriptSystem::InitState()
 {
-	state_.data_.open_libraries(sol::lib::base);
+	state_.open_libraries(sol::lib::base);
 
-	((LuaUserType<Ts>::Register(state_.data_)), ...);
+	((LuaUserType<Ts>::Register(state_)), ...);
 }
 
 template <HasFuncTraits Sig>

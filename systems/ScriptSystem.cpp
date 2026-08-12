@@ -55,7 +55,7 @@ ScriptSystem::~ScriptSystem()
 
 Result<ScriptTable::TableId> ScriptSystem::AddTable(const std::string& pathStr)
 {
-	sol::protected_function_result loadResult = state_.data_.script_file(pathStr);
+	sol::protected_function_result loadResult = state_.LoadScriptFile(pathStr);
 	if (!loadResult.valid())
 	{
 		sol::error err = loadResult;
@@ -70,7 +70,7 @@ Result<ScriptTable::TableId> ScriptSystem::AddTable(const std::string& pathStr)
 	auto newTable = ScriptTable::Create(loadResult.get<sol::table>());
 	const auto id = newTable.GetTableId();
 
-	tableData_.try_emplace(id, std::move(newTable), std::move(pathStr));
+	tableData_.try_emplace(id, std::move(newTable), pathStr);
 
 	return id;
 }
@@ -233,7 +233,7 @@ Result<bool> ScriptSystem::ReloadTable(ScriptTable::TableId tableId)
 		return false;
 	}
 
-	sol::protected_function_result loadResult = state_.data_.script_file(it->second.filepath);
+	sol::protected_function_result loadResult = state_.LoadScriptFile(it->second.filepath);
 	if (!loadResult.valid())
 	{
 		sol::error err = loadResult;

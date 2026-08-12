@@ -3,9 +3,15 @@
 #if IMGUI_ENABLED
 #include "GuiEditPhysics.h"
 #include "GuiEditPropertyTable.h"
+#include "../InspectorEventPanel.h"
+#include "../gui_edit/GuiEditIncludes.h"
 #include "../../../ecs/Ecs.h"
+#include "../../../ecs/EntityEvents.h"
 #include "../../../ecs/EntityPhysics.h"
+#include "../../../core/Algorithms.h"
 #include "../../../components/RigidBodyComponent.h"
+#include "../../../events/EventBus2.h"
+#include <filesystem>
 
 namespace ui {
 
@@ -13,106 +19,91 @@ namespace {
 
 void DrawHullVector(std::optional<std::vector<SDL_FPoint>>& opVec)
 {
-	//size_t erasedIdx = std::numeric_limits<size_t>::max();
-
-	//VecArgs args{
-	//	.minSize = 3
-	//};
-
 	PropertyGroup("Hull", [&] {
 		return Property("", opVec, VecArgs{ .minSize = 3 });
 	});
+}
 
-	/*if (erasedIdx != std::numeric_limits<size_t>::max())
+namespace detail {
+
+template <typename> struct event_names_array;
+
+template <template <typename...> class TList, typename...Ts>
+struct event_names_array<TList<Ts...>>
+{
+	static constexpr const char* value[] = {
+		GuiEventName<Ts>::name.data()...
+	};
+};
+
+} // detail
+
+static constexpr auto kEventNames =
+	detail::event_names_array<InspectorEventPanel::GuiEventTypeList>::value;
+
+static const ScriptDataDescriptor kEmptyScriptDataDescriptor{};
+
+int GetCurrentEventNameIndex(std::string_view selectedEvName)
+{
+	if (selectedEvName.empty())
 	{
-		if (opVec.has_value())
-		{
-			auto& vec = *opVec;
-			if (vec.size() > 3)
-			{
-				assert(erasedIdx < vec.size());
-
-				vec.erase(vec.begin() + erasedIdx);
-			}
-		}
+		return 0;
 	}
-	
-	if (ImGui::Button("Add"))
+
+	for (int i = 0; i < InspectorEventPanel::GuiEventTypeList::size; ++i)
 	{
-		vec.emplace_back(0.0f, 0.0f);
-	}*/
+		if (selectedEvName == std::string_view{ kEventNames[static_cast<size_t>(i)] })
+		{
+			return i;
+		} 
+	}
 
-	//bool hasValue = opVec.has_value();
-	//size_t erasedIdx = std::numeric_limits<size_t>::max();
+	return 0;
+}
 
-	//PropertyGroup("Hull", [&] {
-	//	Property("", [&] {
-	//		if (ImGui::Checkbox("##Value", &hasValue))
-	//		{
-	//			if (hasValue && !opVec.has_value())
-	//			{
-	//				opVec = std::vector<SDL_FPoint>{ {0.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f} };
-	//			}
-	//			else if (!hasValue && opVec.has_value())
-	//			{
-	//				opVec.reset();
-	//			}
-	//		}
-	//		return false;
-	//	});
-	//	if (hasValue)
-	//	{
-	//		auto& vec = *opVec;
+void DrawEventNames(std::string_view& selectedEvName)
+{
+	int cur = GetCurrentEventNameIndex(selectedEvName);
 
-	//		Property("", [&] {
-	//			for (size_t i = 0; i < vec.size(); ++i)
-	//			{
-	//				auto& p = vec[i];
+	if (ImGui::Combo("##EvNames", &cur, kEventNames, InspectorEventPanel::GuiEventTypeList::size))
+	{
+		selectedEvName = kEventNames[static_cast<size_t>(cur)];
+	}
+}
 
-	//				ImGui::TableNextRow();
+namespace detail {
 
-	//				ImGui::TableNextColumn();
+template <typename> struct connect_script_to_event_dispatch_table;
 
-	//				ImGui::AlignTextToFramePadding();
+template <template <typename...> class TList, typename...Ts>
+struct connect_script_to_event_dispatch_table<TList<Ts...>>
+{
+	template <typename EvT>
+	static void call(Entity& e, EventBus& bus, std::string_view selectedScriptFn)
+	{
+		auto evs = e.GetEvents(bus);
 
-	//				ImGui::PushID(i);
+		evs.OnEventScript<EvT>(selectedScriptFn);
+	}
 
-	//				GuiEditProperties<"X", "Y">(p.x, p.y);
+	using CallSig = void(*)(Entity&, EventBus&, std::string_view);
 
-	//				ImGui::TableNextColumn();
+	static constexpr CallSig value[] = { &call<Ts>... };
+};
 
-	//				ImGui::SetNextItemWidth(-FLT_MIN);
+using kConnectScriptToEventDispatchTable = 
+	connect_script_to_event_dispatch_table<InspectorEventPanel::GuiEventTypeList>;
 
-	//				const std::string xBtnLabel = std::format("x##{}", i);
+} // detail
 
-	//				ImGui::BeginDisabled(vec.size() < 3);
+void ConnectScriptToEvent(Entity& e, EventBus& bus, std::string_view selectedEvName, 
+						  std::string_view selectedScriptFn)
+{
+	int evIdx = GetCurrentEventNameIndex(selectedEvName);
+	assert(evIdx >= 0 && evIdx < InspectorEventPanel::GuiEventTypeList::size);
 
-	//				if (ImGui::Button(xBtnLabel.c_str()))
-	//				{
-	//					erasedIdx = i;
-	//				}
-
-	//				ImGui::EndDisabled();
-
-	//				ImGui::PopID();
-	//			}
-	//		});
-
-	//		if (erasedIdx != std::numeric_limits<size_t>::max() && vec.size() > 3)
-	//		{
-	//			assert(erasedIdx < vec.size());
-
-	//			vec.erase(vec.begin() + erasedIdx);
-	//		}
-
-	//		if (ImGui::Button("Add"))
-	//		{
-	//			vec.emplace_back(0.0f, 0.0f);
-	//		}
-	//	};
-
-	//	return false;
-	//});
+	std::invoke(detail::kConnectScriptToEventDispatchTable::value[static_cast<size_t>(evIdx)],
+		e, bus, selectedScriptFn);
 }
 
 } // unnamed
@@ -123,8 +114,6 @@ bool GuiEditComponentBuilder<RigidBody>::Draw(Entity& e, B2World& world)
 
 	isActive_ = true;
 
-	//ImGui::BeginChild("RigidBodyBuilderPanel", ImVec2(0, panelHeight), ImGuiChildFlags_AutoResizeY);
-
 	SDL_FPoint pos = bodyParams_.position;
 	if (!manuallySelectingPosition_)
 	{
@@ -134,7 +123,6 @@ bool GuiEditComponentBuilder<RigidBody>::Draw(Entity& e, B2World& world)
 
 	if (!BeginPropertyTable())
 	{
-		//ImGui::EndChild();
 		return false;
 	}
 
@@ -166,21 +154,12 @@ bool GuiEditComponentBuilder<RigidBody>::Draw(Entity& e, B2World& world)
 
 	if (ImGui::Button("Done"))
 	{		
-		//if (e.HasComponent<RigidBody>([](const auto& rb) {
-		//	return rb.body.GetData().IsValid();
-		//}))
-		//{
-		//	e.RemoveComponent
-		//}
-
 		e.RemoveComponent<RigidBody>();
 
 		auto& rb = e.AddComponent(ComponentBuilder<RigidBody>{}
 		.WithBodyParameters(bodyParams_)
 		.WithBodyLimits(bodyLimits_)
 		.Build(world));
-
-		//WriteAccessor<B2Body>{}(rb.body).SetPosition(bodyParams_.position);
 
 		bodyParams_ = {};
 		bodyLimits_ = {};
@@ -191,8 +170,6 @@ bool GuiEditComponentBuilder<RigidBody>::Draw(Entity& e, B2World& world)
 	}
 
 	EndPropertyTable();
-
-	//ImGui::EndChild();
 
 	return built;
 }
@@ -214,11 +191,8 @@ bool GuiEditComponentBuilder<Collider>::Draw(Entity& e, ReadOnly<B2Body>& roBody
 
 	isActive_ = true;
 
-	//ImGui::BeginChild("ColliderBuilderPanel", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY);
-
 	if (!BeginPropertyTable())
 	{
-		//ImGui::EndChild();
 		return false;
 	}
 
@@ -332,13 +306,6 @@ bool GuiEditComponentBuilder<Collider>::Draw(Entity& e, ReadOnly<B2Body>& roBody
 
 	if (ImGui::Button("Done"))
 	{
-		//if (e.HasComponent<Collider>([](const auto& col) {
-		//	return col.shape.GetData().IsValid();
-		//}))
-		//{
-		//	WriteAccessor<B2Shape>{}(e.GetComponent<Collider>().shape).Destroy();
-		//}
-
 		e.RemoveComponent<Collider>();
 
 		e.AddComponent(ComponentBuilder<Collider>{}
@@ -359,8 +326,6 @@ bool GuiEditComponentBuilder<Collider>::Draw(Entity& e, ReadOnly<B2Body>& roBody
 
 	EndPropertyTable();
 
-	//ImGui::EndChild();
-
 	return built;
 }
 
@@ -374,6 +339,135 @@ void GuiEditComponentBuilder<Collider>::SetIsActive(bool active)
 
 	isActive_ = active;
 }
+
+bool GuiEditComponentBuilder<CallbackInfo>::Draw(Entity& e, ScriptSystem& scriptSys, EventBus& bus)
+{
+	assert(e.IsValid());
+
+	if (!BeginPropertyTable())
+	{
+		return false;
+	}
+
+	Property("event", [] {
+		DrawEventNames(selectedEventName_);
+		return PropertyEditState::None;
+	});
+
+	auto package = scriptSys.ExportScriptDataPackage();
+
+	ScriptFilepathsContext filepathsCtx{
+		.package = package,
+		.selectedFilepath = selectedScriptFile_
+	};
+
+	Property("script", [&filepathsCtx] {
+		return GuiEditProperty(filepathsCtx);
+	});
+
+	ScriptTableFunctionNamesContext funcNamesCtx{
+		.tableFunctionNames = (filepathsCtx.packageIndex < package.size()
+			? package[filepathsCtx.packageIndex].tableDescriptor.functionNames
+			: Null<std::vector<std::string>>()),
+		.selectedTableFunction = selectedTableFunction_
+	};
+
+	Property("function", [&funcNamesCtx] {
+		return GuiEditProperty(funcNamesCtx);
+	});
+
+	if (ImGui::Button("Done") && CanAddCallback())
+	{
+		UpdateEntityScriptTable(e, scriptSys);
+
+		ConnectScriptToEvent(e, bus, selectedEventName_, selectedTableFunction_);
+
+		UpdateEntityCallbackInfo(e);
+
+		ClearSelections();
+
+		return true;
+	}
+
+	EndPropertyTable();
+
+	return false;
+}
+
+void GuiEditComponentBuilder<CallbackInfo>::SetIsActive(bool active)
+{
+	if (!active)
+	{
+		//tableNamesToIds_.clear();
+	}
+
+	isActive_ = active;
+}
+
+bool GuiEditComponentBuilder<CallbackInfo>::CanAddCallback()
+{
+	return !selectedEventName_.empty() &&
+		   !selectedScriptFile_.empty() &&
+		   !selectedTableFunction_.empty();
+}
+
+void GuiEditComponentBuilder<CallbackInfo>::UpdateEntityScriptTable(Entity& e, 
+																	const ScriptSystem& scriptSys)
+{
+	const auto& tableData = scriptSys.GetTableDataMap();
+	auto it = core::FindIf(tableData, [](const auto& pair) {
+		return pair.second.filepath == selectedScriptFile_;
+	});
+
+	auto& tks = e.AddComponent<SignalTokenStorage>().signalTokens;
+
+	if (it != tableData.end())
+	{
+		auto& script = e.AddComponent<Script>();
+		if (script.table.GetTableId() != it->first)
+		{
+			core::EraseIf(tks, [](const auto& tk) {
+				return tk.type == EntityCallbackToken::Type::Script;
+			});
+
+			auto& callbackInfo = e.AddComponent<CallbackInfo>();
+			callbackInfo.eventNames.clear();
+			callbackInfo.scriptFileNames.clear();
+			callbackInfo.tableFunctionNames.clear();
+		}
+
+		script.table = it->second.table.GetView();
+	}
+}
+
+void GuiEditComponentBuilder<CallbackInfo>::UpdateEntityCallbackInfo(Entity& e)
+{
+	auto& callbackInfo = e.GetComponent<CallbackInfo>();
+	callbackInfo.eventNames.emplace_back(selectedEventName_);
+	callbackInfo.tableFunctionNames.emplace_back(selectedTableFunction_);
+
+	auto path = fs::path(selectedScriptFile_);
+	assert(fs::exists(path));
+
+	callbackInfo.scriptFileNames.emplace_back(path.filename().string());
+}
+
+void GuiEditComponentBuilder<CallbackInfo>::ClearSelections()
+{
+	selectedEventName_ = {};
+	selectedScriptFile_.clear();
+	selectedTableFunction_.clear();
+}
+
+//void GuiEditComponentBuilder<CallbackInfo>::ReloadTableIdMap(const ScriptSystem& scriptSys)
+//{
+//	tableFilepathsToIds_.clear();
+//
+//	for (const auto& [id, tableData] : scriptSys.GetTableDataMap())
+//	{
+//		tableFilepathsToIds_.try_emplace(tableData.filepath, id);
+//	}
+//}
 
 } // ui
 
