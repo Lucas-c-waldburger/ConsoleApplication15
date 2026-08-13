@@ -793,47 +793,6 @@ private:
 	sol::state state_;
 };
 
-class LuaRegistrationHelper
-{
-public:
-	template <typename T, typename...Args>
-	bool RegisterUserType(std::string_view name, Args&&...args)
-	{
-		if (registrationFns_.contains(name))
-		{
-			return false;
-		}
-
-		using Type = raw_type_t<T>;
-
-		registrationFns_.try_emplace(name, 
-		[args = std::tuple<std::decay_t<Args>...>(std::forward<Args>(args)...)]
-		(std::string_view nm, sol::state_view st) mutable {
-			std::apply([nm, st](auto&&...args) {
-				st.template new_usertype<Type>(nm, args...);
-			}, args);
-		});
-
-		return true;
-	}
-
-	bool AddRegisteredUserType(std::string_view name, sol::state_view state)
-	{
-		auto it = registrationFns_.find(name);
-		if (it != registrationFns_.end() && it->second)
-		{
-			std::invoke(it->second, name, state);
-
-			return true;
-		}
-
-		return false;
-	}
-
-private:
-	UnorderedDictionary<fu2::unique_function<void(std::string_view, sol::state_view)>> registrationFns_;
-};
-
 struct ScriptTableEntry;
 class ScriptTableView2;
 
