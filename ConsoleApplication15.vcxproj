@@ -421,6 +421,7 @@
     <ClInclude Include="core\DirtyValue.h" />
     <ClInclude Include="core\FixedString.h" />
     <ClInclude Include="core\formatters.h" />
+    <ClInclude Include="core\TypeInfo.h" />
     <ClInclude Include="core\InlineStorage.h" />
     <ClInclude Include="core\Hash.h" />
     <ClInclude Include="core\MacroUtils.h" />

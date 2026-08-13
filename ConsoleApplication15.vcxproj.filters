@@ -522,6 +522,9 @@
     <ClCompile Include="test\ui\gui_edit\GuiEditScripts.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="scripting\ScriptHandle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -2244,6 +2247,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="deps\ctre\unicode-db.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\TypeInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
