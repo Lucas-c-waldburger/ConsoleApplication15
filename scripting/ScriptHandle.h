@@ -1,6 +1,7 @@
 #pragma once
 #include "LuaUserType.h"
 #include "../core/Dictionary.h"
+#include "../core/TypeInfo.h"
 #include "../core/Handle.h"
 #include "../core/FuncTraits.h"
 #include "../deps/ctre/ctre.hpp"
@@ -185,7 +186,7 @@ struct accepted_lua_type_qualified_traits
 template <typename T>
 concept AcceptedLuaTypeQualified = detail::accepted_lua_type_qualified_traits<T>::valid;
 
-enum LuaTypeQualifiers : uint32_t
+enum LuaTypeQualifiers : uint8_t
 {
 	Const = 1 << 0,
 	Ref = 1 << 1,
@@ -194,6 +195,12 @@ enum LuaTypeQualifiers : uint32_t
 
 class LuaTypeRegistry
 {
+private:
+	struct InvalidLuaType;
+	struct LuaNativeBooleanType;
+	struct LuaNativeNumberType;
+	struct LuaNativeStringType;
+
 public:
 	template <typename T>
 	static bool RegisterType(std::string_view name)
@@ -254,21 +261,22 @@ public:
 		}
 	}
 
-	static uint32_t GetTypeId(std::string_view name)
+	static uint64_t GetTypeId(std::string_view name)
 	{
 		if (IsNativeLuaType(name))
 		{
-			return name == "boolean" ? kNativeBooleanLuaTypeId :
-				   name == "number" ? kNativeNumberLuaTypeId : kNativeStringLuaTypeId;
+			return name == "boolean" ? TypeInfo<LuaNativeBooleanType>::hash :
+				   name == "number"  ? TypeInfo<LuaNativeNumberType>::hash : 
+									   TypeInfo<LuaNativeStringType>::hash;
 		}
 
 		auto it = nameToTypeId_.find(name);
 
-		return (it != nameToTypeId_.end()) ? it->second : kInvalidLuaTypeId;
+		return (it != nameToTypeId_.end()) ? it->second : TypeInfo<InvalidLuaType>::hash;
 	}
 
 	template <typename T>
-	static uint32_t GetTypeId()
+	static uint64_t GetTypeId()
 	{
 		using Type = raw_type_t<T>;
 
@@ -278,9 +286,11 @@ public:
 		}
 		else if constexpr (std::is_class_v<Type> || std::is_enum_v<Type>)
 		{
-			const auto typeId = GetLuaTypeId<Type>();
+			constexpr auto typeId = TypeInfo<Type>::hash;
 
-			return (typeIdToName_.contains(typeId)) ? typeId : kInvalidLuaTypeId;
+			return (typeIdToName_.contains(typeId)) 
+				? typeId 
+				: TypeInfo<InvalidLuaType>::hash;
 		}
 		else
 		{
@@ -317,25 +327,26 @@ public:
 	}
 
 	template <typename T>
-	static constexpr uint32_t GetNativeLuaTypeId() noexcept
+	static constexpr uint64_t GetNativeLuaTypeId() noexcept
 	{
 		using Raw = raw_type_t<T>;
 
 		if constexpr (std::same_as<Raw, bool>)
 		{
-			return kNativeBooleanLuaTypeId;
+			return TypeInfo<LuaNativeBooleanType>::hash;
 		}
 		else if constexpr (std::is_arithmetic_v<Raw> && !std::same_as<Raw, char>)
 		{
-			return kNativeNumberLuaTypeId;
+			return TypeInfo<LuaNativeNumberType>::hash;
 		}
-		else if constexpr (std::constructible_from<std::string, Raw> || std::same_as<Raw, char>)
+		else if constexpr (std::constructible_from<std::string, Raw> || 
+						   std::same_as<Raw, char>)
 		{
-			return kNativeStringLuaTypeId;
+			return TypeInfo<LuaNativeStringType>::hash;
 		}
 		else
 		{
-			return 0;
+			return TypeInfo<InvalidLuaType>::hash;
 		}
 	}
 
@@ -396,7 +407,7 @@ private:
 				return true;
 			}
 
-			const auto typeId = GetLuaTypeId<Type>();
+			constexpr auto typeId = TypeInfo<Type>::hash;
 
 			auto [it, insertedName] = nameToTypeId_.try_emplace(assignedName, typeId);
 			assert(insertedName);
@@ -412,13 +423,20 @@ private:
 		}
 	}
 
-	static std::unordered_map<std::string_view, uint32_t> nameToTypeId_;
-	static std::unordered_map<uint32_t, std::string_view> typeIdToName_;
+	static std::unordered_map<std::string_view, uint64_t> nameToTypeId_;
+	static std::unordered_map<uint64_t, std::string_view> typeIdToName_;
 };
 
-using ParsedLuaFunctionTableSignatures = UnorderedDictionary<std::vector<uint64_t>>;
+struct ParsedLuaArgumentType
+{
+	uint64_t typeId = 0;
+	uint8_t qualifiers = 0;
+};
 
-inline Result<uint64_t> ParseFullArgumentType(const std::string& argStr)
+using ParsedLuaFunctionTableSignatures = 
+	UnorderedDictionary<std::vector<ParsedLuaArgumentType>>;
+
+inline Result<ParsedLuaArgumentType> ParseFullArgumentType(const std::string& argStr)
 {
 	static constexpr auto regex = ctll::fixed_string{ R"(
 			^\s*(?:(?<leading_const>const)\s+)?(?<type>[A-Za-z_][A-Za-z0-9_]*)
@@ -431,8 +449,7 @@ inline Result<uint64_t> ParseFullArgumentType(const std::string& argStr)
 		return MAKE_ERROR_FMT("Argument string '{}' did not match regex", argStr);
 	}
 
-	uint32_t typeId = 0;
-	uint32_t qualifiers = 0;
+	ParsedLuaArgumentType parsed{};
 
 	auto typeName = match.get<"type">().to_view();
 	if (typeName.empty())
@@ -440,8 +457,8 @@ inline Result<uint64_t> ParseFullArgumentType(const std::string& argStr)
 		return MAKE_ERROR_FMT("Argument string '{}' missing type name", argStr);
 	}
 
-	typeId = LuaTypeRegistry::GetTypeId(typeName);
-	if (typeId == 0)
+	parsed.typeId = LuaTypeRegistry::GetTypeId(typeName);
+	if (parsed.typeId == 0)
 	{
 		return MAKE_ERROR_FMT("Argument type '{}' not registered", typeName);
 	}
@@ -450,25 +467,23 @@ inline Result<uint64_t> ParseFullArgumentType(const std::string& argStr)
 	{
 		const auto qual = match.get<"qualifier">().to_view();
 
-		qualifiers |= (qual == "&" ? LuaTypeQualifiers::Ref :
-					   qual == "*" ? LuaTypeQualifiers::Ptr : 0);
+		parsed.qualifiers |= (qual == "&" ? LuaTypeQualifiers::Ref :
+							  qual == "*" ? LuaTypeQualifiers::Ptr : 0);
 
 		// only add const if type is not value-only
-		if ((qualifiers & (LuaTypeQualifiers::Ref | LuaTypeQualifiers::Ptr)) != 0)
+		if ((parsed.qualifiers & (LuaTypeQualifiers::Ref | LuaTypeQualifiers::Ptr)) != 0)
 		{
 			const bool isConst = !match.get<"leading_const">().to_view().empty() ||
 								 !match.get<"trailing_const">().to_view().empty();
 
 			if (isConst)
 			{
-				qualifiers |= LuaTypeQualifiers::Const;
+				parsed.qualifiers |= LuaTypeQualifiers::Const;
 			}
 		}
 	}
 
-	return uint64_t{
-		(static_cast<uint64_t>(qualifiers) << 32 | static_cast<uint64_t>(typeId))
-	};
+	return parsed;
 }
 
 //Result<ParsedLuaFunctionTableSignatures>
@@ -805,7 +820,7 @@ public:
 	{
 	public:
 		CallableWrapper() = default;
-		CallableWrapper(sol::function&& fn, const std::vector<uint64_t>& argTypes) :
+		CallableWrapper(sol::function&& fn, const std::vector<ParsedLuaArgumentType>& argTypes) :
 			fn_(std::move(fn)), argTypes_(argTypes) {}
 		~CallableWrapper() = default;
 		CallableWrapper(const CallableWrapper&) = delete;
@@ -824,7 +839,7 @@ public:
 
 	private:
 		sol::function fn_;
-		std::span<const uint64_t> argTypes_;
+		std::span<const ParsedLuaArgumentType> argTypes_;
 	};
 
 	ScriptTable2() = default;
@@ -1136,7 +1151,7 @@ private:
 		return parsed;
 	}
 
-	Result<uint64_t> ParseFullArgumentType(const std::string& argStr)
+	Result<ParsedLuaArgumentType> ParseFullArgumentType(const std::string& argStr)
 	{
 		static constexpr auto regex = ctll::fixed_string{ R"(
 			^\s*(?:(?<leading_const>const)\s+)?(?<type>[A-Za-z_][A-Za-z0-9_]*)
@@ -1149,8 +1164,7 @@ private:
 			return MAKE_ERROR_FMT("Argument string '{}' did not match regex", argStr);
 		}
 
-		uint32_t typeId = 0;
-		uint32_t qualifiers = 0;
+		ParsedLuaArgumentType parsed{};
 
 		auto typeName = match.get<"type">().to_view();
 		if (typeName.empty())
@@ -1163,32 +1177,31 @@ private:
 			return MAKE_ERROR_FMT("Argument type '{}' not found in state", typeName);
 		}
 
-		typeId = LuaTypeRegistry::GetTypeId(typeName);
-		assert(typeId != 0);
+		parsed.typeId = LuaTypeRegistry::GetTypeId(typeName);
+		assert(parsed.typeId != 0);
 
 		if (!LuaTypeRegistry::IsNativeLuaType(typeName))
 		{
 			const auto qual = match.get<"qualifier">().to_view();
 
-			qualifiers |= (qual == "&" ? LuaTypeQualifiers::Ref :
-						   qual == "*" ? LuaTypeQualifiers::Ptr : 0);
+			parsed.qualifiers |= (qual == "&" ? LuaTypeQualifiers::Ref :
+								  qual == "*" ? LuaTypeQualifiers::Ptr : 0);
 
 			// only add const if type is not value-only
-			if ((qualifiers & (LuaTypeQualifiers::Ref | LuaTypeQualifiers::Ptr)) != 0)
+			if ((parsed.qualifiers & (LuaTypeQualifiers::Ref | LuaTypeQualifiers::Ptr)) 
+				!= 0)
 			{
 				const bool isConst = !match.get<"leading_const">().to_view().empty() ||
 									 !match.get<"trailing_const">().to_view().empty();
 
 				if (isConst)
 				{
-					qualifiers |= LuaTypeQualifiers::Const;
+					parsed.qualifiers |= LuaTypeQualifiers::Const;
 				}
 			}
 		}
 
-		return uint64_t{
-			(static_cast<uint64_t>(qualifiers) << 32 | static_cast<uint64_t>(typeId))
-		};
+		return parsed;
 	}
 
 	LuaStateManager state_;
