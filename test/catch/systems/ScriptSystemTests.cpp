@@ -1,6 +1,8 @@
 #include "../CatchUtils.h"
 #include "../../../file/FilePathUtility.h"
 #include "../../../systems/ScriptSystem.h"
+#include "../../../scripting/ScriptHandle.h"
+#include "../../../events/EventBus2.h"
 #include "../../../scripting/user_types/EntityUserType.h"
 
 namespace {
@@ -13,6 +15,14 @@ std::filesystem::path MakeScriptTestPath(std::string_view scriptFilename)
 		fs::path("test/catch/test_scripts") / fs::path(scriptFilename);
 
 	return path;
+}
+
+constexpr std::pair<uint32_t, uint32_t> DecomposeArgType(uint64_t argType)
+{
+	return std::make_pair(
+		static_cast<uint32_t>(argType >> 32),
+		static_cast<uint32_t>(argType & 0xFFFFFFFFull)
+	);
 }
 
 } // unnamed
@@ -131,4 +141,673 @@ TEST_CASE("ScriptSystem::RemoveTable", "[sys][script][a]")
 	CHECK_FALSE(e1.GetComponent<Script>().table.IsValid());
 	CHECK_FALSE(e2.GetComponent<Script>().table.IsValid());
 	CHECK_FALSE(e3.GetComponent<Script>().table.IsValid());
+}
+
+
+TEST_CASE("LuaFunctionTableParser Tests", "[script][b]")
+{
+	Logger::StartSession();
+	LuaStateManager state{};
+	state.InitWithEngineTypes<Entity>();
+
+	struct TestUserStructA {};
+	struct TestUserStructB {};
+	struct TestUserStructC {};
+	enum class TestUserEnum { A = 1, B = 2 };
+
+	CHECK(state.NewUserType<TestUserStructA>("TestUserStructA"));
+	CHECK(state.NewUserType<TestUserStructB>("TestUserStructB"));
+	CHECK(state.NewUserType<TestUserStructC>("TestUserStructC"));
+	CHECK(state.NewEnum<TestUserEnum>("TestUserEnum", "A", TestUserEnum::A, "B", TestUserEnum::B));
+
+	CHECK(state.IsRegistered("TestUserStructA"));
+	CHECK(state.IsRegistered("TestUserStructB"));
+	CHECK(state.IsRegistered("TestUserStructC"));
+	CHECK(state.IsRegistered("TestUserEnum"));
+
+	static const std::string kArgA = "TestUserStructA";
+	static const std::string kArgB = "const TestUserStructB";
+	static const std::string kArgC = "const TestUserStructC *";
+	static const std::string kArgEnum = "TestUserEnum&";
+
+	SECTION("Argument parsing")
+	{
+		auto parseResultA = LuaFunctionTableParser::ParseFullArgumentType(kArgA, state);
+		REQUIRE_RESULT(parseResultA);
+
+		const auto [qualsA, typeA] = DecomposeArgType(parseResultA.GetValue());
+		CHECK(qualsA == 0);
+		CHECK(typeA == TypeInfo<TestUserStructA>::hash32);
+
+		auto parseResultB = LuaFunctionTableParser::ParseFullArgumentType(kArgB, state);
+		REQUIRE_RESULT(parseResultB);
+
+		const auto [qualsB, typeB] = DecomposeArgType(parseResultB.GetValue());
+		CHECK(qualsB == 0); // const auto removed since value type
+		CHECK(typeB == TypeInfo<TestUserStructB>::hash32);
+
+		auto parseResultC = LuaFunctionTableParser::ParseFullArgumentType(kArgC, state);
+		REQUIRE_RESULT(parseResultC);
+
+		const auto [qualsC, typeC] = DecomposeArgType(parseResultC.GetValue());
+		CHECK(qualsC == (LuaTypeQualifiers::Const | LuaTypeQualifiers::Ptr)); 
+		CHECK(typeC == TypeInfo<TestUserStructC>::hash32);
+
+		auto parseResultEnum = LuaFunctionTableParser::ParseFullArgumentType(kArgEnum, state);
+		REQUIRE_RESULT(parseResultEnum);
+
+		const auto [qualsEnum, typeEnum] = DecomposeArgType(parseResultEnum.GetValue());
+		CHECK(qualsEnum == LuaTypeQualifiers::Ref);
+		CHECK(typeEnum == TypeInfo<TestUserEnum>::hash32);
+	}
+
+	SECTION("Table Parsing - Single Arguments")
+	{
+		static const std::string fnTableLua = R"(
+			local table = {}
+
+			function table.A(a)
+			end
+
+			function table.B(b)        
+			end
+
+			function table.C(c)        
+			end
+
+			function table.E(e)        
+			end
+
+			local meta = {
+			    __signatures = { 
+			        A = { "TestUserStructA" },
+			        B = { "const TestUserStructB" },
+			        C = { "const TestUserStructC *" },
+			        E = { "TestUserEnum&" }
+			    }
+			}
+	
+			setmetatable(table, meta)
+			
+			return table
+		)";
+
+		auto loadRet = state.LoadScriptString(fnTableLua);
+		if (!loadRet.valid())
+		{
+			sol::error err = loadRet;
+			CAPTURE(err.what());
+			REQUIRE(false);
+		}
+
+		REQUIRE(loadRet.get_type() == sol::type::table);
+
+		auto table = loadRet.get<sol::table>();
+
+		auto tableParseResult = 
+			LuaFunctionTableParser::ParseLuaFunctionTableSignatures(table, state);
+		REQUIRE_RESULT(tableParseResult);
+
+		const auto& tableParsed = tableParseResult.GetValue();
+		CHECK(tableParsed.size() == 4);
+
+		REQUIRE(tableParsed.contains("A"));
+		REQUIRE(tableParsed["A"].size() == 1);
+		const auto [qualsA, typeA] = DecomposeArgType(tableParsed["A"].front());
+		CHECK(qualsA == 0);
+		CHECK(typeA == TypeInfo<TestUserStructA>::hash32);
+
+		REQUIRE(tableParsed.contains("B"));
+		REQUIRE(tableParsed["B"].size() == 1);
+		const auto [qualsB, typeB] = DecomposeArgType(tableParsed["B"].front());
+		CHECK(qualsB == 0); // const auto removed since value type
+		CHECK(typeB == TypeInfo<TestUserStructB>::hash32);
+
+		REQUIRE(tableParsed.contains("C"));
+		REQUIRE(tableParsed["C"].size() == 1);
+		const auto [qualsC, typeC] = DecomposeArgType(tableParsed["C"].front());
+		CHECK(qualsC == (LuaTypeQualifiers::Const | LuaTypeQualifiers::Ptr));
+		CHECK(typeC == TypeInfo<TestUserStructC>::hash32);
+
+		REQUIRE(tableParsed.contains("E"));
+		REQUIRE(tableParsed["E"].size() == 1);
+		const auto [qualsEnum, typeEnum] = DecomposeArgType(tableParsed["E"].front());
+		CHECK(qualsEnum == LuaTypeQualifiers::Ref);
+		CHECK(typeEnum == TypeInfo<TestUserEnum>::hash32);
+	}
+
+	SECTION("Table Parsing - Multiple Arguments")
+	{
+		static const std::string fnTableLua = R"(
+			local table = {}
+
+			function table.A_B(a, b)
+			end
+
+			function table.B_C(b, c)        
+			end
+
+			function table.A_B_C(a, b, c)        
+			end
+
+			function table.A_B_C_E(a, b, c, e)        
+			end
+
+			local meta = {
+			    __signatures = { 
+			        A_B = { "TestUserStructA", "const TestUserStructB&" },
+			        B_C = { "const TestUserStructB", "TestUserStructC  *" },
+			        A_B_C = { "TestUserStructA", "TestUserStructB const &", "const TestUserStructC  *" },
+			        A_B_C_E = { "TestUserStructA", "TestUserStructB const ", "TestUserStructC*", "TestUserEnum const *" }
+			    }
+			}
+	
+			setmetatable(table, meta)
+			
+			return table
+		)";
+
+		auto loadRet = state.LoadScriptString(fnTableLua);
+		if (!loadRet.valid())
+		{
+			sol::error err = loadRet;
+			CAPTURE(err.what());
+			REQUIRE(false);
+		}
+
+		REQUIRE(loadRet.get_type() == sol::type::table);
+
+		auto table = loadRet.get<sol::table>();
+
+		auto tableParseResult =
+			LuaFunctionTableParser::ParseLuaFunctionTableSignatures(table, state);
+		REQUIRE_RESULT(tableParseResult);
+
+		const auto& tableParsed = tableParseResult.GetValue();
+		CHECK(tableParsed.size() == 4);
+
+		{
+		REQUIRE(tableParsed.contains("A_B"));
+		REQUIRE(tableParsed["A_B"].size() == 2);
+
+		const auto [qualsA, typeA] = DecomposeArgType(tableParsed["A_B"][0]);
+		CHECK(qualsA == 0);
+		CHECK(typeA == TypeInfo<TestUserStructA>::hash32);
+
+		const auto [qualsB, typeB] = DecomposeArgType(tableParsed["A_B"][1]);
+		CHECK(qualsB == (LuaTypeQualifiers::Const | LuaTypeQualifiers::Ref));
+		CHECK(typeB == TypeInfo<TestUserStructB>::hash32);
+		}
+
+		{
+		REQUIRE(tableParsed.contains("B_C"));
+		REQUIRE(tableParsed["B_C"].size() == 2);
+
+		const auto [qualsB, typeB] = DecomposeArgType(tableParsed["B_C"][0]);
+		CHECK(qualsB == 0); // const auto removed since value type
+		CHECK(typeB == TypeInfo<TestUserStructB>::hash32);
+
+		const auto [qualsC, typeC] = DecomposeArgType(tableParsed["B_C"][1]);
+		CHECK(qualsC == LuaTypeQualifiers::Ptr);
+		CHECK(typeC == TypeInfo<TestUserStructC>::hash32);
+		}
+
+		{
+		REQUIRE(tableParsed.contains("A_B_C"));
+		REQUIRE(tableParsed["A_B_C"].size() == 3);
+
+		const auto [qualsA, typeA] = DecomposeArgType(tableParsed["A_B_C"][0]);
+		CHECK(qualsA == 0);
+		CHECK(typeA == TypeInfo<TestUserStructA>::hash32);
+
+		const auto [qualsB, typeB] = DecomposeArgType(tableParsed["A_B_C"][1]);
+		CHECK(qualsB == (LuaTypeQualifiers::Const | LuaTypeQualifiers::Ref));
+		CHECK(typeB == TypeInfo<TestUserStructB>::hash32);
+
+		const auto [qualsC, typeC] = DecomposeArgType(tableParsed["A_B_C"][2]);
+		CHECK(qualsC == (LuaTypeQualifiers::Const | LuaTypeQualifiers::Ptr));
+		CHECK(typeC == TypeInfo<TestUserStructC>::hash32);
+		}
+
+		{
+		REQUIRE(tableParsed.contains("A_B_C_E"));
+		REQUIRE(tableParsed["A_B_C_E"].size() == 4);
+
+		const auto [qualsA, typeA] = DecomposeArgType(tableParsed["A_B_C_E"][0]);
+		CHECK(qualsA == 0);
+		CHECK(typeA == TypeInfo<TestUserStructA>::hash32);
+
+		const auto [qualsB, typeB] = DecomposeArgType(tableParsed["A_B_C_E"][1]);
+		CHECK(qualsB == 0);
+		CHECK(typeB == TypeInfo<TestUserStructB>::hash32);
+
+		const auto [qualsC, typeC] = DecomposeArgType(tableParsed["A_B_C_E"][2]);
+		CHECK(qualsC == LuaTypeQualifiers::Ptr);
+		CHECK(typeC == TypeInfo<TestUserStructC>::hash32);
+
+		const auto [qualsE, typeE] = DecomposeArgType(tableParsed["A_B_C_E"][3]);
+		CHECK(qualsE == (LuaTypeQualifiers::Const | LuaTypeQualifiers::Ptr));
+		CHECK(typeE == TypeInfo<TestUserEnum>::hash32);
+		}
+	}
+}
+
+TEST_CASE("LuaFunctionCallHandler Tests", "[scripting][b]")
+{
+	Logger::StartSession();
+	LuaStateManager state{};
+	state.InitWithEngineTypes<Entity>();
+
+	struct TestUserStructA {};
+	struct TestUserStructB {};
+	struct TestUserStructC {};
+	enum class TestUserEnum { A = 1, B = 2 };
+
+	CHECK(state.NewUserType<TestUserStructA>("TestUserStructA"));
+	CHECK(state.NewUserType<TestUserStructB>("TestUserStructB"));
+	CHECK(state.NewUserType<TestUserStructC>("TestUserStructC"));
+	CHECK(state.NewEnum<TestUserEnum>("TestUserEnum", "A", TestUserEnum::A, "B", TestUserEnum::B));
+
+	CHECK(state.IsRegistered("TestUserStructA"));
+	CHECK(state.IsRegistered("TestUserStructB"));
+	CHECK(state.IsRegistered("TestUserStructC"));
+	CHECK(state.IsRegistered("TestUserEnum"));
+
+	static const std::string kArgA = "TestUserStructA";
+	static const std::string kArgB = "const TestUserStructB";
+	static const std::string kArgC = "const TestUserStructC *";
+	static const std::string kArgEnum = "TestUserEnum&";
+
+	SECTION("TryMakeArgumentLuaObject")
+	{
+		TestUserStructA structAValue{};
+		const TestUserStructA structAValueConst{};
+		TestUserStructA* structAPtr = &structAValue;
+		const TestUserStructA* structAPtrConst = &structAValueConst;
+		TestUserStructA* const structAConstPtr = &structAValue;
+		TestUserStructA& structARef = structAValue;
+		const TestUserStructA& structARefConst = structAValueConst;
+		TestUserStructA* structAPtrNull = nullptr;
+		const TestUserStructA* structAPtrConstNull = nullptr;
+		TestUserStructA** structADoublePtr = &structAPtr;
+
+		constexpr uint64_t parsedTypeValue = static_cast<uint64_t>(TypeInfo<TestUserStructA>::hash32);
+		constexpr uint64_t parsedTypeConstValue = { 
+			static_cast<uint64_t>(LuaTypeQualifiers::Const) << 32 |
+			static_cast<uint64_t>(TypeInfo<TestUserStructA>::hash32) 
+		};
+		constexpr uint64_t parsedTypeRef = {
+			static_cast<uint64_t>(LuaTypeQualifiers::Ref) << 32 |
+			static_cast<uint64_t>(TypeInfo<TestUserStructA>::hash32)
+		};
+		constexpr uint64_t parsedTypeRefConst = {
+			static_cast<uint64_t>(LuaTypeQualifiers::Ref | LuaTypeQualifiers::Const) << 32 |
+			static_cast<uint64_t>(TypeInfo<TestUserStructA>::hash32)
+		};
+		constexpr uint64_t parsedTypePtr = {
+			static_cast<uint64_t>(LuaTypeQualifiers::Ptr) << 32 |
+			static_cast<uint64_t>(TypeInfo<TestUserStructA>::hash32)
+		};
+		constexpr uint64_t parsedTypePtrConst = {
+			static_cast<uint64_t>(LuaTypeQualifiers::Ptr | LuaTypeQualifiers::Const) << 32 |
+			static_cast<uint64_t>(TypeInfo<TestUserStructA>::hash32)
+		};
+
+		STATIC_CHECK_FALSE(AcceptedLuaTypeQualified<int&&>);
+		STATIC_CHECK_FALSE(AcceptedLuaTypeQualified<const int&&>);
+		STATIC_CHECK_FALSE(AcceptedLuaTypeQualified<int**>);
+		STATIC_CHECK_FALSE(AcceptedLuaTypeQualified<int***>);
+		STATIC_CHECK_FALSE(AcceptedLuaTypeQualified<int**&>);
+		STATIC_CHECK_FALSE(AcceptedLuaTypeQualified<int*&&>);
+
+		SECTION("Lua requests value type")
+		{
+		// T value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), TestUserStructA{}, parsedTypeValue).valid());
+		// const T value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), static_cast<const TestUserStructA>(TestUserStructA{}), parsedTypeValue).valid());
+		// T ref value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structARef, parsedTypeValue).valid());
+		// const T ref value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structARefConst, parsedTypeValue).valid());
+		// T ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtr, parsedTypeValue).valid());
+		// const T ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtrConst, parsedTypeValue).valid());
+		// T const ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAConstPtr, parsedTypeValue).valid());
+		// T ptr null - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtrNull, parsedTypeValue).valid());
+		}
+
+		SECTION("Lua requests const value type")
+		{
+		// T value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), TestUserStructA{}, parsedTypeConstValue).valid());
+		// const T value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), static_cast<const TestUserStructA>(TestUserStructA{}), parsedTypeConstValue).valid());
+		// T ref value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structARef, parsedTypeConstValue).valid());
+		// const T ref value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structARefConst, parsedTypeConstValue).valid());
+		// T ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtr, parsedTypeConstValue).valid());
+		// const T ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtrConst, parsedTypeConstValue).valid());
+		// T const ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAConstPtr, parsedTypeConstValue).valid());
+		// T ptr null - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtrNull, parsedTypeConstValue).valid());
+		}
+
+		SECTION("Lua requests reference type")
+		{
+		// T value - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), TestUserStructA{}, parsedTypeRef).valid());
+		// const T value - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), static_cast<const TestUserStructA>(TestUserStructA{}), parsedTypeRef).valid());
+		// T ref value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structARef, parsedTypeRef).valid());
+		// const T ref value - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structARefConst, parsedTypeRef).valid());
+		// T ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtr, parsedTypeRef).valid());
+		// const T ptr value - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtrConst, parsedTypeRef).valid());
+		// T const ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAConstPtr, parsedTypeRef).valid());
+		// T ptr null - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtrNull, parsedTypeRef).valid());
+		}
+
+		SECTION("Lua requests const reference type")
+		{
+		// T value - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), TestUserStructA{}, parsedTypeRefConst).valid());
+		// const T value - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), static_cast<const TestUserStructA>(TestUserStructA{}), parsedTypeRefConst).valid());
+		// T ref value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structARef, parsedTypeRefConst).valid());
+		// const T ref value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structARefConst, parsedTypeRefConst).valid());
+		// T ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtr, parsedTypeRefConst).valid());
+		// const T ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtrConst, parsedTypeRefConst).valid());
+		// T const ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAConstPtr, parsedTypeRefConst).valid());
+		// T ptr null - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtrNull, parsedTypeRefConst).valid());
+		}
+
+		SECTION("Lua requests pointer type")
+		{
+		// T value - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), TestUserStructA{}, parsedTypePtr).valid());
+		// const T value - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), static_cast<const TestUserStructA>(TestUserStructA{}), parsedTypePtr).valid());
+		// T ref value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structARef, parsedTypePtr).valid());
+		// const T ref value - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structARefConst, parsedTypePtr).valid());
+		// T ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtr, parsedTypePtr).valid());
+		// const T ptr value - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtrConst, parsedTypePtr).valid());
+		// T const ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAConstPtr, parsedTypePtr).valid());
+		// T ptr null - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtrNull, parsedTypePtr).valid());
+		}
+
+		SECTION("Lua requests pointer to const type")
+		{
+		// T value - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), TestUserStructA{}, parsedTypePtrConst).valid());
+		// const T value - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), static_cast<const TestUserStructA>(TestUserStructA{}), parsedTypePtrConst).valid());
+		// T ref value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structARef, parsedTypePtrConst).valid());
+		// const T ref value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structARefConst, parsedTypePtrConst).valid());
+		// T ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtr, parsedTypePtrConst).valid());
+		// const T ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtrConst, parsedTypePtrConst).valid());
+		// T const ptr value - value
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAConstPtr, parsedTypePtrConst).valid());
+		// T ptr null - value FAIL
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), structAPtrNull, parsedTypePtrConst).valid());
+		}
+	}
+
+	SECTION("CallLuaFunctionQualified")
+	{
+		constexpr uint64_t userStructARefType = {
+			static_cast<uint64_t>(LuaTypeQualifiers::Ref) << 32 |
+			static_cast<uint64_t>(TypeInfo<TestUserStructA>::hash32)
+		};
+		constexpr uint64_t userStructBConstValueType = {
+			static_cast<uint64_t>(LuaTypeQualifiers::Const) << 32 |
+			static_cast<uint64_t>(TypeInfo<TestUserStructB>::hash32)
+		};
+		constexpr uint64_t userStructCPtrConstType = {
+			static_cast<uint64_t>(LuaTypeQualifiers::Const | LuaTypeQualifiers::Ptr) << 32 |
+			static_cast<uint64_t>(TypeInfo<TestUserStructC>::hash32)
+		};
+
+		std::vector<uint64_t> argTypes = { 
+			userStructARefType, userStructBConstValueType, userStructCPtrConstType 
+		};
+
+		sol::state_view stateView{ state.Data() };
+
+		std::string fnOutput;
+		stateView["fn"] = 
+			[&fnOutput](TestUserStructA& a, const TestUserStructB b, const TestUserStructC* c) {
+				fnOutput = "called";
+			};
+
+		sol::function fn = stateView["fn"];
+		REQUIRE(fn.valid());
+
+		TestUserStructA userStructA{};
+		TestUserStructB userStructB{};
+		TestUserStructC userStructC{};
+
+		SECTION("Different argument type permutations")
+		{
+			{
+			auto callResult = LuaFunctionCallHandler::CallLuaFunctionQualified(
+				fn, argTypes, userStructA, static_cast<const TestUserStructB>(TestUserStructB{}),
+				&userStructC
+			);
+			REQUIRE_RESULT(callResult);
+
+			CHECK(fnOutput == "called");
+			fnOutput.clear();
+			}
+
+			{
+			auto callResult = LuaFunctionCallHandler::CallLuaFunctionQualified(
+				fn, argTypes, userStructA, userStructB, &userStructC
+			);
+			REQUIRE_RESULT(callResult);
+
+			CHECK(fnOutput == "called");
+			fnOutput.clear();
+			}
+
+			{
+			const auto* cPtr = &userStructC;
+
+			auto callResult = LuaFunctionCallHandler::CallLuaFunctionQualified(
+				fn, argTypes, userStructA, userStructB, cPtr
+			);
+			REQUIRE_RESULT(callResult);
+
+			CHECK(fnOutput == "called");
+			fnOutput.clear();
+			}
+		}
+
+		SECTION("Different argument ordering")
+		{
+			{
+			auto callResult = LuaFunctionCallHandler::CallLuaFunctionQualified(
+				fn, argTypes, userStructA, &userStructC, userStructB
+			);
+			REQUIRE_RESULT(callResult);
+
+			CHECK(fnOutput == "called");
+			fnOutput.clear();
+			}
+
+			{
+			auto callResult = LuaFunctionCallHandler::CallLuaFunctionQualified(
+				fn, argTypes, userStructB, userStructA, &userStructC
+			);
+			REQUIRE_RESULT(callResult);
+
+			CHECK(fnOutput == "called");
+			fnOutput.clear();
+			}
+
+			{
+			auto callResult = LuaFunctionCallHandler::CallLuaFunctionQualified(
+				fn, argTypes, &userStructC, userStructB, userStructA
+			);
+			REQUIRE_RESULT(callResult);
+
+			CHECK(fnOutput == "called");
+			fnOutput.clear();
+			}
+		}
+
+		SECTION("Non-unique argument types")
+		{
+			std::string firstCall;
+			std::string secondCall;
+
+			struct TestUserStructD {
+				std::string id;
+			};
+
+			CHECK(state.NewUserType<TestUserStructD>("TestUserStructD", "id", &TestUserStructD::id));
+			CHECK(state.IsRegistered("TestUserStructD"));
+
+			stateView["repeatArgFn1"] = [&firstCall, &secondCall]
+			(TestUserStructD& d1, const TestUserStructB* b, const TestUserStructD d2) {
+				firstCall = d1.id;
+				secondCall = d2.id;
+			};
+			stateView["repeatArgFn2"] = [&firstCall, &secondCall]
+			(const TestUserStructD d1, const TestUserStructB* b, TestUserStructD& d2) {
+				firstCall = d1.id;
+				secondCall = d2.id;
+			};
+
+			constexpr uint64_t structDRefType = {
+				static_cast<uint64_t>(LuaTypeQualifiers::Ref) << 32 |
+				static_cast<uint64_t>(TypeInfo<TestUserStructD>::hash32)
+			};
+			constexpr uint64_t structDConstValType = {
+				static_cast<uint64_t>(LuaTypeQualifiers::Const) << 32 |
+				static_cast<uint64_t>(TypeInfo<TestUserStructD>::hash32)
+			};
+			constexpr uint64_t structBConstPtrType = {
+				static_cast<uint64_t>(LuaTypeQualifiers::Const | LuaTypeQualifiers::Ptr) << 32 |
+				static_cast<uint64_t>(TypeInfo<TestUserStructB>::hash32)
+			};
+
+			const std::vector<uint64_t> repeatArgFn1Types = {
+				structDRefType, structBConstPtrType, structDConstValType
+			};
+			const std::vector<uint64_t> repeatArgFn2Types = {
+				structDConstValType, structBConstPtrType, structDRefType
+			};
+
+			sol::function repeatArgFn1 = stateView["repeatArgFn1"];
+			REQUIRE(repeatArgFn1.valid());
+			sol::function repeatArgFn2 = stateView["repeatArgFn2"];
+			REQUIRE(repeatArgFn2.valid());
+
+			TestUserStructD structDInstance{ .id = "ref instance" };
+			TestUserStructB structBInstance{};
+
+			{
+			auto callResult = LuaFunctionCallHandler::CallLuaFunctionQualified(
+				repeatArgFn1, repeatArgFn1Types, structDInstance, &structBInstance, 
+				TestUserStructD{ .id = "value instance" }
+			);
+			REQUIRE_RESULT(callResult);
+
+			CHECK(firstCall == "ref instance");
+			CHECK(secondCall == "value instance");
+			firstCall.clear();
+			secondCall.clear();
+			}
+
+			{
+			auto callResult = LuaFunctionCallHandler::CallLuaFunctionQualified(
+				repeatArgFn2, repeatArgFn2Types, structDInstance, &structBInstance,
+				TestUserStructD{ .id = "value instance" }
+			);
+			REQUIRE_RESULT(callResult);
+
+			CHECK(firstCall == "value instance");
+			CHECK(secondCall == "ref instance");
+			firstCall.clear();
+			secondCall.clear();
+			}
+		}
+	}
 }

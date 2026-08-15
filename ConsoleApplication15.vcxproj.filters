@@ -525,6 +525,15 @@
     <ClCompile Include="scripting\ScriptHandle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="scripting\LuaFunctionCallHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scripting\LuaStateManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scripting\LuaFunctionTableParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -2252,6 +2261,18 @@
     <ClInclude Include="core\TypeInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="scripting\LuaFunctionCallHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\LuaNativeTypeIdUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\LuaStateManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\LuaFunctionTableParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -3172,6 +3193,7 @@
     <None Include="test\catch\test_scripts\entity_test.lua" />
     <None Include="test\catch\test_scripts\empty.lua" />
     <None Include="resources\scripts\textbox_test.lua" />
+    <None Include="test\catch\test_scripts\fn_table.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

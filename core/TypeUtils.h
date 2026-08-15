@@ -348,7 +348,7 @@ using type_at_index_t = typename detail::type_at_index<Idx, 0, TList>::type;
 
 /* RAW TYPE */
 template <typename T>
-using raw_type_t = std::remove_pointer_t<std::remove_cvref_t<T>>;
+using raw_type_t = std::remove_cv_t<std::remove_pointer_t<std::remove_cvref_t<T>>>;
 
 /* IS CONST REFERENCE */
 namespace detail {

@@ -196,6 +196,9 @@
     <ClCompile Include="render\GlyphCacheHandler.cpp" />
     <ClCompile Include="render\RenderBatchHandler.cpp" />
     <ClCompile Include="render\TextFormatExpressionParser.cpp" />
+    <ClCompile Include="scripting\LuaFunctionCallHandler.cpp" />
+    <ClCompile Include="scripting\LuaFunctionTableParser.cpp" />
+    <ClCompile Include="scripting\LuaStateManager.cpp" />
     <ClCompile Include="scripting\ScriptHandle.cpp" />
     <ClCompile Include="scripting\ScriptTable.cpp" />
     <ClCompile Include="serial\AudioBankSerializer.cpp" />
@@ -265,7 +268,12 @@
     <ClCompile Include="test\catch\events\InputEventTests.cpp" />
     <ClCompile Include="test\catch\scripting\ScriptTableTests.cpp" />
     <ClCompile Include="test\catch\serial\SerializationTests.cpp" />
-    <ClCompile Include="test\catch\systems\ScriptSystemTests.cpp" />
+    <ClCompile Include="test\catch\systems\ScriptSystemTests.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="test\catch\systems\SpriteAnimationSystemTests.cpp" />
     <ClCompile Include="test\catch\systems\UserSystemSchedulerTests.cpp" />
     <ClCompile Include="test\demo\audio_lounge\AudioLounge.cpp" />
@@ -516,6 +524,10 @@
     <ClInclude Include="file\FilePathUtility.h" />
     <ClInclude Include="games\bullet_heaven\Terrain.h" />
     <ClInclude Include="render\TextFormatExpressionParser.h" />
+    <ClInclude Include="scripting\LuaFunctionCallHandler.h" />
+    <ClInclude Include="scripting\LuaFunctionTableParser.h" />
+    <ClInclude Include="scripting\LuaNativeTypeIdUtils.h" />
+    <ClInclude Include="scripting\LuaStateManager.h" />
     <ClInclude Include="scripting\ScriptHandle.h" />
     <ClInclude Include="scripting\ScriptSignature.h" />
     <ClInclude Include="scripting\ScriptTable.h" />
@@ -1242,6 +1254,7 @@
     <None Include="test\catch\test_json\user_components.json" />
     <None Include="test\catch\test_scripts\empty.lua" />
     <None Include="test\catch\test_scripts\entity_test.lua" />
+    <None Include="test\catch\test_scripts\fn_table.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc" />

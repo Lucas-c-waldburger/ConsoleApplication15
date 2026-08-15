@@ -75,7 +75,7 @@ inline consteval std::string_view GetTypeName()
 }
 
 template <typename T>
-inline consteval uint64_t GetTypeHash()
+inline consteval uint64_t GetTypeHash64()
 {
     constexpr auto typeName = GetTypeName<T>();
 
@@ -91,9 +91,26 @@ inline consteval uint64_t GetTypeHash()
 }
 
 template <typename T>
+inline consteval uint32_t GetTypeHash32()
+{
+    constexpr auto typeName = GetTypeName<T>();
+
+    uint32_t hash = 2166136261u;
+
+    for (const unsigned char c : typeName)
+    {
+        hash ^= c;
+        hash *= 16777619u;
+    }
+
+    return hash;
+}
+
+template <typename T>
 struct TypeInfo
 {
     static constexpr std::string_view name = GetTypeName<T>();
-    static constexpr uint64_t hash = GetTypeHash<T>();
+    static constexpr uint64_t hash64 = GetTypeHash64<T>();
+    static constexpr uint32_t hash32 = GetTypeHash32<T>();
 };
 

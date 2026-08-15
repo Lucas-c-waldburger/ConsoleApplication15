@@ -63,6 +63,12 @@ public:
     {
         return Super::erase(std::string{ sv });
     }
+
+    template <typename...Args>
+    decltype(auto) try_emplace(std::string_view sv, Args&&...args)
+    {
+        return Super::try_emplace(std::string{ sv }, std::forward<Args>(args)...);
+    }
 };
 
 

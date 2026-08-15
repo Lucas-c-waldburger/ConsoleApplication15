@@ -24,7 +24,8 @@ using EntityLuaUserTypeDependencies = Dependencies<
 	SpriteAnimationComponent, 
 	Name, 
 	Timer,
-	NewAudioRequest
+	NewAudioRequest,
+	GameControllerState
 >;
 
 DEF_LUA_USERTYPE(Entity, EntityLuaUserTypeDependencies)
