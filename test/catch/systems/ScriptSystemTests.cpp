@@ -773,7 +773,7 @@ TEST_CASE("LuaFunctionCallHandler Tests", "[scripting][b]")
 			};
 			const std::vector<uint64_t> repeatArgFn2Types = {
 				structDConstValType, structBConstPtrType, structDRefType
-			};
+			}; 
 
 			sol::function repeatArgFn1 = stateView["repeatArgFn1"];
 			REQUIRE(repeatArgFn1.valid());
@@ -808,6 +808,260 @@ TEST_CASE("LuaFunctionCallHandler Tests", "[scripting][b]")
 			firstCall.clear();
 			secondCall.clear();
 			}
+		}
+	}
+}
+
+TEST_CASE("Native Lua Type identification", "[scripting]")
+{
+	SECTION("Number")
+	{
+		STATIC_CHECK(IsNativeLuaType<int>());
+		STATIC_CHECK(IsNativeLuaType<double>());
+		STATIC_CHECK(IsNativeLuaType<float>());
+		STATIC_CHECK(IsNativeLuaType<const uint8_t>());
+		STATIC_CHECK(IsNativeLuaType<uint32_t>());
+		STATIC_CHECK(IsNativeLuaType<const uint64_t*>());
+
+		STATIC_CHECK(GetNativeLuaTypeId<int>() == kNativeNumberLuaTypeId);
+		STATIC_CHECK(GetNativeLuaTypeId<double>() == kNativeNumberLuaTypeId);
+		STATIC_CHECK(GetNativeLuaTypeId<float>() == kNativeNumberLuaTypeId);
+		STATIC_CHECK(GetNativeLuaTypeId<const uint8_t>() == kNativeNumberLuaTypeId);
+		STATIC_CHECK(GetNativeLuaTypeId<uint32_t&>() == kNativeNumberLuaTypeId);
+		STATIC_CHECK(GetNativeLuaTypeId<const uint64_t*>() == kNativeNumberLuaTypeId);
+
+		STATIC_CHECK(GetNativeLuaTypeName<int>() == "number");
+		STATIC_CHECK(GetNativeLuaTypeName<uint32_t&>() == "number");
+		STATIC_CHECK(GetNativeLuaTypeName<const uint64_t*>() == "number");
+	}
+
+	SECTION("Boolean")
+	{
+		STATIC_CHECK(IsNativeLuaType<bool>());
+		STATIC_CHECK(IsNativeLuaType<bool*&>());
+
+		STATIC_CHECK(GetNativeLuaTypeId<bool>() == kNativeBooleanLuaTypeId);
+		STATIC_CHECK_FALSE(GetNativeLuaTypeId<bool>() == kNativeNumberLuaTypeId);
+
+		STATIC_CHECK(GetNativeLuaTypeName<bool>() == "boolean");
+		STATIC_CHECK(GetNativeLuaTypeName<bool*&>() == "boolean");
+	}
+
+	SECTION("String")
+	{
+		STATIC_CHECK(IsNativeLuaType<const char*>());
+		STATIC_CHECK(IsNativeLuaType<std::string>());
+		STATIC_CHECK(IsNativeLuaType<std::string_view>());
+		STATIC_CHECK(IsNativeLuaType<char[8]>());
+
+		STATIC_CHECK(GetNativeLuaTypeId<const char*>() == kNativeStringLuaTypeId);
+		STATIC_CHECK(GetNativeLuaTypeId<std::string>() == kNativeStringLuaTypeId);
+		STATIC_CHECK(GetNativeLuaTypeId<std::string_view>() == kNativeStringLuaTypeId);
+		STATIC_CHECK(GetNativeLuaTypeId<char[8]>() == kNativeStringLuaTypeId);
+
+		STATIC_CHECK(GetNativeLuaTypeName<const char*>() == "string");
+		STATIC_CHECK(GetNativeLuaTypeName<std::string>() == "string");
+		STATIC_CHECK(GetNativeLuaTypeName<std::string_view>() == "string");
+		STATIC_CHECK(GetNativeLuaTypeName<char[8]>() == "string");
+	}
+}
+
+TEST_CASE("Lua function parsing/call with Native lua types", "[scripting][b]")
+{
+	Logger::StartSession();
+	LuaStateManager state{};
+	state.InitWithEngineTypes<>();
+
+	struct TestUserStructA {};
+	enum class TestUserEnum { A = 1, B = 2 };
+
+	CHECK(state.NewUserType<TestUserStructA>("TestUserStructA"));
+	CHECK(state.NewEnum<TestUserEnum>("TestUserEnum", "A", TestUserEnum::A, "B", TestUserEnum::B));
+
+	CHECK(state.IsRegistered("TestUserStructA"));
+	CHECK(state.IsRegistered("TestUserEnum"));
+
+	CHECK(state.IsRegistered("number"));
+	CHECK(state.IsRegistered("boolean"));
+	CHECK(state.IsRegistered("string"));
+
+	SECTION("Qualifiers get stripped for native lua types when string-parsed")
+	{
+		static const std::string numberRefTypeStr = "number&";
+		static const std::string booleanPtrTypeStr = "boolean *";
+		static const std::string stringConstRefTypeStr = "const  string&";
+
+		auto parseResultNum = LuaFunctionTableParser::ParseFullArgumentType(numberRefTypeStr, state);
+		REQUIRE_RESULT(parseResultNum);
+
+		const auto [qualsNum, typeNum] = DecomposeArgType(parseResultNum.GetValue());
+		CHECK(qualsNum == 0);
+		CHECK(typeNum == kNativeNumberLuaTypeId);
+
+		auto parseResultBool = LuaFunctionTableParser::ParseFullArgumentType(booleanPtrTypeStr, state);
+		REQUIRE_RESULT(parseResultBool);
+
+		const auto [qualsBool, typeBool] = DecomposeArgType(parseResultBool.GetValue());
+		CHECK(qualsBool == 0);
+		CHECK(typeBool == kNativeBooleanLuaTypeId);
+
+		auto parseResultString = LuaFunctionTableParser::ParseFullArgumentType(stringConstRefTypeStr, state);
+		REQUIRE_RESULT(parseResultString);
+
+		const auto [qualsString, typeString] = DecomposeArgType(parseResultString.GetValue());
+		CHECK(qualsString == 0);
+		CHECK(typeString == kNativeStringLuaTypeId);
+	}
+
+	SECTION("Correct argument matching for native lua types")
+	{
+		constexpr uint64_t numberRefType = {
+			static_cast<uint64_t>(LuaTypeQualifiers::Ref) << 32 |
+			static_cast<uint64_t>(kNativeNumberLuaTypeId)
+		};
+		constexpr uint64_t booleanPtrType = {
+			static_cast<uint64_t>(LuaTypeQualifiers::Ptr) << 32 |
+			static_cast<uint64_t>(kNativeBooleanLuaTypeId)
+		};
+		constexpr uint64_t stringConstRefType = {
+			static_cast<uint64_t>(LuaTypeQualifiers::Ref | LuaTypeQualifiers::Const) << 32 |
+			static_cast<uint64_t>(kNativeStringLuaTypeId)
+		};
+
+		int kNumberValue = 12;
+		int& kNumberRef = kNumberValue;
+		const int* kNumberPtrConst = &kNumberValue;
+		int* kNumberPtrNull = nullptr;
+
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), 12.3f, numberRefType).valid());
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), kNumberRef, numberRefType).valid());
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), kNumberPtrConst, numberRefType).valid());
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), kNumberPtrNull, numberRefType).valid());
+
+		bool kBoolValue = true;
+		const bool& kBoolConstRef = kBoolValue;
+		bool* kBoolPtr = &kBoolValue;
+		bool* kBoolPtrNull = nullptr;
+
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), true, booleanPtrType).valid());
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), kBoolConstRef, booleanPtrType).valid());
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), kBoolPtr, booleanPtrType).valid());
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), kBoolPtrNull, booleanPtrType).valid());
+
+		std::string kStrValue = "yo";
+		std::string_view kStrViewValue = kStrValue;
+		std::string* kStringPtr = &kStrValue;
+		const std::string_view& kStringViewRefConst = kStrViewValue;
+		const char* kConstCharPtrNull = nullptr;
+
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), "bro", stringConstRefType).valid());
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), 'b', stringConstRefType).valid());
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), kStrViewValue, stringConstRefType).valid());
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), kStringPtr, stringConstRefType).valid());
+		CHECK(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), kStringViewRefConst, stringConstRefType).valid());
+		CHECK_FALSE(LuaFunctionCallHandler::TryMakeArgumentLuaObject(
+			state.Data(), kConstCharPtrNull, stringConstRefType).valid());
+	}
+
+	SECTION("Mixing native and user types in function call")
+	{
+		sol::state_view stateView{ state.Data() };
+
+		int intOutput = 0;
+		double doubleOutput = 0.0;
+		bool boolOutput = false;
+		std::string stringOutput;
+
+		stateView["intFnMix"] = [&intOutput](int i, const TestUserStructA& a) {
+			intOutput = i;
+		};
+		stateView["doubleBoolFnMix"] = [&doubleOutput, &boolOutput]
+		(double d, const TestUserStructA* a, bool b) {
+			doubleOutput = d;
+			boolOutput = b;
+		};
+		stateView["allFnMix"] = [&](TestUserStructA a, double d, int i, std::string s, bool b) {
+			intOutput = i;
+			doubleOutput = d;
+			stringOutput = s;
+			boolOutput = b;
+		};
+
+		constexpr uint64_t structAValueType = {
+			static_cast<uint64_t>(TypeInfo<TestUserStructA>::hash32)
+		};
+		constexpr uint64_t structAPtrConstType = {
+			static_cast<uint64_t>(LuaTypeQualifiers::Const | LuaTypeQualifiers::Ptr) << 32 |
+			static_cast<uint64_t>(TypeInfo<TestUserStructA>::hash32)
+		};
+		constexpr uint64_t structARefConstType = {
+			static_cast<uint64_t>(LuaTypeQualifiers::Const | LuaTypeQualifiers::Ref) << 32 |
+			static_cast<uint64_t>(TypeInfo<TestUserStructA>::hash32)
+		};
+		constexpr uint64_t numberType = static_cast<uint64_t>(kNativeNumberLuaTypeId);
+		constexpr uint64_t booleanType = static_cast<uint64_t>(kNativeBooleanLuaTypeId);
+		constexpr uint64_t stringType = static_cast<uint64_t>(kNativeStringLuaTypeId);
+
+		const std::vector<uint64_t> intFnMixTypes = {
+			numberType, structARefConstType
+		};
+		const std::vector<uint64_t> doubleBoolFnMixTypes = {
+			numberType, structAPtrConstType, booleanType
+		};
+		const std::vector<uint64_t> allFnMixTypes = {
+			structAValueType, numberType, numberType, stringType, booleanType
+		};
+
+		TestUserStructA structAInstance{};
+
+		{
+		sol::function intFnMix = stateView["intFnMix"];
+		REQUIRE(intFnMix.valid());
+
+		CHECK(LuaFunctionCallHandler::CallLuaFunctionQualified(
+			intFnMix, intFnMixTypes, 354, structAInstance
+		).Success());
+		CHECK(intOutput == 354);
+		intOutput = 0;
+		}
+
+		{
+		sol::function doubleBoolFnMix = stateView["doubleBoolFnMix"];
+		REQUIRE(doubleBoolFnMix.valid());
+
+		CHECK(LuaFunctionCallHandler::CallLuaFunctionQualified(
+			doubleBoolFnMix, doubleBoolFnMixTypes, 80.5, true, &structAInstance
+		).Success());
+		CHECK(doubleOutput == 80.5);
+		CHECK(boolOutput == true);
+		doubleOutput = 0.0;
+		boolOutput = false;
+		}
+
+		{
+		sol::function allFnMix = stateView["allFnMix"];
+		REQUIRE(allFnMix.valid());
+
+		CHECK(LuaFunctionCallHandler::CallLuaFunctionQualified(
+			allFnMix, allFnMixTypes, 69.69, TestUserStructA{}, true, 67, "hello"
+		).Success());
+		CHECK(doubleOutput == 69.69);
+		CHECK(intOutput == 67);
+		CHECK(boolOutput == true);
+		CHECK(stringOutput == "hello");
 		}
 	}
 }

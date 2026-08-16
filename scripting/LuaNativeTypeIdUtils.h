@@ -66,6 +66,24 @@ inline constexpr uint32_t GetNativeLuaTypeId() noexcept
 	}
 }
 
+inline uint32_t GetNativeLuaTypeId(std::string_view name)
+{
+	if (name == "boolean")
+	{
+		return kNativeBooleanLuaTypeId;
+	}
+	if (name == "number")
+	{
+		return kNativeNumberLuaTypeId;
+	}
+	if (name == "string")
+	{
+		return kNativeStringLuaTypeId;
+	}
+
+	return kInvalidLuaTypeId;
+}
+
 template <typename T>
 inline constexpr std::string_view GetNativeLuaTypeName() noexcept
 {

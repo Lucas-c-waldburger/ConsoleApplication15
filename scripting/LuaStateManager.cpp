@@ -22,6 +22,11 @@ bool LuaStateManager::IsRegistered(std::string_view name) const
 
 uint32_t LuaStateManager::GetRegisteredTypeId(std::string_view name) const
 {
+	if (IsNativeLuaType(name))
+	{
+		return GetNativeLuaTypeId(name);
+	}
+
 	auto it = registeredNameToTypeId_.find(name);
 
 	return (it != registeredNameToTypeId_.end()) ? it->second : kInvalidLuaTypeId;
