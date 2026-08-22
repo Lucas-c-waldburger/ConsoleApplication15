@@ -47,7 +47,7 @@ inline float TerrainHeightAt(float worldX, float freq, float amp, float groundOf
 
 inline float HillHeightAt(float x, float start, float width, float height)
 {
-    float t = (x - start) / width;   // 0 ¨ 1
+    float t = (x - start) / width;   // 0 -> 1
     return height * 0.5f * (1.0f - std::cos(t * 2.0f * static_cast<float>(M_PI)));
 }
 

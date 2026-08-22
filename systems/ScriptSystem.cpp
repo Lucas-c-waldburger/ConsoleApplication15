@@ -17,17 +17,6 @@ void InvalidateEntityScriptTables(ScriptTable::TableId tableId)
 	}
 }
 
-//std::vector<Entity> GetEntitiesToUpdate(ScriptTable::TableId removedTableId,
-//										ScriptTable::TableId swappedTableId)
-//{
-//	return ECS::GetAllEntitiesWith<Script>([removedTableId, swappedTableId](const Script& script) {
-//		return script.table.GetTableId() == removedTableId ||
-//			   script.table.GetTableId() == swappedTableId;
-//	});
-//}
-
-//void ReassignEntityScriptTables(ScriptTable::TableId )
-
 void EraseScriptCallbacks(Entity& e)
 {
 	if (!e.HasComponent<SignalTokenStorage>())
@@ -53,212 +42,110 @@ ScriptSystem::~ScriptSystem()
 	}
 }
 
-Result<ScriptTable::TableId> ScriptSystem::AddTable(const std::string& pathStr)
+Result<ScriptTable::TableId> ScriptSystem::AddFunctionTable(const std::string& path)
 {
-	sol::protected_function_result loadResult = state_.script_file(pathStr);
-	if (!loadResult.valid())
-	{
-		sol::error err = loadResult;
-		return MAKE_ERROR(err.what());
-	}
+	TRY(tables_.AddTable(path, state_, ScriptTable::TableType::FunctionTable), table);
 
-	if (loadResult.get_type() != sol::type::table)
-	{
-		return MAKE_ERROR_FMT("Script at path '{}' did not return a sol::table", pathStr);
-	}
+	assert(table);
 
-	auto newTable = ScriptTable::Create(loadResult.get<sol::table>());
-	const auto id = newTable.GetTableId();
-
-	tableData_.try_emplace(id, std::move(newTable), pathStr);
-
-	return id;
+	return table->GetTableId();
 }
 
-Result<ScriptTable::TableId> ScriptSystem::AddTable(const std::filesystem::path& path)
+Result<ScriptTable::TableId> ScriptSystem::AddSystemTable(const std::string& path, Phase phase)
 {
-	auto pathStr = path.string();
+	TRY(tables_.AddTable(path, state_, ScriptTable::TableType::SystemTable), table);
 
-	if (!std::filesystem::exists(path))
+	assert(table);
+
+	auto result = scriptableUserSubsystem_.AddSystemScript(*table, phase);
+	if (!result.Success())
 	{
-		return MAKE_ERROR_FMT("File at path '{}' does not exist", pathStr);
-	}
-	if (path.extension() != ".lua")
-	{
-		return MAKE_ERROR_FMT("File at path '{}' is not  a lua file", pathStr);
+		tables_.RemoveTable(table->GetTableId());
+
+		return result.GetError();
 	}
 
-	return AddTable(pathStr);
+	return table->GetTableId();
 }
 
-bool ScriptSystem::RegisterTableFunction(ScriptTable::TableId tableId, std::string_view fnName,
-										 const ScriptSignature& scriptSig)
+Result<Void> ScriptSystem::ReloadTable(ScriptTable::TableId tableId)
 {
-	if (auto it = tableData_.find(tableId); it != tableData_.end())
-	{
-		return it->second.table.RegisterFunction(fnName, scriptSig);
-	}
-
-	return false;
+	return tables_.ReloadTable(tableId, state_);
 }
 
-ScriptTable* ScriptSystem::GetTable(ScriptTable::TableId tableId)
+void ScriptSystem::Reset()
 {
-	//if (auto it = tableIndexMap_.find(tableId); it != tableIndexMap_.end())
-	//{
-	//	assert(it->second < tables_.size());
-	//	return &tables_[it->second];
-	//}
-
-	if (auto it = tableData_.find(tableId); it != tableData_.end())
+	auto es = ECS::GetAllEntitiesWith<Script>();
+	for (auto& e : es)
 	{
-		return &it->second.table;
+		e.GetComponent<Script>().table = {};
 	}
 
-	return nullptr;
-}
-
-const ScriptTable* ScriptSystem::GetTable(ScriptTable::TableId tableId) const
-{
-	//if (auto it = tableIndexMap_.find(tableId); it != tableIndexMap_.end())
-	//{
-	//	assert(it->second < tables_.size());
-	//	return &tables_[it->second];
-	//}
-
-	if (auto it = tableData_.find(tableId); it != tableData_.end())
-	{
-		return &it->second.table;
-	}
-
-	return nullptr;
+	tables_.Clear();
+	scriptableUserSubsystem_.Clear();
+	state_ = {};
 }
 
 ScriptTableView ScriptSystem::GetTableView(ScriptTable::TableId tableId) const
 {
-	//if (auto it = tableIndexMap_.find(tableId); it != tableIndexMap_.end())
-	//{
-	//	assert(it->second < tables_.size());
-	//	
-	//	return tables_[it->second].GetView();
-	//}
-
-	if (auto it = tableData_.find(tableId); it != tableData_.end())
-	{
-		return it->second.table.GetView();
-	}
-
-	return {};
+	return tables_.GetTableView(tableId);
 }
 
 const std::string& ScriptSystem::GetTableFilepath(ScriptTable::TableId tableId) const
 {
-	//if (auto it = tableIndexMap_.find(tableId); it != tableIndexMap_.end())
-	//{
-	//	assert(it->second < filepaths_.size());
-	//	return filepaths_[it->second];
-	//}
+	return tables_.GetTableFilepath(tableId);
+}
 
-	if (auto it = tableData_.find(tableId); it != tableData_.end())
-	{
-		return it->second.filepath;
-	}
-
-	return Null<std::string>();
+const ScriptTableDataMap& ScriptSystem::GetScriptTableMap() const
+{
+	return tables_.GetTableDataMap();
 }
 
 bool ScriptSystem::RemoveTable(ScriptTable::TableId tableId)
 {
-	auto it = tableData_.find(tableId);
-	if (it == tableData_.end())
+	if (!tables_.ContainsTable(tableId))
 	{
 		return false;
 	}
 
-	InvalidateEntityScriptTables(tableId);
+	switch (tables_.GetTableType(tableId))
+	{
+	case ScriptTable::TableType::FunctionTable:
+		InvalidateEntityScriptTables(tableId);
+		break;
+	case ScriptTable::TableType::SystemTable:
+		scriptableUserSubsystem_.RemoveSystemScript(tableId);
+		break;
+	default:
+		break;
+	}
 
-	tableData_.erase(it);
+	[[maybe_unused]] const bool removed = tables_.RemoveTable(tableId);
+	assert(removed);
 
 	return true;
-
-	/*auto it = tableIndexMap_.find(tableId);
-	if (it == tableIndexMap_.end())
-	{
-		return false;
-	}
-
-	assert(it->second < tables_.size());
-
-	InvalidateEntityScriptTables(tableId);
-
-	const size_t tableIdx = it->second;
-	const size_t backIdx = tables_.size() - 1;
-
-	if (tableIdx != backIdx)
-	{
-		const auto backTableId = tables_.back().GetTableId();
-
-		auto es = ECS::GetAllEntitiesWith<Script>([backTableId](const Script& script) {
-			return script.table.GetTableId() == backTableId;
-		});
-
-		std::swap(tables_[tableIdx], tables_[backIdx]);
-		std::swap(filepaths_[tableIdx], filepaths_[backIdx]);
-		tableIndexMap_[tables_[tableIdx].GetTableId()] = tableIdx;
-
-		for (auto& e : es)
-		{
-			e.GetComponent<Script>().table = tables_[tableIdx].GetView();
-		}
-	}
-
-	tables_.pop_back();
-	filepaths_.pop_back();
-	tableIndexMap_.erase(it);
-
-	return true;*/
 }
 
 bool ScriptSystem::ContainsTable(ScriptTable::TableId tableId) const
 {
-	//return tableIndexMap_.contains(tableId);
-	return tableData_.contains(tableId);
+	return tables_.ContainsTable(tableId);
 }
 
-Result<bool> ScriptSystem::ReloadTable(ScriptTable::TableId tableId)
-{
-	auto it = tableData_.find(tableId);
-	if (it == tableData_.end())
-	{
-		return false;
-	}
-
-	sol::protected_function_result loadResult = state_.script_file(it->second.filepath);
-	if (!loadResult.valid())
-	{
-		sol::error err = loadResult;
-		return MAKE_ERROR(err.what());
-	}
-
-	if (loadResult.get_type() != sol::type::table)
-	{
-		return MAKE_ERROR_FMT("Script at path '{}' did not return a sol::table", it->second.filepath);
-	}
-
-	it->second.table.SetTable(loadResult.get<sol::table>());
-
-	return true;
-}
-
-ScriptDataPackage ScriptSystem::ExportScriptDataPackage() const
-{
-	ScriptDataPackage package{};
-	package.reserve(tableData_.size());
-
-	for (const auto& [_, data] : tableData_)
-	{
-		package.emplace_back(data.filepath, data.table.ExportTableDescriptor());
-	}
-
-	return package;
-}
+//ScriptTableDescriptors ScriptSystem::ExportTableDescriptors() const
+//{
+//	ScriptTableDescriptors descriptors{};
+//	descriptors.filepaths.reserve(tableMap_.size());
+//	descriptors.functionNames.reserve(tableMap_.size());
+//
+//	for (const auto& [_, data] : tableMap_)
+//	{
+//		descriptors.filepaths.emplace_back(data.filepath);
+//		descriptors.functionNames.emplace_back(
+//			data.table.GetFunctionSignatures() 
+//			| std::views::transform([](const auto& pair) { return pair.first; }) 
+//			| std::ranges::to<std::vector>()
+//		);
+//	}
+//
+//	return descriptors;
+//}

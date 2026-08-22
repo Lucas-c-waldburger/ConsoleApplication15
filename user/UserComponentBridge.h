@@ -195,6 +195,14 @@ T& UserComponentBridge::AddComponentData(Entity_t entity, ComponentManager& cmpM
 	const size_t idx = userComponentListIndexForDataType_[typeId];
 	assert(idx < UserComponentTypeList::size);
 
+	const bool hasCmp = std::invoke(UserComponentDispatchTable::kHasUserComponent[idx],
+		entity, cmpManager);
+	if (hasCmp)
+	{
+		return std::invoke(UserComponentDispatchTable::kGetUserComponentStorage[idx],
+			entity, cmpManager).Get<T>();
+	}
+
 	InlineStorage<kUserComponentStorageSize>& newCmpStorage =
 		std::invoke(UserComponentDispatchTable::kAddUserComponentStorage[idx],
 			entity, cmpManager);

@@ -1,5 +1,5 @@
-/** @file MaxRectsBinPack.h
-	@author Jukka Jyl�nki
+﻿/** @file MaxRectsBinPack.h
+	@author Jukka Jyläki
 
 	@brief Implements different bin packer algorithms that use the MAXRECTS data structure.
 

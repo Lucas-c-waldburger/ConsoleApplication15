@@ -77,17 +77,19 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/utf-8  /external:I"C:\Libraries\spdlog-1.x\include" %(AdditionalOptions)</AdditionalOptions>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86;C:\Libraries\spdlog-1.x\build32\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;spdlogd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -99,19 +101,21 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/utf-8  /external:I"C:\Libraries\spdlog-1.x\include" %(AdditionalOptions)</AdditionalOptions>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86;C:\Libraries\spdlog-1.x\build32\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;spdlogd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -121,17 +125,19 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/utf-8  /external:I"C:\Libraries\spdlog-1.x\include" %(AdditionalOptions)</AdditionalOptions>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86;C:\Libraries\spdlog-1.x\build32\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;spdlogd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -143,19 +149,21 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/utf-8  /external:I"C:\Libraries\spdlog-1.x\include" %(AdditionalOptions)</AdditionalOptions>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86;C:\Libraries\spdlog-1.x\build32\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;spdlogd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -201,6 +209,8 @@
     <ClCompile Include="scripting\LuaStateManager.cpp" />
     <ClCompile Include="scripting\ScriptHandle.cpp" />
     <ClCompile Include="scripting\ScriptTable.cpp" />
+    <ClCompile Include="scripting\ScriptTableManager.cpp" />
+    <ClCompile Include="scripting\ScriptTableObserverSignal.cpp" />
     <ClCompile Include="serial\AudioBankSerializer.cpp" />
     <ClCompile Include="serial\EntityDeserializer.cpp" />
     <ClCompile Include="serial\EntitySerializer.cpp" />
@@ -305,6 +315,7 @@
     <ClCompile Include="test\ui\EntityDragUtility.cpp" />
     <ClCompile Include="test\ui\EntityInspector.cpp" />
     <ClCompile Include="test\ui\FileTreeView.cpp" />
+    <ClCompile Include="test\ui\GuiConsole.cpp" />
     <ClCompile Include="test\ui\GuiMouse.cpp" />
     <ClCompile Include="test\ui\GuiResource.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditAudio.cpp" />
@@ -492,6 +503,220 @@
     <ClInclude Include="deps\nlohmann\json.hpp" />
     <ClInclude Include="deps\nlohmann\json_fwd.hpp" />
     <ClInclude Include="deps\rapidhash\rapidhash.h" />
+    <ClInclude Include="deps\spdlog\async.h" />
+    <ClInclude Include="deps\spdlog\async_logger-inl.h" />
+    <ClInclude Include="deps\spdlog\async_logger.h" />
+    <ClInclude Include="deps\spdlog\cfg\argv.h" />
+    <ClInclude Include="deps\spdlog\cfg\env.h" />
+    <ClInclude Include="deps\spdlog\cfg\helpers-inl.h" />
+    <ClInclude Include="deps\spdlog\cfg\helpers.h" />
+    <ClInclude Include="deps\spdlog\common-inl.h" />
+    <ClInclude Include="deps\spdlog\common.h" />
+    <ClInclude Include="deps\spdlog\details\backtracer-inl.h" />
+    <ClInclude Include="deps\spdlog\details\backtracer.h" />
+    <ClInclude Include="deps\spdlog\details\circular_q.h" />
+    <ClInclude Include="deps\spdlog\details\console_globals.h" />
+    <ClInclude Include="deps\spdlog\details\file_helper-inl.h" />
+    <ClInclude Include="deps\spdlog\details\file_helper.h" />
+    <ClInclude Include="deps\spdlog\details\fmt_helper.h" />
+    <ClInclude Include="deps\spdlog\details\log_msg-inl.h" />
+    <ClInclude Include="deps\spdlog\details\log_msg.h" />
+    <ClInclude Include="deps\spdlog\details\log_msg_buffer-inl.h" />
+    <ClInclude Include="deps\spdlog\details\log_msg_buffer.h" />
+    <ClInclude Include="deps\spdlog\details\mpmc_blocking_q.h" />
+    <ClInclude Include="deps\spdlog\details\null_mutex.h" />
+    <ClInclude Include="deps\spdlog\details\os-inl.h" />
+    <ClInclude Include="deps\spdlog\details\os.h" />
+    <ClInclude Include="deps\spdlog\details\periodic_worker-inl.h" />
+    <ClInclude Include="deps\spdlog\details\periodic_worker.h" />
+    <ClInclude Include="deps\spdlog\details\registry-inl.h" />
+    <ClInclude Include="deps\spdlog\details\registry.h" />
+    <ClInclude Include="deps\spdlog\details\synchronous_factory.h" />
+    <ClInclude Include="deps\spdlog\details\tcp_client-windows.h" />
+    <ClInclude Include="deps\spdlog\details\tcp_client.h" />
+    <ClInclude Include="deps\spdlog\details\thread_pool-inl.h" />
+    <ClInclude Include="deps\spdlog\details\thread_pool.h" />
+    <ClInclude Include="deps\spdlog\details\udp_client-windows.h" />
+    <ClInclude Include="deps\spdlog\details\udp_client.h" />
+    <ClInclude Include="deps\spdlog\details\windows_include.h" />
+    <ClInclude Include="deps\spdlog\fmt\bin_to_hex.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\args.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\base.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\chrono.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\color.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\compile.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\core.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\format-inl.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\format.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\os.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\ostream.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\printf.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\ranges.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\std.h" />
+    <ClInclude Include="deps\spdlog\fmt\bundled\xchar.h" />
+    <ClInclude Include="deps\spdlog\fmt\chrono.h" />
+    <ClInclude Include="deps\spdlog\fmt\compile.h" />
+    <ClInclude Include="deps\spdlog\fmt\fmt.h" />
+    <ClInclude Include="deps\spdlog\fmt\ostr.h" />
+    <ClInclude Include="deps\spdlog\fmt\ranges.h" />
+    <ClInclude Include="deps\spdlog\fmt\std.h" />
+    <ClInclude Include="deps\spdlog\fmt\xchar.h" />
+    <ClInclude Include="deps\spdlog\formatter.h" />
+    <ClInclude Include="deps\spdlog\fwd.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\async.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\async_logger-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\async_logger.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\cfg\argv.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\cfg\env.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\cfg\helpers-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\cfg\helpers.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\common-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\common.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\backtracer-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\backtracer.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\circular_q.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\console_globals.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\file_helper-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\file_helper.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\fmt_helper.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\log_msg-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\log_msg.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\log_msg_buffer-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\log_msg_buffer.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\mpmc_blocking_q.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\null_mutex.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\os-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\os.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\periodic_worker-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\periodic_worker.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\registry-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\registry.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\synchronous_factory.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\tcp_client-windows.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\tcp_client.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\thread_pool-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\thread_pool.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\udp_client-windows.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\udp_client.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\details\windows_include.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bin_to_hex.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\args.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\base.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\chrono.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\color.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\compile.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\core.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\format-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\format.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\os.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\ostream.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\printf.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\ranges.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\std.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\bundled\xchar.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\chrono.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\compile.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\fmt.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\ostr.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\ranges.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\std.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fmt\xchar.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\formatter.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\fwd.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\logger-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\logger.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\mdc.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\namespace.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\pattern_formatter-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\pattern_formatter.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\android_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\ansicolor_sink-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\ansicolor_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\base_sink-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\base_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\basic_file_sink-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\basic_file_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\callback_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\daily_file_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\dist_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\dup_filter_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\hourly_file_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\kafka_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\loki_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\mongo_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\msvc_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\null_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\ostream_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\qt_sinks.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\ringbuffer_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\rotating_file_sink-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\rotating_file_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\sink-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\stdout_color_sinks-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\stdout_color_sinks.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\stdout_sinks-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\stdout_sinks.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\syslog_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\systemd_namespace_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\systemd_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\tcp_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\udp_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\wincolor_sink-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\wincolor_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\sinks\win_eventlog_sink.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\spdlog-inl.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\spdlog.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\stopwatch.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\tweakme.h" />
+    <ClInclude Include="deps\spdlog\include\spdlog\version.h" />
+    <ClInclude Include="deps\spdlog\logger-inl.h" />
+    <ClInclude Include="deps\spdlog\logger.h" />
+    <ClInclude Include="deps\spdlog\mdc.h" />
+    <ClInclude Include="deps\spdlog\namespace.h" />
+    <ClInclude Include="deps\spdlog\pattern_formatter-inl.h" />
+    <ClInclude Include="deps\spdlog\pattern_formatter.h" />
+    <ClInclude Include="deps\spdlog\sinks\android_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\ansicolor_sink-inl.h" />
+    <ClInclude Include="deps\spdlog\sinks\ansicolor_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\base_sink-inl.h" />
+    <ClInclude Include="deps\spdlog\sinks\base_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\basic_file_sink-inl.h" />
+    <ClInclude Include="deps\spdlog\sinks\basic_file_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\callback_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\daily_file_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\dist_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\dup_filter_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\hourly_file_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\kafka_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\loki_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\mongo_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\msvc_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\null_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\ostream_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\qt_sinks.h" />
+    <ClInclude Include="deps\spdlog\sinks\ringbuffer_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\rotating_file_sink-inl.h" />
+    <ClInclude Include="deps\spdlog\sinks\rotating_file_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\sink-inl.h" />
+    <ClInclude Include="deps\spdlog\sinks\sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\stdout_color_sinks-inl.h" />
+    <ClInclude Include="deps\spdlog\sinks\stdout_color_sinks.h" />
+    <ClInclude Include="deps\spdlog\sinks\stdout_sinks-inl.h" />
+    <ClInclude Include="deps\spdlog\sinks\stdout_sinks.h" />
+    <ClInclude Include="deps\spdlog\sinks\syslog_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\systemd_namespace_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\systemd_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\tcp_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\udp_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\wincolor_sink-inl.h" />
+    <ClInclude Include="deps\spdlog\sinks\wincolor_sink.h" />
+    <ClInclude Include="deps\spdlog\sinks\win_eventlog_sink.h" />
+    <ClInclude Include="deps\spdlog\spdlog-inl.h" />
+    <ClInclude Include="deps\spdlog\spdlog.h" />
+    <ClInclude Include="deps\spdlog\stopwatch.h" />
+    <ClInclude Include="deps\spdlog\tweakme.h" />
+    <ClInclude Include="deps\spdlog\version.h" />
     <ClInclude Include="deps\tinyfiledialogs\tinyfiledialogs.h" />
     <ClInclude Include="ecs\ComponentCleanup.h" />
     <ClInclude Include="ecs\ComponentMasks.h" />
@@ -531,6 +756,8 @@
     <ClInclude Include="scripting\ScriptHandle.h" />
     <ClInclude Include="scripting\ScriptSignature.h" />
     <ClInclude Include="scripting\ScriptTable.h" />
+    <ClInclude Include="scripting\ScriptTableManager.h" />
+    <ClInclude Include="scripting\ScriptTableObserverSignal.h" />
     <ClInclude Include="scripting\user_types\AudioBankLuaUserType.h" />
     <ClInclude Include="scripting\user_types\CameraLuaUserType.h" />
     <ClInclude Include="scripting\user_types\CameraTargetUserType.h" />
@@ -551,6 +778,7 @@
     <ClInclude Include="serial\user_types\ScriptJsonUserTypes.h" />
     <ClInclude Include="systems\Observers.h" />
     <ClInclude Include="systems\Pausable.h" />
+    <ClInclude Include="systems\ScriptableUserSubsystem.h" />
     <ClInclude Include="systems\ScriptSystem.h" />
     <ClInclude Include="test\demo\audio_lounge\AudioLounge.h" />
     <ClInclude Include="test\demo\audio_lounge\AudioLoungeApp.h" />
@@ -571,6 +799,7 @@
     <ClInclude Include="test\ui\ComponentEditHistory.h" />
     <ClInclude Include="test\ui\Editor.h" />
     <ClInclude Include="test\ui\EntityDragUtility.h" />
+    <ClInclude Include="test\ui\GuiConsole.h" />
     <ClInclude Include="test\ui\GuiMouse.h" />
     <ClInclude Include="test\ui\GuiResource.h" />
     <ClInclude Include="test\ui\GuiFonts.h" />
@@ -589,7 +818,7 @@
     <ClInclude Include="test\ui\InspectorEventPanel.h" />
     <ClInclude Include="test\ui\InspectorSystemPanel.h" />
     <ClInclude Include="test\ui\SaveSceneUtility.h" />
-    <ClInclude Include="test\ui\ScriptPicker.h" />
+    <ClInclude Include="test\ui\ScriptLoaderUtility.h" />
     <ClInclude Include="test\ui\SpritePicker.h" />
     <ClInclude Include="test\demo\gallery\Gallery.h" />
     <ClInclude Include="test\demo\gallery\GalleryApp.h" />

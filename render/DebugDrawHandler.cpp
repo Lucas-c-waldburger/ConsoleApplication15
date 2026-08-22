@@ -4,6 +4,7 @@
 #include "../components/RenderableComponent.h"
 #include "../physics/B2Chain.h"
 #include <ranges>
+#include <numbers>
 
 namespace {
 
@@ -58,7 +59,7 @@ void RotateRectPoints(std::vector<SDL_FPoint>& points, SDL_FPoint center, float 
 {
 	assert(points.size() >= 5);
 
-	float radians = angleDegrees * (M_PI / 180.0f);
+	float radians = angleDegrees * (std::numbers::pi_v<float> / 180.0f);
 	float cosA = std::cos(radians);
 	float sinA = std::sin(radians);
 

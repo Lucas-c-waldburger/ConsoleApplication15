@@ -7,6 +7,7 @@
 
 class Camera;
 class TextureRepository;
+class Entity;
 struct SDL_Renderer;
 
 class NewRenderSystem : public System
@@ -15,6 +16,9 @@ public:
 	NewRenderSystem() = default;
 
 	void Update(SDL_Renderer* renderer, const Camera& camera,
+				const TextureRepository& textureRepo);
+	void Update(std::vector<Entity>& entities,
+				SDL_Renderer* renderer, const Camera& camera,
 				const TextureRepository& textureRepo);
 
 private:

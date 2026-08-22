@@ -41,7 +41,7 @@ struct event_names_array<TList<Ts...>>
 static constexpr auto kEventNames =
 	detail::event_names_array<InspectorEventPanel::GuiEventTypeList>::value;
 
-static const ScriptDataDescriptor kEmptyScriptDataDescriptor{};
+static const ScriptTableDescriptors kEmptyScriptDataDescriptor{};
 
 int GetCurrentEventNameIndex(std::string_view selectedEvName)
 {
@@ -61,13 +61,63 @@ int GetCurrentEventNameIndex(std::string_view selectedEvName)
 	return 0;
 }
 
-void DrawEventNames(std::string_view& selectedEvName)
+void DrawEventNames(std::string& selectedEvName)
 {
+	if (selectedEvName.empty())
+	{
+		selectedEvName = kEventNames[0];
+	}
+
 	int cur = GetCurrentEventNameIndex(selectedEvName);
 
 	if (ImGui::Combo("##EvNames", &cur, kEventNames, InspectorEventPanel::GuiEventTypeList::size))
 	{
 		selectedEvName = kEventNames[static_cast<size_t>(cur)];
+	}
+}
+
+size_t GetCurrentRelevantEntityIndex(const std::vector<Entity>& es, Entity_t selected)
+{
+	for (size_t i = 0; i < es.size(); ++i)
+	{
+		if (es[i].GetID() == selected)
+		{
+			return i;
+		}
+	}
+
+	return std::numeric_limits<size_t>::max();
+}
+
+void DrawRelevantEntityList(Entity& e, Entity_t& selectedRelevantEntity)
+{
+	if (selectedRelevantEntity == kInvalidEntity)
+	{
+		selectedRelevantEntity = e.GetID();
+	}
+
+	auto es = ECS::GetAllEntitiesWith<Name, Exclude<InspectorTag>>();
+
+	const size_t curIdx = GetCurrentRelevantEntityIndex(es, selectedRelevantEntity);
+	const auto& curName = (curIdx < es.size()) 
+		? es[curIdx].GetComponent<Name>().value 
+		: Null<std::string>();
+
+	if (ImGui::BeginCombo("##RelEnts", curName.c_str()))
+	{
+		for (size_t i = 0; i < es.size(); ++i)
+		{
+			const auto& name = es[i].GetComponent<Name>().value;
+
+			const bool selected = (curName == name);
+
+			if (ImGui::Selectable(name.c_str(), &selected))
+			{
+				selectedRelevantEntity = es[i].GetID();
+			}
+		}
+
+		ImGui::EndCombo();
 	}
 }
 
@@ -79,14 +129,16 @@ template <template <typename...> class TList, typename...Ts>
 struct connect_script_to_event_dispatch_table<TList<Ts...>>
 {
 	template <typename EvT>
-	static void call(Entity& e, EventBus& bus, std::string_view selectedScriptFn)
+	static void call(Entity& e, EventBus& bus, std::string_view selectedScriptFn,
+					 Entity_t selectedRelevantEntity)
 	{
 		auto evs = e.GetEvents(bus);
 
-		evs.OnEventScript<EvT>(selectedScriptFn);
+		evs.OnEventScript<EvT>(selectedScriptFn, 
+			EntityEvents::FilterDef{ .relevantEntity = selectedRelevantEntity});
 	}
 
-	using CallSig = void(*)(Entity&, EventBus&, std::string_view);
+	using CallSig = void(*)(Entity&, EventBus&, std::string_view, Entity_t);
 
 	static constexpr CallSig value[] = { &call<Ts>... };
 };
@@ -97,13 +149,13 @@ using kConnectScriptToEventDispatchTable =
 } // detail
 
 void ConnectScriptToEvent(Entity& e, EventBus& bus, std::string_view selectedEvName, 
-						  std::string_view selectedScriptFn)
+						  std::string_view selectedScriptFn, Entity_t selectedRelevantEntity)
 {
 	int evIdx = GetCurrentEventNameIndex(selectedEvName);
 	assert(evIdx >= 0 && evIdx < InspectorEventPanel::GuiEventTypeList::size);
 
 	std::invoke(detail::kConnectScriptToEventDispatchTable::value[static_cast<size_t>(evIdx)],
-		e, bus, selectedScriptFn);
+		e, bus, selectedScriptFn, selectedRelevantEntity);
 }
 
 } // unnamed
@@ -354,11 +406,16 @@ bool GuiEditComponentBuilder<CallbackInfo>::Draw(Entity& e, ScriptSystem& script
 		return PropertyEditState::None;
 	});
 
-	auto package = scriptSys.ExportScriptDataPackage();
+	if (selectedTableId_ != std::numeric_limits<ScriptTable::TableId>::max() &&
+		!scriptSys.ContainsTable(selectedTableId_))
+	{
+		selectedTableId_ = std::numeric_limits<ScriptTable::TableId>::max();
+		selectedTableFunction_.clear();
+	}
 
-	ScriptFilepathsContext filepathsCtx{
-		.package = package,
-		.selectedFilepath = selectedScriptFile_
+	ScriptFilepathsContext filepathsCtx{ 
+		.scriptTableMap = scriptSys.GetScriptTableMap(),
+		.selectedTableId = selectedTableId_
 	};
 
 	Property("script", [&filepathsCtx] {
@@ -366,9 +423,8 @@ bool GuiEditComponentBuilder<CallbackInfo>::Draw(Entity& e, ScriptSystem& script
 	});
 
 	ScriptTableFunctionNamesContext funcNamesCtx{
-		.tableFunctionNames = (filepathsCtx.packageIndex < package.size()
-			? package[filepathsCtx.packageIndex].tableDescriptor.functionNames
-			: Null<std::vector<std::string>>()),
+		.scriptTableMap = scriptSys.GetScriptTableMap(),
+		.selectedTableId = selectedTableId_,
 		.selectedTableFunction = selectedTableFunction_
 	};
 
@@ -376,22 +432,36 @@ bool GuiEditComponentBuilder<CallbackInfo>::Draw(Entity& e, ScriptSystem& script
 		return GuiEditProperty(funcNamesCtx);
 	});
 
-	if (ImGui::Button("Done") && CanAddCallback())
+	Property("relevant entity", [&e]{
+		DrawRelevantEntityList(e, selectedRelevantEntity_);
+		return PropertyEditState::None;
+	});
+
+	ImGui::TableNextRow();
+	ImGui::TableNextColumn();
+
+	bool built = false;
+
+	if (ImGui::Button("Done"))
 	{
-		UpdateEntityScriptTable(e, scriptSys);
+		if (CanAddCallback())
+		{
+			UpdateEntityScriptTable(e, scriptSys);
 
-		ConnectScriptToEvent(e, bus, selectedEventName_, selectedTableFunction_);
+			ConnectScriptToEvent(e, bus, selectedEventName_, selectedTableFunction_,
+								 selectedRelevantEntity_);
 
-		UpdateEntityCallbackInfo(e);
+			UpdateEntityCallbackInfo(e, scriptSys);
 
-		ClearSelections();
+			ClearSelections();
 
-		return true;
+			built = true;
+		}
 	}
 
 	EndPropertyTable();
 
-	return false;
+	return built;
 }
 
 void GuiEditComponentBuilder<CallbackInfo>::SetIsActive(bool active)
@@ -407,46 +477,42 @@ void GuiEditComponentBuilder<CallbackInfo>::SetIsActive(bool active)
 bool GuiEditComponentBuilder<CallbackInfo>::CanAddCallback()
 {
 	return !selectedEventName_.empty() &&
-		   !selectedScriptFile_.empty() &&
+		   selectedTableId_ != std::numeric_limits<size_t>::max() &&
 		   !selectedTableFunction_.empty();
 }
 
 void GuiEditComponentBuilder<CallbackInfo>::UpdateEntityScriptTable(Entity& e, 
 																	const ScriptSystem& scriptSys)
 {
-	const auto& tableData = scriptSys.GetTableDataMap();
-	auto it = core::FindIf(tableData, [](const auto& pair) {
-		return pair.second.filepath == selectedScriptFile_;
-	});
-
+	auto tableView = scriptSys.GetTableView(selectedTableId_);
 	auto& tks = e.AddComponent<SignalTokenStorage>().signalTokens;
 
-	if (it != tableData.end())
+	auto& script = e.AddComponent<Script>();
+	if (script.table.GetTableId() != selectedTableId_)
 	{
-		auto& script = e.AddComponent<Script>();
-		if (script.table.GetTableId() != it->first)
-		{
-			core::EraseIf(tks, [](const auto& tk) {
-				return tk.type == EntityCallbackToken::Type::Script;
-			});
+		core::EraseIf(tks, [](const auto& tk) {
+			return tk.type == EntityCallbackToken::Type::Script;
+		});
 
-			auto& callbackInfo = e.AddComponent<CallbackInfo>();
-			callbackInfo.eventNames.clear();
-			callbackInfo.scriptFileNames.clear();
-			callbackInfo.tableFunctionNames.clear();
-		}
-
-		script.table = it->second.table.GetView();
+		auto& callbackInfo = e.AddComponent<CallbackInfo>();
+		callbackInfo.eventNames.clear();
+		callbackInfo.scriptFileNames.clear();
+		callbackInfo.tableFunctionNames.clear();
 	}
+
+	script.table = tableView;
 }
 
-void GuiEditComponentBuilder<CallbackInfo>::UpdateEntityCallbackInfo(Entity& e)
+void GuiEditComponentBuilder<CallbackInfo>::UpdateEntityCallbackInfo(Entity& e, const ScriptSystem& scriptSys)
 {
 	auto& callbackInfo = e.GetComponent<CallbackInfo>();
 	callbackInfo.eventNames.emplace_back(selectedEventName_);
 	callbackInfo.tableFunctionNames.emplace_back(selectedTableFunction_);
 
-	auto path = fs::path(selectedScriptFile_);
+	const auto& selectedScriptFile = scriptSys.GetTableFilepath(selectedTableId_);
+	assert(!selectedScriptFile.empty());
+
+	auto path = fs::path(selectedScriptFile);
 	assert(fs::exists(path));
 
 	callbackInfo.scriptFileNames.emplace_back(path.filename().string());
@@ -454,9 +520,10 @@ void GuiEditComponentBuilder<CallbackInfo>::UpdateEntityCallbackInfo(Entity& e)
 
 void GuiEditComponentBuilder<CallbackInfo>::ClearSelections()
 {
-	selectedEventName_ = {};
-	selectedScriptFile_.clear();
+	selectedEventName_.clear();
+	selectedTableId_ = std::numeric_limits<size_t>::max();
 	selectedTableFunction_.clear();
+	selectedRelevantEntity_ = kInvalidEntity;
 }
 
 //void GuiEditComponentBuilder<CallbackInfo>::ReloadTableIdMap(const ScriptSystem& scriptSys)

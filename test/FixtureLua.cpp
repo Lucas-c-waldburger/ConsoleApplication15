@@ -1,4 +1,6 @@
 #include "FixtureLua.h"
+#include "Fixtures.h"
+#include "../scripting/user_types/LuaUserTypeIncludes.h"
 
 namespace {
 
@@ -75,24 +77,30 @@ void ExtendAudioRequest(StateWrapper& state, AudioBank& bank)
 	}
 }
 
-void SetUpFixtureLuaState(SceneFixture::SharedPtr& fx)
+void SetUpFixtureLuaState(SceneFixture& fx)
 {
-	if (!fx->IsSystemRegistered<ScriptSystem>())
+	if (!fx.IsSystemRegistered<ScriptSystem>())
 	{
 		return;
 	}
 
-	auto& scriptSys = fx->GetSystem<ScriptSystem>();
-	scriptSys.InitState<Entity, TextureRepository, Camera, AudioBank>();
+	auto& scriptSys = fx.GetSystem<ScriptSystem>();
+	scriptSys.GetState().InitWithEngineTypes<
+		Entity, 
+		TextureRepository, 
+		Camera, 
+		AudioBank,
+		EventLuaUserTypeList
+	>();
 
 	auto& state = scriptSys.GetState();
-	auto wrap = StateWrapper{ .state = state };
+	auto wrap = StateWrapper{ .state = state.Data()};
 
-	auto& camera = fx->GetCamera();
-	auto& textureRepo = fx->GetTextureRepository();
-	auto& audioBank = fx->GetAudioBank();
+	auto& camera = fx.GetCamera();
+	auto& textureRepo = fx.GetTextureRepository();
+	auto& audioBank = fx.GetAudioBank();
 	
-	sol::table fxLua = state.create_named_table(kFixtureObjectName);
+	sol::table fxLua = sol::state_view{ state.Data() }.create_named_table(kFixtureObjectName);
 	fxLua[kCameraObjectName] = &camera;
 	fxLua[kTextureRepositoryObjectName] = &textureRepo;
 	fxLua[kAudioBankObjectName] = &audioBank;

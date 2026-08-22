@@ -27,6 +27,12 @@ public:
 		Events
 	};
 
+	enum WindowType : uint8_t
+	{
+		Main = 1 << 0,
+		Console = 1 << 1
+	};
+
 	struct UpdateState
 	{
 		PanelType forcePanelOpen = PanelType::None;
@@ -70,6 +76,8 @@ public:
 
 	static void TearDown();
 
+	static SceneFixture::SceneConfiguration GetSceneConfiguration();
+
 private:
 	Editor() = default;
 
@@ -79,11 +87,15 @@ private:
 
 	static void HandleEntityDrag(const Camera& cam, Entity_t selectedEntityAtUpdateStart);
 	static void HandleCameraControl(Camera& cam, float dt);
-	static void DrawToolbar(SceneFixture& scene);
+
+	static void DrawToolbar(SceneFixture& fixture);
+	static void DrawFileMenu(SceneFixture& fixture);
+	static void DrawDebugMenu(SceneFixture& fixture);
 
 	static void UpdateForHistoryChange();
 	
 	static inline PanelType activePanel_ = PanelType::Entities;
+	static inline uint8_t activeWindows_ = WindowType::Main;
 	static inline EntityDragUtility entityDrag_{};
 	static inline CameraControlUtility cameraControl_{};
 	static inline UpdateState updateState_{};

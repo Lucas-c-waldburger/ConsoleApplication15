@@ -10,6 +10,7 @@
 #include "InspectorEventPanel.h"
 #include "ComponentEditHistory.h"
 #include "SaveSceneUtility.h"
+#include "GuiConsole.h"
 
 namespace ui {
 
@@ -41,6 +42,19 @@ void DrawSelectionState()
 	std::string selReport = std::format("{} : {}", name, selType);
 
 	ImGui::TextUnformatted(selReport.c_str());
+}
+
+void ClearHoverSelectionIfNeeded()
+{
+	if (Editor::GetActivePanel() != Editor::PanelType::Entities &&
+		Editor::GetActivePanel() != Editor::PanelType::Components)
+	{
+		const auto& sel = InspectorEntityPanel::GetSelection();
+		if (sel.IsHovering())
+		{
+			InspectorEntityPanel::ClearSelection();
+		}
+	}	
 }
 
 } // unnamed
@@ -87,61 +101,84 @@ void Editor::HandleCameraControl(Camera& cam, float dt)
 	cameraControl_.UpdateZoom(cam);
 }
 
+void Editor::DrawFileMenu(SceneFixture& fixture)
+{
+	if (!ImGui::Selectable("Open"))
+	{
+		return;
+	}
+
+	auto selectedFile = SceneSaveUtility::QuerySceneOpen();
+	if (selectedFile.has_value())
+	{
+		const auto currentFile = SceneSaveUtility::GetCurrentSceneFilepath();
+
+		auto openScene = [&fixture](const auto& path) {
+
+			auto response = SceneSaveUtility::HandleSceneOpen(path, fixture);
+
+			for (const auto& err : response.errors)
+			{
+				LOG_ERROR(err.GetMessage());
+			}
+
+			return response.success;
+			};
+
+		if (!openScene(*selectedFile))
+		{
+			LOG_ERROR("Could not open new scene. Attempting to reopen last scene");
+
+			openScene(currentFile);
+		}
+
+		LOG_IF_ERROR(ResetForNewScene(fixture));
+	}
+
+	if (ImGui::Selectable("Save"))
+	{
+		LOG_IF_ERROR(SceneSaveUtility::HandleSceneSave(fixture));
+	}
+
+	if (ImGui::Selectable("Save As..."))
+	{
+		LOG_IF_ERROR(SceneSaveUtility::HandleSceneSaveAs(fixture));
+	}
+}
+
+void Editor::DrawDebugMenu(SceneFixture& fixture)
+{
+	if (ImGui::Selectable("Console", (activeWindows_ & WindowType::Console)))
+	{
+		activeWindows_ ^= WindowType::Console;
+	}
+}
+
 void Editor::DrawToolbar(SceneFixture& fixture)
 {
 	assert(fixture.IsSystemRegistered<AudioSystem>());
 	assert(fixture.IsSystemRegistered<SDLInputSystem>());
 
-	if (ImGui::BeginMenuBar())
+	if (!ImGui::BeginMainMenuBar())
 	{
-		if (ImGui::BeginMenu("File"))
-		{
-			if (ImGui::Selectable("Open"))
-			{
-				auto selectedFile = SceneSaveUtility::QuerySceneOpen();
-				if (selectedFile.has_value())
-				{
-					const auto currentFile = SceneSaveUtility::GetCurrentSceneFilepath();
-
-					auto openScene = [&fixture](const auto& path) {
-						DestroyEditorEntities();
-
-						auto response = SceneSaveUtility::HandleSceneOpen(path, fixture);
-
-						for (const auto& err : response.errors)
-						{
-							LOG_ERROR(err.GetMessage());
-						}
-
-						return response.success;
-					};
-
-					if (!openScene(*selectedFile))
-					{
-						LOG_ERROR("Could not open new scene. Attempting to reopen last scene");
-
-						openScene(currentFile);
-					}
-					 
-					LOG_IF_ERROR(ResetForNewScene(fixture));
-				}
-			}
-
-			if (ImGui::Selectable("Save"))
-			{
-				LOG_IF_ERROR(SceneSaveUtility::HandleSceneSave(fixture));
-			}
-
-			if (ImGui::Selectable("Save As..."))
-			{
-				LOG_IF_ERROR(SceneSaveUtility::HandleSceneSaveAs(fixture));
-			}
-
-			ImGui::EndMenu();
-		}
-
-		ImGui::EndMenuBar();
+		return;
 	}
+
+	if (ImGui::BeginMenu("File"))
+	{
+		DrawFileMenu(fixture);
+
+		ImGui::EndMenu();
+	}
+
+	if (ImGui::BeginMenu("Debug"))
+	{
+		DrawDebugMenu(fixture);
+
+		ImGui::EndMenu();
+	}
+
+	ImGui::EndMainMenuBar();
 }
 
 Result<Void> Editor::ResetForNewScene(SceneFixture& fixture)
@@ -222,9 +259,12 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 		{
 			activePanel_ = PanelType::Entities;
 
+			const auto& auxRepo = scene->GetAuxTextureRepository();
+			assert(auxRepo);
+
 			auto entityCtx = InspectorEntityPanel::ResourceContext{ 
 				.camera = scene->GetCamera(),
-				.textureRepo = scene->GetTextureRepository()
+				.textureRepo = *auxRepo
 			};
 			InspectorEntityPanel::Update(entityCtx);
 
@@ -235,9 +275,12 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 		{
 			activePanel_ = PanelType::Systems;
 
+			const auto& auxRepo = scene->GetAuxTextureRepository();
+			assert(auxRepo);
+
 			auto sysCtx = InspectorSystemPanel::ResourceContext{ 
 				.systemManager = scene->GetSystemManager(),
-				.textureRepo = scene->GetTextureRepository()
+				.textureRepo = *auxRepo
 			};
 			InspectorSystemPanel::Update(sysCtx);
 
@@ -268,9 +311,12 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 				auto e = ECS::GetEntityByID(selectedEntityId);
 				assert(e.IsValid());
 
+				const auto& auxRepo = scene->GetAuxTextureRepository();
+				assert(auxRepo);
+
 				auto cmpCtx = InspectorComponentPanel::ResourceContext{ 
 					.entity = e,
-					.textureRepo = scene->GetTextureRepository(),
+					.textureRepo = *auxRepo,
 					.world = scene->GetWorld(),
 					.scriptSys = scene->GetSystem<ScriptSystem>(),
 					.eventBus = scene->GetEventBus()
@@ -287,9 +333,12 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 		{
 			activePanel_ = PanelType::Events;
 
+			const auto& auxRepo = scene->GetAuxTextureRepository();
+			assert(auxRepo);
+
 			auto evCtx = InspectorEventPanel::ResourceContext{
 				.eventBus = scene->GetEventBus(),
-				.textureRepo = scene->GetTextureRepository(),
+				.textureRepo = *auxRepo
 			};
 			InspectorEventPanel::Update(evCtx);
 
@@ -306,8 +355,17 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 
 	HandleEntityDrag(scene->GetCamera(), atUpdateBegin.selectedEntity);
 	HandleCameraControl(scene->GetCamera(), dt);
+	ClearHoverSelectionIfNeeded();
 
 	ImGui::End();
+
+	if (activeWindows_ & WindowType::Console)
+	{
+		if (!GuiConsole::Draw())
+		{
+			activeWindows_ &= ~WindowType::Console;
+		}
+	}
 }
 
 Result<Void> Editor::Init(SceneFixture::SharedPtr& scene)
@@ -319,6 +377,7 @@ Result<Void> Editor::Init(SceneFixture::SharedPtr& scene)
 
 	GuiResource::Init();
 	GuiMouse::Init();
+	GuiConsole::Init();
 
 	AssignGuiStyles();
 
@@ -342,6 +401,18 @@ Result<Void> Editor::Init(SceneFixture::SharedPtr& scene)
 void Editor::TearDown()
 {
 	InspectorEventPanel::TearDown();
+}
+
+SceneFixture::SceneConfiguration Editor::GetSceneConfiguration()
+{
+	static constexpr auto omitEntityDestruction = +[](const Entity& e) {
+		return e.HasComponent<InspectorTag>();
+	};
+
+	return SceneFixture::SceneConfiguration{
+		.flags = SceneFixture::SceneConfiguration::InitAuxTextureRepo,
+		.omitEntityDestruction = omitEntityDestruction
+	};
 }
 
 } // ui

@@ -21,26 +21,26 @@ public:
 	struct Buttons
 	{
 		Button<NamedSystemTypeList> playPause;
+		MapButton<ScriptTable::TableId> scriptReload;
+		MapButton<ScriptTable::TableId> scriptDelete;
 	};
 
 	struct ResourceContext
 	{
 		SystemManager& systemManager;
 		const TextureRepository& textureRepo;
-
-		static ResourceContext Create(SceneFixture::SharedPtr& scene);
 	};
 
 	static void Update(ResourceContext& resourceCtx);
 
-	static Result<Void> Init(SceneFixture& scene);
+	static Result<Void> Init(SceneFixture& fixture);
 
 	static Buttons& GetButtons() { return buttons_; }
 
-	static Result<Void> ResetForNewScene(SceneFixture& scene);
+	static Result<Void> ResetForNewScene(SceneFixture& fixture);
 
 private:
-	static Result<Void> LoadResources(SceneFixture& scene);
+	static Result<Void> LoadResources(SceneFixture& fixture);
 
 	static inline Buttons buttons_{};
 };

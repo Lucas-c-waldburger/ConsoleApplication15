@@ -46,7 +46,7 @@ TEST_CASE("EntityPhysics Tests", "[ecs][x]")
 		auto rels = e.GetRelations();
 		CHECK_FALSE(rels.IsParent());
 
-		auto secondaryColliderShape = phys.AddColliderCircle(50.4);
+		auto secondaryColliderShape = phys.AddColliderCircle(50.4f);
 		REQUIRE(secondaryColliderShape.IsValid());
 		CHECK(secondaryColliderShape.GetShapeType() == B2Shape::Type::Circle);
 		CHECK(phys.GetColliderCount() == 2);

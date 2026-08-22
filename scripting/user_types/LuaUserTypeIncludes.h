@@ -4,3 +4,4 @@
 #include "CameraLuaUserType.h" 
 #include "TextureRepositoryLuaUserTypes.h" 
 #include "AudioBankLuaUserType.h"
+#include "EventUserTypes.h"

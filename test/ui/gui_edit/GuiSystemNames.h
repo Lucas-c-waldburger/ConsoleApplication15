@@ -49,6 +49,7 @@ DEF_GUI_SYS_NAME(CameraSystem)
 DEF_GUI_SYS_NAME(PhysicsSystem)
 DEF_GUI_SYS_NAME(SpriteAnimationSystem)
 DEF_GUI_SYS_NAME(TimerSystem)
+DEF_GUI_SYS_NAME(ScriptSystem)
 
 
 #endif

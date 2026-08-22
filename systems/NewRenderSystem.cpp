@@ -254,13 +254,13 @@ void SortRenderableEntities(std::vector<Entity>& entities)
 		const uint8_t handleEval = EvaluateTextureResourceHandles(lhs, rhs);
 		const uint8_t validTest = handleEval & (LhsValid | RhsValid);
 
-		// If lhs invalid ¨ goes before rhs if rhs valid
+		// If lhs invalid -> goes before rhs if rhs valid
 		if ((validTest & LhsValid) == 0)
 		{
 			return static_cast<bool>(validTest & RhsValid);
 		}
 
-		// If both invalid ¨ keep order, if both valid ¨ compare normally
+		// If both invalid -> keep order, if both valid -> compare normally
 		if ((validTest & RhsValid) == 0)
 		{
 			return false;
@@ -446,14 +446,21 @@ void DrawDebugColliderShapeForInvalids(auto& group, const Camera& camera,
 void NewRenderSystem::Update(SDL_Renderer* renderer, const Camera& camera,
 							 const TextureRepository& textureRepo)
 {
-	auto entities = ECS::GetAllEntitiesWith<Transform, Any<SpriteRenderableComponent, 
+	auto entities = ECS::GetAllEntitiesWith<Transform, Any<SpriteRenderableComponent,
 														   TextRenderableComponent>>();
 	if (entities.empty())
 	{
 		return;
 	}
 
-	renderablePreProcessor_.Update(textureRepo);
+	Update(entities, renderer, camera, textureRepo);
+}
+
+void NewRenderSystem::Update(std::vector<Entity>& entities,
+							 SDL_Renderer* renderer, const Camera& camera,
+							 const TextureRepository& textureRepo)
+{
+	renderablePreProcessor_.Update(entities, textureRepo);
 
 	renderBatchHandler_.Reset(renderablePreProcessor_.GetRenderCallCount());
 	debugDrawHandler_.Reset(renderablePreProcessor_.GetDebugDrawPointCount());

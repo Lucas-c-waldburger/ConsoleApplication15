@@ -1,173 +1,116 @@
 #pragma once
-#include "ScriptSignature.h"
+#include "LuaFunctionCallHandler.h"
 #include "../core/Dictionary.h"
-#include <sol/sol.hpp>
 
+struct ScriptTableEntry;
 class ScriptTableView;
 
 class ScriptTable
 {
 public:
-    using TableId = uint32_t;
+	using TableId = uint32_t;
 
-    struct CallableWrapper
-    {
-    public:
-        CallableWrapper() = default;
-        CallableWrapper(const ScriptSignature& sig, sol::function&& fn)
-            : signature_(sig), fn_(std::move(fn)) {}
+	enum class TableType : uint8_t
+	{
+		Invalid = 0,
+		FunctionTable,
+		SystemTable
+	};
+
+	struct CallableWrapper
+	{
+	public:
+		CallableWrapper() = default;
+		CallableWrapper(sol::function&& fn, const std::vector<uint64_t>& argTypes) :
+			fn_(std::move(fn)), argTypes_(argTypes) {
+		}
 		~CallableWrapper() = default;
 		CallableWrapper(const CallableWrapper&) = delete;
 		CallableWrapper& operator=(const CallableWrapper&) = delete;
-		CallableWrapper(CallableWrapper&&) noexcept = default;
-		CallableWrapper& operator=(CallableWrapper&&) noexcept = default;
+		CallableWrapper(CallableWrapper&&) noexcept = delete;
+		CallableWrapper& operator=(CallableWrapper&&) noexcept = delete;
 
-        bool IsValid() const
-        {
-            return signature_.IsValid() && fn_.valid();
-        }
+		operator bool() const noexcept { return fn_.valid(); }
+		bool operator!() const noexcept { return !fn_.valid(); }
 
-        template <HasFuncTraits Sig>
-        bool Matches() const
-        {
-            return signature_.Matches<Sig>();
-        }
+		template <typename...Args>
+		Result<Void> operator()(Args&&...args)
+		{
+			return LuaFunctionCallHandler::CallLuaFunctionQualified(
+				fn_, argTypes_, std::forward<Args>(args)...);
+		}
 
-        template <typename...Args>
-        bool MatchesArguments() const
-        {
-            return signature_.MatchesArguments<Args...>();
-        }
+	private:
+		sol::function fn_;
+		std::span<const uint64_t> argTypes_;
+	};
 
-        template <typename...Args>
-        decltype(auto) operator()(Args&&...args)
-        {
-            return fn_(std::forward<Args>(args)...);
-        }
-
-    private:
-        ScriptSignature signature_;
-        sol::function fn_;
-    };
-
-    struct Descriptor
-    {
-        std::vector<std::string> functionNames;
-        std::vector<uint64_t> scriptSignatures;
-    };
-
-    ScriptTable() = default;
+	ScriptTable() = default;
 	~ScriptTable() = default;
 	ScriptTable(const ScriptTable&) = delete;
 	ScriptTable& operator=(const ScriptTable&) = delete;
 	ScriptTable(ScriptTable&&) noexcept = default;
 	ScriptTable& operator=(ScriptTable&&) noexcept = default;
 
-    bool RegisterFunction(std::string_view fnName, const ScriptSignature& scriptSig);
+	static std::pair<ScriptTable::TableId, ScriptTableEntry>
+	CreateTableEntry(const std::string& path, sol::table&& tbl, 
+		ParsedLuaFunctionTableSignatures&& fns, TableType type);
 
-    template <HasFuncTraits Sig>
-    bool RegisterFunction(std::string_view fnName)
-    {
-        return RegisterFunction(fnName, ScriptSignature::Create<Sig>());
-    }
+	bool IsValid() const noexcept
+	{
+		return table_.valid() && id_ != std::numeric_limits<TableId>::max();
+	}
 
-    template <HasFuncTraits Sig>
-    bool Contains(std::string_view fnName) const
-    {
-        auto it = registeredSignatures_.find(fnName);
+	TableId GetTableId() const noexcept { return id_; }
 
-        return it != registeredSignatures_.end() && it->second.Matches<Sig>();
-    }
+	ScriptTableView GetView() const;
 
-    CallableWrapper operator[](std::string_view fnName) const
-    {
-        auto it = registeredSignatures_.find(fnName);
-        if (it == registeredSignatures_.end())
-        {
-            return {};
-        }
+	bool Contains(std::string_view name) const;
 
-        return { it->second, table_[fnName] };
-    }
+	CallableWrapper operator[](std::string_view name) const;
 
-    ScriptTableView GetView() const;
+	void ReassignTableData(sol::table&& tbl, ParsedLuaFunctionTableSignatures&& fns);
 
-    TableId GetTableId() const noexcept { return id_; }
+	const ParsedLuaFunctionTableSignatures& GetFunctionSignatures() const { return functions_; }
 
-    static ScriptTable Create(sol::table&& table)
-    {
-        ScriptTable scriptTable{};
-
-        scriptTable.table_ = std::move(table);
-        scriptTable.id_ = ++tableIdCounter_;
-
-        return scriptTable;
-    }
-
-    void SetTable(sol::table&& table) { table_ = std::move(table); }
-
-    Descriptor ExportTableDescriptor() const;
+	const sol::table& Data() const { return table_; }
 
 private:
-    bool ValidateFunction(std::string_view fnName)
-    {
-        const auto& fn = table_[fnName];
-
-        return fn.valid() && fn.get_type() == sol::type::function;
-    }
-
 	static inline TableId tableIdCounter_ = 0;
 
-    sol::table table_;
+	ScriptTable(sol::table&& tbl, ParsedLuaFunctionTableSignatures&& fns, uint32_t id) :
+		table_(std::move(tbl)), functions_(std::move(fns)), id_(id) {}
+
+	sol::table table_;
+	ParsedLuaFunctionTableSignatures functions_;
 	TableId id_ = std::numeric_limits<TableId>::max();
-    UnorderedDictionary<ScriptSignature> registeredSignatures_;
 };
+
+struct ScriptTableEntry
+{
+	std::string filepath;
+	ScriptTable table;
+	ScriptTable::TableType type = ScriptTable::TableType::Invalid;
+};
+
+using ScriptTableDataMap = std::unordered_map<ScriptTable::TableId, ScriptTableEntry>;
 
 class ScriptTableView
 {
 public:
-    ScriptTableView() = default;
-    explicit ScriptTableView(const ScriptTable& tbl) : scriptTable_(&tbl) {}
+	ScriptTableView() = default;
+	explicit ScriptTableView(const ScriptTable* tbl) : scriptTable_(tbl) {}
 
-    ScriptTable::CallableWrapper operator[](std::string_view fnName) const
-    {
-        if (!scriptTable_)
-        {
-            return {};
-        }
-        return (*scriptTable_)[fnName];
-    }
+	bool Contains(std::string_view fnName) const;
 
-    template <HasFuncTraits Sig>
-    bool Contains(std::string_view fnName) const
-    {
-        if (!scriptTable_)
-        {
-            return false;
-        }
-        return scriptTable_->Contains<Sig>(fnName);
-    }
+	bool IsValid() const noexcept;
 
-    bool IsValid() const noexcept
-    {
-        return scriptTable_ && scriptTable_->GetTableId() != 
-               std::numeric_limits<ScriptTable::TableId>::max();
-    }
+	ScriptTable::TableId GetTableId() const noexcept;
 
-    ScriptTable::TableId GetTableId() const noexcept
-    {
-        if (!scriptTable_)
-        {
-            return std::numeric_limits<ScriptTable::TableId>::max();
-        }
-        return scriptTable_->GetTableId();
-	}
+	ScriptTable::CallableWrapper operator[](std::string_view name) const;
 
-    constexpr bool operator==(const ScriptTableView& rhs) const noexcept
-    {
-        return scriptTable_ == rhs.scriptTable_;
-	}
+	constexpr bool operator==(const ScriptTableView& rhs) const = default;
 
 private:
-    const ScriptTable* scriptTable_ = nullptr;
+	const ScriptTable* scriptTable_ = nullptr;
 };

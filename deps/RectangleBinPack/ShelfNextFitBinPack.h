@@ -1,5 +1,5 @@
-/** @file ShelfNextFitBinPack.h
-	@author Jukka Jyl�nki
+﻿/** @file ShelfNextFitBinPack.h
+	@author Jukka Jyläki
 
 	@brief Implements the naive Shelf Next Fit bin packer algorithm.
 

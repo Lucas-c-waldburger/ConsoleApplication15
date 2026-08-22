@@ -303,9 +303,16 @@ PropertyEditState GuiEditProperty(std::vector<SDL_FPoint>& v, VecArgs args)
 	return state;
 }
 
+PropertyEditState GuiDrawProperty(const std::string& str)
+{
+	ImGui::TextUnformatted(str.c_str());
+
+	return PropertyEditState::None;
+}
+
 PropertyEditState GuiDrawProperty(const std::string_view& sv)
 {
-	ImGui::TextUnformatted(sv.data());
+	ImGui::TextUnformatted(sv.data(), sv.data() + sv.size());
 
 	return PropertyEditState::None;
 }

@@ -6,7 +6,7 @@
 class LuaStateManager
 {
 public:
-	template <SomeLuaUserType...Ts>
+	template <typename...Ts>
 	void InitWithEngineTypes();
 
 	template <typename T, typename...Args>
@@ -25,19 +25,51 @@ public:
 
 	uint32_t GetRegisteredTypeId(std::string_view name) const;
 
-	lua_State* Data() { return state_.lua_state(); }
+	sol::state_view Data() { return state_; }
 
 private:
 	sol::state state_;
 	UnorderedDictionary<uint32_t> registeredNameToTypeId_;
 };
 
-template <SomeLuaUserType ...Ts>
+namespace detail {
+template <typename T>
+struct register_lua_user_types_impl;
+
+template <template <typename> class TList, SomeLuaUserType...Ts>
+struct register_lua_user_types_impl<TList<Ts...>>
+{
+	static void call(sol::state_view state, UnorderedDictionary<uint32_t>& nameToTypeId)
+	{
+		((LuaUserType<Ts>::Register(state, nameToTypeId)), ...);
+	}
+};
+
+template <SomeLuaUserType T>
+struct register_lua_user_types_impl<T>
+{
+	static void call(sol::state_view state, UnorderedDictionary<uint32_t>& nameToTypeId)
+	{
+		LuaUserType<T>::Register(state, nameToTypeId);
+	}
+};
+
+}
+
+template <typename...Ts>
 inline void LuaStateManager::InitWithEngineTypes()
 {
 	state_.open_libraries(sol::lib::base);
 
-	((LuaUserType<Ts>::Register(state_)), ...);
+	((detail::register_lua_user_types_impl<Ts>::call(state_, registeredNameToTypeId_)), ...);
+
+	//((LuaUserType<Ts>::Register(state_, registeredNameToTypeId_)), ...);
+
+	//static constexpr auto registerType = []<typename T>(UnorderedDictionary<uint32_t>& map) {
+	//	map.try_emplace(lua_user_type_name<T>::value, TypeInfo<T>::hash32);
+	//};
+
+	//((registerType.template operator()<Ts>(registeredNameToTypeId_)), ...);
 }
 
 template <typename T, typename ...Args>

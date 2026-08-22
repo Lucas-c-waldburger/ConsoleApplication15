@@ -251,7 +251,8 @@ Result<Void> Gallery::LoadGalleryPictures(TextureRepository& repo, SDL_Renderer*
 	TRY(repo.GetSpriteAtlas().LoadSprites(renderer, std::move(descriptors)), sprites);
 	std::shuffle(sprites.begin(), sprites.end(), std::mt19937{ std::random_device{}() });
 
-	const size_t numRowsCols = std::ceil(std::sqrt(sprites.size()));
+	const size_t numRowsCols = 
+		static_cast<size_t>(std::ceil(static_cast<double>(std::sqrt(sprites.size()))));
 
 	size_t numInCurrentRow = 0;
 	float currentX = 0.0f;

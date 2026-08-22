@@ -1,31 +1,22 @@
 #pragma once
-#include "System.h"
-#include "Observers.h"
-#include "../scripting/LuaUserType.h"
-#include "../components/ScriptComponent.h"
-#include "../core/Result.h"
+#include "ScriptableUserSubsystem.h"
+#include "../scripting/LuaStateManager.h"
 #include "../scripting/ScriptTable.h"
+#include "../scripting/ScriptTableObserverSignal.h"
+#include "../scripting/ScriptTableManager.h"
 #include <unordered_map>
 #include <filesystem>
 
-struct ScriptDataDescriptor
+struct ScriptTableDescriptors
 {
-	std::string filepath;
-	ScriptTable::Descriptor tableDescriptor;
+	std::vector<std::string> filepaths;
+	std::vector<std::vector<std::string>> functionNames;
 };
-
-using ScriptDataPackage = std::vector<ScriptDataDescriptor>;
 
 class ScriptSystem : public System
 {
 public:
-	struct TableData
-	{
-		ScriptTable table;
-		std::string filepath;
-	};
-
-	using TableDataMap = std::unordered_map<ScriptTable::TableId, TableData>;
+	using ScriptTableMap = std::unordered_map<ScriptTable::TableId, ScriptTableEntry>;
 
 	ScriptSystem() = default;
 	~ScriptSystem();
@@ -34,64 +25,31 @@ public:
 	ScriptSystem(ScriptSystem&&) noexcept = delete;
 	ScriptSystem& operator=(ScriptSystem&&) noexcept = delete;
 
-	sol::state& GetState() { return state_; }
+	Result<ScriptTable::TableId> AddFunctionTable(const std::string& path);
+	Result<ScriptTable::TableId> AddSystemTable(const std::string& path, Phase phase);
 
-	template <SomeLuaUserType...Ts>
-	void InitState();
-
-	Result<ScriptTable::TableId> AddTable(const std::string& pathStr);
-	Result<ScriptTable::TableId> AddTable(const std::filesystem::path& path);
-
-	bool RegisterTableFunction(ScriptTable::TableId tableId, std::string_view fnName,
-							   const ScriptSignature& scriptSig);
-
-	template <HasFuncTraits Sig>
-	bool RegisterTableFunction(ScriptTable::TableId tableId, std::string_view fnName);
-
-	ScriptTable* GetTable(ScriptTable::TableId tableId);
-	const ScriptTable* GetTable(ScriptTable::TableId tableId) const;
-
-	ScriptTableView GetTableView(ScriptTable::TableId tableId) const; 
-
-	const std::string& GetTableFilepath(ScriptTable::TableId tableId) const;
-
+	Result<Void> ReloadTable(ScriptTable::TableId tableId);
 	bool RemoveTable(ScriptTable::TableId tableId);
-
 	bool ContainsTable(ScriptTable::TableId tableId) const;
+	ScriptTableView GetTableView(ScriptTable::TableId tableId) const;
+	const std::string& GetTableFilepath(ScriptTable::TableId tableId) const;
+	const ScriptTableDataMap& GetScriptTableMap() const;
 
-	Result<bool> ReloadTable(ScriptTable::TableId tableId);
+	//ScriptTableDescriptors ExportTableDescriptors() const;
 
-	ScriptDataPackage ExportScriptDataPackage() const;
+	LuaStateManager& GetState() { return state_; }
+	const LuaStateManager& GetState() const { return state_; }
 
-	const TableDataMap& GetTableDataMap() const { return tableData_; }
+	void Reset();
 
-private:
-	sol::state state_;
-	TableDataMap tableData_;
-};
-
-template <SomeLuaUserType...Ts>
-void ScriptSystem::InitState()
-{
-	state_.open_libraries(sol::lib::base);
-
-	((LuaUserType<Ts>::Register(state_)), ...);
-}
-
-template <HasFuncTraits Sig>
-bool ScriptSystem::RegisterTableFunction(ScriptTable::TableId tableId, std::string_view fnName)
-{
-	//if (auto it = tableIndexMap_.find(tableId); it != tableIndexMap_.end())
-	//{
-	//	assert(it->second < tables_.size());
-
-	//	return tables_[it->second].RegisterFunction<Sig>(fnName);
-	//}
-
-	if (auto it = tableData_.find(tableId); it != tableData_.end())
+	template <Phase ph>
+	void Update(float dt)
 	{
-		return it->second.table.RegisterFunction<Sig>(fnName);
+		scriptableUserSubsystem_.Update<ph>(dt);
 	}
 
-	return false;
-}
+private:
+	LuaStateManager state_;
+	ScriptTableManager tables_;
+	ScriptableUserSubsystem scriptableUserSubsystem_;
+};

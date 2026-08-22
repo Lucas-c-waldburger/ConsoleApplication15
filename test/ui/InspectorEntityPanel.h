@@ -67,7 +67,7 @@ public:
 		const TextureRepository& textureRepo;
 	};
 
-	static Result<Void> Init(SceneFixture& scene);
+	static Result<Void> Init(SceneFixture& fixture);
 
 	static void Update(ResourceContext& resourceCtx);
 
@@ -75,13 +75,13 @@ public:
 
 	static const Selection& GetSelection() { return selection_; }
 
-	static void ClearSelection() { selection_.Clear(); }
-	 
 	static bool SetSelectedEntityForEdit(Entity_t id);
 
 	static Buttons& GetButtons() { return buttons_; }
 
-	static Result<Void> ResetForNewScene(SceneFixture& scene);
+	static Result<Void> ResetForNewScene(SceneFixture& fixture);
+
+	static void ClearSelection();
 
 private:
 	struct HoverStack
@@ -124,7 +124,7 @@ private:
 	static void AssignEntityName(Entity& e);
 	static void RemoveStaleEntity(Entity& e);
 
-	static Result<Void> LoadResources(SceneFixture& scene);
+	static Result<Void> LoadResources(SceneFixture& fixture);
 
 	static inline std::unordered_map<Entity_t, Entity_t> selectionBoxes_;
 	static inline Selection selection_;

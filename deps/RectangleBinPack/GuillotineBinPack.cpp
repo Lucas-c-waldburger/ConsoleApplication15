@@ -1,5 +1,5 @@
-/** @file GuillotineBinPack.cpp
-	@author Jukka Jyl�nki
+﻿/** @file GuillotineBinPack.cpp
+	@author Jukka Jyläki
 
 	@brief Implements different bin packer algorithms that use the GUILLOTINE data structure.
 

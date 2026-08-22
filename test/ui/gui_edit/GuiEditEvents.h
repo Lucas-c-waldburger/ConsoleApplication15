@@ -6,6 +6,7 @@
 #include "../PropertyEditState.h"
 #include "../../../events/data/EventDataIncludes.h"
 #include "../../../ecs/EntityT.h"
+#include "../InspectorCommon.h"
 
 class Entity;
 
@@ -33,6 +34,14 @@ struct CollisionEventShapesContext
 
 PropertyEditState GuiEditProperty(CollisionEventParticipantContext& ctx);
 PropertyEditState GuiEditProperty(CollisionEventShapesContext& ctx);
+
+struct CallbackInfoEntryContext
+{
+	const CallbackInfo& cbInfo;
+	size_t i = 0;
+};
+
+PropertyEditState GuiDrawProperty(const CallbackInfoEntryContext& ctx);
 
 PropertyEditState GuiEditProperty(events::ContactCollisionBegin&);
 PropertyEditState GuiEditProperty(events::ContactCollisionEnd&);

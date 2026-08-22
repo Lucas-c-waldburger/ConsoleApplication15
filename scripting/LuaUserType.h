@@ -1,5 +1,7 @@
 #pragma once
+#include "../core/Dictionary.h"
 #include "../core/TypeUtils.h"
+#include "../core/TypeInfo.h"
 #include <sol/sol.hpp>
 #include <lua.hpp>
 
@@ -45,7 +47,8 @@ namespace detail {
 template <typename T>
 struct lua_helper
 {
-	explicit lua_helper(sol::state& l) : lua_(l) {}
+	lua_helper(sol::state_view l, UnorderedDictionary<uint32_t>& map) 
+		: lua_(l), nameToTypeId_(map) {}
 
 	template <typename...Args>
 	void def_type(Args&&...args) 
@@ -53,6 +56,8 @@ struct lua_helper
 		if (lua_[lua_user_type_name<T>::value] == sol::lua_nil)
 		{
 			lua_.new_usertype<T>(lua_user_type_name<T>::value, std::forward<Args>(args)...);
+
+			nameToTypeId_.try_emplace(lua_user_type_name<T>::value, TypeInfo<T>::hash32);
 		}
 	}
 
@@ -62,11 +67,14 @@ struct lua_helper
 		if (lua_[lua_user_type_name<T>::value] == sol::lua_nil)
 		{
 			lua_.new_enum(lua_user_type_name<T>::value, std::forward<Args>(args)...);
+
+			nameToTypeId_.try_emplace(lua_user_type_name<T>::value, TypeInfo<T>::hash32);
 		}
 	}
 
 private:
-	sol::state& lua_;
+	sol::state_view lua_;
+	UnorderedDictionary<uint32_t>& nameToTypeId_;
 };
 }
 
@@ -90,18 +98,31 @@ struct LuaUserType
 
 	struct RegisterDeps
 	{
+		//template <typename...Us>
+		//static void Apply(sol::state& lua)
+		//{
+		//	((LuaUserType<Us>::Register(lua)), ...);
+		//}
+
 		template <typename...Us>
-		static void Apply(sol::state& lua)
+		static void Apply(sol::state_view state, UnorderedDictionary<uint32_t>& nameToTypeId)
 		{
-			((LuaUserType<Us>::Register(lua)), ...);
+			((LuaUserType<Us>::Register(state, nameToTypeId)), ...);
 		}
 	};
 
-	static void Register(sol::state& lua)
-	{
-		Dependencies::template Apply<RegisterDeps>(lua);
+	//static void Register(sol::state& lua)
+	//{
+	//	Dependencies::template Apply<RegisterDeps>(lua);
 
-		lua_user_type_register<T>::template fn(detail::lua_helper<T>(lua));
+	//	lua_user_type_register<T>::template fn(detail::lua_helper<T>(lua));
+	//}
+
+	static void Register(sol::state_view state, UnorderedDictionary<uint32_t>& nameToTypeId)
+	{
+		Dependencies::template Apply<RegisterDeps>(state, nameToTypeId);
+
+		lua_user_type_register<T>::template fn(detail::lua_helper<T>(state, nameToTypeId));
 	}
 };
 

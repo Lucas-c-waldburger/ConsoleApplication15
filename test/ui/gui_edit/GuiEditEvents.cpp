@@ -1,6 +1,7 @@
 #include "GuiEditEvents.h"
 #include "../../../ecs/Ecs.h"
 #include "../InspectorCommon.h"
+#include "GuiEditPropertyTable.h"
 
 #if IMGUI_ENABLED
 
@@ -64,6 +65,20 @@ PropertyEditState GuiEditProperty(CollisionEventShapesContext& ctx)
 
 	return EvaluatePropertyState();
 }
+
+PropertyEditState GuiDrawProperty(const CallbackInfoEntryContext& ctx)
+{
+	assert(ctx.i < ctx.cbInfo.eventNames.size());
+	assert(ctx.i < ctx.cbInfo.scriptFileNames.size());
+	assert(ctx.i < ctx.cbInfo.tableFunctionNames.size());
+
+	//Property("eventType", ctx.cbInfo.eventNames[ctx.i]);
+	Property("table", ctx.cbInfo.scriptFileNames[ctx.i]);
+	Property("function", ctx.cbInfo.tableFunctionNames[ctx.i]);
+
+	return PropertyEditState::None;
+}
+
 
 PropertyEditState GuiEditProperty(events::ContactCollisionBegin&) { return PropertyEditState::None; }
 PropertyEditState GuiEditProperty(events::ContactCollisionEnd&) { return PropertyEditState::None; }

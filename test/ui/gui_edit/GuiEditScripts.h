@@ -8,14 +8,14 @@ namespace ui {
 
 struct ScriptFilepathsContext
 {
-	const ScriptDataPackage& package;
-	std::string& selectedFilepath;
-	size_t packageIndex = std::numeric_limits<size_t>::max();
+	const ScriptSystem::ScriptTableMap& scriptTableMap;
+	ScriptTable::TableId& selectedTableId;
 };
 
 struct ScriptTableFunctionNamesContext
 {
-	const std::vector<std::string>& tableFunctionNames;
+	const ScriptSystem::ScriptTableMap& scriptTableMap;
+	ScriptTable::TableId selectedTableId;
 	std::string& selectedTableFunction;
 };
 

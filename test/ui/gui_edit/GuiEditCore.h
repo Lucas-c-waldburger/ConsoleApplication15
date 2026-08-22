@@ -583,25 +583,26 @@ inline PropertyEditState GuiEditProperty(C& c, Args&&...args)
 
 	return state;
 }
-template <typename C> requires requires(const C& c) {
-	{ c.begin() } -> std::same_as<typename C::const_iterator>;
-	{ c.end() } -> std::same_as<typename C::const_iterator>;
-}
-inline PropertyEditState GuiDrawProperty(const C& c)
-{
-	int i = 0;
-	for (const auto& elem : c)
-	{
-		ImGui::PushID(i++);
+//template <typename C> requires requires(const C& c) {
+//	{ c.begin() } -> std::same_as<typename C::const_iterator>;
+//	{ c.end() } -> std::same_as<typename C::const_iterator>;
+//}
+//inline PropertyEditState GuiDrawProperty(const C& c)
+//{
+//	int i = 0;
+//	for (const auto& elem : c)
+//	{
+//		ImGui::PushID(i++);
+//
+//		GuiDrawProperty(elem);
+//
+//		ImGui::PopID();
+//	}
+//
+//	return PropertyEditState::None;
+//}
 
-		GuiDrawProperty(elem);
-
-		ImGui::PopID();
-	}
-
-	return PropertyEditState::None;
-}
-
+PropertyEditState GuiDrawProperty(const std::string& str);
 PropertyEditState GuiDrawProperty(const std::string_view& sv);
 
 /** @} */ 

@@ -177,7 +177,7 @@ enum class KeyboardInputSource
     PRIOR = 157,
     RETURN2 = 158,
     SEPARATOR = 159,
-    OUT = 160,
+    OUT_ = 160,
     OPER = 161,
     CLEARAGAIN = 162,
     CRSEL = 163,

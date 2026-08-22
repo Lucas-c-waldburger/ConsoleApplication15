@@ -74,3 +74,15 @@ DEF_LUA_USERTYPE(TimerFiredEvent) {
 	lua.def_type("entity", [](const TimerFiredEvent& ev) { return ev.entity<0>(); });
 }
 /** @} */
+
+using EventLuaUserTypeList = TypeList<
+	ContactCollisionBeginEvent,
+	ContactCollisionEndEvent,
+	SensorCollisionBeginEvent,
+	SensorCollisionEndEvent,
+	HitCollisionEvent,
+	GameControllerConnectedEvent,
+	GameControllerDisconnectedEvent,
+	GameControllerInputEvent,
+	TimerFiredEvent
+>;

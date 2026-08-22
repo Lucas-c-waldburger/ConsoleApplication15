@@ -100,6 +100,16 @@ private:
 	LuaFunctionCallHandler() = default;
 };
 
+//namespace detail {
+//
+//template <typename> struct get_type_name_at_tuple_pos;
+//template <typename...Ts> 
+//struct get_type_name_at_tuple_pos<std::tuple<Ts...>> {
+//
+//};
+//
+//} // detail
+
 //template <AcceptedLuaTypeQualified T>
 //inline constexpr uint32_t ParseStrongTypeQualifiers()
 //{
@@ -618,8 +628,6 @@ inline Result<Void> LuaFunctionCallHandler::CallLuaFunctionQualified(sol::functi
 			parsedArgTypes.size(), argCount);
 	}
 
-	//TRY(MakeArgumentLuaObjects(fn.lua_state(), parsedArgTypes,
-	//	std::forward<Args>(args)...), argObjects);
 	TRY(MakeArgumentLuaObjects2(fn.lua_state(), parsedArgTypes,
 		std::forward<Args>(args)...), argObjects);
 

@@ -32,9 +32,27 @@ public:
 
 	struct SceneConfiguration
 	{
+		enum Flag : uint8_t
+		{
+			InitAuxTextureRepo = 1 << 0
+		};
+
 		SDL_Color screenColor = SDLite::kColorBlack;
 		SDL_FPoint worldGravity = { 0, 9.8f };
+		uint8_t flags = 0;
+		bool (*omitEntityDestruction)(const Entity&) = nullptr;
 	};
+
+	//struct PersistenceData
+	//{
+	//	enum Flag : uint8_t
+	//	{
+	//		UseAuxTextureRepo = 1 << 0
+	//	};
+
+	//	uint8_t flags = 0;
+	//	bool (*omitEntityDestruction)(const Entity&) = nullptr;
+	//};
 
 	class GameLoopController
 	{
@@ -158,6 +176,8 @@ public:
 	HookManager& GetHooks() { return hooks_; }
 	TextureRepository& GetTextureRepository() { return textureRepo_; }
 	const TextureRepository& GetTextureRepository() const { return textureRepo_; }
+	std::unique_ptr<TextureRepository>& GetAuxTextureRepository() { return auxTextureRepo_; }
+	const std::unique_ptr<TextureRepository>& GetAuxTextureRepository() const { return auxTextureRepo_; }
 	B2World& GetWorld() { return world_; }
 	ScriptManager& GetScripts() { return scripts_; }
 	SDL_Renderer* GetRenderer() { return SDLite::Renderer(); }
@@ -200,9 +220,10 @@ private:
 	void SerializeSceneToJson(nlohmann::json& j) const;
 	Result<Void> DeserializeSceneFromJson(const nlohmann::json& j);
 
-	static void InitScriptSystemState(SceneFixture::SharedPtr& fixture);
+	bool ShouldDestroyEntity(Entity& e);
 
 	TextureRepository textureRepo_;
+	std::unique_ptr<TextureRepository> auxTextureRepo_;
 	HookManager hooks_;
 	B2World world_;
 	ScriptManager scripts_;

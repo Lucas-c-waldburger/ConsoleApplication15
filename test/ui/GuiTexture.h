@@ -92,8 +92,12 @@ private:
         const auto [txW, txH] = GetTextureSize(srcTexture);
         assert(txW > 0 && txH > 0);
 
-        const auto& [x, y, w, h] = plot.rect;
-        if (!(w > 0 && h > 0))
+        float x = static_cast<float>(plot.rect.x);
+        float y = static_cast<float>(plot.rect.y);
+        float w = static_cast<float>(plot.rect.w);
+        float h = static_cast<float>(plot.rect.h);
+
+        if (!(w > 0.0f && h > 0.0f))
         {
             return {};
         }

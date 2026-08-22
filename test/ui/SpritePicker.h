@@ -127,7 +127,7 @@ public:
                         // Single click: select file
                         fileTreeState_.selectedFile = path;
 
-                        // Double-click: confirm selection ¨ return true
+                        // Double-click: confirm selection -> return true
                         complete = doubleClicked;
                     }
                 }

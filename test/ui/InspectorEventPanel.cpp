@@ -541,7 +541,13 @@ Result<Void> InspectorEventPanel::LoadResources(SceneFixture& fixture)
 	TRY(ResourcePath::Sprite("ui/editor/bolt_icon.png"), boltIconPath);
 	TRY(ResourcePath::Sprite("ui/editor/bolt_icon_fill.png"), boltIconFillPath);
 
-	auto& spriteAtlas = fixture.GetTextureRepository().GetSpriteAtlas();
+	//auto& spriteAtlas = fixture.GetTextureRepository().GetSpriteAtlas();
+	auto& auxRepo = fixture.GetAuxTextureRepository();
+	if (!auxRepo)
+	{
+		return MAKE_ERROR("Aux TextureRepository was null");
+	}
+	auto& spriteAtlas = auxRepo->GetSpriteAtlas();
 
 	TRY_ASSIGN(buttons_.fire.defaultSprite, spriteAtlas.LoadSprite(
 		fixture.GetRenderer(), { .filepath = std::move(boltIconPath) }));

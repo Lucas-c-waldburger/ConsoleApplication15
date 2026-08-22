@@ -70,7 +70,7 @@ public:
                     // Single click: select file
                     state_.selectedFile = path;
 
-                    // Double-click: confirm selection ¨ return true
+                    // Double-click: confirm selection -> return true
                     complete = doubleClicked;
                 }
             }

@@ -69,10 +69,10 @@ static std::vector<SDL_FPoint> CreateHourglassPixels(
 	// ---- Start at TOP-LEFT ----
 	vertices.push_back({ -topRadiusPx, -halfHeight });
 
-	// ---- Upper left curve (top Å® waist) ----
+	// ---- Upper left curve (top -> waist) ----
 	for (int i = 1; i <= segmentsPerHalf; ++i)
 	{
-		float t = static_cast<float>(i) / segmentsPerHalf; // 0 Å® 1
+		float t = static_cast<float>(i) / segmentsPerHalf; // 0 -> 1
 		float y = -halfHeight + t * halfHeight;  // moving downward
 
 		float blend = (1.0f - std::cos(float(M_PI) * t)) * 0.5f;
@@ -81,7 +81,7 @@ static std::vector<SDL_FPoint> CreateHourglassPixels(
 		vertices.push_back({ -radius, y });
 	}
 
-	// ---- Lower left curve (waist Å® bottom) ----
+	// ---- Lower left curve (waist -> bottom) ----
 	for (int i = 1; i <= segmentsPerHalf; ++i)
 	{
 		float t = static_cast<float>(i) / segmentsPerHalf;
@@ -96,7 +96,7 @@ static std::vector<SDL_FPoint> CreateHourglassPixels(
 	// ---- Bottom edge ----
 	vertices.push_back({ bottomRadiusPx, halfHeight });
 
-	// ---- Lower right curve (bottom Å® waist) ----
+	// ---- Lower right curve (bottom -> waist) ----
 	for (int i = segmentsPerHalf - 1; i >= 0; --i)
 	{
 		float t = static_cast<float>(i) / segmentsPerHalf;
@@ -108,7 +108,7 @@ static std::vector<SDL_FPoint> CreateHourglassPixels(
 		vertices.push_back({ radius, y });
 	}
 
-	// ---- Upper right curve (waist Å® top) ----
+	// ---- Upper right curve (waist -> top) ----
 	for (int i = segmentsPerHalf - 1; i >= 0; --i)
 	{
 		float t = static_cast<float>(i) / segmentsPerHalf;

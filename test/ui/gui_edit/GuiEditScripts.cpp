@@ -23,22 +23,28 @@ std::string GetFileName(const std::string& filepath)
 
 PropertyEditState GuiEditProperty(ScriptFilepathsContext& ctx)
 {
-	auto curName = GetFileName(ctx.selectedFilepath);
+	std::string curName;
+	auto currTableIter = ctx.scriptTableMap.find(ctx.selectedTableId);
+	if (currTableIter != ctx.scriptTableMap.end())
+	{
+		curName = GetFileName(currTableIter->second.filepath);
+	}
+	else
+	{
+		ctx.selectedTableId = std::numeric_limits<size_t>::max();
+	}
 
 	if (ImGui::BeginCombo("##SFC", curName.c_str()))
 	{
-		for (size_t i = 0; i < ctx.package.size(); ++i)
+		for (const auto& [id, data] : ctx.scriptTableMap)
 		{
-			const auto& filepath = ctx.package[i].filepath;
+			const bool selected = (id == ctx.selectedTableId);
 
-			const bool selected = (filepath == ctx.selectedFilepath);
-
-			auto filename = GetFileName(filepath);
+			auto filename = GetFileName(data.filepath);
 
 			if (ImGui::Selectable(filename.c_str(), &selected))
 			{
-				ctx.selectedFilepath = filepath;
-				ctx.packageIndex = i;
+				ctx.selectedTableId = id;
 			}
 		}
 
@@ -50,17 +56,26 @@ PropertyEditState GuiEditProperty(ScriptFilepathsContext& ctx)
 
 PropertyEditState GuiEditProperty(ScriptTableFunctionNamesContext& ctx)
 {
-	auto curName = GetFileName(ctx.selectedTableFunction);
-
-	if (ImGui::BeginCombo("##STFNC", curName.c_str()))
+	auto currTableIter = ctx.scriptTableMap.find(ctx.selectedTableId);
+	if (currTableIter == ctx.scriptTableMap.end())
 	{
-		for (const auto& fnName : ctx.tableFunctionNames)
-		{
-			const bool selected = (fnName == ctx.selectedTableFunction);
+		ctx.selectedTableFunction.clear();
+	}
 
-			if (ImGui::Selectable(fnName.c_str(), &selected))
+	if (ImGui::BeginCombo("##STFNC", ctx.selectedTableFunction.c_str()))
+	{
+		if (currTableIter != ctx.scriptTableMap.end())
+		{
+			const auto& fnSigs = currTableIter->second.table.GetFunctionSignatures();
+
+			for (const auto& [fnName, _] : fnSigs)
 			{
-				ctx.selectedTableFunction = fnName;
+				const bool selected = (fnName == ctx.selectedTableFunction);
+
+				if (ImGui::Selectable(fnName.c_str(), &selected))
+				{
+					ctx.selectedTableFunction = fnName;
+				}
 			}
 		}
 

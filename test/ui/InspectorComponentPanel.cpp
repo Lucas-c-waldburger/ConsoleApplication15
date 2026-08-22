@@ -429,11 +429,33 @@ struct draw_component<SignalTokenStorage>
 		assert(cbInfo.eventNames.size() == cbInfo.scriptFileNames.size());
 		assert(cbInfo.eventNames.size() == cbInfo.tableFunctionNames.size());
 
+		CallbackInfoEntryContext cbInfoCtx{
+			.cbInfo = cbInfo
+		};
+
+		const auto& tks = ctx.entity.GetComponent<SignalTokenStorage>();
+
 		for (size_t i = 0; i < cbInfo.eventNames.size(); ++i)
 		{
-			GuiDrawProperties<"event", "table", "function">(
-				cbInfo.eventNames[i], cbInfo.scriptFileNames[i], cbInfo.tableFunctionNames);
+			const std::string label = std::format("{}##{}",
+				cbInfo.eventNames[i], i);
+
+			cbInfoCtx.i = i;
+			const auto& constCbInfoCtx = cbInfoCtx;
+
+			PropertyGroup(label, [&] {
+				return Property("", constCbInfoCtx);
+			});
 		}
+
+		//Property("", [&] {
+		//	for (size_t i = 0; i < cbInfo.eventNames.size(); ++i)
+		//	{
+		//		GuiDrawProperties<"event", "table", "function">(
+		//			cbInfo.eventNames[i], cbInfo.scriptFileNames[i], cbInfo.tableFunctionNames);
+		//	}
+		//	return PropertyEditState::None;
+		//});
 
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
@@ -567,12 +589,12 @@ Result<Void> InspectorComponentPanel::ResetForNewScene(SceneFixture& scene)
 	componentHeaderOpen_.Reset();
 	activeBuilderType_ = ComponentBuilderType::None;
 
-	const auto& spriteAtlas = scene.GetTextureRepository().GetSpriteAtlas();
-	buttons_.remove.defaultSprite = spriteAtlas.GetSprite("delete_icon");
-	buttons_.hide.defaultSprite = spriteAtlas.GetSprite("visibility_on_icon");
-	buttons_.hide.activatedSprite = spriteAtlas.GetSprite("visibility_off_icon");
-	buttons_.undo.sprite = spriteAtlas.GetSprite("undo_icon");
-	buttons_.redo.sprite = spriteAtlas.GetSprite("redo_icon");
+	//const auto& spriteAtlas = scene.GetTextureRepository().GetSpriteAtlas();
+	//buttons_.remove.defaultSprite = spriteAtlas.GetSprite("delete_icon");
+	//buttons_.hide.defaultSprite = spriteAtlas.GetSprite("visibility_on_icon");
+	//buttons_.hide.activatedSprite = spriteAtlas.GetSprite("visibility_off_icon");
+	//buttons_.undo.sprite = spriteAtlas.GetSprite("undo_icon");
+	//buttons_.redo.sprite = spriteAtlas.GetSprite("redo_icon");
 
 	return kVoid;
 }
@@ -585,7 +607,13 @@ Result<Void> InspectorComponentPanel::LoadResources(SceneFixture& scene)
 	TRY(ResourcePath::Sprite("ui/editor/undo_icon.png"), undoIconPath);
 	TRY(ResourcePath::Sprite("ui/editor/redo_icon.png"), redoIconPath);
 
-	auto& spriteAtlas = scene.GetTextureRepository().GetSpriteAtlas();
+	//auto& spriteAtlas = scene.GetTextureRepository().GetSpriteAtlas();
+	auto& auxRepo = scene.GetAuxTextureRepository();
+	if (!auxRepo)
+	{
+		return MAKE_ERROR("Aux TextureRepository was null");
+	}
+	auto& spriteAtlas = auxRepo->GetSpriteAtlas();
 
 	TRY_ASSIGN(buttons_.remove.defaultSprite, spriteAtlas.LoadSprite(
 		scene.GetRenderer(), { .filepath = std::move(deleteIconPath) }));

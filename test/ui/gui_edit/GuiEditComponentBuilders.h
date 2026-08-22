@@ -94,12 +94,13 @@ private:
 	static bool CanAddCallback();
 
 	static void UpdateEntityScriptTable(Entity& e, const ScriptSystem& scriptSys);
-	static void UpdateEntityCallbackInfo(Entity& e);
+	static void UpdateEntityCallbackInfo(Entity& e, const ScriptSystem& scriptSys);
 	static void ClearSelections();
 
-	static inline std::string_view selectedEventName_{};
-	static inline std::string selectedScriptFile_{};
+	static inline std::string selectedEventName_{};
+	static inline ScriptTable::TableId selectedTableId_ = std::numeric_limits<ScriptTable::TableId>::max();
 	static inline std::string selectedTableFunction_{};
+	static inline Entity_t selectedRelevantEntity_ = kInvalidEntity;
 	static inline bool isActive_ = false;
 };
 

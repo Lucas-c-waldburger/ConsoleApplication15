@@ -23,7 +23,7 @@ namespace ui {
 struct InspectorTag {};
 struct CallbackInfo
 {
-	std::vector<std::string_view> eventNames;
+	std::vector<std::string> eventNames;
 	std::vector<std::string> scriptFileNames;
 	std::vector<std::string> tableFunctionNames;
 };
@@ -40,6 +40,9 @@ struct MapButton
 {
 	Sprite sprite;
 	std::unordered_map<T, bool> isHovered;
+
+	//template <typename U> requires std::convertible_to<U, T>
+	//bool Draw(U&& key, const GuiTextureConverter& converter)
 };
 
 template <typename TList>

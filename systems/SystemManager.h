@@ -71,6 +71,31 @@ public:
 		return userSystems_.RegisterSystem<T>(std::forward<Args>(args)...);
 	}
 
+	//Result<ScriptTable::TableId> RegisterSystemScript(const std::string& filepath, Phase phase)
+	//{
+	//	if (!IsSystemRegistered<ScriptSystem>())
+	//	{
+	//		return MAKE_ERROR("ScriptSystem is not registered");
+	//	}
+
+	//	auto& scriptSys = GetSystem<ScriptSystem>();
+
+	//	TRY(scriptSys.AddTable(filepath), tableId);
+
+	//	auto& userScripts = scriptSys.GetScriptableUserSubSystem();
+
+	//	auto addResult = 
+	//		userScripts.AddInstance(scriptSys.GetScriptTableMap().at(tableId).table, phase);
+	//	if (!addResult.Success())
+	//	{
+	//		scriptSys.RemoveTable(tableId);
+
+	//		return addResult.GetError();
+	//	}
+
+
+	//}
+
 	template <typename T> requires (!SomeSystem<T>)
 	bool RemoveSystem()
 	{
@@ -94,6 +119,11 @@ public:
 		{
 			return userSystems_.IsSystemRegistered<T>();
 		}
+	}
+
+	UserSystemScheduler& GetUserSystemScheduler()
+	{
+		return userSystems_;
 	}
 
 	void ClearUserSystems()

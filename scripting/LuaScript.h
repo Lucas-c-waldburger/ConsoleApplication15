@@ -2,6 +2,7 @@
 #include "LuaUserType.h"
 #include "LuaFunction.h"
 #include "LuaTypesRegistry.h"
+#include "../core/Dictionary.h"
 
 //namespace detail {
 
@@ -77,7 +78,8 @@ inline sol::state MakeLuaState()
 
 	luaState.open_libraries(sol::lib::base);
 
-	((LuaUserType<Ts>::Register(luaState)), ...);
+	UnorderedDictionary<uint32_t> temp;
+	((LuaUserType<Ts>::Register(luaState, temp)), ...);
 
 	return luaState;
 }
@@ -108,7 +110,8 @@ public:
 
 		lua.state_.open_libraries(sol::lib::base);
 
-		((LuaUserType<Ts>::Register(lua.state_)), ...);
+		UnorderedDictionary<uint32_t> temp;
+		((LuaUserType<Ts>::Register(lua.state_, temp)), ...);
 
 		sol::protected_function_result result = lua.state_.script(script);
 		if (!result.valid())

@@ -209,7 +209,13 @@ int main(int argc, char* argv[])
     //fixture->RunGameLoop();
 
 #else
-    auto fixtureResult = SceneFixture::GetInstance();
+SceneFixture::SceneConfiguration config{};
+
+#if IMGUI_ENABLED
+    config = ui::Editor::GetSceneConfiguration();
+#endif
+
+    auto fixtureResult = SceneFixture::GetInstance(config);
     ASSERT_RESULT(fixtureResult);
 
     auto& fixture = fixtureResult.GetValue();

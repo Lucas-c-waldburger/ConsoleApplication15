@@ -3,19 +3,23 @@
 #include "../test_utils/AtlasTestUtils.h"
 #include "../../../atlas/NewTextureRepository.h"
 #include "../../../file/FilePathUtility.h"
+#include <numbers>
 
 namespace {
 
 SDL_Color GetRainbowColor(float t)
 {
-	float r = std::sin(2.0f * M_PI * t + 0.0f) * 0.5f + 0.5f;
-	float g = std::sin(2.0f * M_PI * t + 2.0f * M_PI / 3.0f) * 0.5f + 0.5f;
-	float b = std::sin(2.0f * M_PI * t + 4.0f * M_PI / 3.0f) * 0.5f + 0.5f;
+	float r = std::sin(2.0f * std::numbers::pi_v<float> * t + 
+		0.0f) * 0.5f + 0.5f;
+	float g = std::sin(2.0f * std::numbers::pi_v<float> * t + 
+		2.0f * std::numbers::pi_v<float> / 3.0f) * 0.5f + 0.5f;
+	float b = std::sin(2.0f * std::numbers::pi_v<float> * t + 
+		4.0f * std::numbers::pi_v<float> / 3.0f) * 0.5f + 0.5f;
 
 	return {
-		static_cast<uint8_t>(r * 255),
-		static_cast<uint8_t>(g * 255),
-		static_cast<uint8_t>(b * 255),
+		static_cast<uint8_t>(r * 255.0f),
+		static_cast<uint8_t>(g * 255.0f),
+		static_cast<uint8_t>(b * 255.0f),
 		255
 	};
 }

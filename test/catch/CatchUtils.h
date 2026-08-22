@@ -1,6 +1,15 @@
 #pragma once
+//#include "../../core/Result.h"
+
+//#ifdef WARN
+//	#undef WARN
+//#endif
+
 #include "../../deps/catch/catch_amalgamated.hpp"
-#include "../../core/Result.h"
+
+#ifdef GetMessage
+	#undef GetMessage
+#endif
 
 #define CAPTURE_RESULT(result_) do { \
 	if (!result_.Success()) { CATCH_MAKE_MSG(result_.GetError().GetMessage()); } \

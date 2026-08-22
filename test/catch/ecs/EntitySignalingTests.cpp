@@ -52,7 +52,7 @@ TEST_CASE("Entity destroyed signal - PhysicsSystem", "[ecs][sys][phys]")
 
 	auto& chCol2 = childEnt2.AddComponent(ComponentBuilder<Collider>{}
 	.WithShapeParameters(B2ShapeParameters{ .shapeType = B2Shape::Type::Circle,
-											.radius = 24.5 })
+											.radius = 24.5f })
 	.Build(rb.body));
 	REQUIRE(chCol2.shape.GetData().IsValid());
 
@@ -131,7 +131,7 @@ TEST_CASE("Component removed signal - PhysicsSystem", "[ecs][sys][phys]")
 
 	auto& chCol2 = childEnt2.AddComponent(ComponentBuilder<Collider>{}
 	.WithShapeParameters(B2ShapeParameters{ .shapeType = B2Shape::Type::Circle,
-											.radius = 24.5 })
+											.radius = 24.5f })
 		.Build(rb.body));
 	REQUIRE(chCol2.shape.GetData().IsValid());
 

@@ -1,7 +1,6 @@
 #include "../CatchUtils.h"
 #include "../../../file/FilePathUtility.h"
 #include "../../../systems/ScriptSystem.h"
-#include "../../../scripting/ScriptHandle.h"
 #include "../../../events/EventBus2.h"
 #include "../../../scripting/user_types/EntityUserType.h"
 
@@ -27,30 +26,22 @@ constexpr std::pair<uint32_t, uint32_t> DecomposeArgType(uint64_t argType)
 
 } // unnamed
 
-TEST_CASE("ScriptSystem Tests", "[sys][script]")
+TEST_CASE("ScriptSystem Tests", "[sys][script][b]")
 {
 	ScriptSystem scriptSystem{};
 
-	scriptSystem.InitState<Entity>();
+	scriptSystem.GetState().InitWithEngineTypes<Entity>();
 
 	auto entityTestFilepath = MakeScriptTestPath("entity_test.lua");
 	REQUIRE(std::filesystem::exists(entityTestFilepath));
 
-	auto addTableResult = scriptSystem.AddTable(entityTestFilepath);
+	auto addTableResult = scriptSystem.AddFunctionTable(entityTestFilepath.string());
 	REQUIRE_RESULT(addTableResult);
 
 	auto tableId = addTableResult.GetValue();
 	CHECK(tableId != std::numeric_limits<ScriptTable::TableId>::max());
 
 	CHECK(scriptSystem.GetTableFilepath(tableId) == entityTestFilepath.string());
-
-	const bool registeredChangeName = 
-		scriptSystem.RegisterTableFunction<void(Entity&)>(tableId, "changeName");
-	CHECK(registeredChangeName);
-
-	const bool registeredChangePos =
-		scriptSystem.RegisterTableFunction<void(Entity&)>(tableId, "changePos");
-	CHECK(registeredChangePos);
 
 	auto e = ECS::CreateEntity();
 	REQUIRE(e.IsValid());
@@ -60,17 +51,15 @@ TEST_CASE("ScriptSystem Tests", "[sys][script]")
 	auto tableView = scriptSystem.GetTableView(tableId);
 	CHECK(tableView.IsValid());
 
-	auto& script = e.AddComponent(Script{ .table = std::move(tableView) });
+	auto& script = e.AddComponent(Script{ .table = tableView });
 
-	CHECK(script.table.Contains<void(Entity&)>("changeName"));
-	CHECK(script.table.Contains<void(Entity&)>("changePos"));
+	CHECK(script.table.Contains("changeName"));
+	CHECK(script.table.Contains("changePos"));
 
 	CHECK(script.table.GetTableId() == tableId);
 
 	auto changeNameFn = script.table["changeName"];
-	CHECK(changeNameFn.IsValid());
-	CHECK(changeNameFn.Matches<void(Entity&)>());
-	CHECK(changeNameFn.MatchesArguments<Entity&>());
+	CHECK(changeNameFn);
 
 	changeNameFn(e);
 
@@ -78,9 +67,7 @@ TEST_CASE("ScriptSystem Tests", "[sys][script]")
 	CHECK(e.GetComponent<Name>() == "changed");
 
 	auto changePosFn = script.table["changePos"];
-	CHECK(changePosFn.IsValid());
-	CHECK(changePosFn.Matches<void(Entity&)>());
-	CHECK(changePosFn.MatchesArguments<Entity&>());
+	CHECK(changePosFn);
 
 	changePosFn(e);
 
@@ -93,16 +80,16 @@ TEST_CASE("ScriptSystem::RemoveTable", "[sys][script][a]")
 {
 	ScriptSystem scriptSystem{};
 
-	scriptSystem.InitState<Entity>();
+	scriptSystem.GetState().InitWithEngineTypes<Entity>();
 
 	auto testFilepath1 = MakeScriptTestPath("entity_test.lua");
 	REQUIRE(std::filesystem::exists(testFilepath1));
 	auto testFilepath2 = MakeScriptTestPath("empty.lua");
 	REQUIRE(std::filesystem::exists(testFilepath2));
 
-	auto addTable1Result = scriptSystem.AddTable(testFilepath1);
+	auto addTable1Result = scriptSystem.AddFunctionTable(testFilepath1.string());
 	REQUIRE_RESULT(addTable1Result);
-	auto addTable2Result = scriptSystem.AddTable(testFilepath2);
+	auto addTable2Result = scriptSystem.AddFunctionTable(testFilepath2.string());
 	REQUIRE_RESULT(addTable2Result);
 
 	const auto table1Id = addTable1Result.GetValue();
@@ -142,7 +129,6 @@ TEST_CASE("ScriptSystem::RemoveTable", "[sys][script][a]")
 	CHECK_FALSE(e2.GetComponent<Script>().table.IsValid());
 	CHECK_FALSE(e3.GetComponent<Script>().table.IsValid());
 }
-
 
 TEST_CASE("LuaFunctionTableParser Tests", "[script][b]")
 {
@@ -866,7 +852,7 @@ TEST_CASE("Native Lua Type identification", "[scripting]")
 	}
 }
 
-TEST_CASE("Lua function parsing/call with Native lua types", "[scripting][b]")
+TEST_CASE("Lua function parsing/call with Native lua types", "[scripting]")
 {
 	Logger::StartSession();
 	LuaStateManager state{};

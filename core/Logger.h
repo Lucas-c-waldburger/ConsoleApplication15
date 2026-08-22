@@ -3,139 +3,92 @@
 #include <fstream>
 #include <iomanip>
 #include <format>
-#include "TerminalUtils.h"
+#include <memory>
+#include <vector>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/basic_file_sink.h>
+//#include "../deps/spdlog/include/spdlog/spdlog.h"
+//#include "../deps/spdlog/include/spdlog/sinks/stdout_color_sinks.h"
+//#include "../deps/spdlog/include/spdlog/sinks/basic_file_sink.h"
 
-class LogLevel
-{
-public:
-    enum Level : uint8_t
-    {
-        DEBUG = 1 << 0,
-        INFO = 1 << 1,
-        WARNING = 1 << 2,
-        ERROR = 1 << 3,
-        CRITICAL = 1 << 4,
-        ALL = DEBUG | INFO | WARNING | ERROR | CRITICAL
-    };
-
-    friend std::ostream& operator<<(std::ostream& os, LogLevel::Level lvl);
-
-private:
-    static constexpr const char* kDebugStr = "DEBUG";
-    static constexpr const char* kInfoStr = "INFO";
-    static constexpr const char* kWarnStr = "WARNING";
-    static constexpr const char* kErrorStr = "ERROR";
-    static constexpr const char* kCriticalStr = "CRITICAL";
-    static constexpr const char* kUnknownStr = "UKNOWN";
-};
-
-static std::ostream& operator<<(std::ostream& os, LogLevel::Level lvl);
+#ifdef GetMessage
+#undef GetMessage
+#endif
 
 class Logger
 {
 public:
-    ~Logger()
-    {
-        Log(LogLevel::INFO, "Program Ended");
-        CloseFilestream();
-    }
+    ~Logger();
 
-    Logger(const Logger&) = delete;
-    Logger& operator=(const Logger&) = delete;
+    static void StartSession(const std::string& logFile = {});
+    static void EndSession();
 
-    static void StartSession(const std::string& logFile = {}, bool enableConsole = true)
-    {
-        return Logger::Get().StartSessionImpl(logFile, enableConsole);
-    }
+    template <typename T, typename...Args>
+        requires (std::derived_from<T, spdlog::sinks::sink> &&
+                  std::constructible_from<T, Args...>)
+    static std::shared_ptr<T> AddSink(Args&&...args);
 
-    static void EndSession()
-    {
-        return Logger::Get().EndSessionImpl();
-    }
+    static spdlog::level::level_enum GetLogLevel();
 
-    static void SetLogFile(const std::string& fileName)
-    {
-        return Logger::Get().SetLogFile(fileName);
-    }
+    static void SetLogLevel(spdlog::level::level_enum lvl);
 
-    static bool IsRunning()
-    {
-        return Logger::Get().flags_ & Logger::Flag::SessionStarted;
-    }
-
-    template <typename...Ts>
-    static void Log(LogLevel::Level lvl, Ts&&...data)
-    {
-        return Logger::Get().LogImpl(lvl, std::forward<Ts>(data)...);
-    }
-
-    static void SilenceLogLevel(LogLevel::Level logLvls, bool silence)
-    {
-        if (silence)
-        {
-            Logger::Get().flags_ &= ~(logLvls);
-        }
-        else
-        {
-            Logger::Get().flags_ |= logLvls;
-        }
-    }
-
-    static Logger& Get();
+    static std::shared_ptr<spdlog::logger>& Get();
 
 private:
-    enum Flag : uint8_t
-    {
-        SessionStarted = 1 << 5,
-        WriteToConsole = 1 << 6
-    };
-
     Logger() = default;
 
-    static std::ostream& GetOStream();
-
-    template <typename...Ts>
-    void LogImpl(LogLevel::Level lvl, Ts&&...data)
-    {
-        if ((flags_ & Flag::SessionStarted) == 0)
-        {
-            return;
-        }
-
-        if ((flags_ & lvl))
-
-        if (flags_ & Flag::WriteToConsole)
-        {
-            LogHeader(GetOStream(), lvl);
-            ((GetOStream() << std::forward<Ts>(data)), ...) << '\n';
-        }
-        if (fileStream_.is_open())
-        {
-            LogHeader(fileStream_, lvl);
-            ((fileStream_ << std::forward<Ts>(data)), ...) << '\n';
-        }
-    }
-
-    void StartSessionImpl(const std::string& logFile, bool enableConsole);
-    void EndSessionImpl();
-    void SetLogFileImpl(const std::string& fileName);
-    void CloseFilestream();
-
-    static void LogTime(std::ostream& os);
-    static void LogHeader(std::ostream& os, LogLevel::Level lvl);
-
-    std::ofstream fileStream_;
-    uint8_t flags_ = LogLevel::ALL;
+    static inline std::shared_ptr<spdlog::logger> logger_;
 };
 
-#define LOG_DEBUG(...) Logger::Log(LogLevel::DEBUG, __VA_ARGS__)
-#define LOG_INFO(...) Logger::Log(LogLevel::INFO, __VA_ARGS__)
-#define LOG_WARNING(...) Logger::Log(LogLevel::WARNING, __VA_ARGS__)
-#define LOG_ERROR(...) Logger::Log(LogLevel::ERROR, __VA_ARGS__)
-#define LOG_CRITICAL(...) Logger::Log(LogLevel::CRITICAL, __VA_ARGS__)
+template <typename T, typename...Args>
+    requires (std::derived_from<T, spdlog::sinks::sink>&&
+              std::constructible_from<T, Args...>)
+inline std::shared_ptr<T> Logger::AddSink(Args&&...args)
+{
+    if (!logger_)
+    {
+        return nullptr;
+    }
 
-#define LOG_DEBUG_FMT(fmtStr, ...) Logger::Log(LogLevel::DEBUG, std::format(fmtStr, __VA_ARGS__))
-#define LOG_INFO_FMT(fmtStr, ...) Logger::Log(LogLevel::INFO, std::format(fmtStr, __VA_ARGS__))
-#define LOG_WARNING_FMT(fmtStr, ...) Logger::Log(LogLevel::WARNING, std::format(fmtStr, __VA_ARGS__))
-#define LOG_ERROR_FMT(fmtStr, ...) Logger::Log(LogLevel::ERROR, std::format(fmtStr, __VA_ARGS__))
-#define LOG_CRITICAL_FMT(fmtStr, ...) Logger::Log(LogLevel::CRITICAL, std::format(fmtStr, __VA_ARGS__))
+    auto sink = std::make_shared<T>(std::forward<Args>(args)...);
+
+    auto& sinks = logger_->sinks();
+    sinks.emplace_back(sink);
+
+    return sink;
+}
+
+#define LOG_DEBUG(...) \
+    do { if (Logger::Get()) { Logger::Get()->debug(__VA_ARGS__); } } while(0)
+#define LOG_INFO(...) \
+    do { if (Logger::Get()) { Logger::Get()->info(__VA_ARGS__); } } while(0)
+#define LOG_WARNING(...) \
+    do { if (Logger::Get()) { Logger::Get()->warn(__VA_ARGS__); } } while(0)
+#define LOG_ERROR(...) \
+    do { if (Logger::Get()) { Logger::Get()->error(__VA_ARGS__); } } while(0)
+#define LOG_CRITICAL(...) \
+    do { if (Logger::Get()) { Logger::Get()->critical(__VA_ARGS__); } } while(0)
+
+#define LOG_DEBUG_FMT(fmtStr, ...)  \
+    do { if (Logger::Get()) { Logger::Get()->debug(fmtStr, __VA_ARGS__); } } while(0)
+#define LOG_INFO_FMT(fmtStr, ...) \
+    do { if (Logger::Get()) { Logger::Get()->info(fmtStr, __VA_ARGS__); } } while(0)
+#define LOG_WARNING_FMT(fmtStr, ...) \
+    do { if (Logger::Get()) { Logger::Get()->warn(fmtStr, __VA_ARGS__); } } while(0)
+#define LOG_ERROR_FMT(fmtStr, ...) \
+    do { if (Logger::Get()) { Logger::Get()->error(fmtStr, __VA_ARGS__); } } while(0)
+#define LOG_CRITICAL_FMT(fmtStr, ...) \
+    do { if (Logger::Get()) { Logger::Get()->critical(fmtStr, __VA_ARGS__); } } while(0)
+
+//#define LOG_DEBUG(...) Logger::Log(LogLevel::DEBUG, __VA_ARGS__)
+//#define LOG_INFO(...) Logger::Log(LogLevel::INFO, __VA_ARGS__)
+//#define LOG_WARNING(...) Logger::Log(LogLevel::WARNING, __VA_ARGS__)
+//#define LOG_ERROR(...) Logger::Log(LogLevel::ERROR, __VA_ARGS__)
+//#define LOG_CRITICAL(...) Logger::Log(LogLevel::CRITICAL, __VA_ARGS__)
+//
+//#define LOG_DEBUG_FMT(fmtStr, ...) Logger::Log(LogLevel::DEBUG, std::format(fmtStr, __VA_ARGS__))
+//#define LOG_INFO_FMT(fmtStr, ...) Logger::Log(LogLevel::INFO, std::format(fmtStr, __VA_ARGS__))
+//#define LOG_WARNING_FMT(fmtStr, ...) Logger::Log(LogLevel::WARNING, std::format(fmtStr, __VA_ARGS__))
+//#define LOG_ERROR_FMT(fmtStr, ...) Logger::Log(LogLevel::ERROR, std::format(fmtStr, __VA_ARGS__))
+//#define LOG_CRITICAL_FMT(fmtStr, ...) Logger::Log(LogLevel::CRITICAL, std::format(fmtStr, __VA_ARGS__))

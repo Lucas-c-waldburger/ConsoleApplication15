@@ -151,7 +151,7 @@ void CDCarousel::Apply(std::vector<Entity>& cdSpriteEntities, std::vector<Entity
 
 	auto [winCenterX, winCenterY] = SDLite::Window().GetLocalCenter<SDL_FPoint>();
 
-	for (int i = 0; i < cdSpriteEntities.size(); ++i)
+	for (size_t i = 0; i < cdSpriteEntities.size(); ++i)
 	{
 		const float offset = (static_cast<float>(i) - position) * spacing;
 
@@ -164,8 +164,8 @@ void CDCarousel::Apply(std::vector<Entity>& cdSpriteEntities, std::vector<Entity
 		const float scale = 1.0f - normalized * 0.2f;
 		const float alpha = (1.0f - normalized * 0.5f) * 255.0f;
 
-		auto& spriteE = cdSpriteEntities[static_cast<size_t>(i)];
-		auto& txtE = trackNameEntities[static_cast<size_t>(i)];
+		auto& spriteE = cdSpriteEntities[i];
+		auto& txtE = trackNameEntities[i];
 
 		assert((spriteE.HasComponents<Transform, SpriteRenderableComponent>()));
 		assert((txtE.HasComponents<Transform, TextRenderableComponent>()));
@@ -303,7 +303,8 @@ void AudioLounge2::Update(float dt)
 
 Entity& AudioLounge2::GetActiveSpriteEntity()
 {
-	assert(carousel_.currentSelection < cdSpriteEntities_.size());
+	assert(carousel_.currentSelection >= 0 &&
+		   static_cast<size_t>(carousel_.currentSelection) < cdSpriteEntities_.size());
 
 	return cdSpriteEntities_[static_cast<size_t>(carousel_.currentSelection)];
 }

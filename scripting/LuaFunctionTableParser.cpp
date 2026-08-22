@@ -2,8 +2,9 @@
 #include "LuaStateManager.h"
 #include "../deps/ctre/ctre.hpp"
 
-Result<ParsedLuaFunctionTableSignatures> 
-LuaFunctionTableParser::ParseLuaFunctionTableSignatures(sol::table& fnTable, const LuaStateManager& state)
+template <typename T>
+Result<T>
+LuaFunctionTableParser::ParseLuaFunctionTableImpl(const sol::table& fnTable, const LuaStateManager& state)
 {
 	sol::table meta = fnTable[sol::metatable_key];
 	if (!meta.valid())
@@ -17,7 +18,7 @@ LuaFunctionTableParser::ParseLuaFunctionTableSignatures(sol::table& fnTable, con
 		return MAKE_ERROR("No field '__signatures' found in metatable");
 	}
 
-	ParsedLuaFunctionTableSignatures parsed;
+	T parsed;
 
 	for (auto&& [fnName, fn] : fnTable)
 	{
@@ -41,11 +42,11 @@ LuaFunctionTableParser::ParseLuaFunctionTableSignatures(sol::table& fnTable, con
 				fnNameStr);
 		}
 
-		auto [it, fnNameInserted] = parsed.try_emplace(fnNameStr, std::vector<uint64_t>{});
+		auto [it, fnNameInserted] = parsed.try_emplace(fnNameStr, typename T::mapped_type{});
 		assert(fnNameInserted);
 
-		auto& argTypeIds = it->second;
-		argTypeIds.reserve(fnSig.size());
+		auto& valueVec = it->second;
+		valueVec.reserve(fnSig.size());
 
 		for (auto&& [_, arg] : fnSig)
 		{
@@ -54,13 +55,38 @@ LuaFunctionTableParser::ParseLuaFunctionTableSignatures(sol::table& fnTable, con
 				return MAKE_ERROR("Argument name was not of type string");
 			}
 
-			const auto argStr = arg.as<std::string>();
+			auto argStr = arg.as<std::string>();
 
-			TRY_ASSIGN(argTypeIds.emplace_back(), ParseFullArgumentType(argStr, state));
+			if constexpr (std::same_as<T, ParsedLuaFunctionTableSignatures>)
+			{
+				TRY_ASSIGN(valueVec.emplace_back(), ParseFullArgumentType(argStr, state));
+			}
+			else
+			{
+				valueVec.emplace_back(std::move(argStr));
+			}
 		}
 	}
 
 	return parsed;
+}
+
+template Result<ParsedLuaFunctionTableSignatures>
+LuaFunctionTableParser::ParseLuaFunctionTableImpl(const sol::table& fnTable, const LuaStateManager& state);
+
+template Result<ParsedLuaFunctionTableStrings>
+LuaFunctionTableParser::ParseLuaFunctionTableImpl(const sol::table& fnTable, const LuaStateManager& state);
+
+Result<ParsedLuaFunctionTableSignatures> 
+LuaFunctionTableParser::ParseLuaFunctionTableSignatures(const sol::table& fnTable, const LuaStateManager& state)
+{
+	return ParseLuaFunctionTableImpl<ParsedLuaFunctionTableSignatures>(fnTable, state);
+}
+
+Result<ParsedLuaFunctionTableStrings> 
+LuaFunctionTableParser::ParseLuaFunctionTableStrings(const sol::table& fnTable, const LuaStateManager& state)
+{
+	return ParseLuaFunctionTableImpl<ParsedLuaFunctionTableStrings>(fnTable, state);
 }
 
 Result<uint64_t> 

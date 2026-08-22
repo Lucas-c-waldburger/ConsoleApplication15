@@ -666,34 +666,12 @@ inline auto ScriptCallbackImpl(Entity& e, const std::string& script, const EvT& 
 	}
 
 	auto func = e.GetComponent<Script>().table[script];
-	if (!func.IsValid())
+	if (!func)
 	{
 		return;
 	}
 
-	sol::protected_function_result result;
-	if (func.MatchesArguments<Entity&>())
-	{
-		result = func(e);
-	}
-	else if (func.MatchesArguments<const EvT&, Entity&>())
-	{
-		result = func(e, ev);
-	}
-	else if (func.MatchesArguments<Entity&, const EvT&>())
-	{
-		result = func(ev, e);
-	}
-	else
-	{
-		LOG_ERROR("Script function '{}' has invalid signature for event callback", script);
-	}
-
-	if (!result.valid())
-	{
-		sol::error err = result;
-		LOG_ERROR_FMT("Error calling script function '{}': {}", script, err.what());
-	}
+	LOG_IF_ERROR(func(e, ev));
 }
 
 template <typename EvT>
@@ -738,6 +716,11 @@ inline Result<Void> EntityEvents::OnEventScript(std::string_view scriptCallable,
 		return MAKE_ERROR("Internal EventBus was null");
 	}
 
+	if (filterDef.relevantEntity.id == kInvalidEntity)
+	{
+		filterDef.relevantEntity.id = entity_.GetID();
+	}
+
 	auto& tks = entity_.AddComponent<SignalTokenStorage>().signalTokens;
 
 	auto& tk = tks.emplace_back(bus_->ConnectToEvent(
@@ -759,6 +742,11 @@ inline Result<Void> EntityEvents::OnInputScript(Src src, InputState state, std::
 	if (!bus_)
 	{
 		return MAKE_ERROR("Internal EventBus was null");
+	}
+
+	if (filterDef.relevantEntity.id == kInvalidEntity)
+	{
+		filterDef.relevantEntity.id = entity_.GetID();
 	}
 
 	auto& tks = entity_.AddComponent<SignalTokenStorage>().signalTokens;

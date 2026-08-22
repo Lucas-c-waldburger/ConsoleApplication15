@@ -3,6 +3,54 @@
 #include "../physics/B2World.h"
 #include "../gui/GuiContext.h"
 #include "FixtureLua.h"
+#include <ranges>
+
+namespace {
+
+std::pair<std::vector<Entity>, std::vector<Entity>> 
+GetFilteredEntitiesToRender(const SceneFixture& fx, const std::vector<Entity>& es)
+{
+	auto& primaryRepo = fx.GetTextureRepository();
+	auto& auxRepo = fx.GetAuxTextureRepository();
+	assert(auxRepo);
+
+	return std::make_pair(
+		es | std::views::filter([&primaryRepo](const auto& e) {
+			if (e.HasComponent<SpriteRenderableComponent>())
+			{
+				const auto& r = e.GetComponent<SpriteRenderableComponent>();
+
+				return !r.sprite.resourceHandle.IsValid() || // allow for invalid if debug draw only
+						primaryRepo.GetSourceTexture(r.sprite.resourceHandle);
+			}
+			else
+			{
+				const auto& r = e.GetComponent<TextRenderableComponent>();
+
+				return !r.writer.resourceHandle.IsValid() || // allow for invalid if debug draw only
+						primaryRepo.GetSourceTexture(r.writer.resourceHandle);
+			}
+		}) | std::ranges::to<std::vector>(),
+		es | std::views::filter([&auxRepo](const auto& e) {
+			if (e.HasComponent<SpriteRenderableComponent>())
+			{
+				const auto& r = e.GetComponent<SpriteRenderableComponent>();
+
+				return r.sprite.resourceHandle.IsValid() &&
+					   auxRepo->GetSourceTexture(r.sprite.resourceHandle);
+			}
+			else
+			{
+				const auto& r = e.GetComponent<TextRenderableComponent>();
+
+				return r.writer.resourceHandle.IsValid() &&
+					   auxRepo->GetSourceTexture(r.writer.resourceHandle);
+			}
+		}) | std::ranges::to<std::vector>()
+	);
+}
+
+} // unnamed
 
 SceneFixture::~SceneFixture()
 {
@@ -183,6 +231,11 @@ void SceneFixture::LoopStart()
 
 	UpdateTimers();
 
+	if (IsSystemRegistered<ScriptSystem>())
+	{
+		GetSystem<ScriptSystem>().Update<Phase::Setup>(GetDeltaTime());
+	}
+
 	systems_.RunSystemUpdates(Phase::Setup, GetDeltaTime());
 }
 
@@ -197,6 +250,11 @@ Result<bool> SceneFixture::UpdateSDLInputs()
 		return false;
 	}
 
+	if (IsSystemRegistered<ScriptSystem>())
+	{
+		GetSystem<ScriptSystem>().Update<Phase::Input>(GetDeltaTime());
+	}
+
 	systems_.RunSystemUpdates(Phase::Input, GetDeltaTime());
 
 	return true;
@@ -204,6 +262,11 @@ Result<bool> SceneFixture::UpdateSDLInputs()
 
 Result<Void> SceneFixture::UpdatePhysics()
 {
+	if (IsSystemRegistered<ScriptSystem>())
+	{
+		GetSystem<ScriptSystem>().Update<Phase::Simulation>(GetDeltaTime());
+	}
+
 	systems_.RunSystemUpdates(Phase::Simulation, GetDeltaTime());
 
 	assert(systems_.IsSystemRegistered<PhysicsSystem>());
@@ -211,6 +274,11 @@ Result<Void> SceneFixture::UpdatePhysics()
 
 	static constexpr float kTimeStep = 1.0f / 60.0f;
 	systems_.GetSystem<PhysicsSystem>().Update(&world_, eventBus_, kTimeStep, 4);
+
+	if (IsSystemRegistered<ScriptSystem>())
+	{
+		GetSystem<ScriptSystem>().Update<Phase::SimResponse>(GetDeltaTime());
+	}
 
 	systems_.RunSystemUpdates(Phase::SimResponse, GetDeltaTime());
 
@@ -246,9 +314,21 @@ Result<Void> SceneFixture::UpdateRender()
 	systems_.GetSystem<SpriteAnimationSystem>().Update(textureRepo_);
 
 	auto& cam = systems_.GetSystem<CameraSystem>().GetCamera();
-	systems_.GetSystem<NewRenderSystem>().Update(
-		SDLite::Renderer(), cam, textureRepo_
-	);
+	auto& renderSys = systems_.GetSystem<NewRenderSystem>();
+
+	auto es = ECS::GetAllEntitiesWith<Transform, Any<SpriteRenderableComponent,
+													 TextRenderableComponent>>();
+	if (!auxTextureRepo_)
+	{
+		renderSys.Update(es, SDLite::Renderer(), cam, textureRepo_);
+	}
+	else
+	{
+		auto [primaryEs, auxEs] = GetFilteredEntitiesToRender(*this, es);
+
+		renderSys.Update(primaryEs, SDLite::Renderer(), cam, textureRepo_);
+		renderSys.Update(auxEs, SDLite::Renderer(), cam, *auxTextureRepo_);
+	}
 
 	return Void{};
 }
@@ -271,6 +351,11 @@ void SceneFixture::LoopEnd()
 {
 	assert(systems_.IsSystemRegistered<GameLoopSystem>());
 	systems_.GetSystem<GameLoopSystem>().UpdateLoopStepEnd(eventBus_);
+
+	if (IsSystemRegistered<ScriptSystem>())
+	{
+		GetSystem<ScriptSystem>().Update<Phase::Cleanup>(GetDeltaTime());
+	}
 
 	systems_.RunSystemUpdates(Phase::Cleanup, GetDeltaTime());
 }
@@ -342,18 +427,18 @@ Result<std::vector<Error>> SceneFixture::DeserializeState(SerializationSystem::F
 	assert(systems_.IsSystemRegistered<SDLInputSystem>());
 	assert(systems_.IsSystemRegistered<AudioSystem>());
 
-	auto activeEntities = ECS::GetAllActiveEntities();
-	for (auto& entity : activeEntities)
+	auto es = ECS::GetAllActiveEntities();
+	for (auto& e : es)
 	{
-		if (!entity.GetRelations().IsChild())
+		if (ShouldDestroyEntity(e))
 		{
-			entity.Destroy();
+			e.Destroy();
 		}
 	}
 
 	return systems_.GetSystem<SerializationSystem>().DeserializeState(
-		fps, world_, textureRepo_, systems_.GetSystem<SDLInputSystem>(),
-		systems_.GetSystem<AudioSystem>().GetAudioBank(), GetRenderer()
+		fps, world_, textureRepo_, GetSystem<SDLInputSystem>(),
+		GetAudioBank(), GetRenderer()
 	);
 }
 
@@ -410,6 +495,13 @@ Result<Void> SceneFixture::DeserializeSceneFromJson(const nlohmann::json& j)
 	return LoadScene(sceneName);
 }
 
+bool SceneFixture::ShouldDestroyEntity(Entity& e)
+{
+	return !e.GetRelations().IsChild() && config_.omitEntityDestruction
+		? !config_.omitEntityDestruction(e)
+		: true;
+}
+
 Result<Void> SceneFixture::RenderScene()
 {
 #if IMGUI_ENABLED
@@ -423,6 +515,11 @@ Result<Void> SceneFixture::RenderScene()
 	SDLite::Renderer().Clear(config_.screenColor);
 
 	TRY(UpdateRender());
+
+	if (IsSystemRegistered<ScriptSystem>())
+	{
+		GetSystem<ScriptSystem>().Update<Phase::Presentation>(GetDeltaTime());
+	}
 
 	systems_.RunSystemUpdates(Phase::Presentation, GetDeltaTime());
 
@@ -465,7 +562,7 @@ void SceneFixture::ResetForNewScene(const SceneConfiguration& config)
 	auto es = ECS::GetAllActiveEntities();
 	for (auto& e : es)
 	{
-		if (!e.GetRelations().IsChild())
+		if (ShouldDestroyEntity(e))
 		{
 			e.Destroy();
 		}
@@ -488,6 +585,13 @@ void SceneFixture::ResetForNewScene(const SceneConfiguration& config)
 	if (IsSystemRegistered<CameraSystem>())
 	{
 		GetCamera().SetPosition(SDLite::Window().GetLocalCenter<SDL_FPoint>());
+	}
+
+	if (IsSystemRegistered<ScriptSystem>())
+	{
+		GetSystem<ScriptSystem>().Reset();
+
+		SetUpFixtureLuaState(*this);
 	}
 
 	config_ = config;
@@ -520,7 +624,12 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance(const SceneConfi
 	fixture->systems_.RegisterSystem<CameraSystem>(SDLite::Window().GetSize<float>());
 	fixture->systems_.RegisterSystem<ScriptSystem>();
 
-	SetUpFixtureLuaState(fixture);
+	if (fixture->config_.flags & SceneConfiguration::InitAuxTextureRepo)
+	{
+		fixture->auxTextureRepo_ = std::make_unique<TextureRepository>();
+	}
+
+	SetUpFixtureLuaState(*fixture);
 	
 	fixture->GetCamera().SetPosition(SDLite::Window().GetLocalCenter<SDL_FPoint>());
 	 

@@ -152,7 +152,7 @@ public:
 
         for (int i = 0; i < count; ++i)
         {
-            double x = static_cast<double>(i) / (count - 1); // 0 Å® 1
+            double x = static_cast<double>(i) / (count - 1); // 0 -> 1
 
             if (invert)
             {

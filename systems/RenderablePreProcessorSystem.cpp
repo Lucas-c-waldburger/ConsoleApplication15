@@ -45,7 +45,12 @@ size_t EstimateDebugDrawPointCount(const Entity& entity, const RenderProfile& pr
 void RenderablePreProcessor::Update(const TextureRepository& textureRepo)
 {
 	auto entities = ECS::GetAllEntitiesWith<Transform, Any<SpriteRenderableComponent,
-														   TextRenderableComponent>>();
+															TextRenderableComponent>>();
+	Update(entities, textureRepo);
+}
+
+void RenderablePreProcessor::Update(std::vector<Entity>& entities, const TextureRepository& textureRepo)
+{
 	renderCallCount_ = 0;
 	debugDrawPointCount_ = 0;
 

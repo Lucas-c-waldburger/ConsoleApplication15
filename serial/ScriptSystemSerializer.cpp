@@ -15,11 +15,11 @@ Result<Void> ScriptSystemSerializer::Serialize(const std::string& jsonFilepath,
 
 	auto& scriptJ = j["scripts"] = nlohmann::json::array();
 
-	auto scriptPackage = scriptSys.ExportScriptDataPackage();
-	for (const auto& data : scriptPackage)
-	{
-		scriptJ.push_back(data);
-	}
+	//auto descriptors = scriptSys.ExportTableDescriptors();
+	//for (const auto& path : descriptors.filepaths)
+	//{
+	//	scriptJ.push_back(path);
+	//}
 
 	file << j.dump(4);
 
@@ -47,51 +47,27 @@ std::vector<Error> ScriptSystemSerializer::Deserialize(const std::string& jsonFi
 		return { MAKE_ERROR("'scripts' field in JSON file was not of type array") };
 	}
 
-	ScriptDataPackage scriptDataPackage;
-	scriptDataPackage.reserve(scriptsJ.size());
+	ScriptTableDescriptors descriptors;
+	descriptors.filepaths.reserve(scriptsJ.size());
 
 	try
 	{
-		from_json(scriptsJ, scriptDataPackage);
+		from_json(scriptsJ, descriptors.filepaths);
 	}
 	catch (const nlohmann::json::exception& err)
 	{
-		return { MAKE_ERROR_FMT("Error parsing script data package: '{}'", err.what()) };
+		return { MAKE_ERROR_FMT("Error parsing script table descriptors: '{}'", err.what()) };
 	}
 
 	std::vector<Error> errors{};
 
-	for (auto&& descriptor : scriptDataPackage)
+	for (auto&& path : descriptors.filepaths)
 	{
-		auto&& fnNames = descriptor.tableDescriptor.functionNames;
-		auto&& scriptSigs = descriptor.tableDescriptor.scriptSignatures;
-
-		if (fnNames.size() != scriptSigs.size())
-		{
-			errors.emplace_back(MAKE_ERROR("Number of function names did not match number"
-				"of script signatures inside ScriptTable::Descriptor"));
-			continue;
-		}
-
-		auto addResult = scriptSys.AddTable(descriptor.filepath);
+		auto addResult = scriptSys.AddTable(path);
 		if (!addResult.Success())
 		{
 			errors.emplace_back(std::move(addResult.GetError()));
 			continue;
-		}
-
-		const auto tableId = addResult.GetValue();
-		
-		for (size_t i = 0; i < fnNames.size(); ++i)
-		{
-			const bool registered = scriptSys.RegisterTableFunction(
-				tableId, fnNames[i], ScriptSignature{ scriptSigs[i]});
-
-			if (!registered)
-			{
-				errors.emplace_back(
-					MAKE_ERROR_FMT("Unable to register function named '{}'", fnNames[i]));
-			}
 		}
 	}
 
@@ -105,11 +81,11 @@ void ScriptSystemSerializer::SerializeToJson(nlohmann::json& masterJ,
 
 	auto& scriptJ = masterJ["scripts"] = nlohmann::json::array();
 
-	auto scriptPackage = scriptSys.ExportScriptDataPackage();
-	for (const auto& data : scriptPackage)
-	{
-		scriptJ.push_back(data);
-	}
+	//auto descriptors = scriptSys.ExportTableDescriptors();
+	//for (const auto& path : descriptors.filepaths)
+	//{
+	//	scriptJ.push_back(path);
+	//}
 }
 
 std::vector<Error> ScriptSystemSerializer::DeserializeFromJson(const nlohmann::json& masterJ, 
@@ -126,51 +102,27 @@ std::vector<Error> ScriptSystemSerializer::DeserializeFromJson(const nlohmann::j
 		return { MAKE_ERROR("'scripts' field in JSON file was not of type array") };
 	}
 
-	ScriptDataPackage scriptDataPackage;
-	scriptDataPackage.reserve(scriptsJ.size());
+	ScriptTableDescriptors descriptors;
+	descriptors.filepaths.reserve(scriptsJ.size());
 
 	try
 	{
-		from_json(scriptsJ, scriptDataPackage);
+		from_json(scriptsJ, descriptors.filepaths);
 	}
 	catch (const nlohmann::json::exception& err)
 	{
-		return { MAKE_ERROR_FMT("Error parsing script data package: '{}'", err.what()) };
+		return { MAKE_ERROR_FMT("Error parsing script table descriptors: '{}'", err.what()) };
 	}
 
 	std::vector<Error> errors{};
 
-	for (auto&& descriptor : scriptDataPackage)
+	for (auto&& path : descriptors.filepaths)
 	{
-		auto&& fnNames = descriptor.tableDescriptor.functionNames;
-		auto&& scriptSigs = descriptor.tableDescriptor.scriptSignatures;
-
-		if (fnNames.size() != scriptSigs.size())
-		{
-			errors.emplace_back(MAKE_ERROR("Number of function names did not match number"
-				"of script signatures inside ScriptTable::Descriptor"));
-			continue;
-		}
-
-		auto addResult = scriptSys.AddTable(descriptor.filepath);
+		auto addResult = scriptSys.AddTable(path);
 		if (!addResult.Success())
 		{
 			errors.emplace_back(std::move(addResult.GetError()));
 			continue;
-		}
-
-		const auto tableId = addResult.GetValue();
-
-		for (size_t i = 0; i < fnNames.size(); ++i)
-		{
-			const bool registered = scriptSys.RegisterTableFunction(
-				tableId, fnNames[i], ScriptSignature{ scriptSigs[i] });
-
-			if (!registered)
-			{
-				errors.emplace_back(
-					MAKE_ERROR_FMT("Unable to register function named '{}'", fnNames[i]));
-			}
 		}
 	}
 

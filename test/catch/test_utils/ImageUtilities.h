@@ -2,6 +2,7 @@
 #include "../CatchUtils.h"
 #include "../../../core/commonObjects.h"
 #include <SDL.h>
+#include "../../../core/Result.h"
 
 namespace test {
 

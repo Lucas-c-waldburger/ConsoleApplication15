@@ -79,7 +79,8 @@ SpriteAtlasTexture::LoadSprite(SDL_Renderer* renderer, const SpriteDescriptor& d
         return MAKE_ERROR_FMT("Invalid surface dimensions: ({}, {})",
             spriteSurface->w, spriteSurface->h);
     }
-    if (spriteSurface->w > GetTextureSize() || spriteSurface->h > GetTextureSize())
+    if (static_cast<size_t>(spriteSurface->w) > GetTextureSize() || 
+        static_cast<size_t>(spriteSurface->h) > GetTextureSize())
     {
 		return SpriteLoadOutcome{ .code = SpriteLoadOutcome::SpriteTooLarge };
 	}

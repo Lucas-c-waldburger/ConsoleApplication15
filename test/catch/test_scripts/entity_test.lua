@@ -16,4 +16,13 @@ function table.changePos(e)
     end               
 end
 
+local meta = {
+    __signatures = {
+        changeName = { "Entity" },
+        changePos = { "Entity" }
+    }
+}
+
+setmetatable(table, meta)
+
 return table
