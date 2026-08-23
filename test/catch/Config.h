@@ -5,7 +5,7 @@
 #define RUN_UI_VISUALIZER 2
 
 
-#define DEF_RUN_MODE RUN_MAIN
+#define DEF_RUN_MODE RUN_CATCH_TESTS
 
 
 #define RUN_MODE(mode) (DEF_RUN_MODE == mode)

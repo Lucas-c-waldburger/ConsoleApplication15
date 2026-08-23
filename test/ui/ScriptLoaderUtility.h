@@ -30,7 +30,7 @@ public:
 			return false;
 		}
 
-		TRY(scriptSys.AddTable(selectedFile));
+		TRY(scriptSys.AddFunctionTable(selectedFile));
 
 		return true;
 	}

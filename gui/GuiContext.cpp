@@ -11,6 +11,7 @@ void GuiContext::Exit()
     ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
+    isInitialized_ = false;
 }
 
 Result<Void> GuiContext::Init(SDL_Window* window, SDL_Renderer* renderer)

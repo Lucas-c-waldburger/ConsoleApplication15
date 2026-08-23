@@ -368,7 +368,7 @@ Result<Void> InspectorSystemPanel::LoadResources(SceneFixture& fixture)
 	assert(fixture.IsSystemRegistered<ScriptSystem>());
 	auto& scriptSys = fixture.GetSystem<ScriptSystem>();
 	
-	TRY(scriptSys.AddTable(fnTableScriptPath));
+	TRY(scriptSys.AddFunctionTable(fnTableScriptPath));
 
 	return kVoid;
 }

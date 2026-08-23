@@ -543,6 +543,9 @@
     <ClCompile Include="scripting\ScriptTableManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="systems\ScriptableUserSubsystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -2936,6 +2939,9 @@
     <ClInclude Include="scripting\ScriptTableManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="scripting\user_types\ComponentIdLuaUserType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -3857,6 +3863,8 @@
     <None Include="test\catch\test_scripts\empty.lua" />
     <None Include="resources\scripts\textbox_test.lua" />
     <None Include="test\catch\test_scripts\fn_table.lua" />
+    <None Include="test\catch\test_scripts\sys_table.lua" />
+    <None Include="test\catch\test_scripts\sys_table_2.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

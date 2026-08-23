@@ -63,7 +63,7 @@ std::vector<Error> ScriptSystemSerializer::Deserialize(const std::string& jsonFi
 
 	for (auto&& path : descriptors.filepaths)
 	{
-		auto addResult = scriptSys.AddTable(path);
+		auto addResult = scriptSys.AddFunctionTable(path);
 		if (!addResult.Success())
 		{
 			errors.emplace_back(std::move(addResult.GetError()));
@@ -118,7 +118,7 @@ std::vector<Error> ScriptSystemSerializer::DeserializeFromJson(const nlohmann::j
 
 	for (auto&& path : descriptors.filepaths)
 	{
-		auto addResult = scriptSys.AddTable(path);
+		auto addResult = scriptSys.AddFunctionTable(path);
 		if (!addResult.Success())
 		{
 			errors.emplace_back(std::move(addResult.GetError()));

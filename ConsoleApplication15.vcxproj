@@ -260,6 +260,7 @@
     <ClCompile Include="systems\GameLoopSystem.cpp" />
     <ClCompile Include="systems\RenderablePreProcessorSystem.cpp" />
     <ClCompile Include="systems\NewRenderSystem.cpp" />
+    <ClCompile Include="systems\ScriptableUserSubsystem.cpp" />
     <ClCompile Include="systems\ScriptSystem.cpp" />
     <ClCompile Include="systems\SerializationSystem.cpp" />
     <ClCompile Include="systems\util\DebugDrawUtils.cpp" />
@@ -762,6 +763,7 @@
     <ClInclude Include="scripting\user_types\CameraLuaUserType.h" />
     <ClInclude Include="scripting\user_types\CameraTargetUserType.h" />
     <ClInclude Include="scripting\user_types\CoreLuaUserTypes.h" />
+    <ClInclude Include="scripting\user_types\ComponentIdLuaUserType.h" />
     <ClInclude Include="scripting\user_types\EventUserTypes.h" />
     <ClInclude Include="scripting\user_types\LuaUserTypeIncludes.h" />
     <ClInclude Include="scripting\user_types\NameUserType.h" />
@@ -1484,6 +1486,8 @@
     <None Include="test\catch\test_scripts\empty.lua" />
     <None Include="test\catch\test_scripts\entity_test.lua" />
     <None Include="test\catch\test_scripts\fn_table.lua" />
+    <None Include="test\catch\test_scripts\sys_table.lua" />
+    <None Include="test\catch\test_scripts\sys_table_2.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc" />

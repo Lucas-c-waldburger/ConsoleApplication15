@@ -4,6 +4,7 @@
 
 namespace {
 
+static constexpr std::string_view kEcsObjectName = "ecs";
 static constexpr std::string_view kFixtureObjectName = "fixture";
 static constexpr std::string_view kCameraObjectName = "camera";
 static constexpr std::string_view kTextureRepositoryObjectName = "textures";
@@ -77,6 +78,30 @@ void ExtendAudioRequest(StateWrapper& state, AudioBank& bank)
 	}
 }
 
+void AddEcsTable(sol::state_view state)
+{
+	sol::table ecsLua = state.create_named_table(kEcsObjectName);
+
+	ecsLua["createEntity"] = [] -> Entity { return ECS::CreateEntity(); };
+	ecsLua["getEntityById"] = [](Entity_t id) { return ECS::GetEntityByID(id); };
+	ecsLua["getEntitiesWith"] = [](sol::variadic_args args) {
+
+		ComponentSignature sig = 0;
+
+		for (const sol::object& arg : args)
+		{
+			if (!arg.is<ComponentId>())
+			{
+				throw sol::error("getEntitiesWith expects ComponentId arguments");
+			}
+
+			sig |= static_cast<ComponentSignature>(arg.as<ComponentId>());
+		}
+
+		return sol::as_table(ECS::GetAllEntitiesWithSignature(sig));
+	};
+}
+
 void SetUpFixtureLuaState(SceneFixture& fx)
 {
 	if (!fx.IsSystemRegistered<ScriptSystem>())
@@ -90,10 +115,14 @@ void SetUpFixtureLuaState(SceneFixture& fx)
 		TextureRepository, 
 		Camera, 
 		AudioBank,
-		EventLuaUserTypeList
+		EventLuaUserTypeList,
+		ComponentId
 	>();
 
 	auto& state = scriptSys.GetState();
+
+	AddEcsTable(state.Data());
+
 	auto wrap = StateWrapper{ .state = state.Data()};
 
 	auto& camera = fx.GetCamera();

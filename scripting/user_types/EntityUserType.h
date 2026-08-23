@@ -9,6 +9,26 @@
 #include "NameUserType.h"
 #include "PhysicsUserTypes.h"
 #include "TimerComponentUserType.h"
+#include "ComponentIdLuaUserType.h"
+
+#define DEF_LUA_GET_COMPONENT_SWITCH_CASE(cmpType) \
+	case cmpType::componentBit: return sol::make_object(lua, std::ref(e.GetComponent<cmpType>()))
+
+static constexpr auto getComponentLuaFn = [](sol::this_state state, Entity& e, ComponentSignature sig) {
+	sol::state_view lua{ state };
+	
+	switch (sig)
+	{
+	DEF_LUA_GET_COMPONENT_SWITCH_CASE(Transform);
+	DEF_LUA_GET_COMPONENT_SWITCH_CASE(SpriteRenderableComponent);
+	DEF_LUA_GET_COMPONENT_SWITCH_CASE(TextRenderableComponent);
+	DEF_LUA_GET_COMPONENT_SWITCH_CASE(SpriteAnimationComponent);
+	DEF_LUA_GET_COMPONENT_SWITCH_CASE(Name);
+	DEF_LUA_GET_COMPONENT_SWITCH_CASE(Timer);
+	}
+
+	return sol::object{};
+};
 
 #define DEF_LUA_COMPONENT_METHODS(cmpType) \
 	"get"	 #cmpType, [](Entity& e) -> cmpType& { return e.GetComponent<cmpType>(); }, \
@@ -37,6 +57,6 @@ DEF_LUA_USERTYPE(Entity, EntityLuaUserTypeDependencies)
 				 DEF_LUA_COMPONENT_METHODS(Name),
 				 DEF_LUA_COMPONENT_METHODS(Timer),
 				 "isValid", &Entity::IsValid,
-				 "getID", &Entity::GetID
+				 "getId", &Entity::GetID
 	);
 } 

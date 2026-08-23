@@ -126,6 +126,8 @@ public:
     bool IsValid() const;
     Entity_t GetID() const { return id_; }
 
+    ComponentSignature GetComponentSignature() const;
+
     bool operator==(const Entity& rhs) const { return id_ == rhs.id_; }
     bool operator==(const Entity_t& entT) const { return id_ == entT; }
 
@@ -248,6 +250,13 @@ public:
         auto& ecs = ECS::Get();
 
         return ecs.GetAllEntitiesWithImpl<Ts...>(std::forward<Fn>(fn));
+    }
+
+    static std::vector<Entity> GetAllEntitiesWithSignature(ComponentSignature sig)
+    {
+        auto& ecs = ECS::Get();
+
+        return ecs.GetAllEntitiesWithSignatureImpl(sig);
     }
 
     // grabs all active entities with at least one of the desired components
@@ -489,6 +498,32 @@ private:
             return userComponentBridge_.HasComponentData<T>(
                 entity, componentManager_);
         }
+    }
+
+    std::vector<Entity> GetAllEntitiesWithSignatureImpl(ComponentSignature sig)
+    {
+        auto activeEntities = entityManager_.GetActiveEntities();
+
+        std::vector<Entity> result;
+        result.reserve(activeEntities.size());
+
+        for (const auto& entity : activeEntities)
+        {
+            uint64_t entitySig = componentManager_.GetSignature(entity);
+
+            assert(componentManager_.HasComponent<EntityFlags>(entity));
+            const auto& flags = componentManager_.GetComponent<EntityFlags>(entity);
+
+            // remove bits for components marked invisible
+            entitySig &= flags.componentVisibilityFlags;
+
+            if ((entitySig & sig) != 0)
+            {
+                result.emplace_back(entity, *this);
+            }
+        }
+
+        return result;
     }
 
     //// TODO: Does this actually work since adding UserComponentBridge?

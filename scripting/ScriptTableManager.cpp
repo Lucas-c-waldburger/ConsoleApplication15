@@ -100,7 +100,7 @@ ScriptTable::TableType ScriptTableManager::GetTableType(ScriptTable::TableId tab
 		return it->second.type;
 	}
 
-	return ScriptTable::TableType::Unknown;
+	return ScriptTable::TableType::Invalid;
 }
 
 void ScriptTableManager::Clear() 

@@ -3,6 +3,7 @@
 #include "../../../systems/ScriptSystem.h"
 #include "../../../events/EventBus2.h"
 #include "../../../scripting/user_types/EntityUserType.h"
+#include "../../Fixtures.h"
 
 namespace {
 
@@ -26,7 +27,7 @@ constexpr std::pair<uint32_t, uint32_t> DecomposeArgType(uint64_t argType)
 
 } // unnamed
 
-TEST_CASE("ScriptSystem Tests", "[sys][script][b]")
+TEST_CASE("ScriptSystem Tests", "[sys][script]")
 {
 	ScriptSystem scriptSystem{};
 
@@ -76,7 +77,7 @@ TEST_CASE("ScriptSystem Tests", "[sys][script][b]")
 	CHECK(e.GetComponent<Transform>().position.y == 500.0f);
 }
 
-TEST_CASE("ScriptSystem::RemoveTable", "[sys][script][a]")
+TEST_CASE("ScriptSystem::RemoveTable", "[sys][script]")
 {
 	ScriptSystem scriptSystem{};
 
@@ -130,7 +131,7 @@ TEST_CASE("ScriptSystem::RemoveTable", "[sys][script][a]")
 	CHECK_FALSE(e3.GetComponent<Script>().table.IsValid());
 }
 
-TEST_CASE("LuaFunctionTableParser Tests", "[script][b]")
+TEST_CASE("LuaFunctionTableParser Tests", "[script]")
 {
 	Logger::StartSession();
 	LuaStateManager state{};
@@ -378,7 +379,7 @@ TEST_CASE("LuaFunctionTableParser Tests", "[script][b]")
 	}
 }
 
-TEST_CASE("LuaFunctionCallHandler Tests", "[scripting][b]")
+TEST_CASE("LuaFunctionCallHandler Tests", "[script]")
 {
 	Logger::StartSession();
 	LuaStateManager state{};
@@ -798,7 +799,7 @@ TEST_CASE("LuaFunctionCallHandler Tests", "[scripting][b]")
 	}
 }
 
-TEST_CASE("Native Lua Type identification", "[scripting]")
+TEST_CASE("Native Lua Type identification", "[script]")
 {
 	SECTION("Number")
 	{
@@ -852,7 +853,7 @@ TEST_CASE("Native Lua Type identification", "[scripting]")
 	}
 }
 
-TEST_CASE("Lua function parsing/call with Native lua types", "[scripting]")
+TEST_CASE("Lua function parsing/call with Native lua types", "[script]")
 {
 	Logger::StartSession();
 	LuaStateManager state{};
@@ -1049,5 +1050,108 @@ TEST_CASE("Lua function parsing/call with Native lua types", "[scripting]")
 		CHECK(boolOutput == true);
 		CHECK(stringOutput == "hello");
 		}
+	}
+}
+
+TEST_CASE("ScriptSystem Integration Test", "[script][sys][b]")
+{
+	static constexpr auto destroyAllEntities = [] {
+		auto es = ECS::GetAllActiveEntities();
+		for (auto& e : es)
+		{
+			if (!e.HasComponent<Parent>())
+			{
+				e.Destroy();
+			}
+		}
+	};
+
+	auto fixtureResult = SceneFixture::GetInstance();
+	REQUIRE(fixtureResult.Success());
+
+	auto& fixture = fixtureResult.GetValue();
+
+	SECTION("System script that iterates entities")
+	{
+		auto e1 = ECS::CreateEntity();
+		e1.AddComponent(Transform{});
+		auto e2 = ECS::CreateEntity();
+		e2.AddComponent(Transform{});
+		auto e3 = ECS::CreateEntity();
+		e3.AddComponent(Transform{});
+		auto e4 = ECS::CreateEntity();
+
+		auto es = ECS::GetAllEntitiesWithSignature(Transform::componentBit);
+		REQUIRE(es.size() == 3);
+
+		REQUIRE(fixture->IsSystemRegistered<ScriptSystem>());
+
+		auto& scriptSys = fixture->GetSystem<ScriptSystem>();
+
+		auto sysTablePath = MakeScriptTestPath("sys_table.lua");
+		REQUIRE(fs::exists(sysTablePath));
+
+		auto addSysTableResult = scriptSys.AddSystemTable(sysTablePath.string(), Phase::Input);
+		REQUIRE(addSysTableResult.Success());
+
+		auto sysTableId = addSysTableResult.GetValue();
+		CHECK(sysTableId != std::numeric_limits<ScriptTable::TableId>::max());
+
+		CHECK(scriptSys.ContainsTable(sysTableId));
+
+		REQUIRE(e1.HasComponent<Transform>());
+		CHECK(e1.GetComponent<Transform>().position == SDL_FPoint{ 67.0f, 69.0f });
+		REQUIRE(e2.HasComponent<Transform>());
+		CHECK(e2.GetComponent<Transform>().position == SDL_FPoint{ 67.0f, 69.0f });
+		REQUIRE(e3.HasComponent<Transform>());
+		CHECK(e3.GetComponent<Transform>().position == SDL_FPoint{ 67.0f, 69.0f });
+		CHECK_FALSE(e4.HasComponent<Transform>());
+
+		fixture->StepGameLoop(1);
+
+		REQUIRE(e1.HasComponent<Transform>());
+		CHECK(e1.GetComponent<Transform>().position == SDL_FPoint{ 66.0f, 68.0f });
+		REQUIRE(e2.HasComponent<Transform>());
+		CHECK(e2.GetComponent<Transform>().position == SDL_FPoint{ 66.0f, 68.0f });
+		REQUIRE(e3.HasComponent<Transform>());
+		CHECK(e3.GetComponent<Transform>().position == SDL_FPoint{ 66.0f, 68.0f });
+		CHECK_FALSE(e4.HasComponent<Transform>());
+
+		destroyAllEntities();
+	}
+
+	SECTION("System script that creates an entity")
+	{
+		CHECK(ECS::GetAllActiveEntities().size() == 0);
+
+		REQUIRE(fixture->IsSystemRegistered<ScriptSystem>());
+
+		auto& scriptSys = fixture->GetSystem<ScriptSystem>();
+
+		auto sysTablePath = MakeScriptTestPath("sys_table_2.lua");
+		REQUIRE(fs::exists(sysTablePath));
+
+		auto addSysTableResult = scriptSys.AddSystemTable(sysTablePath.string(), Phase::Input);
+		REQUIRE(addSysTableResult.Success());
+
+		auto sysTableId = addSysTableResult.GetValue();
+		CHECK(sysTableId != std::numeric_limits<ScriptTable::TableId>::max());
+
+		CHECK(scriptSys.ContainsTable(sysTableId));
+
+		auto es = ECS::GetAllActiveEntities();
+		REQUIRE(es.size() == 1);
+
+		auto& e = es.front();
+		REQUIRE(e.HasComponent<Name>());
+		CHECK(e.GetComponent<Name>() == "greg");
+
+		fixture->StepGameLoop(1);
+
+		REQUIRE(e.IsValid());
+		REQUIRE(e.HasComponent<Name>());
+		CHECK(e.GetComponent<Name>() == "hank");
+
+		destroyAllEntities();
 	}
 }

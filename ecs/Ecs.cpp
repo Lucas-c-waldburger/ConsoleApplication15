@@ -41,6 +41,16 @@ bool Entity::IsValid() const
     return ecs_ && ecs_->IsEntityValid(id_);
 }
 
+ComponentSignature Entity::GetComponentSignature() const
+{
+	if (!IsValid())
+	{
+		return 0;
+	}
+
+	return ecs_->GetComponentManager().GetSignature(id_);
+}
+
 void Entity::ClearComponents()
 {
 	ComponentTypeList::template Apply<ClearComponentsImpl>(*this);
