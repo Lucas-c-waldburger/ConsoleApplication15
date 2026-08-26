@@ -59,11 +59,13 @@ template <>
 class GuiEditComponentBuilder<Collider>
 {
 public:
-	static bool Draw(Entity& e, ReadOnly<B2Body>& roBody);
+	static bool Draw(Entity& e, ReadOnly<B2Body>& roBody, const Camera& cam);
 
 	static bool IsActive() { return isActive_; }
 
 	static void SetIsActive(bool active);
+
+	static void ClearShapePreview() { ECS::GetEntityByID(shapePreviewEntity_).Destroy(); }
 
 	static const B2ShapeParameters& GetCurrentShapeParameters() { return shapeParams_; }
 
@@ -72,8 +74,11 @@ public:
 private:
 	GuiEditComponentBuilder() = default;
 
+	static void DrawShapePreview(ReadOnly<B2Body>& roBody, const Camera& cam);
+
 	static inline B2ShapeParameters shapeParams_{ .shapeType = B2Shape::Type::Polygon };
 	static inline ColliderSettings colliderSettings_{};
+	static inline Entity_t shapePreviewEntity_ = kInvalidEntity;
 
 	static inline bool isActive_ = false;
 };
@@ -103,6 +108,34 @@ private:
 	static inline Entity_t selectedRelevantEntity_ = kInvalidEntity;
 	static inline bool isActive_ = false;
 };
+
+//namespace detail {
+//
+//template <typename...Ts>
+//class GuiEditComponentBuildersImpl
+//{
+//public:
+//	template <typename T> requires (std::same_as<T, GuiEditComponentBuilder<Ts>> || ...)
+//	GuiEditComponentBuilder<T>& GetBuilder() { return std::get<GuiEditComponentBuilder<T>>(builders_); }
+//
+//	void SetActiveBuilder(ComponentBuilderType activeType)
+//	{
+//		if (activeType == activeBuilder_)
+//		{
+//			return;
+//		}
+//
+//		std::apply([activeType](const auto&...builders) {
+//			((builders.SetIsActive(activeType == builders.GetBuilderType())), ...);
+//		}, builders_);
+//	}
+//
+//private:
+//	std::tuple<GuiEditComponentBuilder<Ts>...> builders_;
+//	ComponentBuilderType activeBuilder_ = ComponentBuilderType::None;
+//};
+//
+//} // detail
 
 } // ui
 

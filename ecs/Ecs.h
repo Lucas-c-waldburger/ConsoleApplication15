@@ -318,6 +318,24 @@ public:
         }
     }
 
+    template <typename T, typename TList>
+    static ComponentId GetComponentId()
+    {
+        static_assert(std::same_as<T, std::remove_cvref_t<T>>,
+            "Template argument T should have cvref qualifiers");
+
+        if constexpr (SomeComponent<T>)
+        {
+            return MakeComponentId<T, TList>();
+        }
+        else
+        {
+            auto& ecs = ECS::Get();
+
+            return ecs.userComponentBridge_.GetComponentDataId<T, TList>();
+        }
+    }
+
     template <typename T>
     static bool RegisterComponent()
     {

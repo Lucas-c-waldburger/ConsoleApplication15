@@ -77,7 +77,7 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -101,7 +101,7 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -125,7 +125,7 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -149,7 +149,7 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -441,6 +441,7 @@
     <ClInclude Include="core\DirtyValue.h" />
     <ClInclude Include="core\FixedString.h" />
     <ClInclude Include="core\formatters.h" />
+    <ClInclude Include="core\Reflection.h" />
     <ClInclude Include="core\TypeInfo.h" />
     <ClInclude Include="core\InlineStorage.h" />
     <ClInclude Include="core\Hash.h" />
@@ -494,6 +495,28 @@
     <ClInclude Include="deps\ctre\ctre-unicode.hpp" />
     <ClInclude Include="deps\ctre\ctre.hpp" />
     <ClInclude Include="deps\ctre\unicode-db.hpp" />
+    <ClInclude Include="deps\describe\boost\describe.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\bases.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\class.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\descriptor_by_name.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\descriptor_by_pointer.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\detail\bases.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\detail\compute_base_modifiers.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\detail\config.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\detail\cx_streq.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\detail\list.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\detail\members.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\detail\pp_for_each.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\detail\pp_utilities.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\detail\void_t.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\enum.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\enumerators.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\enum_from_string.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\enum_to_string.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\members.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\modifiers.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\modifier_description.hpp" />
+    <ClInclude Include="deps\describe\boost\describe\operators.hpp" />
     <ClInclude Include="deps\imgui-master\examples\libs\emscripten\emscripten_mainloop_stub.h" />
     <ClInclude Include="deps\imgui-master\examples\libs\glfw\include\GLFW\glfw3.h" />
     <ClInclude Include="deps\imgui-master\examples\libs\glfw\include\GLFW\glfw3native.h" />
@@ -501,8 +524,70 @@
     <ClInclude Include="deps\imgui\backends\imgui_impl_sdl2.h" />
     <ClInclude Include="deps\imgui\backends\imgui_impl_sdlrenderer2.h" />
     <ClInclude Include="deps\imgui\imgui.h" />
+    <ClInclude Include="deps\magic_enum\magic_enum.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_all.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_containers.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_flags.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_format.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_fuse.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_iostream.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_switch.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_utility.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum_all.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum_containers.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum_flags.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum_format.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum_fuse.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum_iostream.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum_switch.hpp" />
+    <ClInclude Include="deps\magic_enum\magic_enum_utility.hpp" />
     <ClInclude Include="deps\nlohmann\json.hpp" />
     <ClInclude Include="deps\nlohmann\json_fwd.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\config.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\core.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\core_name.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\config.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core14_classic.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core14_loophole.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core17.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core17_generated.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core26.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core26_reflection.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core_name.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core_name14_disabled.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core_name20_static.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core_name26_reflection.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\detectors.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\fake_object.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\fields_count.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\for_each_field.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\for_each_field_impl.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\functional.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\io.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\make_flat_tuple_of_references.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\make_integer_sequence.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\offset_based_getter.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\possible_reflectable.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\rvalue_t.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\sequence_tuple.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\size_array.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\size_t_.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\stdarray.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\stdtuple.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\tie_from_structure_tuple.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\detail\unsafe_declval.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\functions_for.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\functors.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\io.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\io_fields.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\ops.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\ops_fields.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\traits.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\traits_fwd.hpp" />
+    <ClInclude Include="deps\pfr\boost\pfr\tuple_size.hpp" />
     <ClInclude Include="deps\rapidhash\rapidhash.h" />
     <ClInclude Include="deps\spdlog\async.h" />
     <ClInclude Include="deps\spdlog\async_logger-inl.h" />

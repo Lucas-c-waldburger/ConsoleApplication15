@@ -5,6 +5,7 @@
 namespace {
 
 static constexpr std::string_view kEcsObjectName = "ecs";
+static constexpr std::string_view kComponentIdObjectName = "ComponentId";
 static constexpr std::string_view kFixtureObjectName = "fixture";
 static constexpr std::string_view kCameraObjectName = "camera";
 static constexpr std::string_view kTextureRepositoryObjectName = "textures";
@@ -19,7 +20,6 @@ struct GetUserTypeWrapper
 	sol::table userTypeTable;
 };
 
-
 struct StateWrapper
 {
 	template <SomeLuaUserType T>
@@ -31,6 +31,26 @@ struct StateWrapper
 	sol::state_view state;
 };
 
+namespace detail {
+
+template <typename> struct register_component_ids_on_table;
+template <template <typename...> class TList, typename...Ts>
+struct register_component_ids_on_table<TList<Ts...>> {
+	static void call(sol::table& cmpIdTable) {
+		static constexpr auto impl = []<typename T>(sol::table & cmpIdTable) {
+			cmpIdTable[lua_user_type_name<T>::value] = MakeComponentId<T, LuaComponentTypeList>();
+		};
+		((impl.template operator()<Ts>(cmpIdTable)), ...);
+	}
+};
+
+} // detail
+
+void RegisterComponentIdsOnTable(sol::table& cmpIdTable)
+{
+	detail::register_component_ids_on_table<LuaComponentTypeList>::call(cmpIdTable);
+}
+
 } // unnamed
 
 void ExtendSpriteRenderable(StateWrapper& state, SpriteAtlas& atlas)
@@ -41,7 +61,7 @@ void ExtendSpriteRenderable(StateWrapper& state, SpriteAtlas& atlas)
 			r.sprite = atlas.GetSprite(name);
 			if (!r.sprite.resourceHandle.IsValid())
 			{
-				LOG_ERROR_FMT("sprite '{}' not found");
+				LOG_ERROR_FMT("sprite '{}' not found", name);
 			}
 		};
 	}
@@ -58,7 +78,7 @@ void ExtendTextRenderable(StateWrapper& state, FontAtlas& atlas)
 
 			if (!r.writer.resourceHandle.IsValid())
 			{
-				LOG_ERROR_FMT("Font '{}' not found");
+				LOG_ERROR_FMT("Font '{}' not found", name);
 			}
 		};
 	}
@@ -78,14 +98,16 @@ void ExtendAudioRequest(StateWrapper& state, AudioBank& bank)
 	}
 }
 
+void AddComponentIdTable(sol::state_view state)
+{
+	sol::table cmpIdLua = state.create_named_table(kComponentIdObjectName);
+
+	RegisterComponentIdsOnTable(cmpIdLua);
+}
+
 void AddEcsTable(sol::state_view state)
 {
-	sol::table ecsLua = state.create_named_table(kEcsObjectName);
-
-	ecsLua["createEntity"] = [] -> Entity { return ECS::CreateEntity(); };
-	ecsLua["getEntityById"] = [](Entity_t id) { return ECS::GetEntityByID(id); };
-	ecsLua["getEntitiesWith"] = [](sol::variadic_args args) {
-
+	static constexpr auto getEntitiesWith = +[](sol::variadic_args args) {
 		ComponentSignature sig = 0;
 
 		for (const sol::object& arg : args)
@@ -95,11 +117,17 @@ void AddEcsTable(sol::state_view state)
 				throw sol::error("getEntitiesWith expects ComponentId arguments");
 			}
 
-			sig |= static_cast<ComponentSignature>(arg.as<ComponentId>());
+			sig |= static_cast<ComponentSignature>(arg.as<ComponentId>().bit);
 		}
 
 		return sol::as_table(ECS::GetAllEntitiesWithSignature(sig));
 	};
+
+	sol::table ecsLua = state.create_named_table(kEcsObjectName);
+
+	ecsLua["createEntity"] = [] -> Entity { return ECS::CreateEntity(); };
+	ecsLua["getEntityById"] = [](Entity_t id) { return ECS::GetEntityByID(id); };
+	ecsLua["getEntitiesWith"] = getEntitiesWith;
 }
 
 void SetUpFixtureLuaState(SceneFixture& fx)
@@ -115,12 +143,12 @@ void SetUpFixtureLuaState(SceneFixture& fx)
 		TextureRepository, 
 		Camera, 
 		AudioBank,
-		EventLuaUserTypeList,
-		ComponentId
+		EventLuaUserTypeList
 	>();
 
 	auto& state = scriptSys.GetState();
 
+	AddComponentIdTable(state.Data());
 	AddEcsTable(state.Data());
 
 	auto wrap = StateWrapper{ .state = state.Data()};

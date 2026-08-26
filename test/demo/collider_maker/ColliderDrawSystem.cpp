@@ -67,6 +67,10 @@ void ColliderDrawSystem::Update(float)
 
 				break;
 			}
+			case B2Shape::Type::Circle:
+			{
+				SDL_RenderDrawPointsF(r, data.points.data(), data.points.size());
+			}
 			default:
 			{
 				break;

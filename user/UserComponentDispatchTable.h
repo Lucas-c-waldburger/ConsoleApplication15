@@ -89,6 +89,22 @@ public:
 	static constexpr GetUserComponentBitSig kGetUserComponentBit[] = {
 		&GetUserComponentBitImpl<Ts>...
 	};
+
+	template <typename TList>
+	struct inner
+	{
+		template <typename T>
+		ComponentId GetUserComponentIdImpl()
+		{
+			return MakeComponentId<T, TList>();
+		}
+
+		using GetUserComponentIdSig = ComponentId(*)();
+
+		static constexpr GetUserComponentIdSig kGetUserComponentId[] = {
+			&GetUserComponentIdImpl<Ts>...
+		};
+	};
 };
 
 using UserComponentDispatchTable = UserComponentDispatchTableImpl<UserComponentTypeList>;

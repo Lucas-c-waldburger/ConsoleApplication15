@@ -63,6 +63,7 @@ public:
 		B2World& world;
 		ScriptSystem& scriptSys;
 		EventBus& eventBus;
+		const Camera& camera;
 	};
 
 	enum UpdateReport : uint8_t

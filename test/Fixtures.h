@@ -147,6 +147,11 @@ public:
 		return systems_.RegisterSystem<T>(std::forward<Args>(args)...);
 	}
 
+	// component
+	//template <typename T> 
+	//	requires (!SomeComponent<T> && std::same_as<raw_type_t<T>, T> && std::is_class_v<T>)
+	//Result<ComponentId> RegisterUserComponent()
+
 	// scenes
 	template <typename Fn> requires std::convertible_to<Fn, SceneInitializer>
 	bool RegisterScene(std::string sceneName, Fn&& init)

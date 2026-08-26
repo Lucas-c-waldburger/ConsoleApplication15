@@ -1053,7 +1053,7 @@ TEST_CASE("Lua function parsing/call with Native lua types", "[script]")
 	}
 }
 
-TEST_CASE("ScriptSystem Integration Test", "[script][sys][b]")
+TEST_CASE("ScriptSystem Integration Test", "[script][sys]")
 {
 	static constexpr auto destroyAllEntities = [] {
 		auto es = ECS::GetAllActiveEntities();
@@ -1117,6 +1117,18 @@ TEST_CASE("ScriptSystem Integration Test", "[script][sys][b]")
 		CHECK(e3.GetComponent<Transform>().position == SDL_FPoint{ 66.0f, 68.0f });
 		CHECK_FALSE(e4.HasComponent<Transform>());
 
+		CHECK(scriptSys.RemoveTable(sysTableId));
+
+		fixture->StepGameLoop(1);
+
+		REQUIRE(e1.HasComponent<Transform>());
+		CHECK(e1.GetComponent<Transform>().position == SDL_FPoint{ 66.0f, 68.0f });
+		REQUIRE(e2.HasComponent<Transform>());
+		CHECK(e2.GetComponent<Transform>().position == SDL_FPoint{ 66.0f, 68.0f });
+		REQUIRE(e3.HasComponent<Transform>());
+		CHECK(e3.GetComponent<Transform>().position == SDL_FPoint{ 66.0f, 68.0f });
+		CHECK_FALSE(e4.HasComponent<Transform>());
+
 		destroyAllEntities();
 	}
 
@@ -1153,5 +1165,225 @@ TEST_CASE("ScriptSystem Integration Test", "[script][sys][b]")
 		CHECK(e.GetComponent<Name>() == "hank");
 
 		destroyAllEntities();
+	}
+}
+
+struct TestPfrStructA
+{
+	int intVal = 0;
+	std::string stringVal;
+};
+
+struct TestPfrStructB
+{
+	std::vector<float> floatVecVal;
+	bool boolVal = false;
+};
+
+enum TestMagicEnumA { Invalid, Ichi, Ni, San };
+enum class TestMagicEnumB { Invalid, Uno, Dos, Tres };
+struct TestMagicEnumHolder
+{
+	TestMagicEnumA a = TestMagicEnumA::Invalid;
+	TestMagicEnumB b = TestMagicEnumB::Invalid;
+};
+
+TEST_CASE("LuaStateManager::AutoRegister", "[script][b]")
+{
+	Logger::StartSession();
+	LuaStateManager state{};
+	state.InitWithEngineTypes<>();
+
+	STATIC_CHECK(PfrReflectable<TestPfrStructA>);
+	STATIC_CHECK(PfrReflectable<TestPfrStructB>); 
+
+	CHECK(state.AutoRegister<TestPfrStructA>("TestPfrStructA"));
+	CHECK(state.IsRegistered("TestPfrStructA"));
+	CHECK(state.Data()["TestPfrStructA"] == sol::type::table);
+
+	CHECK(state.AutoRegister<TestPfrStructB>("TestPfrStructB"));
+	CHECK(state.IsRegistered("TestPfrStructB"));
+	CHECK(state.Data()["TestPfrStructB"] == sol::type::table);
+
+	CHECK(state.AutoRegister<TestMagicEnumA>("TestMagicEnumA"));
+	CHECK(state.IsRegistered("TestMagicEnumA"));
+	CHECK(state.Data()["TestMagicEnumA"] == sol::type::table);
+
+	CHECK(state.AutoRegister<TestMagicEnumB>("TestMagicEnumB"));
+	CHECK(state.IsRegistered("TestMagicEnumB"));
+	CHECK(state.Data()["TestMagicEnumB"] == sol::type::table);
+
+	//static constexpr auto checkTableField = [](const sol::table& tbl, std::string_view fieldName, 
+	//										   sol::type solType, const auto& expectedVal) {
+	//	sol::object tableVal = tbl[fieldName];
+
+	//	REQUIRE(tableVal.valid());
+	//	REQUIRE(tableVal.get_type() == solType);
+
+	//	CHECK(tableVal.as<std::remove_cvref_t<decltype(expectedVal)>>() == expectedVal);
+	//};
+	 
+	static constexpr auto getCheckTableFieldLambda = [](sol::table tbl) {
+		return [tbl](std::string_view fieldName, sol::type solType, const auto& expectedVal) {
+			sol::object tableVal = tbl[fieldName];
+
+			REQUIRE(tableVal.valid());
+			REQUIRE(tableVal.get_type() == solType);
+
+			CHECK(tableVal.as<std::remove_cvref_t<decltype(expectedVal)>>() == expectedVal);
+		};
+	};
+
+	SECTION("Check TestPfrStructA Getters")
+	{
+		static const std::string testAGetters = R"(
+			return {
+				intValType = type(aStruct.intVal),
+				stringValType = type(aStruct.stringVal),
+				retrievedIntVal = aStruct.intVal,
+				retrievedStringVal = aStruct.stringVal
+			}	
+		)";
+
+		TestPfrStructA testPfrStructA{
+			.intVal = 69,
+			.stringVal = "get rekt"
+		};
+		state.Data()["aStruct"] = std::ref(testPfrStructA);
+
+		auto loadTestAGettersResult = state.LoadScriptString(testAGetters);
+		REQUIRE(loadTestAGettersResult.valid());
+		
+		sol::object testAGettersObj = loadTestAGettersResult;
+		REQUIRE(testAGettersObj.get_type() == sol::type::table);
+		sol::table testAGettersTable = testAGettersObj.as<sol::table>();
+		
+		auto checkField = getCheckTableFieldLambda(testAGettersTable);
+
+		checkField("intValType", sol::type::string, std::string{ "number" });
+		checkField("stringValType", sol::type::string, std::string{ "string" });
+		checkField("retrievedIntVal", sol::type::number, 69);
+		checkField("retrievedStringVal", sol::type::string, std::string{ "get rekt" });
+	}
+
+	SECTION("Check TestPfrStructB Getters")
+	{
+		static const std::string testBGetters = R"(
+			return {
+				floatVecValueType = type(bStruct.floatVecVal),
+				boolValType = type(bStruct.boolVal),
+				retrievedFloatVecValue = bStruct.floatVecVal,
+				retrievedBoolVal = bStruct.boolVal
+			}	
+		)";
+
+		TestPfrStructB testPfrStructB{
+			.floatVecVal = { 69.6f, -195.5f },
+			.boolVal = true
+		};
+		state.Data()["bStruct"] = std::ref(testPfrStructB);
+
+		auto loadTestBGettersResult = state.LoadScriptString(testBGetters);
+		REQUIRE(loadTestBGettersResult.valid());
+		
+		sol::object testBGettersObj = loadTestBGettersResult;
+		REQUIRE(testBGettersObj.get_type() == sol::type::table);
+		sol::table testBGettersTable = testBGettersObj.as<sol::table>();
+
+		auto checkField = getCheckTableFieldLambda(testBGettersTable);
+
+		checkField("floatVecValueType", sol::type::string, std::string{ "userdata" });
+		checkField("boolValType", sol::type::string, std::string{ "boolean" });
+		checkField("retrievedFloatVecValue", sol::type::userdata, std::vector<float>{ 69.6f, -195.5f });
+		checkField("retrievedBoolVal", sol::type::boolean, true);
+	}
+	
+	SECTION("Check TestPfrStructA Setters")
+	{
+		static const std::string testASetters = R"(
+			aStruct.intVal = 101
+			aStruct.stringVal = "lel"
+		)";
+
+		TestPfrStructA testPfrStructA{};
+		state.Data()["aStruct"] = std::ref(testPfrStructA);
+
+		auto loadTestASettersResult = state.LoadScriptString(testASetters);
+		REQUIRE(loadTestASettersResult.valid());
+
+		CHECK(testPfrStructA.intVal == 101);
+		CHECK(testPfrStructA.stringVal == "lel");
+	}
+	
+	SECTION("Check TestPfrStructB Setters")
+	{
+		static const std::string testBSetters = R"(
+			bStruct.floatVecVal = { 2.5, 3.5, 4.5 }
+			bStruct.boolVal = true
+		)";
+
+		TestPfrStructB testPfrStructB{};
+		state.Data()["bStruct"] = std::ref(testPfrStructB);
+
+		auto loadTestBSettersResult = state.LoadScriptString(testBSetters);
+		REQUIRE(loadTestBSettersResult.valid());
+
+		CHECK(testPfrStructB.floatVecVal == std::vector<float>{ 2.5f, 3.5f, 4.5f });
+		CHECK(testPfrStructB.boolVal == true);
+	}
+
+	SECTION("Check Test Enum Getters")
+	{
+		static const std::string testEnumGetters = R"(
+			return {
+				enumValAChecked = enumValA,
+				enumValBChecked = enumValB
+			}
+		)";
+
+		TestMagicEnumA enumValA = TestMagicEnumA::Ichi;
+		TestMagicEnumB enumValB = TestMagicEnumB::Tres;
+
+		state.Data()["enumValA"] = enumValA;
+		state.Data()["enumValB"] = enumValB;
+
+		auto loadTestEnumGettersResult = state.LoadScriptString(testEnumGetters);
+		REQUIRE(loadTestEnumGettersResult.valid());
+
+		sol::object testEnumGettersObj = loadTestEnumGettersResult;
+		REQUIRE(testEnumGettersObj.get_type() == sol::type::table);
+		sol::table testEnumGettersTable = testEnumGettersObj.as<sol::table>();
+
+		sol::object enumValACheckedObj = testEnumGettersTable["enumValAChecked"];
+		REQUIRE(enumValACheckedObj.valid());
+		REQUIRE(enumValACheckedObj.is<TestMagicEnumA>());
+		CHECK(enumValACheckedObj.as<TestMagicEnumA>() == TestMagicEnumA::Ichi);
+
+		sol::object enumValBCheckedObj = testEnumGettersTable["enumValBChecked"];
+		REQUIRE(enumValBCheckedObj.valid());
+		REQUIRE(enumValBCheckedObj.is<TestMagicEnumB>());
+		CHECK(enumValBCheckedObj.as<TestMagicEnumB>() == TestMagicEnumB::Tres);
+	}
+
+	SECTION("Check Test Enum Setters")
+	{
+		static const std::string testEnumSetters = R"(
+			magicEnumHolder.a = TestMagicEnumA.San
+			magicEnumHolder.b = TestMagicEnumB.Dos
+		)";
+
+		CHECK(state.AutoRegister<TestMagicEnumHolder>("TestMagicEnumHolder"));
+		CHECK(state.IsRegistered("TestMagicEnumHolder"));
+		CHECK(state.Data()["TestMagicEnumHolder"] == sol::type::table);
+
+		TestMagicEnumHolder holder{};
+
+		state.Data()["magicEnumHolder"] = std::ref(holder);
+
+		auto loadTestEnumSettersResult = state.LoadScriptString(testEnumSetters);
+		REQUIRE(loadTestEnumSettersResult.valid());
+
+		CHECK(holder.a == TestMagicEnumA::San);
+		CHECK(holder.b == TestMagicEnumB::Dos);
 	}
 }

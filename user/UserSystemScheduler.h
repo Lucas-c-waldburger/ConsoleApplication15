@@ -1,10 +1,14 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include <deque>
 #include "../core/Algorithms.h"
 #include "../core/SizedEnumMap.h"
 #include "../systems/Phase.h"
 #include "../systems/System.h"
+#include "../systems/ScriptableUserSubsystem.h"
+#include "../core/Result.h"
+#include "../core/commonObjects.h"
 
 //// TODO: Think about letting users register multiple update per phase functions on systems
 // ex. RegisterSystemUpdate<&UserSys::UpdateMovement>(Phase::Intent)

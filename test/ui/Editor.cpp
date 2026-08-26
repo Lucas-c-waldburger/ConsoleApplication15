@@ -319,7 +319,8 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 					.textureRepo = *auxRepo,
 					.world = scene->GetWorld(),
 					.scriptSys = scene->GetSystem<ScriptSystem>(),
-					.eventBus = scene->GetEventBus()
+					.eventBus = scene->GetEventBus(),
+					.camera = scene->GetCamera()
 				};
 				InspectorComponentPanel::Update(cmpCtx);
 			}

@@ -7,6 +7,8 @@
 #include "GuiMouse.h"
 #include "ComponentEditHistory.h"
 #include "../../components/util/ComponentValidPreds.h"
+#include "../demo/collider_maker/ColliderMakerCommon.h"
+#include "../demo/collider_maker/ColliderDrawSystem.h"
 
 namespace ui {
 
@@ -631,6 +633,10 @@ Result<Void> InspectorComponentPanel::LoadResources(SceneFixture& scene)
 
 Result<Void> InspectorComponentPanel::Init(SceneFixture& scene)
 {
+	ECS::RegisterComponent<test::ShapeData>();
+
+	scene.RegisterSystem<test::ColliderDrawSystem>(Phase::Presentation);
+
 	TRY(LoadResources(scene));
 
 	return kVoid;
@@ -677,7 +683,7 @@ InspectorComponentPanel::UpdateReport InspectorComponentPanel::Update(ResourceCo
 
 			auto& body = ctx.entity.GetComponent<RigidBody>().body;
 
-			built = GuiEditComponentBuilder<Collider>::Draw(ctx.entity, body);
+			built = GuiEditComponentBuilder<Collider>::Draw(ctx.entity, body, ctx.camera);
 			break;
 		}
 		case ComponentBuilderType::EventCallback:

@@ -1,11 +1,11 @@
 #pragma once
 #include <vector>
 #include <unordered_map>
-#include <typeindex>
 #include <bit>
 #include "../serial/SerializationConcepts.h"
 #include "UserComponentTypeId.h"
 #include "UserComponentDispatchTable.h"
+#include "../core/TypeInfo.h"
 
 /** UserComponentSerializationHelper */
 class UserComponentSerializationHelper
@@ -69,6 +69,9 @@ public:
 	template <typename T>
 	ComponentSignature GetComponentDataSignature() const;
 
+	template <typename T, typename TList>
+	ComponentId GetComponentDataId() const;
+
 	void SerializeComponentData(nlohmann::json& j, Entity_t e,
 								const ComponentManager& cmpManager) const;
 
@@ -93,7 +96,7 @@ void UserComponentSerializationHelper::HandleSerializerRegistration(std::string_
 	if constexpr (HasToJson<T> || HasFromJson<T>)
 	{
 		userComponentNames_.emplace_back((cmpName.empty())
-			? std::string{ typeid(T).name() }
+			? std::string{ TypeInfo<T>::name }
 			: std::string{ cmpName }
 		);
 
@@ -163,7 +166,7 @@ bool UserComponentBridge::RegisterComponentData(std::string_view cmpName)
 	{
 		return true;
 	}
-
+	 
 	const bool registered = RegisterComponentDataInternal(typeId);
 	if (!registered)
 	{
@@ -295,5 +298,20 @@ ComponentSignature UserComponentBridge::GetComponentDataSignature() const
 	assert(idx < UserComponentTypeList::size);
 
 	return std::invoke(UserComponentDispatchTable::kGetUserComponentBit[idx]);
+}
+
+template <typename T, typename TList>
+inline ComponentId UserComponentBridge::GetComponentDataId() const
+{
+	const auto typeId = static_cast<size_t>(GetUserComponentTypeId<T>());
+	if (!IsComponentDataRegisteredInternal(typeId))
+	{
+		return {};
+	}
+
+	const size_t idx = userComponentListIndexForDataType_[typeId];
+	assert(idx < UserComponentTypeList::size);
+
+	return std::invoke(UserComponentDispatchTable::template inner<TList>::kGetUserComponentId[idx]);
 }
 /**/

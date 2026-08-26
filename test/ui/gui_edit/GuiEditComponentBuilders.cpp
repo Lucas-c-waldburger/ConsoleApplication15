@@ -11,6 +11,8 @@
 #include "../../../core/Algorithms.h"
 #include "../../../components/RigidBodyComponent.h"
 #include "../../../events/EventBus2.h"
+#include "../../demo/collider_maker/ColliderMakerCommon.h"
+#include "../../../systems/util/DebugDrawUtils.h"
 #include <filesystem>
 
 namespace ui {
@@ -213,6 +215,8 @@ bool GuiEditComponentBuilder<RigidBody>::Draw(Entity& e, B2World& world)
 		.WithBodyLimits(bodyLimits_)
 		.Build(world));
 
+		assert(rb.body.GetData().IsValid());
+
 		bodyParams_ = {};
 		bodyLimits_ = {};
 
@@ -237,7 +241,65 @@ void GuiEditComponentBuilder<RigidBody>::SetIsActive(bool active)
 	isActive_ = active;
 }
 
-bool GuiEditComponentBuilder<Collider>::Draw(Entity& e, ReadOnly<B2Body>& roBody)
+void GuiEditComponentBuilder<Collider>::DrawShapePreview(ReadOnly<B2Body>& roBody, const Camera& cam)
+{
+	auto previewE = ECS::GetEntityByID(shapePreviewEntity_);
+	if (!previewE.IsValid())
+	{
+		previewE = ECS::CreateEntity();
+		previewE.AddComponent<InspectorTag>();
+		previewE.AddComponent<test::ShapeData>();
+		shapePreviewEntity_ = previewE.GetID();
+	}
+
+	assert(previewE.IsValid());
+	assert(previewE.HasComponent<test::ShapeData>());
+
+	auto& shapeData = previewE.GetComponent<test::ShapeData>();
+
+	shapeData.shapeType = shapeParams_.shapeType;
+	shapeData.color = SDLite::kColorOrange;
+
+	switch (shapeParams_.shapeType)
+	{
+	case B2Shape::Type::Polygon:
+	{
+		if (shapeParams_.dimensions.has_value())
+		{
+			auto [w, h] = *shapeParams_.dimensions;
+			shapeData.points = { {0.0f, 0.0f}, {w, 0.0f}, {w, h}, {0.0f, h} };
+		}
+		else
+		{
+			assert(shapeParams_.hull.has_value());
+			shapeData.points = *shapeParams_.hull;
+		}
+		break;
+	}
+	case B2Shape::Type::Circle:
+	{
+		assert(shapeParams_.radius.has_value());
+		shapeData.points = util::MakeCirclePerimeterPoints({0.0f, 0.0f}, *shapeParams_.radius);
+		break;
+	}
+	default:
+		break;
+	}
+
+	auto center = roBody.GetData().GetPosition();
+	if (shapeParams_.localPosition.has_value())
+	{
+		center += *shapeParams_.localPosition;
+	}
+	center = cam.WorldToScreen<SDL_FPoint>(center);
+
+	for (auto& p : shapeData.points)
+	{
+		p += center;
+	}
+}
+
+bool GuiEditComponentBuilder<Collider>::Draw(Entity& e, ReadOnly<B2Body>& roBody, const Camera& cam)
 {
 	assert(roBody.GetData().IsValid());
 
@@ -276,7 +338,7 @@ bool GuiEditComponentBuilder<Collider>::Draw(Entity& e, ReadOnly<B2Body>& roBody
 			if (shapeParams_.hull.has_value())
 			{
 				while (shapeParams_.hull->size() < 3)
-				{
+				{ 
 					shapeParams_.hull->emplace_back(0.0f, 0.0f);
 				}
 			}
@@ -360,18 +422,25 @@ bool GuiEditComponentBuilder<Collider>::Draw(Entity& e, ReadOnly<B2Body>& roBody
 	{
 		e.RemoveComponent<Collider>();
 
-		e.AddComponent(ComponentBuilder<Collider>{}
+		auto& col = e.AddComponent(ComponentBuilder<Collider>{}
 		 .WithShapeParameters(shapeParams_)
 		 .WithColliderSettings(colliderSettings_)
 		 .Build(roBody));
+
+		assert(col.shape.GetData().IsValid());
 
 		shapeParams_ = {};
 		colliderSettings_ = {};
 
 		WriteAccessor<B2Body>{}(roBody).SetAwake(true);
 
+		ClearShapePreview();
 		isActive_ = false;
 		built = true;
+	}
+	else if (canBuild)
+	{
+		DrawShapePreview(roBody, cam);
 	}
 
 	ImGui::EndDisabled();

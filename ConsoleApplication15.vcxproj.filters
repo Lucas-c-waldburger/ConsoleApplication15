@@ -2942,6 +2942,261 @@
     <ClInclude Include="scripting\user_types\ComponentIdLuaUserType.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\config.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core_name.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core_name14_disabled.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core_name20_static.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core_name26_reflection.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core14_classic.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core14_loophole.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core17.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core17_generated.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core26.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\core26_reflection.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\detectors.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\fake_object.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\fields_count.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\for_each_field.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\for_each_field_impl.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\functional.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\io.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\make_flat_tuple_of_references.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\make_integer_sequence.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\offset_based_getter.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\possible_reflectable.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\rvalue_t.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\sequence_tuple.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\size_array.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\size_t_.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\stdarray.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\stdtuple.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\tie_from_structure_tuple.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\detail\unsafe_declval.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\config.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\core.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\core_name.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\functions_for.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\functors.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\io.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\io_fields.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\ops.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\ops_fields.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\traits.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\traits_fwd.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr\tuple_size.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\pfr\boost\pfr.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Reflection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum_all.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum_containers.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum_flags.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum_format.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum_fuse.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum_iostream.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum_switch.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum_utility.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_all.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_containers.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_flags.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_format.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_fuse.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_iostream.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_switch.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\magic_enum\magic_enum\magic_enum_utility.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\detail\bases.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\detail\compute_base_modifiers.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\detail\config.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\detail\cx_streq.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\detail\list.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\detail\members.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\detail\pp_for_each.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\detail\pp_utilities.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\detail\void_t.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\bases.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\class.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\descriptor_by_name.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\descriptor_by_pointer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\enum.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\enum_from_string.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\enum_to_string.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\enumerators.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\members.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\modifier_description.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\modifiers.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe\operators.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\describe\boost\describe.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
