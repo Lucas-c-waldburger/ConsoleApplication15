@@ -10,6 +10,7 @@
 #include "gui_edit/GuiEditPropertyTable.h"
 #include "gui_edit/GuiComponentNames.h"
 #include "gui_edit/GuiEditComponentBuilders.h"
+#include "builder/EditorComponentBuilderManager.h"
 
 namespace ui {
 
@@ -28,10 +29,10 @@ public:
 
 	using GuiEditableComponentTypeList = filter_types_t<CoreComponentTypeList, GuiEditablePred>;
 
-	template <typename T>
-	using GuiBuilderPred = std::bool_constant<HasGuiEditComponentBuilder<T>>;
+	//template <typename T>
+	//using GuiBuilderPred = std::bool_constant<HasGuiEditComponentBuilder<T>>;
 
-	using GuiBuilderComponentTypeList = filter_types_t<CoreComponentTypeList, GuiBuilderPred>;
+	//using GuiBuilderComponentTypeList = filter_types_t<CoreComponentTypeList, GuiBuilderPred>;
 
 	template <typename T>
 	using GuiAddablePred = std::bool_constant<public_mutable_component_v<T> && HasGuiComponentName<T> 
@@ -74,14 +75,14 @@ public:
 
 	static Result<Void> Init(SceneFixture& scene);
 
-	static UpdateReport Update(ResourceContext& ctx);
+	static UpdateReport Update(Entity& e, SceneFixture& fixture);
 
 	static void ClearState();
 
 	static Buttons& GetButtons() { return buttons_; }
 	static SpritePicker& GetSpritePicker() { return spritePicker_; }
-	static const ComponentBuilderType& GetActiveBuilderType() { return activeBuilderType_; }
-	static void SetActiveBuilderType(ComponentBuilderType type) { activeBuilderType_ = type; }
+	static const ComponentBuilderType& GetActiveBuilderType() { return componentBuilders_.GetActiveBuilderType(); }
+	static void SetActiveBuilderType(ComponentBuilderType type) { componentBuilders_.SetActiveBuilder(type); }
 	static EditableComponentBitSet& GetComponentHeaderOpen() { return componentHeaderOpen_; }
 
 	static Result<Void> ResetForNewScene(SceneFixture& scene);
@@ -91,8 +92,9 @@ private:
 
 	static inline SpritePicker spritePicker_{};
 	static inline Buttons buttons_{};
-	static inline ComponentBuilderType activeBuilderType_ = ComponentBuilderType::None;
+	//static inline ComponentBuilderType activeBuilderType_ = ComponentBuilderType::None;
 	static inline EditableComponentBitSet componentHeaderOpen_{};
+	static inline EditorComponentBuilderManager componentBuilders_{};
 
 	InspectorComponentPanel() = default;
 };

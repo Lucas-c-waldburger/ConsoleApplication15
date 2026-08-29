@@ -1019,7 +1019,7 @@ bool ShapeManager::ShouldDrawPoint(const Point& pointStruct, const AppState& app
 		if (appState.editMode == EditMode::DraggingShape)
 		{
 			return true;
-		}
+		} 
 
 		if (&GetFocusedPoint() == &pointStruct)
 		{

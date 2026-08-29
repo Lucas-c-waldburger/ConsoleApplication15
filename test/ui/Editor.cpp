@@ -16,10 +16,10 @@ namespace ui {
 
 namespace {
 
-bool RightClickedWithComponentPanelOpen()
+bool UserWantsClearSelectedEntity()
 {
 	return Editor::GetActivePanel() == Editor::PanelType::Components &&
-		  GuiMouse::IsRightClicked();
+		   ImGui::IsKeyPressed(ImGuiKey_Escape);
 }
 
 void DrawSelectionState()
@@ -240,7 +240,7 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 	AtUpdateBegin atUpdateBegin{};
 	auto currentState = updateState_.Take();
 
-	if (RightClickedWithComponentPanelOpen())
+	if (UserWantsClearSelectedEntity())
 	{
 		InspectorEntityPanel::ClearSelection();
 		InspectorComponentPanel::ClearState();
@@ -305,24 +305,24 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 				const auto selectedEntityId = InspectorEntityPanel::GetSelection().entityId;
 				if (selectedEntityId != atUpdateBegin.selectedEntity)
 				{
-					InspectorComponentPanel::SetActiveBuilderType(ComponentBuilderType::None);
+					InspectorComponentPanel::SetActiveBuilderType(kInvalidComponentBuilderType);
 				}
 
 				auto e = ECS::GetEntityByID(selectedEntityId);
 				assert(e.IsValid());
 
-				const auto& auxRepo = scene->GetAuxTextureRepository();
-				assert(auxRepo);
+				//const auto& auxRepo = scene->GetAuxTextureRepository();
+				//assert(auxRepo);
 
-				auto cmpCtx = InspectorComponentPanel::ResourceContext{ 
-					.entity = e,
-					.textureRepo = *auxRepo,
-					.world = scene->GetWorld(),
-					.scriptSys = scene->GetSystem<ScriptSystem>(),
-					.eventBus = scene->GetEventBus(),
-					.camera = scene->GetCamera()
-				};
-				InspectorComponentPanel::Update(cmpCtx);
+				//auto cmpCtx = InspectorComponentPanel::ResourceContext{ 
+				//	.entity = e,
+				//	.textureRepo = *auxRepo,
+				//	.world = scene->GetWorld(),
+				//	.scriptSys = scene->GetSystem<ScriptSystem>(),
+				//	.eventBus = scene->GetEventBus(),
+				//	.camera = scene->GetCamera()
+				//};
+				InspectorComponentPanel::Update(e, *scene);
 			}
 
 			ImGui::EndTabItem();

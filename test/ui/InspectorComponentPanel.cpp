@@ -9,6 +9,7 @@
 #include "../../components/util/ComponentValidPreds.h"
 #include "../demo/collider_maker/ColliderMakerCommon.h"
 #include "../demo/collider_maker/ColliderDrawSystem.h"
+#include "ColliderEditUtility.h"
 
 namespace ui {
 
@@ -589,7 +590,8 @@ void DrawComponents(InspectorComponentPanel::ResourceContext& ctx, UpdateReport&
 Result<Void> InspectorComponentPanel::ResetForNewScene(SceneFixture& scene)
 {
 	componentHeaderOpen_.Reset();
-	activeBuilderType_ = ComponentBuilderType::None;
+	componentBuilders_.ClearActiveBuilder();
+	//activeBuilderType_ = ComponentBuilderType::None;
 
 	//const auto& spriteAtlas = scene.GetTextureRepository().GetSpriteAtlas();
 	//buttons_.remove.defaultSprite = spriteAtlas.GetSprite("delete_icon");
@@ -601,7 +603,7 @@ Result<Void> InspectorComponentPanel::ResetForNewScene(SceneFixture& scene)
 	return kVoid;
 }
 
-Result<Void> InspectorComponentPanel::LoadResources(SceneFixture& scene)
+Result<Void> InspectorComponentPanel::LoadResources(SceneFixture& fixture)
 {
 	TRY(ResourcePath::Sprite("ui/editor/delete_icon.png"), deleteIconPath);
 	TRY(ResourcePath::Sprite("ui/editor/visibility_on_icon.png"), visibleOnIconPath);
@@ -609,8 +611,7 @@ Result<Void> InspectorComponentPanel::LoadResources(SceneFixture& scene)
 	TRY(ResourcePath::Sprite("ui/editor/undo_icon.png"), undoIconPath);
 	TRY(ResourcePath::Sprite("ui/editor/redo_icon.png"), redoIconPath);
 
-	//auto& spriteAtlas = scene.GetTextureRepository().GetSpriteAtlas();
-	auto& auxRepo = scene.GetAuxTextureRepository();
+	auto& auxRepo = fixture.GetAuxTextureRepository();
 	if (!auxRepo)
 	{
 		return MAKE_ERROR("Aux TextureRepository was null");
@@ -618,33 +619,49 @@ Result<Void> InspectorComponentPanel::LoadResources(SceneFixture& scene)
 	auto& spriteAtlas = auxRepo->GetSpriteAtlas();
 
 	TRY_ASSIGN(buttons_.remove.defaultSprite, spriteAtlas.LoadSprite(
-		scene.GetRenderer(), { .filepath = std::move(deleteIconPath) }));
+		fixture.GetRenderer(), { .filepath = std::move(deleteIconPath) }));
 	TRY_ASSIGN(buttons_.hide.defaultSprite, spriteAtlas.LoadSprite(
-		scene.GetRenderer(), { .filepath = std::move(visibleOnIconPath) }));
+		fixture.GetRenderer(), { .filepath = std::move(visibleOnIconPath) }));
 	TRY_ASSIGN(buttons_.hide.activatedSprite, spriteAtlas.LoadSprite(
-		scene.GetRenderer(), { .filepath = std::move(visibleOffIconPath) }));
+		fixture.GetRenderer(), { .filepath = std::move(visibleOffIconPath) }));
 	TRY_ASSIGN(buttons_.undo.sprite, spriteAtlas.LoadSprite(
-		scene.GetRenderer(), { .filepath = std::move(undoIconPath) }));
+		fixture.GetRenderer(), { .filepath = std::move(undoIconPath) }));
 	TRY_ASSIGN(buttons_.redo.sprite, spriteAtlas.LoadSprite(
-		scene.GetRenderer(), { .filepath = std::move(redoIconPath) }));
+		fixture.GetRenderer(), { .filepath = std::move(redoIconPath) }));
 
 	return kVoid;
 }
 
-Result<Void> InspectorComponentPanel::Init(SceneFixture& scene)
+Result<Void> InspectorComponentPanel::Init(SceneFixture& fixture)
 {
-	ECS::RegisterComponent<test::ShapeData>();
+	//ECS::RegisterComponent<test::ShapeData>();
 
-	scene.RegisterSystem<test::ColliderDrawSystem>(Phase::Presentation);
+	//scene.RegisterSystem<test::ColliderDrawSystem>(Phase::Presentation);
 
-	TRY(LoadResources(scene));
+	TRY(LoadResources(fixture));
+
+	TRY(componentBuilders_.Init(fixture));
+
+	//TRY(GuiEditComponentBuilder<Collider>::Init(fixture));
 
 	return kVoid;
-}
+} 
 
-InspectorComponentPanel::UpdateReport InspectorComponentPanel::Update(ResourceContext& ctx)
+auto InspectorComponentPanel::Update(Entity& e, SceneFixture& fixture) -> UpdateReport
 {
+	const auto& auxRepo = fixture.GetAuxTextureRepository();
+	assert(auxRepo);
+
 	UpdateReport report = UpdateReport::None;
+
+	auto ctx = ResourceContext{
+		.entity = e,
+		.textureRepo = *auxRepo,
+		.world = fixture.GetWorld(),
+		.scriptSys = fixture.GetSystem<ScriptSystem>(),
+		.eventBus = fixture.GetEventBus(),
+		.camera = fixture.GetCamera()
+	};
 
 	if (!ctx.entity.IsValid())
 	{
@@ -661,47 +678,61 @@ InspectorComponentPanel::UpdateReport InspectorComponentPanel::Update(ResourceCo
 
 	ImGui::EndChild();
 
-	if (activeBuilderType_ != ComponentBuilderType::None)
+	if (componentBuilders_.HasActiveBuilder())
 	{
 		ImGui::BeginChild("ComponentBuilder", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY);
 
-		bool built = false;
-
-		switch (activeBuilderType_)
-		{
-		case ComponentBuilderType::RigidBody:
-		{
-			built = GuiEditComponentBuilder<RigidBody>::Draw(ctx.entity, ctx.world);
-			break;
-		}
-		case ComponentBuilderType::Collider:
-		{
-			if (!ctx.entity.HasComponent<RigidBody>(&RigidBodyValid))
-			{
-				activeBuilderType_ = ComponentBuilderType::None;
-			}
-
-			auto& body = ctx.entity.GetComponent<RigidBody>().body;
-
-			built = GuiEditComponentBuilder<Collider>::Draw(ctx.entity, body, ctx.camera);
-			break;
-		}
-		case ComponentBuilderType::EventCallback:
-		{
-			built = GuiEditComponentBuilder<CallbackInfo>::Draw(ctx.entity, ctx.scriptSys, ctx.eventBus);
-			break;
-		}
-		default:
-			break;
-		}
-
+		const bool built = componentBuilders_.DrawActiveBuilder(e, fixture);
 		if (built)
 		{
-			activeBuilderType_ = ComponentBuilderType::None;
+			componentBuilders_.ClearActiveBuilder();
 		}
 
 		ImGui::EndChild();
 	}
+
+	//if (activeBuilderType_ != ComponentBuilderType::None)
+	//{
+	//	ImGui::BeginChild("ComponentBuilder", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY);
+
+	//	bool built = false;
+
+	//	switch (activeBuilderType_)
+	//	{
+	//	case ComponentBuilderType::RigidBody:
+	//	{
+	//		built = GuiEditComponentBuilder<RigidBody>::Draw(ctx.entity, ctx.world);
+	//		break;
+	//	}
+	//	case ComponentBuilderType::Collider:
+	//	{
+	//		if (!ctx.entity.HasComponent<RigidBody>(&RigidBodyValid))
+	//		{
+	//			activeBuilderType_ = ComponentBuilderType::None;
+	//		}
+
+	//		auto& body = ctx.entity.GetComponent<RigidBody>().body;
+
+	//		//built = GuiEditComponentBuilder<Collider>::Draw(ctx.entity, body, ctx.camera);
+	//		built = GuiEditComponentBuilder<Collider>::DrawInteractive(ctx.entity, body, ctx.camera);
+	//		break;
+	//	}
+	//	case ComponentBuilderType::EventCallback:
+	//	{
+	//		built = GuiEditComponentBuilder<CallbackInfo>::Draw(ctx.entity, ctx.scriptSys, ctx.eventBus);
+	//		break;
+	//	}
+	//	default:
+	//		break;
+	//	}
+
+	//	if (built)
+	//	{
+	//		activeBuilderType_ = ComponentBuilderType::None;
+	//	}
+
+	//	ImGui::EndChild();
+	//}
 
 	return report;
 }
@@ -709,6 +740,7 @@ InspectorComponentPanel::UpdateReport InspectorComponentPanel::Update(ResourceCo
 void InspectorComponentPanel::ClearState()
 {
 	componentHeaderOpen_.Reset();
+	componentBuilders_.ClearActiveBuilder();
 }
 
 } // ui

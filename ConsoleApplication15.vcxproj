@@ -309,7 +309,12 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="test\setups\TileSet.cpp" />
+    <ClCompile Include="test\ui\builder\EditorColliderBuilder.cpp" />
+    <ClCompile Include="test\ui\builder\EditorComponentBuilderManager.cpp" />
+    <ClCompile Include="test\ui\builder\EditorEventCallbackBuilder.cpp" />
+    <ClCompile Include="test\ui\builder\EditorRigidBodyBuilder.cpp" />
     <ClCompile Include="test\ui\CameraControlUtility.cpp" />
+    <ClCompile Include="test\ui\ColliderEditUtility.cpp" />
     <ClCompile Include="test\ui\ComponentEditHistory.cpp" />
     <ClCompile Include="test\ui\ControllerMappingEditor.cpp" />
     <ClCompile Include="test\ui\Editor.cpp" />
@@ -882,7 +887,13 @@
     <ClInclude Include="test\demo\collider_maker\ColliderMakerCommon.h" />
     <ClInclude Include="test\FixtureLua.h" />
     <ClInclude Include="test\SceneRegistry.h" />
+    <ClInclude Include="test\ui\builder\EditorColliderBuilder.h" />
+    <ClInclude Include="test\ui\builder\EditorComponentBuilderManager.h" />
+    <ClInclude Include="test\ui\builder\EditorEventCallbackBuilder.h" />
+    <ClInclude Include="test\ui\builder\EditorRigidBodyBuilder.h" />
+    <ClInclude Include="test\ui\builder\IEditorComponentBuilder.h" />
     <ClInclude Include="test\ui\CameraControlUtility.h" />
+    <ClInclude Include="test\ui\ColliderEditUtility.h" />
     <ClInclude Include="test\ui\ComponentEditHistory.h" />
     <ClInclude Include="test\ui\Editor.h" />
     <ClInclude Include="test\ui\EntityDragUtility.h" />
