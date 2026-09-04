@@ -73,18 +73,25 @@ void Editor::DestroyEditorEntities()
 
 void Editor::HandleEntityDrag(const Camera& cam, Entity_t selectedEntityAtUpdateStart)
 {
-	if (InspectorEntityPanel::GetSelection().IsEditing())
+	if (InspectorComponentPanel::GetActiveBuilderType() == ComponentBuilderType::Collider)
 	{
-		if (InspectorEntityPanel::GetSelection().entityId != selectedEntityAtUpdateStart)
-		{
-			entityDrag_.Reset();
-		}
-
-		auto e = ECS::GetEntityByID(InspectorEntityPanel::GetSelection().entityId);
-		assert(e.IsValid());
-
-		entityDrag_.Update(e, cam);
+		return;
 	}
+
+	if (!InspectorEntityPanel::GetSelection().IsEditing())
+	{
+		return;
+	}
+
+	if (InspectorEntityPanel::GetSelection().entityId != selectedEntityAtUpdateStart)
+	{
+		entityDrag_.Reset();
+	}
+
+	auto e = ECS::GetEntityByID(InspectorEntityPanel::GetSelection().entityId);
+	assert(e.IsValid());
+
+	entityDrag_.Update(e, cam);
 }
 
 void Editor::HandleCameraControl(Camera& cam, float dt)
@@ -311,17 +318,6 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 				auto e = ECS::GetEntityByID(selectedEntityId);
 				assert(e.IsValid());
 
-				//const auto& auxRepo = scene->GetAuxTextureRepository();
-				//assert(auxRepo);
-
-				//auto cmpCtx = InspectorComponentPanel::ResourceContext{ 
-				//	.entity = e,
-				//	.textureRepo = *auxRepo,
-				//	.world = scene->GetWorld(),
-				//	.scriptSys = scene->GetSystem<ScriptSystem>(),
-				//	.eventBus = scene->GetEventBus(),
-				//	.camera = scene->GetCamera()
-				//};
 				InspectorComponentPanel::Update(e, *scene);
 			}
 

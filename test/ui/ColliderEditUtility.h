@@ -67,6 +67,7 @@ public:
 
 		bool IsValid() const;
 
+		bool IsPointInside(SDL_FPoint point) const;
 		SDL_Rect GetBoundingBox() const;
 		bool CanAddMorePoints() const;
 		bool CanBuild() const;
@@ -97,8 +98,8 @@ public:
 		Camera* cam_ = nullptr;
 	};
 
-	static constexpr SDL_Color kTextColor = SDLite::kColorBlack;
-	static constexpr int kFontSize = 36;
+	static constexpr SDL_Color kTextColor = SDLite::kColorPink;
+	static constexpr int kFontSize = 22;
 	static constexpr std::string_view kFontName = "GoNotoKurrent-Regular";
 	static constexpr std::string_view kFontFileName = "GoNotoKurrent-Regular.ttf";
 	static constexpr std::string_view kPointCircleIconSpriteName = "circle_icon";

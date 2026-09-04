@@ -49,6 +49,16 @@ public:
         return FromSprite(repo_.GetSpriteAtlas().GetSprite(spriteName));
     }
 
+    GuiTexture FromTextureResource(const Handle<TextureResource>& handle, const AtlasPlot& plot)
+    {
+        if (!handle.IsValid())
+        {
+            return GuiTexture::Default();
+        }
+
+		return MakeGuiTexture(repo_.GetSourceTexture(handle), plot);
+    }
+
     GuiTexture FromGlyph(const Glyph& glyph, std::string_view fontName) const
     {
         const auto& fnt = repo_.GetFontAtlas().GetFont(fontName);

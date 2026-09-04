@@ -15,8 +15,14 @@ constexpr bool IsPowerOfTwo(size_t x) noexcept
 
 } // unnamed
 
+/** @defgroup SpriteAtlasTexture @{ */
+
+//// TODO:
+    // replace atlasId with atlasIndex in SpriteInfo - get atlasId when needed using atlasIndex
+    // 
+
 SpriteAtlasTexture::SpriteAtlasTexture(SpriteAtlasTexture&& other) noexcept : 
-    TextureAtlas(std::move(other))
+	TextureAtlas(std::move(other)), isReserved_(other.isReserved_)
 {}
 
 SpriteAtlasTexture& SpriteAtlasTexture::operator=(SpriteAtlasTexture&& other) noexcept
@@ -24,12 +30,13 @@ SpriteAtlasTexture& SpriteAtlasTexture::operator=(SpriteAtlasTexture&& other) no
     if (this != &other)
     {
         TextureAtlas::operator=(std::move(other));
+		isReserved_ = other.isReserved_;
     }
     return *this;
 }
 
 Result<SpriteAtlasTexture>
-SpriteAtlasTexture::Create(SDL_Renderer* renderer, size_t size)
+SpriteAtlasTexture::Create(SDL_Renderer* renderer, size_t size, bool isReserved)
 {
     SpriteAtlasTexture atlas{ GetNextAtlasID() };
 
@@ -48,6 +55,8 @@ SpriteAtlasTexture::Create(SDL_Renderer* renderer, size_t size)
     SDL_SetTextureBlendMode(atlas.atlasTexture_.get(), SDL_BLENDMODE_BLEND);
 
     atlas.binPack_.Init(size, size, false);
+
+	atlas.isReserved_ = isReserved;
 
     return atlas;
 }
@@ -116,7 +125,31 @@ SpriteAtlasTexture::LoadSprite(SDL_Renderer* renderer, const SpriteDescriptor& d
     };
 }
 
-Result<Void> SpriteAtlasTexture::RebuildSourceTexture(SDL_Renderer* renderer, 
+Result<Void> SpriteAtlasTexture::OverwriteSprite(SDL_Renderer* renderer, UniqueSurfacePtr& spriteSurface,
+                                                 AtlasPlot& plot)
+{
+    if (!IsLoaded())
+    {
+        return MAKE_ERROR("Atlas was not loaded");
+    }
+
+    assert(spriteSurface);
+
+    auto spriteTexture = MakeUniqueTexturePtrFromSurface(renderer, spriteSurface.get());
+    if (!spriteTexture)
+    {
+        return MAKE_ERROR(SDL_GetError());
+    }
+
+    if (SDL_RenderCopy(renderer, spriteTexture.get(), nullptr, &plot.rect) != 0)
+    {
+        return MAKE_ERROR(SDL_GetError());
+    }
+
+    return kVoid;
+}
+
+Result<Void> SpriteAtlasTexture::RebuildSourceTexture(SDL_Renderer* renderer,
                                                   const SpriteInfoSOA& spriteInfo, 
                                                   size_t& runningIdxCounter)
 {
@@ -185,49 +218,19 @@ Result<Void> SpriteAtlasTexture::RebuildSourceTexture(SDL_Renderer* renderer,
 
     return kVoid;
 }
+/** @} */
 
-// SPRITE ATLAS
-//SpriteAtlas::SpriteAtlas(SpriteAtlas&& other) noexcept : 
-//    TextureCreationNotifier(std::move(other)),
-//    spriteAtlasTextures_(std::move(other.spriteAtlasTextures_)),
-//    spriteInfo_(std::move(other.spriteInfo_)),
-//    rebuildTexturesSignalToken_(std::move(other.rebuildTexturesSignalToken_)),
-//    textureSize_(other.textureSize_), growthPolicy_(other.growthPolicy_)
-//{}
-
-//SpriteAtlas& SpriteAtlas::operator=(SpriteAtlas&& other) noexcept
-//{
-//    if (this == &other)
-//    {
-//        return *this;
-//    }
-//
-//    TextureCreationNotifier::operator=(std::move(other));
-//    spriteAtlasTextures_ = std::move(other.spriteAtlasTextures_);
-//    spriteInfo_ = std::move(other.spriteInfo_);
-//    rebuildTexturesSignalToken_ = std::move(other.rebuildTexturesSignalToken_);
-//    textureSize_ = other.textureSize_;
-//    growthPolicy_ = other.growthPolicy_;
-//
-//    return *this;
-//}
-
+/** @defgroup SpriteAtlas @{ */
 Result<Sprite> SpriteAtlas::LoadSprite(SDL_Renderer* renderer,
                                        SpriteDescriptor&& descriptor)
 {
     if (spriteAtlasTextures_.empty())
     {
-        assert(textureSize_ > 0);
-
-        TRY_ASSIGN(spriteAtlasTextures_.emplace_back(),
-            SpriteAtlasTexture::Create(renderer, textureSize_));
-
-        NotifyTextureCreated(spriteAtlasTextures_.back().GetAtlasID(), 
-                             spriteAtlasTextures_.back().GetSourceTexture());
+        TRY(AddNewAtlasTexture(renderer));
     }
     assert(!spriteAtlasTextures_.empty());
 
-    SDL_SetRenderTarget(renderer, spriteAtlasTextures_.back().GetSourceTexture());
+    //SDL_SetRenderTarget(renderer, spriteAtlasTextures_.back().GetSourceTexture());
 
     auto loadResult = LoadSpriteImpl(renderer, std::move(descriptor));
 
@@ -236,9 +239,101 @@ Result<Sprite> SpriteAtlas::LoadSprite(SDL_Renderer* renderer,
     return loadResult;
 }
 
+Result<Void> SpriteAtlas::DefineSpriteSeries(std::string_view seriesName, std::span<const Sprite> sprites)
+{
+    if (spriteSeriesDefs_.contains(seriesName))
+    {
+        return MAKE_ERROR_FMT("Sprite series with name '{}' already exists", seriesName);
+    }
+
+    auto& indices = spriteSeriesDefs_[seriesName];
+    indices.reserve(sprites.size());
+
+    for (size_t i = 0; i < sprites.size(); ++i)
+    {
+        if (!IsSpriteValid(sprites[i]))
+        {
+            return MAKE_ERROR_FMT("Sprite at index '{}' was invalid", i);
+        }
+
+        indices.emplace_back(sprites[i].resourceHandle.GetResourceIndex());
+    }
+
+    return kVoid;
+}
+
+bool SpriteAtlas::RemoveSpriteSeries(std::string_view seriesName)
+{
+    return spriteSeriesDefs_.erase(seriesName) > 0;
+}
+
+bool SpriteAtlas::RemoveSpriteSeriesMember(std::string_view seriesName, const Sprite& sprite)
+{
+    auto it = spriteSeriesDefs_.find(seriesName);
+    if (it == spriteSeriesDefs_.end())
+    {
+        return false;
+    }
+
+    return core::Erase(it->second, sprite.resourceHandle.GetResourceIndex());
+}
+
+size_t SpriteAtlas::GetSpriteSeriesMemberIndex(std::string_view seriesName, const Sprite& sprite) const
+{
+    auto it = spriteSeriesDefs_.find(seriesName);
+    if (it == spriteSeriesDefs_.end())
+    {
+        return std::numeric_limits<size_t>::max();
+    }
+
+	const auto spriteIdx = static_cast<size_t>(sprite.resourceHandle.GetResourceIndex());
+	auto foundIt = core::Find(it->second, spriteIdx);
+
+    return (foundIt != it->second.end()) 
+        ? static_cast<size_t>(std::distance(it->second.begin(), foundIt)) 
+        : std::numeric_limits<size_t>::max();
+}
+
+bool SpriteAtlas::EraseSprite(const Sprite& sprite)
+{
+    const auto spriteIdx = sprite.resourceHandle.GetResourceIndex();
+    if (spriteIdx >= spriteInfo_.Size())
+    {
+        return false;
+    }
+
+    auto [filepath, name, plot] = spriteInfo_.GetView<&SpriteInfo::filepath,
+                                                      &SpriteInfo::spriteName,
+                                                      &SpriteInfo::plot>(spriteIdx);
+    if (filepath.empty())
+    {
+        assert(name.empty());
+        return false;
+    }
+
+    assert(plot.rect.w > 0 && plot.rect.y <= 0);
+
+    filepath.clear();
+    name.clear();
+
+    freePlots_.emplace_back(spriteIdx);
+
+    for (auto& [_, seriesMemberIdx] : spriteSeriesDefs_)
+    {
+        core::Erase(seriesMemberIdx, spriteIdx);
+	}
+
+    return true;
+}
+
 size_t SpriteAtlas::GetTextureCount() const
 {
     return spriteAtlasTextures_.size();
+}
+
+size_t SpriteAtlas::GetSpriteCount() const 
+{
+	return spriteInfo_.Size() - freePlots_.size();
 }
 
 size_t SpriteAtlas::GetTextureSize() const
@@ -261,16 +356,141 @@ void SpriteAtlas::SetTextureGrowthPolicy(TextureGrowthPolicy policy)
     growthPolicy_ = policy;
 }
 
-//void SpriteAtlas::FillTextureMap(TextureObserverPassKey pk, TextureMap& map)
+Result<Sprite> SpriteAtlas::OverwriteSprite(SDL_Renderer* renderer, UniqueSurfacePtr& spriteSurface, 
+                                            SpriteDescriptor&& descriptor, size_t freePlotIdx)
+{
+    auto [filepath, spriteName, plot, gen, atlasIndex] = spriteInfo_.GetView<
+        &SpriteInfo::filepath,
+        &SpriteInfo::spriteName,
+        &SpriteInfo::plot,
+        &SpriteInfo::generation,
+        &SpriteInfo::atlasIndex>(freePlots_[freePlotIdx]);
+
+    assert(atlasIndex < spriteAtlasTextures_.size());
+
+    SDL_SetRenderTarget(renderer, spriteAtlasTextures_[atlasIndex].GetSourceTexture());
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+
+    SDL_Rect resizedRect{
+        .x = plot.rect.x,
+        .y = plot.rect.y,
+        .w = spriteSurface->w,
+        .h = spriteSurface->h
+    };
+
+    if (SDL_RenderFillRect(renderer, &resizedRect) < 0)
+    {
+        SDL_SetRenderTarget(renderer, nullptr);
+
+        return MAKE_ERROR(SDL_GetError());
+    }
+
+    SDL_SetRenderTarget(renderer, spriteAtlasTextures_[atlasIndex].GetSourceTexture());
+
+    TRY(spriteAtlasTextures_[atlasIndex].OverwriteSprite(renderer, spriteSurface, plot));
+
+    filepath = std::move(descriptor.filepath);
+    spriteName = std::move(descriptor.spriteName);
+    plot.rect = resizedRect;
+    ++gen;
+
+    const auto backIdx = freePlots_.size();
+    freePlots_[freePlotIdx] = freePlots_[backIdx];
+    freePlots_.pop_back();
+
+    return MakeSprite(freePlots_[freePlotIdx]);
+}
+
+//Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
+//										   SpriteDescriptor&& descriptor)
 //{
-//    for (auto& spriteAtlasTexture : spriteAtlasTextures_)
+//    if (!std::filesystem::exists(descriptor.filepath))
 //    {
-//        map[spriteAtlasTexture.GetAtlasID()] = spriteAtlasTexture.GetSourceTexture();
+//        return MAKE_ERROR_FMT("Invalid filepath: '{}'", descriptor.filepath);
 //    }
+//
+//    if (descriptor.spriteName.empty())
+//    {
+//        descriptor.spriteName = 
+//            std::filesystem::path(descriptor.filepath).stem().string();
+//    }
+//
+//    if (auto it = spriteNameIndices_.find(descriptor.spriteName);
+//        it != spriteNameIndices_.end())
+//    {
+//        LOG_INFO_FMT("Sprite name '{}' already exists in atlas. Returning original sprite", 
+//            descriptor.spriteName);
+//
+//        return MakeSprite(it->second);
+//    }
+//
+//    assert(!spriteAtlasTextures_.empty());
+//
+//    using Outcome = SpriteAtlasTexture::SpriteLoadOutcome;
+//    Outcome loadOutcome{};
+//	size_t originalTextureSize = textureSize_;
+//    do 
+//    {
+//        TRY_ASSIGN(loadOutcome, spriteAtlasTextures_.back().LoadSprite(renderer, descriptor));
+//        
+//        if (loadOutcome.code == Outcome::SpriteTooLarge)
+//        {
+//            if (growthPolicy_ == TextureGrowthPolicy::FixedSize ||
+//                textureSize_ >= TextureAtlas::kMaxAtlasSize)
+//            {
+//                return MAKE_ERROR_FMT("Sprite '{}' was too large to fit in atlas texture",
+//                    descriptor.filepath);
+//			}
+//            else
+//            {
+//				textureSize_ = std::min(textureSize_ * 2, TextureAtlas::kMaxAtlasSize);
+//				loadOutcome.code = Outcome::AtlasFull;
+//            }
+//		}
+//        if (loadOutcome.code == Outcome::AtlasFull)
+//        {
+//            TRY_ASSIGN(spriteAtlasTextures_.emplace_back(),
+//                SpriteAtlasTexture::Create(renderer, textureSize_));
+//
+//            auto& newAtlas = spriteAtlasTextures_.back();
+//
+//            NotifyTextureCreated(newAtlas.GetAtlasID(), newAtlas.GetSourceTexture());
+//
+//            SDL_SetRenderTarget(renderer, newAtlas.GetSourceTexture());
+//        }
+//
+//    } while (loadOutcome.code != Outcome::Success);
+//
+//    textureSize_ = originalTextureSize;
+//
+//    auto& newSpriteInfo = loadOutcome.spriteInfo;
+//    newSpriteInfo.spriteName = std::move(descriptor.spriteName);
+//    newSpriteInfo.filepath = std::move(descriptor.filepath);
+//
+//    size_t spriteIdx = spriteInfo_.PushBack(std::move(newSpriteInfo));
+//
+//    auto [_, inserted] = spriteNameIndices_.try_emplace(
+//        spriteInfo_.GetView<&SpriteInfo::spriteName>(spriteIdx), spriteIdx
+//    );
+//    assert(inserted);
+//
+//    const auto& plot = spriteInfo_.GetView<&SpriteInfo::plot>(spriteIdx);
+//    assert(plot.rect.w > 0 && plot.rect.h > 0);
+//
+//    const auto resourceHandle = Handle<TextureResource>::Create(
+//        spriteAtlasTextures_.back().GetAtlasID(), spriteIdx
+//    );
+//
+//    return Sprite{
+//        .resourceHandle = resourceHandle,
+//        .plot = plot
+//    };
 //}
 
 Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
-										   SpriteDescriptor&& descriptor)
+                                           SpriteDescriptor&& descriptor)
 {
     if (!std::filesystem::exists(descriptor.filepath))
     {
@@ -279,14 +499,14 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
 
     if (descriptor.spriteName.empty())
     {
-        descriptor.spriteName = 
+        descriptor.spriteName =
             std::filesystem::path(descriptor.filepath).stem().string();
     }
 
     if (auto it = spriteNameIndices_.find(descriptor.spriteName);
         it != spriteNameIndices_.end())
     {
-        LOG_INFO_FMT("Sprite name '{}' already exists in atlas. Returning original sprite", 
+        LOG_INFO_FMT("Sprite name '{}' already exists in atlas. Returning original sprite",
             descriptor.spriteName);
 
         return MakeSprite(it->second);
@@ -296,11 +516,33 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
 
     using Outcome = SpriteAtlasTexture::SpriteLoadOutcome;
     Outcome loadOutcome{};
-	size_t originalTextureSize = textureSize_;
-    do 
+    size_t originalTextureSize = textureSize_;
+
+    auto spriteSurface = MakeUniqueSurfacePtr(descriptor.filepath);
+    if (!spriteSurface)
     {
+        return MAKE_ERROR(IMG_GetError());
+    }
+    if (spriteSurface->w <= 0 || spriteSurface->h <= 0)
+    {
+        return MAKE_ERROR_FMT("Invalid surface dimensions: ({}, {})",
+            spriteSurface->w, spriteSurface->h);
+    }
+
+    // if large-enough plot available, overwrite it
+    const auto freePlotIdx = FindSuitableFreePlotIndex(spriteSurface->w, spriteSurface->h);
+    if (freePlotIdx < freePlots_.size())
+    {
+        return OverwriteSprite(renderer, spriteSurface, std::move(descriptor), freePlotIdx);
+    }
+
+    // else no free plot to reuse - make new one
+    do
+    {
+        SDL_SetRenderTarget(renderer, spriteAtlasTextures_.back().GetSourceTexture());
+
         TRY_ASSIGN(loadOutcome, spriteAtlasTextures_.back().LoadSprite(renderer, descriptor));
-        
+
         if (loadOutcome.code == Outcome::SpriteTooLarge)
         {
             if (growthPolicy_ == TextureGrowthPolicy::FixedSize ||
@@ -308,23 +550,16 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
             {
                 return MAKE_ERROR_FMT("Sprite '{}' was too large to fit in atlas texture",
                     descriptor.filepath);
-			}
+            }
             else
             {
-				textureSize_ = std::min(textureSize_ * 2, TextureAtlas::kMaxAtlasSize);
-				loadOutcome.code = Outcome::AtlasFull;
+                textureSize_ = std::min(textureSize_ * 2, TextureAtlas::kMaxAtlasSize);
+                loadOutcome.code = Outcome::AtlasFull;
             }
-		}
+        }
         if (loadOutcome.code == Outcome::AtlasFull)
         {
-            TRY_ASSIGN(spriteAtlasTextures_.emplace_back(),
-                SpriteAtlasTexture::Create(renderer, textureSize_));
-
-            auto& newAtlas = spriteAtlasTextures_.back();
-
-            NotifyTextureCreated(newAtlas.GetAtlasID(), newAtlas.GetSourceTexture());
-
-            SDL_SetRenderTarget(renderer, newAtlas.GetSourceTexture());
+            TRY(AddNewAtlasTexture(renderer));
         }
 
     } while (loadOutcome.code != Outcome::Success);
@@ -332,27 +567,100 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
     textureSize_ = originalTextureSize;
 
     auto& newSpriteInfo = loadOutcome.spriteInfo;
-    newSpriteInfo.spriteName = std::move(descriptor.spriteName);
+    newSpriteInfo.spriteName = descriptor.spriteName;
     newSpriteInfo.filepath = std::move(descriptor.filepath);
+	newSpriteInfo.atlasIndex = spriteAtlasTextures_.size() - 1;
+	newSpriteInfo.generation = 0;
 
     size_t spriteIdx = spriteInfo_.PushBack(std::move(newSpriteInfo));
 
-    auto [_, inserted] = spriteNameIndices_.try_emplace(
-        spriteInfo_.GetView<&SpriteInfo::spriteName>(spriteIdx), spriteIdx
-    );
+    auto [_, inserted] = spriteNameIndices_.try_emplace(descriptor.spriteName, spriteIdx);
     assert(inserted);
 
-    const auto& plot = spriteInfo_.GetView<&SpriteInfo::plot>(spriteIdx);
+    [[maybe_unused]] const auto& plot = spriteInfo_.GetView<&SpriteInfo::plot>(spriteIdx);
     assert(plot.rect.w > 0 && plot.rect.h > 0);
 
     const auto resourceHandle = Handle<TextureResource>::Create(
-        spriteAtlasTextures_.back().GetAtlasID(), spriteIdx
+        spriteAtlasTextures_.back().GetAtlasID(), spriteIdx, 0
     );
 
     return Sprite{
         .resourceHandle = resourceHandle,
         .plot = plot
     };
+}
+
+size_t SpriteAtlas::FindSuitableFreePlotIndex(int spriteW, int spriteH) const
+{
+    assert(spriteW > 0 && spriteH > 0);
+
+    size_t overwriteIndex = std::numeric_limits<size_t>::max();
+    int leastAreaWaste = std::numeric_limits<int>::max();
+    for (size_t i = 0; i < freePlots_.size(); ++i)
+    {
+        const auto idx = freePlots_[i];
+
+        assert(idx < spriteInfo_.Size());
+
+        const auto& plot = spriteInfo_.GetView<&SpriteInfo::plot>(idx);
+        if (spriteW > plot.rect.w || spriteH > plot.rect.h)
+        {
+            continue;
+        }
+
+        const int areaWaste = plot.rect.w * plot.rect.h - spriteW * spriteH;
+        if (areaWaste < leastAreaWaste)
+        {
+            leastAreaWaste = areaWaste;
+            overwriteIndex = i;
+        }
+    }
+
+    return overwriteIndex;
+}
+
+Result<Void> SpriteAtlas::AddNewAtlasTexture(SDL_Renderer* renderer)
+{
+    assert(textureSize_ > 0);
+
+    TRY_ASSIGN(spriteAtlasTextures_.emplace_back(),
+        SpriteAtlasTexture::Create(renderer, textureSize_));
+
+    auto& newAtlas = spriteAtlasTextures_.back();
+
+    NotifyTextureCreated(newAtlas.GetAtlasID(), newAtlas.GetSourceTexture());
+
+    return kVoid;
+}
+
+bool SpriteAtlas::IsPlotEmpty(size_t spriteInfoIdx) const
+{
+    assert(spriteInfoIdx < spriteInfo_.Size());
+
+    const auto [filepath, name] = spriteInfo_.GetView<&SpriteInfo::filepath,
+                                                      &SpriteInfo::spriteName>(spriteInfoIdx);
+    if (filepath.empty())
+    {
+        assert(name.empty());
+
+        return true;
+    }
+
+    return false;
+}
+
+TextureAtlasID SpriteAtlas::GetTextureAtlasIdForSpriteIndex(size_t spriteIdx) const
+{
+    if (spriteIdx >= spriteInfo_.Size())
+    {
+        return std::numeric_limits<uint32_t>::max();
+	}
+
+	const auto atlasIdx = spriteInfo_.GetView<&SpriteInfo::atlasIndex>(spriteIdx);
+
+    return (atlasIdx < spriteAtlasTextures_.size()) 
+        ? spriteAtlasTextures_[atlasIdx].GetAtlasID() 
+		: std::numeric_limits<uint32_t>::max();
 }
 
 Result<std::vector<Sprite>> 
@@ -363,8 +671,7 @@ SpriteAtlas::LoadSprites(SDL_Renderer* renderer, SpriteDescriptors&& descriptors
         return MAKE_ERROR("Sprite descriptors were empty");
     }
 
-    const bool isSpriteSeries = !descriptors.seriesName.empty();
-    if (isSpriteSeries && seriesNameRanges_.contains(descriptors.seriesName))
+    if (!descriptors.seriesName.empty() && spriteSeriesDefs_.contains(descriptors.seriesName))
     {
         return MAKE_ERROR_FMT("Sprite series with name '{}' already exists",
             descriptors.seriesName);
@@ -374,18 +681,11 @@ SpriteAtlas::LoadSprites(SDL_Renderer* renderer, SpriteDescriptors&& descriptors
 
     if (spriteAtlasTextures_.empty())
     {
-        assert(textureSize_ > 0);
-
-        TRY_ASSIGN(spriteAtlasTextures_.emplace_back(),
-            SpriteAtlasTexture::Create(renderer, textureSize_));
-
-        auto& newAtlas = spriteAtlasTextures_.back();
-
-        NotifyTextureCreated(newAtlas.GetAtlasID(), newAtlas.GetSourceTexture());
+        TRY(AddNewAtlasTexture(renderer));
     }
     assert(!spriteAtlasTextures_.empty());
 
-    SDL_SetRenderTarget(renderer, spriteAtlasTextures_.back().GetSourceTexture());
+    //SDL_SetRenderTarget(renderer, spriteAtlasTextures_.back().GetSourceTexture());
 
     auto loadResult = LoadSpritesImpl(renderer, std::move(descriptors));
 
@@ -425,70 +725,39 @@ Sprite SpriteAtlas::GetSprite(const Handle<TextureResource>& handle) const
 std::vector<Sprite> 
 SpriteAtlas::GetSpriteSeries(std::string_view seriesName) const
 {
-    auto it = seriesNameRanges_.find(seriesName);
-    if (it == seriesNameRanges_.end())
+    auto it = spriteSeriesDefs_.find(seriesName);
+    if (it == spriteSeriesDefs_.end())
     {
         return {};
     }
 
-    const auto [start, end] = it->second;
-
-    assert(end > start);
-    assert(end < spriteInfo_.Size());
-
-    std::vector<Sprite> sprites;
-    sprites.reserve(end - start);
-
-    for (size_t i = start; i <= end; i++)
-    {
-        assert(spriteInfo_.GetView<&SpriteInfo::seriesName>(i) == seriesName);
-
-        sprites.emplace_back(MakeSprite(i));
-    }
-
-    return sprites;
+    return it->second | std::views::transform([this](const auto idx) {
+        return MakeSprite(idx);
+     }) | std::ranges::to<std::vector>();
 }
 
 Sprite SpriteAtlas::GetSpriteSeriesMember(std::string_view seriesName, 
-                                                    size_t seriesIdx) const
+                                          size_t idxInSeries) const
 {
-    auto it = seriesNameRanges_.find(seriesName);
-    if (it == seriesNameRanges_.end())
+    auto it = spriteSeriesDefs_.find(seriesName);
+    if (it == spriteSeriesDefs_.end())
     {
         return {};
     }
 
-    const auto [start, end] = it->second;
-
-    assert(end > start);
-    assert(end < spriteInfo_.Size());
-
-    size_t adjustedIdx = seriesIdx + start;
-    if (adjustedIdx > end)
+    if (idxInSeries >= it->second.size())
     {
-        LOG_ERROR_FMT("Index '{}' for sprite series '{}' was out of range. "
-            "Defaulting to series index 0", seriesIdx, seriesName);
-
-        adjustedIdx = start;
+        return {};
     }
 
-    return MakeSprite(adjustedIdx);
+    return MakeSprite(it->second[idxInSeries]);
 }
 
 size_t SpriteAtlas::GetSpriteSeriesSize(std::string_view seriesName) const
 {
-    auto it = seriesNameRanges_.find(seriesName);
-    if (it == seriesNameRanges_.end())
-    {
-        return std::numeric_limits<size_t>::max();
-    }
+    auto it = spriteSeriesDefs_.find(seriesName);
 
-    const auto [start, end] = it->second;
-
-    assert(end > start);
-    assert(end < spriteInfo_.Size());
-
-    return end - start;
+    return (it != spriteSeriesDefs_.end()) ? it->second.size() : 0_uz;
 }
 
 bool SpriteAtlas::HasSprite(std::string_view spriteName) const
@@ -498,7 +767,7 @@ bool SpriteAtlas::HasSprite(std::string_view spriteName) const
 
 bool SpriteAtlas::HasSpriteSeries(std::string_view seriesName) const
 {
-    return seriesNameRanges_.contains(seriesName);
+    return spriteSeriesDefs_.contains(seriesName);
 }
 
 bool SpriteAtlas::IsSpriteValid(const Sprite& sprite) const
@@ -511,11 +780,27 @@ bool SpriteAtlas::IsSpriteValid(const Sprite& sprite) const
         return false;
     }
 
-    const auto [atlasId, plot] = spriteInfo_.GetView<&SpriteInfo::atlasId,
-                                                     &SpriteInfo::plot>
-                                                     (spriteIdx);
+    const auto [atlasId, plot, gen] = spriteInfo_.GetView<&SpriteInfo::atlasId,
+                                                          &SpriteInfo::plot,
+                                                          &SpriteInfo::generation>(spriteIdx);
 
-    return sprite.resourceHandle.GetAtlasID() == atlasId && sprite.plot == plot;
+    return sprite.resourceHandle.GetAtlasID() == atlasId && 
+           sprite.resourceHandle.GetGeneration() == gen &&
+           sprite.plot == plot;
+}
+
+bool SpriteAtlas::IsHandleValid(const Handle<TextureResource>& handle) const
+{
+    const auto spriteIdx = static_cast<size_t>(handle.GetResourceIndex());
+    if (spriteIdx >= spriteInfo_.Size())
+    {
+        return false;
+    }
+
+    const auto [atlasId, gen] = spriteInfo_.GetView<&SpriteInfo::atlasId,
+                                                    &SpriteInfo::generation>(spriteIdx);
+
+    return handle.GetAtlasID() == atlasId && handle.GetGeneration() == gen;
 }
 
 Result<Void> SpriteAtlas::RebuildSourceTextures(SDL_Renderer* renderer)
@@ -536,11 +821,17 @@ Result<Void> SpriteAtlas::RebuildSourceTextures(SDL_Renderer* renderer)
 
 Sprite SpriteAtlas::MakeSprite(size_t spriteIndex) const
 {
-    const auto [atlasId, plot] = spriteInfo_.GetView<&SpriteInfo::atlasId,
-                                                     &SpriteInfo::plot>(spriteIndex);
+    if (IsPlotEmpty(spriteIndex))
+    {
+        return {};
+    }
+
+    const auto [atlasId, plot, gen] = spriteInfo_.GetView<&SpriteInfo::atlasId,
+                                                          &SpriteInfo::plot,
+                                                          &SpriteInfo::generation>(spriteIndex);
 
     return Sprite{
-        .resourceHandle = Handle<TextureResource>::Create(atlasId, spriteIndex),
+        .resourceHandle = Handle<TextureResource>::Create(atlasId, spriteIndex, gen),
         .plot = plot
     };
 }
@@ -553,44 +844,41 @@ SpriteAtlas::LoadSpritesImpl(SDL_Renderer* renderer,
     sprites.reserve(descriptors.data.size());
 
     const bool isSpriteSeries = !descriptors.seriesName.empty();
-
-    for (size_t i = 0; i < descriptors.data.size(); i++)
+    if (isSpriteSeries)
     {
-        auto& descriptor = descriptors.data[i];
+        spriteSeriesDefs_[descriptors.seriesName].reserve(descriptors.data.size());
+    }
 
+    for (auto&& descriptor : descriptors.data)
+    {
         TRY_ASSIGN(sprites.emplace_back(), 
             LoadSpriteImpl(renderer, std::move(descriptor)));
 
         if (isSpriteSeries)
         {
-            const size_t spriteIdx = 
-                static_cast<size_t>(sprites.back().resourceHandle.GetResourceIndex());
-
-            auto [seriesName, seriesIdx] = spriteInfo_.GetView<
-                &SpriteInfo::seriesName, &SpriteInfo::seriesIndex>(spriteIdx);
-
-            seriesName = descriptors.seriesName;
-            seriesIdx = i;
+            spriteSeriesDefs_[descriptors.seriesName].emplace_back(
+                sprites.back().resourceHandle.GetResourceIndex()
+            );
         }
     }
 
-    if (isSpriteSeries)
-    {
-        const size_t minSpriteIdx = 
-            static_cast<size_t>(sprites.front().resourceHandle.GetResourceIndex());
-        const size_t maxSpriteIdx = 
-            static_cast<size_t>(sprites.back().resourceHandle.GetResourceIndex());
+    //if (isSpriteSeries)
+    //{
+    //    const size_t minSpriteIdx = 
+    //        static_cast<size_t>(sprites.front().resourceHandle.GetResourceIndex());
+    //    const size_t maxSpriteIdx = 
+    //        static_cast<size_t>(sprites.back().resourceHandle.GetResourceIndex());
 
-        assert(minSpriteIdx < maxSpriteIdx);
+    //    assert(minSpriteIdx < maxSpriteIdx);
 
-        const auto& seriesNameRef =
-            spriteInfo_.GetView<&SpriteInfo::seriesName>(minSpriteIdx);
+    //    const auto& seriesNameRef =
+    //        spriteInfo_.GetView<&SpriteInfo::seriesName>(minSpriteIdx);
 
-        auto [_, inserted] = seriesNameRanges_.try_emplace(
-            seriesNameRef, Range<size_t>{minSpriteIdx, maxSpriteIdx}
-        );
-        assert(inserted);
-    }
+    //    auto [_, inserted] = seriesNameRanges_.try_emplace(
+    //        seriesNameRef, Range<size_t>{minSpriteIdx, maxSpriteIdx}
+    //    );
+    //    assert(inserted);
+    //}
 
     return sprites;
 }
@@ -598,7 +886,7 @@ SpriteAtlas::LoadSpritesImpl(SDL_Renderer* renderer,
 SpriteDescriptorPackage SpriteAtlas::ExportSpriteDescriptors() const
 {
     SpriteDescriptorPackage package;
-    package.reserve(seriesNameRanges_.size() + size_t{1});
+    /*package.reserve(seriesNameRanges_.size() + size_t{1});
 
     const size_t numSeriesSprites = std::accumulate(
         seriesNameRanges_.begin(), seriesNameRanges_.end(), size_t{0},
@@ -643,10 +931,12 @@ SpriteDescriptorPackage SpriteAtlas::ExportSpriteDescriptors() const
             : getCurrentSeriesDescriptors();
 
         currentDescriptors.data.emplace_back(spriteName, filepath);
-    }
+    }*/
 
     return package;
 }
+
+/** @} */
 
 //void SpriteAtlas::RepopulateSpriteNameIndexMap(size_t newSize)
 //{

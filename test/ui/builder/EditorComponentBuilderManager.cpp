@@ -6,11 +6,12 @@ namespace ui {
 
 namespace {
 
-constexpr bool BuilderTypeIndexInRange(ComponentBuilderType type)
+constexpr bool ValidBuilderTypeIndex(ComponentBuilderType type)
 {
-	return magic_enum::enum_index(type).value() >= 0 &&
-		   magic_enum::enum_index(type).value() < 
-		   std::tuple_size_v<EditorComponentBuilderManager::BuilderArray>;
+	const auto& idx = magic_enum::enum_index(type);
+
+	return idx.has_value() && idx.value() >= 0 &&
+		   idx.value() < std::tuple_size_v<EditorComponentBuilderManager::BuilderArray>;
 }
 
 template <typename T, typename...Args>
@@ -20,7 +21,7 @@ void AddBuilder(EditorComponentBuilderManager::BuilderArray& builderArr, Args&&.
 	auto builder = std::make_unique<T>(std::forward<Args>(args)...);
 	const auto& builderType = builder->GetBuilderType();
 
-	if (!BuilderTypeIndexInRange(builderType) ||
+	if (!ValidBuilderTypeIndex(builderType) ||
 		builderArr[magic_enum::enum_index(builderType).value()] != nullptr)
 	{
 		return;
@@ -34,7 +35,7 @@ void AddBuilder(EditorComponentBuilderManager::BuilderArray& builderArr, Args&&.
 
 bool EditorComponentBuilderManager::DrawActiveBuilder(Entity& e, SceneFixture& fixture)
 {
-	if (!BuilderTypeIndexInRange(activeBuilderType_))
+	if (!ValidBuilderTypeIndex(activeBuilderType_))
 	{
 		return false;
 	}
@@ -52,7 +53,7 @@ void EditorComponentBuilderManager::SetActiveBuilder(ComponentBuilderType type)
 {
 	if (type == activeBuilderType_) { return; }
 
-	if (BuilderTypeIndexInRange(activeBuilderType_))
+	if (ValidBuilderTypeIndex(activeBuilderType_))
 	{
 		auto& currentBuilder = builders_[magic_enum::enum_index(activeBuilderType_).value()];
 		if (currentBuilder)
@@ -61,7 +62,7 @@ void EditorComponentBuilderManager::SetActiveBuilder(ComponentBuilderType type)
 		}
 	}
 
-	if (BuilderTypeIndexInRange(type))
+	if (ValidBuilderTypeIndex(type))
 	{
 		auto& newBuilder = builders_[magic_enum::enum_index(type).value()];
 		if (newBuilder)
@@ -69,6 +70,8 @@ void EditorComponentBuilderManager::SetActiveBuilder(ComponentBuilderType type)
 			newBuilder->SetIsActive(true);
 		}
 	}
+
+	activeBuilderType_ = type;
 }
 
 void EditorComponentBuilderManager::ClearActiveBuilder()
@@ -78,7 +81,7 @@ void EditorComponentBuilderManager::ClearActiveBuilder()
 
 bool EditorComponentBuilderManager::HasActiveBuilder() const noexcept
 {
-	return BuilderTypeIndexInRange(activeBuilderType_) &&
+	return ValidBuilderTypeIndex(activeBuilderType_) &&
 		   builders_[magic_enum::enum_index(activeBuilderType_).value()] != nullptr;
 }
 

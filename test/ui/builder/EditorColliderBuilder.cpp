@@ -90,6 +90,8 @@ bool EditorColliderBuilder::Draw(Entity& e, SceneFixture& fixture)
 
 		assert(col.shape.GetData().IsValid());
 
+		GetWriteAccess(body).SetAwake(true);
+
 		built = true;
 	}
 
@@ -98,6 +100,11 @@ bool EditorColliderBuilder::Draw(Entity& e, SceneFixture& fixture)
 	EndPropertyTable();
 
 	return built;
+}
+
+Result<Void> EditorColliderBuilder::Init(SceneFixture& fixture)
+{
+	return colliderEditUtility_.Init(fixture);
 }
 
 void EditorColliderBuilder::SetIsActiveImpl(bool val)

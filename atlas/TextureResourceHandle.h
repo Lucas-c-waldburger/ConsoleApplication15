@@ -3,34 +3,6 @@
 #include <cassert>
 #include <limits>
 
-//struct TextureAtlasID { 
-//    uint32_t value = std::numeric_limits<uint32_t>::max(); 
-//    friend constexpr bool operator==(TextureAtlasID lhs, TextureAtlasID rhs) {
-//        return lhs.value == rhs.value;
-//    }
-//};
-//struct TextureResourceIndex {
-//    uint32_t value = std::numeric_limits<uint32_t>::max();
-//    friend constexpr bool operator==(TextureResourceIndex lhs, TextureResourceIndex rhs) {
-//        return lhs.value == rhs.value;
-//    }
-//};
-//
-//namespace std {
-//template <>
-//struct hash<TextureAtlasID> {
-//    size_t operator()(TextureAtlasID id) const noexcept {
-//        return std::hash<uint32_t>{}(id.value);
-//    }
-//};
-//template <>
-//struct hash<TextureResourceIndex> {
-//    size_t operator()(TextureResourceIndex idx) const noexcept {
-//        return std::hash<uint32_t>{}(idx.value);
-//    }
-//};
-//} // std
-
 using TextureAtlasID = uint32_t;
 using TextureResourceIndex = uint32_t;
 using TextureResourceID = uint64_t;
@@ -84,70 +56,61 @@ public:
     friend class Super;
 
     Handle() = default;
-    constexpr bool operator==(const Handle& rhs) const noexcept
+    constexpr bool operator==(const Handle<TextureResource>& rhs) const noexcept
     {
-        return id_ == rhs.id_;
+        return atlasId_ == rhs.atlasId_ && resourceIndex_ == rhs.resourceIndex_ &&
+               generation_ == rhs.generation_;
     }
 
-    TextureAtlasID GetAtlasID() const 
+    // The atlas texture the resource is sourced from
+    constexpr uint32_t GetAtlasID() const noexcept
     { 
-        return ExtractTextureAtlasID(id_); 
+        return atlasId_;
     }
-    TextureResourceIndex GetResourceIndex() const 
+    // The index of the resource within the info SOA
+    constexpr uint32_t GetResourceIndex() const noexcept
     { 
-        return ExtractTextureResourceIndex(id_); 
+        return resourceIndex_;
+    }
+	// The generation of the resource - only used by SpriteAtlasCollection for reusing plots
+    constexpr uint32_t GetGeneration() const noexcept
+    {
+        return generation_;
     }
 
 private:
     size_t GetHashImpl() const noexcept
     {
-        return std::hash<TextureResourceID>{}(id_);
+        return MakeHash(atlasId_, resourceIndex_, generation_);
     }
     bool IsValidImpl() const
     {
-        return id_ != kInvalidTextureResourceID;
+        return atlasId_ != std::numeric_limits<uint32_t>::max() &&
+               resourceIndex_ != std::numeric_limits<uint32_t>::max();
     }
 
     static Handle CreateImpl(TextureAtlasID atlasId, size_t resourceIndex)
     {
         return Handle{ atlasId, resourceIndex };
     }
+    static Handle CreateImpl(TextureAtlasID atlasId, size_t resourceIndex, uint32_t gen)
+    {
+        return Handle{ atlasId, resourceIndex, gen };
+    }
 
     Handle(TextureAtlasID atlasId, size_t resourceIndex) : 
-        id_(ComposeTextureResourceID(atlasId, { static_cast<uint32_t>(resourceIndex) }))
+        atlasId_(atlasId), resourceIndex_(resourceIndex)
     {
         assert(IndexInTextureResourceRange(resourceIndex));
     }
 
-    TextureResourceID id_ = kInvalidTextureResourceID;
+    Handle(TextureAtlasID atlasId, size_t resourceIndex, uint32_t gen) :
+        atlasId_(atlasId), resourceIndex_(resourceIndex), generation_(gen)
+    {
+        assert(IndexInTextureResourceRange(resourceIndex));
+    }
+
+    uint32_t atlasId_ = std::numeric_limits<size_t>::max();
+    uint32_t resourceIndex_ = std::numeric_limits<size_t>::max();
+    uint32_t generation_ = 0;
 };
-
-struct AtlasResourceHeteroHash
-{
-    using is_transparent = void;
-
-    size_t operator()(TextureAtlasID atlasId) const noexcept {
-        return std::hash<TextureAtlasID>{}(atlasId);
-    }
-    size_t operator()(const Handle<TextureResource>& resourceHandle) const noexcept {
-        return std::hash<TextureAtlasID>{}(resourceHandle.GetAtlasID());
-    }
-};
-
-struct AtlasResourceHeteroEq
-{
-    using is_transparent = void;
-
-    bool operator()(TextureAtlasID lhs, TextureAtlasID rhs) const {
-        return lhs == rhs;
-    }
-    bool operator()(const Handle<TextureResource>& resourceHandle,
-                    TextureAtlasID atlasId) const {
-        return resourceHandle.GetAtlasID() == atlasId;
-    }
-};
-
-template <typename Value, typename...Args>
-using UnorderedAtlasIDMap = 
-    std::unordered_map<TextureAtlasID, Value, AtlasResourceHeteroHash,
-                                              AtlasResourceHeteroEq, Args...>;

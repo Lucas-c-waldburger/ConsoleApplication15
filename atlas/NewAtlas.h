@@ -4,9 +4,10 @@
 #include "TextureResourceHandle.h"
 #include "../core/Signal.h"
 #include "PackingTools.h"
+#include <SDL_image.h>
 
 using UniqueTexturePtr = std::unique_ptr<SDL_Texture,
-	decltype([](SDL_Texture* t) { SDL_DestroyTexture(t); }) > ;
+	decltype([](SDL_Texture* t) { SDL_DestroyTexture(t); })>;
 
 inline UniqueTexturePtr 
 MakeUniqueTexturePtr(SDL_Renderer* renderer, SDL_PixelFormatEnum fmt,
@@ -18,6 +19,14 @@ MakeUniqueTexturePtr(SDL_Renderer* renderer, SDL_PixelFormatEnum fmt,
 inline UniqueTexturePtr MakeUniqueTexturePtrFromSurface(SDL_Renderer* renderer, SDL_Surface* surface)
 {
 	return UniqueTexturePtr{ SDL_CreateTextureFromSurface(renderer, surface) };
+}
+
+using UniqueSurfacePtr = std::unique_ptr<SDL_Surface,
+	decltype([](SDL_Surface* s) { SDL_FreeSurface(s); })>;
+
+inline UniqueSurfacePtr MakeUniqueSurfacePtr(std::string_view filepath)
+{
+	return UniqueSurfacePtr{ IMG_Load(filepath.data()) };
 }
 
 enum class TextureType

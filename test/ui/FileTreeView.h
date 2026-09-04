@@ -97,11 +97,6 @@ public:
         state_.currentPath = path;
     }
 
-    const fs::path& GetCurrentDirectory() const
-    {
-        return state_.currentPath;
-    }
-
     auto GetCurrentDirectoryIter()
     {
         assert(fs::exists(state_.currentPath));

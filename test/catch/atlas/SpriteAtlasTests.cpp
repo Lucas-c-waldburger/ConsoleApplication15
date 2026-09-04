@@ -55,15 +55,16 @@ TEST_CASE("SpriteAtlas Tests", "[atlas]")
 		CHECK(spriteAtlas.IsSpriteValid(sprite));
 
 		// get info
-		const auto info = spriteAtlas.GetSpriteInfo(sprite);
+		const auto info = spriteAtlas.GetSpriteInfo<&SpriteInfo::atlasId,
+												    &SpriteInfo::plot,
+													&SpriteInfo::spriteName,
+													&SpriteInfo::filepath>(sprite);
 		REQUIRE(info.has_value());
 
-		const auto& [atlasId, plot, name, filepath, series, seriesIdx] = *info;
+		const auto& [atlasId, plot, name, filepath] = *info;
 		CHECK(atlasId == sprite.resourceHandle.GetAtlasID());
 		CHECK(name == "knight_jump_0");
 		CHECK(filepath == path);
-		CHECK(series.empty());
-		CHECK(seriesIdx == kSizeMax);
 
 		// retrieve it
 		auto retrievedSprite = spriteAtlas.GetSprite("knight_jump_0");
@@ -109,14 +110,20 @@ TEST_CASE("SpriteAtlas Tests", "[atlas]")
 		// get info	
 		for (size_t i = 0; i < sprites.size(); i++)
 		{
-			auto info = spriteAtlas.GetSpriteInfo(sprites[i]);
+			const auto info = spriteAtlas.GetSpriteInfo<&SpriteInfo::atlasId,
+													    &SpriteInfo::plot,
+													    &SpriteInfo::spriteName,
+													    &SpriteInfo::filepath>(sprites[i]);
 			REQUIRE(info.has_value());
-			const auto& [atlasId, plot, name, path, series, seriesIdx] = *info;
+			const auto& [atlasId, plot, name, path] = *info;
 			CHECK(atlasId == sprites[i].resourceHandle.GetAtlasID());
 			CHECK(name == std::format("knight_fall_{}", i));
 			CHECK(path == seriesPaths[i]);
-			CHECK(series == "knight_fall_series");
-			CHECK(seriesIdx == i);
+
+			// check series
+			CHECK(spriteAtlas.HasSpriteSeries("knight_fall_series"));
+			CHECK(spriteAtlas.GetSpriteSeriesMember("knight_fall_series", i) == sprites[i]);
+			CHECK(spriteAtlas.GetSpriteSeriesMemberIndex("knight_fall_series", sprites[i]) == i);
 		}
 
 		// retrieve them
@@ -127,6 +134,7 @@ TEST_CASE("SpriteAtlas Tests", "[atlas]")
 	}
 
 	SDLite::Exit();
+	Logger::EndSession();
 }
 
 TEST_CASE("Loading SpriteAtlas until exceeds original texture size", "[atlas]")
@@ -160,10 +168,17 @@ TEST_CASE("Loading SpriteAtlas until exceeds original texture size", "[atlas]")
 	{
 		CHECK(spriteAtlasCollection.IsSpriteValid(sp));
 	}
+
+	SDLite::Exit();
+	Logger::EndSession();
 }
 
 TEST_CASE("SpriteAtlas Texture Created Notification", "[atlas]")
 {
+	Logger::StartSession();
+	auto status = SDLite::Start();
+	REQUIRE(status.Good());
+
 	SpriteAtlas spriteAtlas{};
 	CHECK(spriteAtlas.GetTextureCount() == 0);
 
@@ -205,4 +220,199 @@ TEST_CASE("SpriteAtlas Texture Created Notification", "[atlas]")
 	CHECK(atlasId != kInvalidTextureAtlasID);
 	CHECK(atlasId == sprite.resourceHandle.GetAtlasID());
 	CHECK(texture != nullptr);
+
+	SDLite::Exit();
+	Logger::EndSession();
+}
+
+TEST_CASE("Sprite Series API", "[atlas]")
+{
+	Logger::StartSession();
+	auto status = SDLite::Start();
+	REQUIRE(status.Good());
+
+	SpriteAtlas spriteAtlas{};
+	auto seriesPathsResult =
+		ResourcePaths::SpriteDirectory("knight/fall_anim", std::less<std::string>{});
+	REQUIRE_RESULT(seriesPathsResult);
+
+	auto& seriesPaths = seriesPathsResult.GetValue();
+	CHECK(seriesPaths.size() == 4);
+
+	auto descriptors = test::MakeSpriteTestPackage(std::move(seriesPaths),
+		"knight_fall_series");
+	CHECK(descriptors.data.size() == 4);
+	CHECK(descriptors.seriesName == "knight_fall_series");
+
+	auto loadResult = spriteAtlas.LoadSprites(SDLite::Renderer(),
+		std::move(descriptors));
+	REQUIRE_RESULT(loadResult);
+
+	const auto& sprites = loadResult.GetValue();
+	for (const auto& sp : sprites)
+	{
+		CHECK(spriteAtlas.IsSpriteValid(sp));
+	}
+
+	// define series
+	auto defineResult = spriteAtlas.DefineSpriteSeries("knight_fall_series", sprites);
+	REQUIRE_RESULT(defineResult);
+
+	CHECK(spriteAtlas.HasSpriteSeries("knight_fall_series"));
+	CHECK(spriteAtlas.GetSpriteSeriesSize("knight_fall_series") == sprites.size());
+
+	for (size_t i = 0; i < sprites.size(); i++)
+	{
+		CHECK(spriteAtlas.GetSpriteSeriesMember("knight_fall_series", i) == sprites[i]);
+		CHECK(spriteAtlas.GetSpriteSeriesMemberIndex("knight_fall_series", sprites[i]) == i);
+	}
+
+	// remove series member
+	{
+		REQUIRE(sprites.size() > 2);
+		const auto& memberToRemove = sprites[2];
+
+		const bool removedMember = spriteAtlas.RemoveSpriteSeriesMember(
+			"knight_fall_series", memberToRemove);
+		CHECK(removedMember);
+
+		CHECK(spriteAtlas.GetSpriteSeriesSize("knight_fall_series") == sprites.size() - 1);
+		CHECK(spriteAtlas.GetSpriteSeriesMemberIndex("knight_fall_series", memberToRemove) ==
+			std::numeric_limits<size_t>::max());
+	}
+
+	// erase whole series
+	{
+		const bool removedSeries = spriteAtlas.RemoveSpriteSeries("knight_fall_series");
+		CHECK(removedSeries);
+
+		CHECK_FALSE(spriteAtlas.HasSpriteSeries("knight_fall_series"));
+		CHECK(spriteAtlas.GetSpriteSeriesSize("knight_fall_series") == 0);
+
+		for (size_t i = 0; i < sprites.size(); i++)
+		{
+			CHECK(spriteAtlas.GetSpriteSeriesMemberIndex("knight_fall_series", sprites[i]) ==
+				std::numeric_limits<size_t>::max());
+		}
+	}
+
+	SDLite::Exit();
+	Logger::EndSession();
+}
+
+TEST_CASE("SpriteAtlas::EraseSprite", "[atlas]")
+{
+	Logger::StartSession();
+	auto status = SDLite::Start();
+	REQUIRE(status.Good());
+
+	SpriteAtlas spriteAtlas{};
+
+	auto seriesPathsResult =
+		ResourcePaths::SpriteDirectory("knight/fall_anim", std::less<std::string>{});
+	REQUIRE_RESULT(seriesPathsResult);
+
+	auto& seriesPaths = seriesPathsResult.GetValue();
+	CHECK(seriesPaths.size() == 4);
+	auto descriptors = test::MakeSpriteTestPackage(std::move(seriesPaths),
+		"knight_fall_series");
+	CHECK(descriptors.data.size() == 4);
+	CHECK(descriptors.seriesName == "knight_fall_series");
+
+	auto tempDescriptors = descriptors; // copy for later use
+	auto loadResult = spriteAtlas.LoadSprites(SDLite::Renderer(),
+		std::move(tempDescriptors));
+	REQUIRE_RESULT(loadResult);
+
+	const auto& sprites = loadResult.GetValue();
+	for (const auto& sp : sprites)
+	{
+		CHECK(spriteAtlas.IsSpriteValid(sp));
+		CHECK(spriteAtlas.GetSpriteInfo(sp).has_value());
+	}
+
+	{
+		// erase a sprite
+		const auto& spriteToErase = sprites[0];
+		CHECK(spriteAtlas.IsSpriteValid(spriteToErase));
+
+		const bool erased = spriteAtlas.EraseSprite(spriteToErase);
+		CHECK(erased);
+		CHECK_FALSE(spriteAtlas.IsSpriteValid(spriteToErase));
+
+		CHECK(spriteAtlas.GetSpriteInfo(spriteToErase).has_value() == false);
+
+		// replace it
+		const auto& spriteToLoadOvertop = sprites[1];
+		CHECK(spriteAtlas.IsSpriteValid(spriteToLoadOvertop));
+
+		REQUIRE(spriteToLoadOvertop.plot.rect.w <= spriteToErase.plot.rect.w);
+		REQUIRE(spriteToLoadOvertop.plot.rect.h <= spriteToErase.plot.rect.h);
+
+		auto descriptorToLoadOvertop = descriptors.data[1];
+		auto descriptorToLoadOvertopStoredFilepath =
+			spriteAtlas.GetSpriteInfo<&SpriteInfo::filepath>(sprites[1]);
+		REQUIRE(descriptorToLoadOvertopStoredFilepath.has_value());
+		CHECK(*descriptorToLoadOvertopStoredFilepath == descriptorToLoadOvertop.filepath);
+
+		auto loadOvertopResult = spriteAtlas.LoadSprite(SDLite::Renderer(),
+			std::move(descriptorToLoadOvertop));
+		REQUIRE(loadOvertopResult.Success());
+		
+		auto& spriteLoadedOvertop = loadOvertopResult.GetValue();
+		CHECK(spriteAtlas.IsSpriteValid(spriteLoadedOvertop));
+
+		CHECK(spriteLoadedOvertop.plot.rect.x == spriteToErase.plot.rect.x);
+		CHECK(spriteLoadedOvertop.plot.rect.y == spriteToErase.plot.rect.y);
+
+		CHECK(spriteLoadedOvertop.resourceHandle.GetAtlasID() == 
+			spriteToErase.resourceHandle.GetAtlasID());
+		CHECK(spriteLoadedOvertop.resourceHandle.GetResourceIndex() == 
+			spriteToErase.resourceHandle.GetResourceIndex());
+
+		CHECK(spriteLoadedOvertop.resourceHandle.GetGeneration() ==
+			spriteToErase.resourceHandle.GetGeneration() + 1);
+	}
+
+	SDLite::Exit();
+	Logger::EndSession();
+}
+
+TEST_CASE("SpriteAtlas::GetSpriteCount", "[atlas]")
+{
+	Logger::StartSession();
+	auto status = SDLite::Start();
+	REQUIRE(status.Good());
+
+	SpriteAtlas spriteAtlas{};
+
+	auto seriesPathsResult =
+		ResourcePaths::SpriteDirectory("knight/fall_anim", std::less<std::string>{});
+	REQUIRE_RESULT(seriesPathsResult);
+
+	auto& seriesPaths = seriesPathsResult.GetValue();
+	CHECK(seriesPaths.size() == 4);
+
+	auto descriptors = test::MakeSpriteTestPackage(std::move(seriesPaths),
+		"knight_fall_series");
+	CHECK(descriptors.data.size() == 4);
+	CHECK(descriptors.seriesName == "knight_fall_series");
+
+	auto loadResult = spriteAtlas.LoadSprites(SDLite::Renderer(),
+		std::move(descriptors));
+	REQUIRE_RESULT(loadResult);
+
+	const auto& sprites = loadResult.GetValue();
+	for (const auto& sp : sprites)
+	{
+		CHECK(spriteAtlas.IsSpriteValid(sp));
+		CHECK(spriteAtlas.GetSpriteInfo(sp).has_value());
+	}
+
+	CHECK(spriteAtlas.GetSpriteCount() == 4);
+
+
+
+	SDLite::Exit();
+	Logger::EndSession();
 }

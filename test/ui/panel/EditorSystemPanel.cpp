@@ -1,41 +1,35 @@
-#include "InspectorSystemPanel.h"
+#include "EditorSystemPanel.h"
 
 #if IMGUI_ENABLED
-#include "../../file/FilePathUtility.h"
-#include "GuiResource.h"
-#include "GuiTexture.h"
-#include "InspectorComponentPanel.h"
-#include "ScriptLoaderUtility.h"
-#include "../../systems/NewRenderSystem.h"
-#include <ranges>
+#include "../ScriptLoaderUtility.h"
 
 namespace ui {
 
 namespace {
 
 template <HasGuiSystemName T>
-bool DrawPlayPauseButton(T& sys, const GuiTextureConverter& converter)
+bool DrawPlayPauseButton(T& sys, EditorSystemPanel::Buttons& buttons, const GuiTextureConverter& converter)
 {
-	GuiTexture ppTexture{};
-	auto& button = InspectorSystemPanel::GetButtons().playPause;
+	GuiTexture texture{};
+	auto& button = buttons.playPause;
 
 	static constexpr bool disable = !SomePausable<T>;
 	if constexpr (disable)
 	{
-		ppTexture = converter.FromSprite(button.defaultSprite);
+		texture = converter.FromSprite(button.defaultSprite);
 	}
 	else
 	{
-		ppTexture = converter.FromSprite((sys.IsPaused()
+		texture = converter.FromSprite((sys.IsPaused()
 			? button.activatedSprite
 			: button.defaultSprite));
 	}
 
-	assert(ppTexture.textureId != 0);
+	assert(texture.textureId != 0);
 
 	auto h = ImGui::GetFrameHeight();
-	ppTexture.size.x = h * 1.05f;
-	ppTexture.size.y = h * 1.05f;
+	texture.size.x = h * 1.05f;
+	texture.size.y = h * 1.05f;
 
 	bool changed = false;
 
@@ -47,8 +41,8 @@ bool DrawPlayPauseButton(T& sys, const GuiTextureConverter& converter)
 
 	const auto tint = button.isHovered.Test<T>() ? ImVec4(1, 1, 1, 1) : ImVec4(.75f, .75f, .75f, 1);
 
-	const bool pressed = GuiImageButton(GuiSystemName<T>::label.data(), 
-										ppTexture, ImVec4(0, 0, 0, 0), tint);
+	const bool pressed = GuiImageButton(GuiSystemName<T>::label.data(),
+										texture, ImVec4(0, 0, 0, 0), tint);
 
 	ImGui::PopStyleColor(3);
 
@@ -68,8 +62,8 @@ bool DrawPlayPauseButton(T& sys, const GuiTextureConverter& converter)
 	return changed;
 }
 
-bool DrawScriptButton(std::string_view label, ScriptTable::TableId tableId, 
-					  MapButton<ScriptTable::TableId>& button, 
+bool DrawScriptButton(std::string_view label, ScriptTable::TableId tableId,
+					  MapButton<ScriptTable::TableId>& button,
 					  const GuiTextureConverter& converter)
 {
 	GuiTexture texture = converter.FromSprite(button.sprite);
@@ -104,7 +98,8 @@ using PausableSystemTypeList = filter_types_t<CoreSystemTypeList, PausableSystem
 template <typename T>
 struct draw_system
 {
-	static void call(T& sys, const GuiTextureConverter& converter)
+	static void call(T& sys, EditorSystemPanel::Buttons& buttons, 
+					 const GuiTextureConverter& converter)
 	{
 		if (!BeginComponentTable())
 		{
@@ -116,23 +111,15 @@ struct draw_system
 };
 
 template <>
-struct draw_system<NewRenderSystem>
-{
-	static void call(NewRenderSystem&, TextureRepository& repo, const GuiTextureConverter&)
-	{
-
-	}
-};
-
-template <>
 struct draw_system<ScriptSystem>
 {
-	static void call(ScriptSystem& sys, const GuiTextureConverter& converter)
+	static void call(ScriptSystem& sys, EditorSystemPanel::Buttons& buttons, 
+					 const GuiTextureConverter& converter)
 	{
 		ImGui::Indent(12.0f);
 
-		auto& reloadButtons = InspectorSystemPanel::GetButtons().scriptReload;
-		auto& deleteButtons = InspectorSystemPanel::GetButtons().scriptDelete;
+		auto& reloadButtons = buttons.scriptReload;
+		auto& deleteButtons = buttons.scriptDelete;
 		const auto& tableMap = sys.GetScriptTableMap();
 
 		ScriptTable::TableId removeTableId = std::numeric_limits<ScriptTable::TableId>::max();
@@ -143,7 +130,7 @@ struct draw_system<ScriptSystem>
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 6));
 
-			const bool tableOpen = ImGui::TreeNodeEx(filename.c_str(), 
+			const bool tableOpen = ImGui::TreeNodeEx(filename.c_str(),
 				(ImGuiTreeNodeFlags_DrawLinesFull | ImGuiTreeNodeFlags_FramePadding));
 
 			ImGui::PopStyleVar();
@@ -176,7 +163,7 @@ struct draw_system<ScriptSystem>
 				removeTableId = id;
 
 				tableIdToFormattedFunctionStrings_.erase(id);
-			} 
+			}
 			else
 			{
 				if (reloadScript)
@@ -272,9 +259,9 @@ struct draw_system<ScriptSystem>
 };
 
 template <typename T>
-void DrawSystem(T& sys, const GuiTextureConverter& converter)
+void DrawSystem(T& sys, EditorSystemPanel::Buttons& buttons, const GuiTextureConverter& converter)
 {
-	return draw_system<T>::call(sys, converter);
+	return draw_system<T>::call(sys, buttons, converter);
 }
 
 template <typename TList>
@@ -283,10 +270,12 @@ struct draw_systems;
 template <typename...Ts>
 struct draw_systems<TypeList<Ts...>>
 {
-	static bool call(SystemManager& sysManager, const TextureRepository& repo)
+	static bool call(SystemManager& sysManager, EditorSystemPanel::Buttons& buttons,
+					 const TextureRepository& repo)
 	{
 		static constexpr auto draw = []<typename T>
-		(SystemManager& sysManager, const GuiTextureConverter& converter) 
+			(SystemManager& sysManager, EditorSystemPanel::Buttons & buttons, 
+			 const GuiTextureConverter & converter)
 		{
 			if (!sysManager.IsSystemRegistered<T>())
 			{
@@ -297,7 +286,7 @@ struct draw_systems<TypeList<Ts...>>
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 6));
 
-			const bool open = ImGui::CollapsingHeader(GuiSystemName<T>::name.data(), 
+			const bool open = ImGui::CollapsingHeader(GuiSystemName<T>::name.data(),
 													  ImGuiTreeNodeFlags_AllowOverlap);
 
 			ImGui::PopStyleVar();
@@ -308,7 +297,7 @@ struct draw_systems<TypeList<Ts...>>
 
 			ImGui::SameLine(buttonStartX);
 
-			bool changed = DrawPlayPauseButton<T>(sys, converter);
+			bool changed = DrawPlayPauseButton<T>(sys, buttons, converter);
 
 			ImGui::PopStyleVar();
 
@@ -317,7 +306,7 @@ struct draw_systems<TypeList<Ts...>>
 				return changed;
 			}
 
-			DrawSystem(sys, converter);
+			DrawSystem(sys, buttons, converter);
 
 			return changed;
 		};
@@ -325,32 +314,82 @@ struct draw_systems<TypeList<Ts...>>
 		GuiTextureConverter converter{ repo };
 
 		bool changed = false;
-		((changed |= (draw.template operator()<Ts>(sysManager, converter))), ...);
+		((changed |= (draw.template operator()<Ts>(sysManager, buttons, converter))), ...);
 
 		return changed;
 	}
 };
 
-bool DrawSystems(SystemManager& sysManager, const TextureRepository& repo)
+bool DrawSystems(SystemManager& sysManager, EditorSystemPanel::Buttons& buttons, 
+				 const TextureRepository& repo)
 {
-	return draw_systems<InspectorSystemPanel::NamedSystemTypeList>::call(sysManager, repo);
+	return draw_systems<EditorSystemPanel::NamedSystemTypeList>::call(sysManager, buttons, repo);
 }
 
 } // unnamed
 
-void InspectorSystemPanel::Update(ResourceContext& ctx)
+//void EditorSystemPanel::Update(Entity, SceneFixture& fixture)
+//{
+//	auto& auxRepo = fixture.GetAuxTextureRepository();
+//	assert(auxRepo);
+//
+//	DrawSystems(fixture.GetSystemManager(), buttons_, *auxRepo);
+//}
+//
+//Result<Void> EditorSystemPanel::LoadResources(SceneFixture& fixture)
+//{
+//	TRY(ResourcePath::Sprite("ui/editor/play_circle.png"), playCirclePath);
+//	TRY(ResourcePath::Sprite("ui/editor/pause_circle.png"), pauseCirclePath);
+//	TRY(ResourcePath::Sprite("ui/editor/reload_icon.png"), reloadIconPath);
+//	TRY(ResourcePath::Sprite("ui/editor/delete_icon.png"), deleteIconPath);
+//
+//	auto& auxRepo = fixture.GetAuxTextureRepository();
+//	if (!auxRepo)
+//	{
+//		return MAKE_ERROR("Aux TextureRepository was null");
+//	}
+//	auto& spriteAtlas = auxRepo->GetSpriteAtlas();
+//
+//	TRY_ASSIGN(buttons_.playPause.defaultSprite, spriteAtlas.LoadSprite(
+//		fixture.GetRenderer(), { .filepath = std::move(pauseCirclePath) }));
+//	TRY_ASSIGN(buttons_.playPause.activatedSprite, spriteAtlas.LoadSprite(
+//		fixture.GetRenderer(), { .filepath = std::move(playCirclePath) }));
+//	TRY_ASSIGN(buttons_.scriptReload.sprite, spriteAtlas.LoadSprite(
+//		fixture.GetRenderer(), { .filepath = std::move(reloadIconPath) }));
+//	TRY_ASSIGN(buttons_.scriptDelete.sprite, spriteAtlas.LoadSprite(
+//		fixture.GetRenderer(), { .filepath = std::move(deleteIconPath) }));
+//
+//	TRY(ResourcePath::Script("fn_table.lua"), fnTableScriptPath);
+//
+//	assert(fixture.IsSystemRegistered<ScriptSystem>());
+//	auto& scriptSys = fixture.GetSystem<ScriptSystem>();
+//
+//	TRY(scriptSys.AddFunctionTable(fnTableScriptPath));
+//
+//	return kVoid;
+//}
+//
+//Result<Void> EditorSystemPanel::Init(SceneFixture& fixture)
+//{
+//	TRY(LoadResources(fixture));
+//
+//	return kVoid;
+//}
+//
+//void EditorSystemPanel::ClearState()
+//{
+//	draw_system<ScriptSystem>::tableIdToFormattedFunctionStrings_.clear();
+//}
+
+void EditorSystemPanel::UpdateImpl(Entity, SceneFixture& fixture)
 {
-	DrawSystems(ctx.systemManager, ctx.textureRepo);
+	auto& auxRepo = fixture.GetAuxTextureRepository();
+	assert(auxRepo);
+
+	DrawSystems(fixture.GetSystemManager(), buttons_, *auxRepo);
 }
 
-Result<Void> InspectorSystemPanel::ResetForNewScene(SceneFixture& fixture)
-{
-	draw_system<ScriptSystem>::tableIdToFormattedFunctionStrings_.clear();
-
-	return kVoid;
-}
-
-Result<Void> InspectorSystemPanel::LoadResources(SceneFixture& fixture)
+Result<Void> EditorSystemPanel::LoadResources(SceneFixture& fixture)
 {
 	TRY(ResourcePath::Sprite("ui/editor/play_circle.png"), playCirclePath);
 	TRY(ResourcePath::Sprite("ui/editor/pause_circle.png"), pauseCirclePath);
@@ -374,21 +413,29 @@ Result<Void> InspectorSystemPanel::LoadResources(SceneFixture& fixture)
 		fixture.GetRenderer(), { .filepath = std::move(deleteIconPath) }));
 
 	TRY(ResourcePath::Script("fn_table.lua"), fnTableScriptPath);
-	
+
 	assert(fixture.IsSystemRegistered<ScriptSystem>());
 	auto& scriptSys = fixture.GetSystem<ScriptSystem>();
-	
+
 	TRY(scriptSys.AddFunctionTable(fnTableScriptPath));
 
 	return kVoid;
 }
 
-Result<Void> InspectorSystemPanel::Init(SceneFixture& fixture)
+Result<Void> EditorSystemPanel::InitImpl(SceneFixture& fixture)
 {
-	LoadResources(fixture);
+	TRY(LoadResources(fixture));
 
 	return kVoid;
 }
+
+void EditorSystemPanel::ClearStateImpl()
+{
+	draw_system<ScriptSystem>::tableIdToFormattedFunctionStrings_.clear();
+}
+
+void EditorSystemPanel::TearDownImpl() {}
+
 
 } // ui
 

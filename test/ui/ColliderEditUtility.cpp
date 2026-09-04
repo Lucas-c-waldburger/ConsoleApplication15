@@ -253,6 +253,41 @@ constexpr bool PointInCircle(const SDL_FPoint& p, const SDL_FPoint& center, floa
 	return (dx * dx + dy * dy) <= (radius * radius);
 }
 
+constexpr bool PointInUprightRect(SDL_FPoint p, SDL_FPoint a, SDL_FPoint b)
+{
+	const float minX = std::min(a.x, b.x);
+	const float maxX = std::max(a.x, b.x);
+	const float minY = std::min(a.y, b.y);
+	const float maxY = std::max(a.y, b.y);
+
+	return p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY;
+}
+
+bool PointInPolygon(SDL_FPoint p, std::span<const SDL_FPoint> polygon)
+{
+	bool inside = false;
+
+	const size_t n = polygon.size();
+
+	for (size_t i = 0, j = n - 1; i < n; j = i++)
+	{
+		const auto a = polygon[i];
+		const auto b = polygon[j];
+
+		const bool crossesY = (a.y > p.y) != (b.y > p.y);
+		if (crossesY)
+		{
+			const float intersectionX = a.x + (p.y - a.y) * (b.x - a.x) / (b.y - a.y);
+			if (p.x < intersectionX)
+			{
+				inside = !inside;
+			}
+		}
+	}
+
+	return inside;
+}
+
 bool CanBuildShapeImpl(const ColliderEditUtility::ShapeData& data)
 {
 	switch (data.shapeType)
@@ -358,6 +393,26 @@ bool ColliderEditUtility::Shape::IsValid() const
 	if (!core::AllOf(pointEntities, [](const auto& p) { return p.IsValid(); })) { return false; }
 
 	return true;
+}
+
+bool ColliderEditUtility::Shape::IsPointInside(SDL_FPoint p) const
+{
+	if (!drawEntity.HasComponent<ColliderEditUtility::ShapeData>())
+	{
+		return false;
+	}
+
+	const auto& data = drawEntity.GetComponent<ColliderEditUtility::ShapeData>();
+
+	switch (data.shapeType)
+	{
+	case B2Shape::Type::Polygon:
+		return PointInPolygon(p, data.points);
+	case ShapeData::kUprightRect:
+		return data.points.size() == 2 && PointInUprightRect(p, data.points[0], data.points[1]);
+	default:
+		return false;
+	}
 }
 
 SDL_Rect ColliderEditUtility::Shape::GetBoundingBox() const
@@ -729,12 +784,12 @@ Entity ColliderEditUtility::MakeTextEntity(SDL_FPoint pos, const GlyphTextWriter
 		.formatting = {
 			.bounds = { 80, 60 },
 			.align = TextAlign::Center,
-			.scaleToBounds = true
+			.scaleToBounds = false
 		},
 		.profile = {
 			.drawOrder = 1000,
 			.mods = {
-				.color = RGB::FromSDLColor(SDLite::kColorPink)
+				.color = RGB::FromSDLColor(kTextColor)
 			},
 			.offset = { 15.0f, -18.0f }
 		}
@@ -967,7 +1022,7 @@ void ColliderEditUtility::UpdateState(const Camera& cam)
 
 				return;
 			}
-			if (PointInsideRect(shape_.GetBoundingBox(), GuiMouse::GetPosition()))
+			if (shape_.IsPointInside(cam.ScreenToWorld<SDL_FPoint>(GuiMouse::GetPosition())))
 			{
 				state_.editMode = EditMode::DraggingShape;
 

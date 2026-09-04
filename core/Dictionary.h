@@ -32,6 +32,9 @@ private:
     using Super = MapType<std::string, Value, Ts...>;
 
 public:
+    using iterator = typename Super::iterator;
+    using const_iterator = typename Super::const_iterator;
+
     Value& operator[](std::string_view sv)
     {
         return Super::operator[](std::string{ sv });
@@ -62,6 +65,43 @@ public:
     size_t erase(std::string_view sv)
     {
         return Super::erase(std::string{ sv });
+    }
+
+    iterator erase(iterator it)
+    {
+        return Super::erase(it);
+    }
+
+    iterator erase(const_iterator it)
+    {
+        return Super::erase(it);
+    }
+
+    iterator erase(const_iterator first, const_iterator last)
+    {
+        return Super::erase(first, last);
+    }
+
+    template <typename Fn> requires std::is_invocable_r_v<bool, Fn, const_iterator>
+    size_t erase_if(Fn&& fn)
+    {
+        size_t eraseCount = 0;
+
+        auto it = Super::cbegin();
+        while (it != Super::cend())
+        {
+            if (std::invoke(fn, it))
+            {
+                it = Super::erase(it);
+                ++eraseCount;
+            }
+            else
+            {
+                ++it;
+            }
+        }
+
+        return eraseCount;
     }
 
     template <typename...Args>

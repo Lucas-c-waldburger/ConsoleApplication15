@@ -10,8 +10,10 @@ struct SpriteInfo
 	AtlasPlot plot;
 	std::string spriteName;
 	std::string filepath;
-	std::string seriesName;
-	size_t seriesIndex = std::numeric_limits<size_t>::max();
+	uint32_t generation;
+	size_t atlasIndex = std::numeric_limits<size_t>::max();
+	//std::string seriesName;
+	//size_t seriesIndex = std::numeric_limits<size_t>::max();
 
 	bool operator==(const SpriteInfo&) const = default;
 };
@@ -22,8 +24,8 @@ using SpriteInfoSOA = StableSOA<
 	&SpriteInfo::plot,
 	&SpriteInfo::spriteName,
 	&SpriteInfo::filepath,
-	&SpriteInfo::seriesName,
-	&SpriteInfo::seriesIndex
+	&SpriteInfo::generation,
+
 >;
 
 class SpriteAtlasTexture : public TextureAtlas
@@ -35,7 +37,8 @@ public:
 		{
 			Success,
 			AtlasFull,
-			SpriteTooLarge
+			SpriteTooLarge,
+			SuccessOverwrite
 		};
 
 		uint8_t code = Success;	
@@ -52,25 +55,34 @@ public:
 	SpriteAtlasTexture& operator=(SpriteAtlasTexture&& other) noexcept;
 
 	static Result<SpriteAtlasTexture>
-	Create(SDL_Renderer* renderer, size_t size = kDefaultAtlasSize);
+	Create(SDL_Renderer* renderer, size_t size = kDefaultAtlasSize, bool isReserved = false);
 
 	Result<SpriteLoadOutcome> 
 	LoadSprite(SDL_Renderer* renderer, const SpriteDescriptor& descriptor);
+
+	Result<SpriteLoadOutcome>
+	LoadSprite(SDL_Renderer* renderer, UniqueSurfacePtr& spriteSurface,
+			   const SpriteDescriptor& descriptor, 
+			   SpriteInfoSOA& spriteInfo, std::vector<size_t>& freePlots);
+
+	Result<Void> OverwriteSprite(SDL_Renderer* renderer, UniqueSurfacePtr& spriteSurface,
+								 AtlasPlot& plot);
 
 	Result<Void> RebuildSourceTexture(SDL_Renderer* renderer, 
 									  const SpriteInfoSOA& spriteInfo,
 									  size_t& runningIdxCounter);
 
+	bool IsReserved() const noexcept { return isReserved_; }
+
 private:
 	explicit SpriteAtlasTexture(TextureAtlasID atlasId) : TextureAtlas(atlasId) {}
+
+	bool isReserved_ = false;
 };
 
 class SpriteAtlas : public TextureCreationNotifier
 {
 public:
-	using SpriteIndexMap = UnorderedDictionary<size_t>;
-	using SeriesRangeMap = UnorderedDictionary<Range<size_t>>;
-
 	static constexpr size_t kDefaultSpriteInfoCapacity = 50;
 
 	SpriteAtlas() { spriteInfo_.Reserve(kDefaultSpriteInfoCapacity); }
@@ -101,6 +113,7 @@ public:
 	bool HasSpriteSeries(std::string_view seriesName) const;
 
 	bool IsSpriteValid(const Sprite& sprite) const;
+	bool IsHandleValid(const Handle<TextureResource>& handle) const;
 
 	Result<Void> RebuildSourceTextures(SDL_Renderer* renderer);
 
@@ -108,18 +121,15 @@ public:
 	{
 		using Ret = decltype(spriteInfo_.TryGetView(0));
 
-		const size_t spriteIdx = static_cast<size_t>(handle.GetResourceIndex());
-		if (spriteIdx >= spriteInfo_.Size())
-		{
-			return Ret{ std::nullopt };
-		}
-		if (handle.GetAtlasID() != 
-			spriteInfo_.GetView<&SpriteInfo::atlasId>(spriteIdx))
+		if (!IsHandleValid(handle))
 		{
 			return Ret{ std::nullopt };
 		}
 
+		const size_t spriteIdx = static_cast<size_t>(handle.GetResourceIndex());
+
 		const auto& cInfo = spriteInfo_;
+
 		return cInfo.TryGetView(spriteIdx);
 	}
 	auto GetSpriteInfo(const Sprite& sprite) const
@@ -132,18 +142,15 @@ public:
 	{
 		using Ret = decltype(spriteInfo_.TryGetView<MemberPtrs...>(0));
 
-		const size_t spriteIdx = static_cast<size_t>(handle.GetResourceIndex());
-		if (spriteIdx >= spriteInfo_.Size())
-		{
-			return Ret{ std::nullopt };
-		}
-		if (handle.GetAtlasID() !=
-			spriteInfo_.GetView<&SpriteInfo::atlasId>(spriteIdx))
+		if (!IsHandleValid(handle))
 		{
 			return Ret{ std::nullopt };
 		}
 
+		const size_t spriteIdx = static_cast<size_t>(handle.GetResourceIndex());
+
 		const auto& cInfo = spriteInfo_;
+
 		return cInfo.TryGetView<MemberPtrs...>(spriteIdx);
 	}
 	template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 1)
@@ -158,15 +165,12 @@ public:
 		using Ret = MonoValueOptionalTupleUnwrapper<
 			const typename member_ptr_traits<MemberPtr>::value_type&>;
 
+		if (!IsHandleValid(handle))
+		{
+			return Ret{ std::nullopt };
+		}
+
 		const size_t spriteIdx = static_cast<size_t>(handle.GetResourceIndex());
-		if (spriteIdx >= spriteInfo_.Size())
-		{
-			return Ret{};
-		}
-		if (handle.GetAtlasID() != spriteInfo_.GetView<&SpriteInfo::atlasId>(spriteIdx))
-		{
-			return Ret{};
-		}
 
 		const auto& cInfo = spriteInfo_;
 
@@ -188,7 +192,27 @@ public:
 		return spriteInfo_.ForEach<MemberPtrs...>();
 	}
 
+	template <typename Fn> requires std::invocable<Fn, const Sprite&>
+	void ForEachSprite(Fn&& fn) const
+	{
+		for (size_t i = 0; i < spriteInfo_.Size(); ++i)
+		{
+			if (!IsPlotEmpty(i))
+			{
+				fn(MakeSprite(i));
+			}
+		}
+	}
+
+	Result<Void> DefineSpriteSeries(std::string_view seriesName, std::span<const Sprite> sprites);
+	bool RemoveSpriteSeries(std::string_view seriesName);
+	bool RemoveSpriteSeriesMember(std::string_view seriesName, const Sprite& sprite);
+	size_t GetSpriteSeriesMemberIndex(std::string_view seriesName, const Sprite& sprite) const;
+
+	bool EraseSprite(const Sprite& sprite);
+
 	size_t GetTextureCount() const;
+	size_t GetSpriteCount() const;
 
 	size_t GetTextureSize() const;
 	void SetTextureSize(size_t newSize);
@@ -207,11 +231,24 @@ private:
 
 	Sprite MakeSprite(size_t spriteIndex) const;
 
+	size_t FindSuitableFreePlotIndex(int spriteW, int spriteH) const;
+
+	Result<Sprite> OverwriteSprite(SDL_Renderer* renderer, UniqueSurfacePtr& spriteSurface, 
+								   SpriteDescriptor&& descriptor, size_t freePlotIdx);
+
+	Result<Void> AddNewAtlasTexture(SDL_Renderer* renderer);
+
+	bool IsPlotEmpty(size_t spriteInfoIdx) const;
+
+	TextureAtlasID GetTextureAtlasIdForSpriteIndex(size_t ) const;
+
 	std::vector<SpriteAtlasTexture> spriteAtlasTextures_;
 	SpriteInfoSOA spriteInfo_;
-	SpriteIndexMap spriteNameIndices_;
-	SeriesRangeMap seriesNameRanges_;
+	UnorderedDictionary<size_t> spriteNameIndices_;
+	UnorderedDictionary<std::vector<size_t>> spriteSeriesDefs_;
 	SignalToken rebuildTexturesSignalToken_;
+
+	std::vector<size_t> freePlots_;
 
 	size_t textureSize_ = TextureAtlas::kDefaultAtlasSize;
 	TextureGrowthPolicy growthPolicy_ = TextureGrowthPolicy::FlexibleSize;

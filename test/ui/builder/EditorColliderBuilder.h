@@ -7,13 +7,15 @@
 
 namespace ui {
 
-class EditorColliderBuilder final : public IEditorComponentBuilder
+class EditorColliderBuilder final : public IEditorComponentBuilder, WriteAccessor<B2Body>
 {
 public:
 	EditorColliderBuilder() : IEditorComponentBuilder(ComponentBuilderType::Collider) {}
 	~EditorColliderBuilder() override = default;
 
 	bool Draw(Entity& e, SceneFixture& fixture) override;
+
+	Result<Void> Init(SceneFixture& fixture) override;
 
 private:
 	void SetIsActiveImpl(bool val) override;

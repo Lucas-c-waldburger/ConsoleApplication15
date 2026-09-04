@@ -2,6 +2,7 @@
 #include "../ScriptComponent.h"
 #include "../RigidBodyComponent.h"
 #include "../ColliderComponent.h"
+#include "../NameComponent.h"
 
 inline bool ScriptValid(const Script& script)
 {
@@ -16,4 +17,9 @@ inline bool RigidBodyValid(const RigidBody& rb)
 inline bool ColliderValid(const Collider& col)
 {
 	return col.shape.GetData().IsValid();
+}
+
+inline bool NameValid(const Name& name)
+{
+	return !name.value.empty();
 }
