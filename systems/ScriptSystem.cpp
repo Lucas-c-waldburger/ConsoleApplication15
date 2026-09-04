@@ -48,6 +48,9 @@ Result<ScriptTable::TableId> ScriptSystem::AddFunctionTable(const std::string& p
 
 	assert(table);
 
+	LOG_DEBUG_FMT("Function table script '{}' loaded successfully", 
+		std::filesystem::path(path).stem().string());
+
 	return table->GetTableId();
 }
 
@@ -65,12 +68,17 @@ Result<ScriptTable::TableId> ScriptSystem::AddSystemTable(const std::string& pat
 		return result.GetError();
 	}
 
+	LOG_DEBUG_FMT("System table script '{}' loaded successfully", 
+		std::filesystem::path(path).stem().string());
+
 	return table->GetTableId();
 }
 
 Result<Void> ScriptSystem::ReloadTable(ScriptTable::TableId tableId)
 {
-	return tables_.ReloadTable(tableId, state_);
+	TRY(tables_.ReloadTable(tableId, state_));
+
+	LOG_DEBUG_FMT("Script table with ID '{}' reloaded", tableId);
 }
 
 void ScriptSystem::Reset()
@@ -122,6 +130,8 @@ bool ScriptSystem::RemoveTable(ScriptTable::TableId tableId)
 
 	[[maybe_unused]] const bool removed = tables_.RemoveTable(tableId);
 	assert(removed);
+
+	LOG_DEBUG_FMT("Script table with ID '{}' removed", tableId);
 
 	return true;
 }

@@ -11,6 +11,6 @@ constexpr std::array<std::string_view, 4> kFallAnimSpriteNames = {
 };
 
 SpriteDescriptors MakeSpriteTestPackage(const std::vector<std::string>& pathStrs,
-											  std::string_view seriesName);
+											  std::string_view seriesName = "");
 
 } // test

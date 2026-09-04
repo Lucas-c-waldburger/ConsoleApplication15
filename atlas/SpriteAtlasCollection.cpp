@@ -296,25 +296,26 @@ size_t SpriteAtlas::GetSpriteSeriesMemberIndex(std::string_view seriesName, cons
 
 bool SpriteAtlas::EraseSprite(const Sprite& sprite)
 {
+    if (!IsSpriteValid(sprite))
+    {
+        return false;
+    }
+
     const auto spriteIdx = sprite.resourceHandle.GetResourceIndex();
-    if (spriteIdx >= spriteInfo_.Size())
-    {
-        return false;
-    }
+    auto [filepath, spriteName, plot, gen] = spriteInfo_.GetView<&SpriteInfo::filepath,
+                                                                 &SpriteInfo::spriteName,
+                                                                 &SpriteInfo::plot,
+                                                                 &SpriteInfo::generation>(spriteIdx);
+    assert(!filepath.empty());
+    assert(!spriteName.empty());
+    assert(plot.rect.w > 0 && plot.rect.h > 0);
 
-    auto [filepath, name, plot] = spriteInfo_.GetView<&SpriteInfo::filepath,
-                                                      &SpriteInfo::spriteName,
-                                                      &SpriteInfo::plot>(spriteIdx);
-    if (filepath.empty())
-    {
-        assert(name.empty());
-        return false;
-    }
-
-    assert(plot.rect.w > 0 && plot.rect.y <= 0);
+    [[maybe_unused]] const size_t nameErased = spriteNameIndices_.erase(spriteName);
+    assert(nameErased > 0);
 
     filepath.clear();
-    name.clear();
+    spriteName.clear();
+    ++gen;
 
     freePlots_.emplace_back(spriteIdx);
 
@@ -359,14 +360,19 @@ void SpriteAtlas::SetTextureGrowthPolicy(TextureGrowthPolicy policy)
 Result<Sprite> SpriteAtlas::OverwriteSprite(SDL_Renderer* renderer, UniqueSurfacePtr& spriteSurface, 
                                             SpriteDescriptor&& descriptor, size_t freePlotIdx)
 {
-    auto [filepath, spriteName, plot, gen, atlasIndex] = spriteInfo_.GetView<
+    assert(freePlotIdx < freePlots_.size());
+    const auto spriteIdx = freePlots_[freePlotIdx];
+
+    auto [filepath, spriteName, plot, atlasIndex] = spriteInfo_.GetView<
         &SpriteInfo::filepath,
         &SpriteInfo::spriteName,
         &SpriteInfo::plot,
-        &SpriteInfo::generation,
-        &SpriteInfo::atlasIndex>(freePlots_[freePlotIdx]);
+        &SpriteInfo::atlasIndex>(spriteIdx);
 
     assert(atlasIndex < spriteAtlasTextures_.size());
+    assert(filepath.empty());
+    assert(spriteName.empty());
+    assert(plot.rect.w > 0 && plot.rect.h > 0);
 
     SDL_SetRenderTarget(renderer, spriteAtlasTextures_[atlasIndex].GetSourceTexture());
 
@@ -394,13 +400,12 @@ Result<Sprite> SpriteAtlas::OverwriteSprite(SDL_Renderer* renderer, UniqueSurfac
     filepath = std::move(descriptor.filepath);
     spriteName = std::move(descriptor.spriteName);
     plot.rect = resizedRect;
-    ++gen;
 
-    const auto backIdx = freePlots_.size();
+    const auto backIdx = freePlots_.size() - 1;
     freePlots_[freePlotIdx] = freePlots_[backIdx];
     freePlots_.pop_back();
 
-    return MakeSprite(freePlots_[freePlotIdx]);
+    return MakeSprite(spriteIdx);
 }
 
 //Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
@@ -917,8 +922,6 @@ SerializedSpriteDescriptorPackage SpriteAtlas::Serialize() const
 
             seriesDef.spriteDataIndices.emplace_back(it->second);
         }
-
-        package.seriesDefinitions.emplace_back(std::move(seriesDef));
 	}
 
     return package;
@@ -1039,7 +1042,7 @@ Result<Void> SpriteAtlas::Deserialize(SDL_Renderer* renderer, SerializedSpriteDe
     {
         if (spriteSeriesDefs_.contains(packageSeriesName))
         {
-            return MAKE_ERROR("Duplicate sprite series name: '{}'", packageSeriesName);
+            return MAKE_ERROR_FMT("Duplicate sprite series name: '{}'", packageSeriesName);
         }
 
         auto [_, inserted] = spriteSeriesDefs_.try_emplace(

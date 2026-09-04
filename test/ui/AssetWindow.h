@@ -640,163 +640,163 @@ namespace ui {
 //	Config config_;
 //};
 
-class AssetWindow
-{
-public:
-	struct AssetItem
-	{
-		enum Type
-		{
-			Unknown,
-			Directory,
-			Image,
-			Font,
-			Audio
-		};
-
-		std::filesystem::path path;
-		std::string displayName;
-		Type type = Type::Unknown;
-		bool isOpen = false;
-	};
-
-	struct AssetReferenceNode
-	{
-		size_t id = 0;
-		size_t parent = 0;
-		std::vector<AssetReferenceNode> children;
-	};
-
-	struct AssetTree
-	{
-		std::vector<AssetItem> assets;
-		AssetReferenceNode referenceNode;
-
-		void Fill(const std::filesystem::path& rootPath, const std::unordered_set<std::string>& validExtensions,
-			AssetItem::Type type)
-		{
-			assets.clear();
-			referenceNode = AssetReferenceNode{ .id = 0, .parent = 0 };
-
-			FillImpl(referenceNode, rootPath, validExtensions, type);
-		}
-
-		void FillImpl(AssetReferenceNode& parentNode,
-			const std::filesystem::path& path,
-			const std::unordered_set<std::string>& validExtensions, AssetItem::Type type)
-		{
-			const size_t assetIdx = assets.size();
-
-			auto& newAsset = assets.emplace_back();
-			newAsset.path = path;
-			newAsset.displayName = path.filename().string();
-
-			auto& newNode = parentNode.children.emplace_back();
-			newNode.id = assetIdx;
-			newNode.parent = parentNode.id;
-
-			if (std::filesystem::is_directory(path))
-			{
-				newAsset.type = AssetItem::Type::Directory;
-
-				for (const auto& entry : std::filesystem::directory_iterator(path))
-				{
-					FillImpl(newNode, entry.path(), validExtensions, type);
-				}
-			}
-			else if (std::filesystem::is_regular_file(path))
-			{
-				auto ext = path.extension().string();
-
-				if (validExtensions.contains(ext))
-				{
-					newAsset.type = type;
-				}
-			}
-		}
-	};
-
-	struct AssetCollection
-	{
-		AssetTree spriteTree;
-		AssetTree fontTree;
-		AssetTree audioTree;
-	};
-
-	inline void DrawAssetTreeImpl(AssetReferenceNode& node, AssetTree& tree,
-		const GuiTextureConverter& converter)
-	{
-		assert(node.id < tree.assets.size());
-		auto& item = tree.assets[node.id];
-
-		ImGui::PushID(node.id);
-
-		ImGui::Indent();
-
-		const float rowHeight = ImGui::GetFrameHeight();
-		const bool isLeaf = node.children.empty();
-		const bool selected = selectedAssetNodeId_ == node.id;
-		if (ImGui::Selectable("##row", selected, ImGuiSelectableFlags_SpanAllColumns,
-			ImVec2(0, rowHeight)))
-		{
-			selectedAssetNodeId_ = node.id;
-		}
-
-		if (item.type == AssetItem::Type::Directory)
-		{
-			ImGui::BeginDisabled(isLeaf);
-
-			if (ImGui::ArrowButton("##arrow", (item.isOpen && !isLeaf) ? ImGuiDir_Down : ImGuiDir_Right))
-			{
-				item.isOpen = !item.isOpen;
-			}
-
-			ImGui::EndDisabled();
-		}
-
-		if (ImGui::BeginDragDropSource())
-		{
-			auto pathStr = item.path.generic_string();
-
-			ImGui::SetDragDropPayload("ASSET_IMAGE",
-				pathStr.data(),
-				pathStr.size() + 1
-			);
-
-			ImGui::TextUnformatted(item.displayName.c_str());
-
-			ImGui::EndDragDropSource();
-		}
-
-		ImGui::SameLine();
-
-		auto tx = GetNodeIconTexture(converter, node);
-		assert(tx.textureId != 0);
-		tx.size.x = rowHeight;
-		tx.size.y = rowHeight;
-
-		GuiImage(tx);
-
-		ImGui::SameLine();
-
-		ImGui::TextUnformatted(item.displayName.c_str());
-
-		if (!isLeaf && item.isOpen)
-		{
-			for (auto& ch : node.children)
-			{
-				DrawAssetTreeImpl(ch, tree, converter);
-			}
-		}
-
-		ImGui::Unindent();
-
-		ImGui::PopID();
-	}
-
-private:
-	size_t selectedAssetNodeId_ = 0;
-};
+//class AssetWindow
+//{
+//public:
+//	struct AssetItem
+//	{
+//		enum Type
+//		{
+//			Unknown,
+//			Directory,
+//			Image,
+//			Font,
+//			Audio
+//		};
+//
+//		std::filesystem::path path;
+//		std::string displayName;
+//		Type type = Type::Unknown;
+//		bool isOpen = false;
+//	};
+//
+//	struct AssetReferenceNode
+//	{
+//		size_t id = 0;
+//		size_t parent = 0;
+//		std::vector<AssetReferenceNode> children;
+//	};
+//
+//	struct AssetTree
+//	{
+//		std::vector<AssetItem> assets;
+//		AssetReferenceNode referenceNode;
+//
+//		void Fill(const std::filesystem::path& rootPath, const std::unordered_set<std::string>& validExtensions,
+//			AssetItem::Type type)
+//		{
+//			assets.clear();
+//			referenceNode = AssetReferenceNode{ .id = 0, .parent = 0 };
+//
+//			FillImpl(referenceNode, rootPath, validExtensions, type);
+//		}
+//
+//		void FillImpl(AssetReferenceNode& parentNode,
+//			const std::filesystem::path& path,
+//			const std::unordered_set<std::string>& validExtensions, AssetItem::Type type)
+//		{
+//			const size_t assetIdx = assets.size();
+//
+//			auto& newAsset = assets.emplace_back();
+//			newAsset.path = path;
+//			newAsset.displayName = path.filename().string();
+//
+//			auto& newNode = parentNode.children.emplace_back();
+//			newNode.id = assetIdx;
+//			newNode.parent = parentNode.id;
+//
+//			if (std::filesystem::is_directory(path))
+//			{
+//				newAsset.type = AssetItem::Type::Directory;
+//
+//				for (const auto& entry : std::filesystem::directory_iterator(path))
+//				{
+//					FillImpl(newNode, entry.path(), validExtensions, type);
+//				}
+//			}
+//			else if (std::filesystem::is_regular_file(path))
+//			{
+//				auto ext = path.extension().string();
+//
+//				if (validExtensions.contains(ext))
+//				{
+//					newAsset.type = type;
+//				}
+//			}
+//		}
+//	};
+//
+//	struct AssetCollection
+//	{
+//		AssetTree spriteTree;
+//		AssetTree fontTree;
+//		AssetTree audioTree;
+//	};
+//
+//	inline void DrawAssetTreeImpl(AssetReferenceNode& node, AssetTree& tree,
+//		const GuiTextureConverter& converter)
+//	{
+//		assert(node.id < tree.assets.size());
+//		auto& item = tree.assets[node.id];
+//
+//		ImGui::PushID(node.id);
+//
+//		ImGui::Indent();
+//
+//		const float rowHeight = ImGui::GetFrameHeight();
+//		const bool isLeaf = node.children.empty();
+//		const bool selected = selectedAssetNodeId_ == node.id;
+//		if (ImGui::Selectable("##row", selected, ImGuiSelectableFlags_SpanAllColumns,
+//			ImVec2(0, rowHeight)))
+//		{
+//			selectedAssetNodeId_ = node.id;
+//		}
+//
+//		if (item.type == AssetItem::Type::Directory)
+//		{
+//			ImGui::BeginDisabled(isLeaf);
+//
+//			if (ImGui::ArrowButton("##arrow", (item.isOpen && !isLeaf) ? ImGuiDir_Down : ImGuiDir_Right))
+//			{
+//				item.isOpen = !item.isOpen;
+//			}
+//
+//			ImGui::EndDisabled();
+//		}
+//
+//		if (ImGui::BeginDragDropSource())
+//		{
+//			auto pathStr = item.path.generic_string();
+//
+//			ImGui::SetDragDropPayload("ASSET_IMAGE",
+//				pathStr.data(),
+//				pathStr.size() + 1
+//			);
+//
+//			ImGui::TextUnformatted(item.displayName.c_str());
+//
+//			ImGui::EndDragDropSource();
+//		}
+//
+//		ImGui::SameLine();
+//
+//		auto tx = GetNodeIconTexture(converter, node);
+//		assert(tx.textureId != 0);
+//		tx.size.x = rowHeight;
+//		tx.size.y = rowHeight;
+//
+//		GuiImage(tx);
+//
+//		ImGui::SameLine();
+//
+//		ImGui::TextUnformatted(item.displayName.c_str());
+//
+//		if (!isLeaf && item.isOpen)
+//		{
+//			for (auto& ch : node.children)
+//			{
+//				DrawAssetTreeImpl(ch, tree, converter);
+//			}
+//		}
+//
+//		ImGui::Unindent();
+//
+//		ImGui::PopID();
+//	}
+//
+//private:
+//	size_t selectedAssetNodeId_ = 0;
+//};
 
 
 

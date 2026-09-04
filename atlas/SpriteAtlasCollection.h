@@ -12,8 +12,6 @@ struct SpriteInfo
 	std::string filepath;
 	uint32_t generation;
 	size_t atlasIndex = std::numeric_limits<size_t>::max();
-	//std::string seriesName;
-	//size_t seriesIndex = std::numeric_limits<size_t>::max();
 
 	bool operator==(const SpriteInfo&) const = default;
 };
@@ -25,7 +23,7 @@ using SpriteInfoSOA = StableSOA<
 	&SpriteInfo::spriteName,
 	&SpriteInfo::filepath,
 	&SpriteInfo::generation,
-
+	&SpriteInfo::atlasIndex
 >;
 
 class SpriteAtlasTexture : public TextureAtlas

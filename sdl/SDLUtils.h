@@ -1,22 +1,42 @@
 #pragma once
 #include <SDL.h>
+#include <SDL_image.h>
 #include <concepts>
 #include "../core/TypeUtils.h"
 #include "../core/CommonFunctions.h"
 
 // unique sdl ptr wrappers
 // surface
-using SurfaceDtor = decltype([](SDL_Surface* surf) { if (surf) { SDL_FreeSurface(surf); } });
-using UniqueSurfacePtr = std::unique_ptr<SDL_Surface, SurfaceDtor>;
+using UniqueSurfacePtr = std::unique_ptr<SDL_Surface, 
+    decltype([](SDL_Surface* s) { if (s) { SDL_FreeSurface(s); } })>;
 
+inline UniqueSurfacePtr MakeUniqueSurfacePtr(std::string_view filepath)
+{
+    return UniqueSurfacePtr{ IMG_Load(filepath.data()) };
+}
 inline UniqueSurfacePtr MakeUniqueSurfacePtrBMP(const std::string& bmpFileName)
 {
     return UniqueSurfacePtr{ SDL_LoadBMP(bmpFileName.c_str()) };
 }
 
+// texture
+using UniqueTexturePtr = std::unique_ptr < SDL_Texture,
+    decltype([](SDL_Texture* t) { SDL_DestroyTexture(t); })> ;
+
+inline UniqueTexturePtr
+MakeUniqueTexturePtr(SDL_Renderer* renderer, SDL_PixelFormatEnum fmt,
+                     SDL_TextureAccess access, int w, int h)
+{
+    return UniqueTexturePtr{ SDL_CreateTexture(renderer, fmt, access, w, h) };
+}
+inline UniqueTexturePtr MakeUniqueTexturePtrFromSurface(SDL_Renderer* renderer, SDL_Surface* surface)
+{
+    return UniqueTexturePtr{ SDL_CreateTextureFromSurface(renderer, surface) };
+}
+
 // cursor
-using CursorDtor = decltype([](SDL_Cursor* crsr) { if (crsr) { SDL_FreeCursor(crsr); } });
-using UniqueCursorPtr = std::unique_ptr<SDL_Cursor, CursorDtor>;
+using UniqueCursorPtr = std::unique_ptr<SDL_Cursor, 
+    decltype([](SDL_Cursor* crsr) { if (crsr) { SDL_FreeCursor(crsr); } })>;
 
 inline UniqueCursorPtr MakeUniqueCursor(SDL_SystemCursor systemCursor)
 {

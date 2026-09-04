@@ -7,8 +7,8 @@
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AtlasPlot, rect, rotation)
 
 DEF_SERIALIZABLE_EMPTY(Sprite)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpriteInfo, plot, spriteName, filepath,
-	seriesName, seriesIndex)
+//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpriteInfo, plot, spriteName, filepath,
+	//seriesName, seriesIndex)
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpriteDescriptor, spriteName, filepath)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpriteDescriptors, data, seriesName)
@@ -33,7 +33,7 @@ inline constexpr std::string_view kSeriesIndex = "seriesIndex";
 template <typename BasicJson>
 inline void to_json(BasicJson& j, const SpriteInfoSOA& spriteInfoSoa)
 {
-	auto& obj = BasicJson::object();
+	/*auto& obj = BasicJson::object();
 
 	auto& plots     = obj[kPlotKey]	      = BasicJson::array();
 	auto& names     = obj[kSpriteNameKey] = BasicJson::array();
@@ -48,13 +48,13 @@ inline void to_json(BasicJson& j, const SpriteInfoSOA& spriteInfoSoa)
 		paths.push_back(path);
 		series.push_back(series);
 		idxs.push_back(idx);
-	}
+	}*/
 }
 
 template <typename BasicJson>
 inline void from_json(const BasicJson& j, SpriteInfoSOA& spriteInfoSoa)
 {
-	if (!j.is_object())
+	/*if (!j.is_object())
 	{
 		return;
 	}
@@ -74,7 +74,7 @@ inline void from_json(const BasicJson& j, SpriteInfoSOA& spriteInfoSoa)
 			.seriesName = series[i],
 			.seriesIndex = idxs[i]
 		});
-	}
+	}*/
 }
 
 inline constexpr std::string_view kNoSeriesKey = "noSeries";
@@ -87,7 +87,7 @@ inline constexpr std::string_view kFontDescriptorKey = "fontDescriptor";
 template <typename BasicJson>
 inline void to_json(nlohmann::json& j, const SpriteAtlas& atlas)
 {
-	auto& obj = BasicJson::object();
+	/*auto& obj = BasicJson::object();
 
 	auto& atlasIds  = obj[kAtlasIdKey]	  = BasicJson::array();
 	auto& plots     = obj[kPlotKey]	      = BasicJson::array();
@@ -104,7 +104,7 @@ inline void to_json(nlohmann::json& j, const SpriteAtlas& atlas)
 		paths.push_back(path);
 		series.push_back(series);
 		idxs.push_back(idx);
-	}
+	}*/
 
 	//auto atlases = j.array();
 

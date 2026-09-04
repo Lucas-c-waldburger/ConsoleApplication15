@@ -81,7 +81,7 @@ public:
 
 	static Buttons& GetButtons() { return buttons_; }
 	static SpritePicker& GetSpritePicker() { return spritePicker_; }
-	static const ComponentBuilderType& GetActiveBuilderType() { return componentBuilders_.GetActiveBuilderType(); }
+	static ComponentBuilderType GetActiveBuilderType() { return componentBuilders_.GetActiveBuilderType(); }
 	static void SetActiveBuilderType(ComponentBuilderType type) { componentBuilders_.SetActiveBuilder(type); }
 	static EditableComponentBitSet& GetComponentHeaderOpen() { return componentHeaderOpen_; }
 
