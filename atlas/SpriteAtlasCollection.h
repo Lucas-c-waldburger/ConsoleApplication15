@@ -58,7 +58,7 @@ public:
 	Create(SDL_Renderer* renderer, size_t size = kDefaultAtlasSize, bool isReserved = false);
 
 	Result<SpriteLoadOutcome> 
-	LoadSprite(SDL_Renderer* renderer, const SpriteDescriptor& descriptor);
+	LoadSprite(SDL_Renderer* renderer, std::string_view filepath);
 
 	Result<SpriteLoadOutcome>
 	LoadSprite(SDL_Renderer* renderer, UniqueSurfacePtr& spriteSurface,
@@ -221,6 +221,8 @@ public:
 	void SetTextureGrowthPolicy(TextureGrowthPolicy newPolicy);
 
 	SpriteDescriptorPackage ExportSpriteDescriptors() const;
+	SerializedSpriteDescriptorPackage Serialize() const;
+	Result<Void> Deserialize(SDL_Renderer* renderer, SerializedSpriteDescriptorPackage&& package);
 
 private:
 	Result<Sprite> LoadSpriteImpl(SDL_Renderer* renderer,

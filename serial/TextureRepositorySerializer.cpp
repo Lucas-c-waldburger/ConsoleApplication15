@@ -14,12 +14,17 @@ TextureRepositorySerializer::Serialize(const std::string& jsonFilepath, const Te
 
 	auto& texturesJ = j["textures"] = nlohmann::json::object();
 
-	auto& spritesJ = texturesJ["spriteAtlas"] = nlohmann::json::array();
-	auto spritePackage = repo.GetSpriteAtlas().ExportSpriteDescriptors();
-	for (const auto& descriptors : spritePackage)
-	{
-		spritesJ.push_back(descriptors);
-	}
+	auto& spritesJ = texturesJ["spriteAtlas"] = nlohmann::json::object();
+	auto spritePackage = repo.GetSpriteAtlas().Serialize();
+
+	to_json(spritesJ, spritePackage);
+
+	//auto& spritesJ = texturesJ["spriteAtlas"] = nlohmann::json::array();
+	//auto spritePackage = repo.GetSpriteAtlas().ExportSpriteDescriptors();
+	//for (const auto& descriptors : spritePackage)
+	//{
+	//	spritesJ.push_back(descriptors);
+	//}
 
 	auto& fontsJ = texturesJ["fontAtlas"] = nlohmann::json::array(); 
 	auto fontPackage = repo.GetFontAtlas().ExportFontDescriptors();
@@ -39,12 +44,17 @@ void TextureRepositorySerializer::SerializeToJson(nlohmann::json& masterJ, const
 
 	auto& texturesJ = masterJ["textures"] = nlohmann::json::object();
 
-	auto& spritesJ = texturesJ["spriteAtlas"] = nlohmann::json::array();
-	auto spritePackage = repo.GetSpriteAtlas().ExportSpriteDescriptors();
-	for (const auto& descriptors : spritePackage)
-	{
-		spritesJ.push_back(descriptors);
-	}
+	auto& spritesJ = texturesJ["spriteAtlas"] = nlohmann::json::object();
+	auto spritePackage = repo.GetSpriteAtlas().Serialize();
+
+	to_json(spritesJ, spritePackage);
+
+	//auto& spritesJ = texturesJ["spriteAtlas"] = nlohmann::json::array();
+	//auto spritePackage = repo.GetSpriteAtlas().ExportSpriteDescriptors();
+	//for (const auto& descriptors : spritePackage)
+	//{
+	//	spritesJ.push_back(descriptors);
+	//}
 
 	auto& fontsJ = texturesJ["fontAtlas"] = nlohmann::json::array();
 	auto fontPackage = repo.GetFontAtlas().ExportFontDescriptors();
@@ -81,6 +91,30 @@ TextureRepositorySerializer::Deserialize(const std::string& jsonFilepath, Textur
 	if (texturesJ.contains("spriteAtlas"))
 	{
 		const auto& spriteAtlasJ = texturesJ.at("spriteAtlas");
+		if (!spriteAtlasJ.is_object())
+		{
+			errors.emplace_back(MAKE_ERROR("'spriteAtlas' field in JSON file was not of type object"));
+		}
+
+		SerializedSpriteDescriptorPackage spritePackage;
+		try
+		{
+			from_json(spriteAtlasJ, spritePackage);
+		}
+		catch (const nlohmann::json::exception& err)
+		{
+			errors.emplace_back(
+				MAKE_ERROR_FMT("Error parsing sprite atlas package: '{}'", err.what())
+			);
+		}
+
+		auto loadResult = repo.GetSpriteAtlas().Deserialize(renderer, std::move(spritePackage));
+		if (!loadResult.Success())
+		{
+			errors.emplace_back(std::move(loadResult.GetError()));
+		}
+
+		/*const auto& spriteAtlasJ = texturesJ.at("spriteAtlas");
 		if (!spriteAtlasJ.is_array())
 		{
 			errors.emplace_back(MAKE_ERROR("'spriteAtlas' field in JSON file was not of type array"));
@@ -109,7 +143,7 @@ TextureRepositorySerializer::Deserialize(const std::string& jsonFilepath, Textur
 					errors.emplace_back(std::move(loadResult.GetError()));
 				}
 			}
-		}
+		}*/
 	}
 	else
 	{
@@ -169,6 +203,30 @@ std::vector<Error> TextureRepositorySerializer::DeserializeFromJson(const nlohma
 	if (texturesJ.contains("spriteAtlas"))
 	{
 		const auto& spriteAtlasJ = texturesJ.at("spriteAtlas");
+		if (!spriteAtlasJ.is_object())
+		{
+			errors.emplace_back(MAKE_ERROR("'spriteAtlas' field in JSON file was not of type object"));
+		}
+
+		SerializedSpriteDescriptorPackage spritePackage;
+		try
+		{
+			from_json(spriteAtlasJ, spritePackage);
+		}
+		catch (const nlohmann::json::exception& err)
+		{
+			errors.emplace_back(
+				MAKE_ERROR_FMT("Error parsing sprite atlas package: '{}'", err.what())
+			);
+		}
+
+		auto loadResult = repo.GetSpriteAtlas().Deserialize(renderer, std::move(spritePackage));
+		if (!loadResult.Success())
+		{
+			errors.emplace_back(std::move(loadResult.GetError()));
+		}
+
+		/*const auto& spriteAtlasJ = texturesJ.at("spriteAtlas");
 		if (!spriteAtlasJ.is_array())
 		{
 			errors.emplace_back(MAKE_ERROR("'spriteAtlas' field in JSON file was not of type array"));
@@ -197,7 +255,7 @@ std::vector<Error> TextureRepositorySerializer::DeserializeFromJson(const nlohma
 					errors.emplace_back(std::move(loadResult.GetError()));
 				}
 			}
-		}
+		}*/
 	}
 	else
 	{

@@ -43,16 +43,12 @@ TEST_CASE("SpriteAnimationSystem correctly updates sprites", "[animation][system
 
 		REQUIRE(spriteAtlas.IsSpriteValid(sprite));
 
-		auto info = spriteAtlas.GetSpriteInfo<&SpriteInfo::spriteName,
-											  &SpriteInfo::seriesName,
-											  &SpriteInfo::seriesIndex>(sprite);
-		REQUIRE(info.has_value());
+		auto spriteName = spriteAtlas.GetSpriteInfo<&SpriteInfo::spriteName>(sprite);
+		REQUIRE(spriteName.has_value());
+		CHECK(*spriteName == std::format(spriteNameFmt, i));
 
-		const auto& [spriteName, seriesName, seriesIdx] = *info;
-
-		CHECK(spriteName == std::format(spriteNameFmt, i));
-		CHECK(seriesName == "sword_slash");
-		CHECK(seriesIdx == i - 1);
+		CHECK(spriteAtlas.HasSpriteSeries("sword_slash"));
+		CHECK(spriteAtlas.GetSpriteSeriesMemberIndex("sword_slash", sprite) == i - 1);
 	}
 
 	// prep entity

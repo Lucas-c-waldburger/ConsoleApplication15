@@ -62,7 +62,7 @@ SpriteAtlasTexture::Create(SDL_Renderer* renderer, size_t size, bool isReserved)
 }
 
 Result<SpriteAtlasTexture::SpriteLoadOutcome> 
-SpriteAtlasTexture::LoadSprite(SDL_Renderer* renderer, const SpriteDescriptor& descriptor)
+SpriteAtlasTexture::LoadSprite(SDL_Renderer* renderer, std::string_view filepath)
 {
     if (!IsLoaded())
     {
@@ -77,7 +77,7 @@ SpriteAtlasTexture::LoadSprite(SDL_Renderer* renderer, const SpriteDescriptor& d
         if (spriteTexture) { SDL_DestroyTexture(spriteTexture); }
     } };
 
-    spriteSurface = IMG_Load(descriptor.filepath.c_str());
+    spriteSurface = IMG_Load(filepath.data());
     if (!spriteSurface)
     {
         return MAKE_ERROR(IMG_GetError());
@@ -512,12 +512,6 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
         return MakeSprite(it->second);
     }
 
-    assert(!spriteAtlasTextures_.empty());
-
-    using Outcome = SpriteAtlasTexture::SpriteLoadOutcome;
-    Outcome loadOutcome{};
-    size_t originalTextureSize = textureSize_;
-
     auto spriteSurface = MakeUniqueSurfacePtr(descriptor.filepath);
     if (!spriteSurface)
     {
@@ -537,11 +531,15 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
     }
 
     // else no free plot to reuse - make new one
+    using Outcome = SpriteAtlasTexture::SpriteLoadOutcome;
+    Outcome loadOutcome{};
+    size_t originalTextureSize = textureSize_;
+
     do
     {
         SDL_SetRenderTarget(renderer, spriteAtlasTextures_.back().GetSourceTexture());
 
-        TRY_ASSIGN(loadOutcome, spriteAtlasTextures_.back().LoadSprite(renderer, descriptor));
+        TRY_ASSIGN(loadOutcome, spriteAtlasTextures_.back().LoadSprite(renderer, descriptor.filepath));
 
         if (loadOutcome.code == Outcome::SpriteTooLarge)
         {
@@ -574,7 +572,7 @@ Result<Sprite> SpriteAtlas::LoadSpriteImpl(SDL_Renderer* renderer,
 
     size_t spriteIdx = spriteInfo_.PushBack(std::move(newSpriteInfo));
 
-    auto [_, inserted] = spriteNameIndices_.try_emplace(descriptor.spriteName, spriteIdx);
+    auto [_, inserted] = spriteNameIndices_.try_emplace(std::move(descriptor.spriteName), spriteIdx);
     assert(inserted);
 
     [[maybe_unused]] const auto& plot = spriteInfo_.GetView<&SpriteInfo::plot>(spriteIdx);
@@ -862,25 +860,204 @@ SpriteAtlas::LoadSpritesImpl(SDL_Renderer* renderer,
         }
     }
 
-    //if (isSpriteSeries)
-    //{
-    //    const size_t minSpriteIdx = 
-    //        static_cast<size_t>(sprites.front().resourceHandle.GetResourceIndex());
-    //    const size_t maxSpriteIdx = 
-    //        static_cast<size_t>(sprites.back().resourceHandle.GetResourceIndex());
-
-    //    assert(minSpriteIdx < maxSpriteIdx);
-
-    //    const auto& seriesNameRef =
-    //        spriteInfo_.GetView<&SpriteInfo::seriesName>(minSpriteIdx);
-
-    //    auto [_, inserted] = seriesNameRanges_.try_emplace(
-    //        seriesNameRef, Range<size_t>{minSpriteIdx, maxSpriteIdx}
-    //    );
-    //    assert(inserted);
-    //}
-
     return sprites;
+}
+
+SerializedSpriteDescriptorPackage SpriteAtlas::Serialize() const
+{
+    SerializedSpriteDescriptorPackage package;
+    package.spriteData.reserve(GetSpriteCount());
+
+	// store mapping of spriteInfo index to package.spriteData index for use by series definitions
+	auto spriteInfoIdxToDescriptorIdx = spriteSeriesDefs_ 
+        | std::views::values 
+        | std::views::join 
+        | std::views::transform([](size_t spriteInfoIdx) { 
+            return std::pair<size_t, size_t>{ spriteInfoIdx, std::numeric_limits<size_t>::max() };
+        }) | std::ranges::to<std::unordered_map<size_t, size_t>>();
+
+    for (size_t i = 0; i < spriteInfo_.Size(); ++i)
+    {
+        if (IsPlotEmpty(i))
+        {
+            continue;
+        }
+
+        // store sprite descriptor data
+        const auto [spriteName, filepath] = spriteInfo_.GetView<&SpriteInfo::spriteName,
+                                                                &SpriteInfo::filepath>(i);
+
+        package.spriteData.emplace_back(spriteName, filepath);
+
+		// if this sprite index is part of a series, store the mapping to the package index
+        if (spriteInfoIdxToDescriptorIdx.contains(i))
+        {
+            spriteInfoIdxToDescriptorIdx[i] = package.spriteData.size() - 1;
+		}
+    }
+
+	// store series definitions
+    package.seriesDefinitions.reserve(spriteSeriesDefs_.size());
+    for (const auto& [seriesName, spriteInfoIndices] : spriteSeriesDefs_)
+    {
+        if (spriteInfoIndices.empty())
+        {
+            continue;
+        }
+
+        auto& seriesDef = package.seriesDefinitions.emplace_back();
+        seriesDef.seriesName = seriesName;
+        seriesDef.spriteDataIndices.reserve(spriteInfoIndices.size());
+
+        for (const auto& spriteInfoIdx : spriteInfoIndices)
+        {
+            const auto it = spriteInfoIdxToDescriptorIdx.find(spriteInfoIdx);
+            assert(it != spriteInfoIdxToDescriptorIdx.end());
+            assert(it->second != std::numeric_limits<size_t>::max());
+
+            seriesDef.spriteDataIndices.emplace_back(it->second);
+        }
+
+        package.seriesDefinitions.emplace_back(std::move(seriesDef));
+	}
+
+    return package;
+}
+
+Result<Void> SpriteAtlas::Deserialize(SDL_Renderer* renderer, SerializedSpriteDescriptorPackage&& package)
+{
+    assert(renderer);
+
+    if (package.spriteData.empty())
+    {
+        return kVoid;
+    }
+
+    // store mapping of package.spriteData index to assigned spriteInfo index
+    std::unordered_map<size_t, size_t> descriptorIdxToSpriteInfoIdx;
+    for (const auto& seriesDef : package.seriesDefinitions)
+    {
+        for (const size_t descriptorIdx : seriesDef.spriteDataIndices)
+        {
+            descriptorIdxToSpriteInfoIdx.try_emplace(descriptorIdx, std::numeric_limits<size_t>::max());
+        }
+    }
+
+    TRY(AddNewAtlasTexture(renderer));
+
+    spriteNameIndices_.reserve(package.spriteData.size());
+
+    // load sprites
+    for (size_t descriptorIdx = 0; descriptorIdx < package.spriteData.size(); ++descriptorIdx)
+    {
+        auto& filepath = package.spriteData[descriptorIdx].filepath;
+        auto& spriteName = package.spriteData[descriptorIdx].spriteName;
+
+        if (!std::filesystem::exists(filepath))
+        {
+            return MAKE_ERROR_FMT("Invalid filepath: '{}'", filepath);
+        }
+
+        if (spriteName.empty())
+        {
+            return MAKE_ERROR_FMT("Sprite with filepath '{}' did not have a name", filepath);
+        }
+
+        if (spriteNameIndices_.contains(spriteName))
+        {
+            return MAKE_ERROR_FMT("Duplicate sprite name: '{}'", spriteName);
+        }
+
+        auto spriteSurface = MakeUniqueSurfacePtr(filepath);
+        if (!spriteSurface)
+        {
+            return MAKE_ERROR(IMG_GetError());
+        }
+        if (spriteSurface->w <= 0 || spriteSurface->h <= 0)
+        {
+            return MAKE_ERROR_FMT("Invalid surface dimensions for sprite '{}': ({}, {})",
+                spriteName, spriteSurface->w, spriteSurface->h);
+        }
+
+        using Outcome = SpriteAtlasTexture::SpriteLoadOutcome;
+        Outcome loadOutcome{};
+        size_t originalTextureSize = textureSize_;
+
+        do
+        {
+            SDL_SetRenderTarget(renderer, spriteAtlasTextures_.back().GetSourceTexture());
+
+            TRY_ASSIGN(loadOutcome, spriteAtlasTextures_.back().LoadSprite(renderer, filepath));
+
+            if (loadOutcome.code == Outcome::SpriteTooLarge)
+            {
+                if (growthPolicy_ == TextureGrowthPolicy::FixedSize ||
+                    textureSize_ >= TextureAtlas::kMaxAtlasSize)
+                {
+                    return MAKE_ERROR_FMT("Sprite '{}' was too large to fit in atlas texture",
+                        spriteName);
+                }
+                else
+                {
+                    textureSize_ = std::min(textureSize_ * 2, TextureAtlas::kMaxAtlasSize);
+                    loadOutcome.code = Outcome::AtlasFull;
+                }
+            }
+            if (loadOutcome.code == Outcome::AtlasFull)
+            {
+                TRY(AddNewAtlasTexture(renderer));
+            }
+
+        } while (loadOutcome.code != Outcome::Success);
+
+        textureSize_ = originalTextureSize;
+
+        auto& newSpriteInfo = loadOutcome.spriteInfo;
+        newSpriteInfo.spriteName = spriteName;
+        newSpriteInfo.filepath = std::move(filepath);
+        newSpriteInfo.atlasIndex = spriteAtlasTextures_.size() - 1;
+        newSpriteInfo.generation = 0;
+
+        size_t spriteInfoIdx = spriteInfo_.PushBack(std::move(newSpriteInfo));
+
+        auto [_, inserted] = spriteNameIndices_.try_emplace(std::move(spriteName), spriteInfoIdx);
+        assert(inserted);
+
+        [[maybe_unused]] const auto& plot = spriteInfo_.GetView<&SpriteInfo::plot>(spriteInfoIdx);
+        assert(plot.rect.w > 0 && plot.rect.h > 0);
+
+        // if this sprite is part of a series, store the mapping to its new spriteInfo index
+        if (descriptorIdxToSpriteInfoIdx.contains(descriptorIdx))
+        {
+            descriptorIdxToSpriteInfoIdx[descriptorIdx] = spriteInfoIdx;
+        }
+    }
+
+    // resolve sprite series definitions
+    spriteSeriesDefs_.reserve(package.seriesDefinitions.size());
+    for (auto&& [packageSeriesName, packageSpriteDescriptorIdxs] : package.seriesDefinitions)
+    {
+        if (spriteSeriesDefs_.contains(packageSeriesName))
+        {
+            return MAKE_ERROR("Duplicate sprite series name: '{}'", packageSeriesName);
+        }
+
+        auto [_, inserted] = spriteSeriesDefs_.try_emplace(
+            std::move(packageSeriesName), std::move(packageSpriteDescriptorIdxs)
+        );
+        assert(inserted);
+
+        for (auto& packageSpriteDescriptorIdx : packageSpriteDescriptorIdxs)
+        {
+            const auto it = descriptorIdxToSpriteInfoIdx.find(packageSpriteDescriptorIdx);
+            assert(it != descriptorIdxToSpriteInfoIdx.end());
+            assert(it->second != std::numeric_limits<size_t>::max());
+
+            packageSpriteDescriptorIdx = it->second;
+        }
+    }
+
+    return kVoid;
 }
 
 SpriteDescriptorPackage SpriteAtlas::ExportSpriteDescriptors() const

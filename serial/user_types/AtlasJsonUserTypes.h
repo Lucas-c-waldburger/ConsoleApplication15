@@ -13,6 +13,11 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpriteInfo, plot, spriteName, filepath,
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpriteDescriptor, spriteName, filepath)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpriteDescriptors, data, seriesName)
 
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SerializedSpriteDescriptorPackage::SeriesDefinition,
+	seriesName, spriteDataIndices)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SerializedSpriteDescriptorPackage,
+	spriteData, seriesDefinitions)
+
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FontDescriptor, fontName, filepath, 
 	fontSize, fontHeight)
 

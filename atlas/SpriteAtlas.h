@@ -22,6 +22,18 @@ struct SpriteDescriptors
 
 using SpriteDescriptorPackage = std::vector<SpriteDescriptors>;
 
+struct SerializedSpriteDescriptorPackage
+{
+	struct SeriesDefinition
+	{
+		std::string seriesName;
+		std::vector<size_t> spriteDataIndices;
+	};
+
+	std::vector<SpriteDescriptor> spriteData;
+	std::vector<SeriesDefinition> seriesDefinitions;
+};
+
 struct Sprite
 {
 	Handle<TextureResource> resourceHandle;

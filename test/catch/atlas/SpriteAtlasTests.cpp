@@ -409,9 +409,15 @@ TEST_CASE("SpriteAtlas::GetSpriteCount", "[atlas]")
 		CHECK(spriteAtlas.GetSpriteInfo(sp).has_value());
 	}
 
-	CHECK(spriteAtlas.GetSpriteCount() == 4);
+	size_t numSprites = 4;
+	CHECK(spriteAtlas.GetSpriteCount() == numSprites);
 
-
+	for (const auto& sp : sprites)
+	{
+		CHECK(spriteAtlas.EraseSprite(sp));
+		CHECK(spriteAtlas.GetSpriteCount() == numSprites - 1);
+		--numSprites;
+	}
 
 	SDLite::Exit();
 	Logger::EndSession();
