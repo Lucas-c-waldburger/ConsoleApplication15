@@ -58,7 +58,7 @@ public:
     {
         const size_t newIdx = Size();
 
-        [&] <std::size_t...Is>(std::index_sequence<Is...>)
+        [&]<std::size_t...Is>(std::index_sequence<Is...>)
         {
             ((std::get<Is>(memberValues_)
                 .push_back(obj.*std::get<Is>(memberPtrs_))), ...);
@@ -71,7 +71,7 @@ public:
     {
         const size_t newIdx = Size();
 
-        [&] <std::size_t...Is>(std::index_sequence<Is...>)
+        [&]<std::size_t...Is>(std::index_sequence<Is...>)
         {
             ((std::get<Is>(memberValues_)
                 .push_back(std::move(obj.*std::get<Is>(memberPtrs_)))), ...);
@@ -232,7 +232,7 @@ public:
     {
         return std::apply([](auto&...vecs) {
             return std::views::zip(vecs...);
-            }, memberValues_);
+        }, memberValues_);
     }
 
     template <auto PtrArg>

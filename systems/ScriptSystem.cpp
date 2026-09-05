@@ -79,6 +79,8 @@ Result<Void> ScriptSystem::ReloadTable(ScriptTable::TableId tableId)
 	TRY(tables_.ReloadTable(tableId, state_));
 
 	LOG_DEBUG_FMT("Script table with ID '{}' reloaded", tableId);
+
+	return kVoid;
 }
 
 void ScriptSystem::Reset()

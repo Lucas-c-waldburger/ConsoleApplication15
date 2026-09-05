@@ -459,7 +459,7 @@ TEST_CASE("SpriteAtlas::GetSpriteCount", "[atlas]")
 	Logger::EndSession();
 }
 
-TEST_CASE("SpriteAtlas::Serialize/Deserialize", "[atlas][l]")
+TEST_CASE("SpriteAtlas::Serialize/Deserialize", "[atlas]")
 {
 	Logger::StartSession();
 	auto status = SDLite::Start();
@@ -596,6 +596,189 @@ TEST_CASE("SpriteAtlas::Serialize/Deserialize", "[atlas][l]")
 
 		CHECK(spriteAtlas2.GetSpriteSeriesMember("knight_jump_series", i) == sp);
 		CHECK(spriteAtlas2.GetSpriteSeriesMemberIndex("knight_jump_series", sp) == i);
+	}
+
+	SDLite::Exit();
+	Logger::EndSession();
+}
+
+TEST_CASE("SpriteAtlas::CopyContentsFrom", "[atlas][l]")
+{
+	Logger::StartSession();
+	auto status = SDLite::Start();
+	REQUIRE(status.Good());
+
+	SpriteAtlas spriteAtlas1{};
+	SpriteAtlas spriteAtlas2{};
+
+	// serialize
+	auto fallSeriesPathsResult =
+		ResourcePaths::SpriteDirectory("knight/fall_anim", std::less<std::string>{});
+	REQUIRE_RESULT(fallSeriesPathsResult);
+
+	auto& fallSeriesPaths = fallSeriesPathsResult.GetValue();
+	CHECK(fallSeriesPaths.size() == 4);
+
+	auto jumpSeriesPathsResult =
+		ResourcePaths::SpriteDirectory("knight/jump_anim", std::less<std::string>{});
+	REQUIRE_RESULT(jumpSeriesPathsResult);
+
+	auto& jumpSeriesPaths = jumpSeriesPathsResult.GetValue();
+	CHECK(jumpSeriesPaths.size() == 4);
+
+	auto fallDescriptors = test::MakeSpriteTestPackage(std::move(fallSeriesPaths),
+		"knight_fall_series");
+	CHECK(fallDescriptors.data.size() == 4);
+	CHECK(fallDescriptors.seriesName == "knight_fall_series");
+	for (size_t i = 0; i < fallDescriptors.data.size(); ++i)
+	{
+		fallDescriptors.data[i].spriteName = std::format("knight_fall_{}", i);
+	}
+
+	auto jumpDescriptors = test::MakeSpriteTestPackage(std::move(jumpSeriesPaths),
+		"knight_jump_series");
+	CHECK(jumpDescriptors.data.size() == 4);
+	CHECK(jumpDescriptors.seriesName == "knight_jump_series");
+	for (size_t i = 0; i < jumpDescriptors.data.size(); ++i)
+	{
+		jumpDescriptors.data[i].spriteName = std::format("knight_jump_{}", i);
+	}
+
+	auto tempFallDescriptors = fallDescriptors;
+	auto tempJumpDescriptors = jumpDescriptors;
+
+	auto fallLoadResult = spriteAtlas1.LoadSprites(SDLite::Renderer(),
+		std::move(tempFallDescriptors));
+	REQUIRE_RESULT(fallLoadResult);
+
+	CHECK(spriteAtlas1.GetSpriteCount() == 4);
+	CHECK(spriteAtlas1.HasSpriteSeries("knight_fall_series"));
+
+	auto jumpLoadResult = spriteAtlas2.LoadSprites(SDLite::Renderer(),
+		std::move(tempJumpDescriptors));
+	REQUIRE_RESULT(jumpLoadResult);
+
+	CHECK(spriteAtlas2.GetSpriteCount() == 4);
+	CHECK(spriteAtlas2.HasSpriteSeries("knight_jump_series"));
+
+	auto copyResult = spriteAtlas1.CopyContentsFrom(spriteAtlas2, SDLite::Renderer());
+	REQUIRE_RESULT(copyResult);
+
+	// atlas 1 gets 2 copied into it
+	CHECK(spriteAtlas1.GetSpriteCount() == 8);
+	CHECK(spriteAtlas1.HasSpriteSeries("knight_fall_series"));
+	CHECK(spriteAtlas1.HasSpriteSeries("knight_jump_series"));
+
+	for (size_t i = 0; i < fallDescriptors.data.size(); ++i)
+	{
+		const auto& fallDescriptor = fallDescriptors.data[i];
+
+		auto sp = spriteAtlas1.GetSprite(fallDescriptor.spriteName);
+		CHECK(sp.resourceHandle.IsValid());
+		CHECK(spriteAtlas1.IsSpriteValid(sp));
+
+		CHECK(spriteAtlas1.GetSpriteSeriesMember("knight_fall_series", i) == sp);
+		CHECK(spriteAtlas1.GetSpriteSeriesMemberIndex("knight_fall_series", sp) == i);
+	}
+	for (size_t i = 0; i < jumpDescriptors.data.size(); ++i)
+	{
+		const auto& jumpDescriptor = jumpDescriptors.data[i];
+
+		auto sp = spriteAtlas1.GetSprite(jumpDescriptor.spriteName);
+		CHECK(sp.resourceHandle.IsValid());
+		CHECK(spriteAtlas1.IsSpriteValid(sp));
+
+		CHECK(spriteAtlas1.GetSpriteSeriesMember("knight_jump_series", i) == sp);
+		CHECK(spriteAtlas1.GetSpriteSeriesMemberIndex("knight_jump_series", sp) == i);
+	}
+
+	SECTION("Skips partial repeat descriptors")
+	{
+		SpriteAtlas spriteAtlas3{};
+
+		auto walk1PathResult = ResourcePath::Sprite("knight/walk_anim/knight_walk_1.png");
+		auto walk3PathResult = ResourcePath::Sprite("knight/walk_anim/knight_walk_3.png");
+
+		REQUIRE_RESULT(walk1PathResult);
+		REQUIRE_RESULT(walk3PathResult);
+
+		auto partialRepeatDescriptors = fallDescriptors;
+		partialRepeatDescriptors.data[1] = SpriteDescriptor{
+			.spriteName = "knight_walk_1",
+			.filepath = std::move(walk1PathResult.GetValue())
+		};
+		partialRepeatDescriptors.data[3] = SpriteDescriptor{
+			.spriteName = "knight_walk_3",
+			.filepath = std::move(walk3PathResult.GetValue())
+		};
+
+		auto partialRepeatLoadResult = spriteAtlas3.LoadSprites(SDLite::Renderer(),
+			std::move(partialRepeatDescriptors));
+		REQUIRE_RESULT(partialRepeatLoadResult);
+
+		CHECK(spriteAtlas3.GetSpriteCount() == 4);
+		CHECK(spriteAtlas3.HasSpriteSeries("knight_fall_series"));
+
+		auto partialCopyResult = spriteAtlas1.CopyContentsFrom(spriteAtlas3, SDLite::Renderer());
+		REQUIRE_RESULT(partialCopyResult);
+
+		CHECK(spriteAtlas1.GetSpriteCount() == 10); // only 2 new ones added
+		CHECK(spriteAtlas1.HasSprite("knight_walk_1"));
+		CHECK(spriteAtlas1.HasSprite("knight_walk_3"));
+
+		CHECK(spriteAtlas1.HasSpriteSeries("knight_fall_series"));
+		CHECK(spriteAtlas1.GetSpriteSeriesSize("knight_fall_series") == 4);
+	}
+
+	SECTION("Skips empty plots")
+	{
+		SpriteAtlas spriteAtlasA{};
+		SpriteAtlas spriteAtlasB{};
+
+		auto tempFallDescriptors2 = fallDescriptors;
+		auto tempJumpDescriptors2 = jumpDescriptors;
+
+		auto fallLoadResult2 = spriteAtlasA.LoadSprites(SDLite::Renderer(),
+			std::move(tempFallDescriptors2));
+		REQUIRE_RESULT(fallLoadResult2);
+
+		auto& fallSpritesA = fallLoadResult.GetValue();
+
+		CHECK(spriteAtlasA.GetSpriteCount() == 4);
+		CHECK(spriteAtlasA.HasSpriteSeries("knight_fall_series"));
+
+		auto jumpLoadResult2 = spriteAtlasB.LoadSprites(SDLite::Renderer(),
+			std::move(tempJumpDescriptors2));
+		REQUIRE_RESULT(jumpLoadResult2);
+
+		CHECK(spriteAtlasB.GetSpriteCount() == 4);
+		CHECK(spriteAtlasB.HasSpriteSeries("knight_jump_series"));
+
+		auto& jumpSpritesB = jumpLoadResult2.GetValue();
+		REQUIRE(jumpSpritesB.size() == 4);
+
+		// erase front 2 from B
+		CHECK(spriteAtlasB.EraseSprite(jumpSpritesB[0]));
+		CHECK(spriteAtlasB.EraseSprite(jumpSpritesB[1]));
+		CHECK_FALSE(spriteAtlasB.HasSprite("knight_jump_0"));
+		CHECK_FALSE(spriteAtlasB.HasSprite("knight_jump_1"));
+
+		auto copyBToAResult = spriteAtlasA.CopyContentsFrom(spriteAtlasB, SDLite::Renderer());
+		REQUIRE_RESULT(copyBToAResult);
+
+		CHECK(spriteAtlasA.GetSpriteCount() == 6);
+		CHECK(spriteAtlasA.HasSpriteSeries("knight_jump_series"));
+		CHECK(spriteAtlasA.GetSpriteSeriesSize("knight_jump_series") == 2);
+
+		CHECK_FALSE(spriteAtlasA.HasSprite("knight_jump_0"));
+		CHECK_FALSE(spriteAtlasA.HasSprite("knight_jump_1"));
+		CHECK(spriteAtlasA.HasSprite("knight_jump_2"));
+		CHECK(spriteAtlasA.HasSprite("knight_jump_3"));
+
+		CHECK_FALSE(spriteAtlasA.GetSprite("knight_jump_0").resourceHandle.IsValid());
+		CHECK_FALSE(spriteAtlasA.GetSprite("knight_jump_1").resourceHandle.IsValid());
+		CHECK(spriteAtlasA.GetSprite("knight_jump_2").resourceHandle.IsValid());
+		CHECK(spriteAtlasA.GetSprite("knight_jump_3").resourceHandle.IsValid());
 	}
 
 	SDLite::Exit();

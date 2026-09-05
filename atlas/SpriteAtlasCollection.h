@@ -53,15 +53,10 @@ public:
 	SpriteAtlasTexture& operator=(SpriteAtlasTexture&& other) noexcept;
 
 	static Result<SpriteAtlasTexture>
-	Create(SDL_Renderer* renderer, size_t size = kDefaultAtlasSize, bool isReserved = false);
+	Create(SDL_Renderer* renderer, size_t size = kDefaultAtlasSize, bool reserved = false);
 
 	Result<SpriteLoadOutcome> 
 	LoadSprite(SDL_Renderer* renderer, std::string_view filepath);
-
-	Result<SpriteLoadOutcome>
-	LoadSprite(SDL_Renderer* renderer, UniqueSurfacePtr& spriteSurface,
-			   const SpriteDescriptor& descriptor, 
-			   SpriteInfoSOA& spriteInfo, std::vector<size_t>& freePlots);
 
 	Result<Void> OverwriteSprite(SDL_Renderer* renderer, UniqueSurfacePtr& spriteSurface,
 								 AtlasPlot& plot);
@@ -95,8 +90,7 @@ public:
 	SpriteAtlas(SpriteAtlas&& other) noexcept = default;
 	SpriteAtlas& operator=(SpriteAtlas&& other) noexcept = default;
 
-	Result<Sprite> LoadSprite(SDL_Renderer* renderer, 
-							  SpriteDescriptor&& descriptor);
+	Result<Sprite> LoadSprite(SDL_Renderer* renderer, SpriteDescriptor&& descriptor);
 
 	Result<std::vector<Sprite>> LoadSprites(SDL_Renderer* renderer,
 											SpriteDescriptors&& descriptors);
@@ -197,15 +191,34 @@ public:
 		{
 			if (!IsPlotEmpty(i))
 			{
-				fn(MakeSprite(i));
+				std::invoke(fn, MakeSprite(i));
 			}
 		}
 	}
+
+	template <typename Fn> requires std::invocable<Fn, std::string_view, const std::vector<Sprite>&>
+	void ForEachSpriteSeries(Fn&& fn) const
+	{
+		for (const auto& [seriesName, spriteIdxs] : spriteSeriesDefs_)
+		{
+			auto sprites = spriteIdxs | std::views::transform([this](const auto idx) {
+				return MakeSprite(idx);
+			}) | std::ranges::to<std::vector>();
+
+			std::invoke(fn, seriesName, sprites);
+		}
+	}
+
+	//Result<TextureAtlasID> ReserveTexture(SDL_Renderer* renderer);
+	//Result<TextureAtlasID> ReserveTexture(SDL_Renderer* renderer, size_t size);
 
 	Result<Void> DefineSpriteSeries(std::string_view seriesName, std::span<const Sprite> sprites);
 	bool RemoveSpriteSeries(std::string_view seriesName);
 	bool RemoveSpriteSeriesMember(std::string_view seriesName, const Sprite& sprite);
 	size_t GetSpriteSeriesMemberIndex(std::string_view seriesName, const Sprite& sprite) const;
+	std::vector<std::string_view> GetSpriteSeriesNames() const;
+	//const UnorderedDictionary<std::vector<size_t>> 
+	//GetSpriteSeriesDefintions() const { return spriteSeriesDefs_; }
 
 	bool EraseSprite(const Sprite& sprite);
 
@@ -222,9 +235,13 @@ public:
 	SerializedSpriteDescriptorPackage Serialize() const;
 	Result<Void> Deserialize(SDL_Renderer* renderer, SerializedSpriteDescriptorPackage&& package);
 
+	Result<Void> CopyContentsFrom(const SpriteAtlas& other, SDL_Renderer* renderer);
+
 private:
-	Result<Sprite> LoadSpriteImpl(SDL_Renderer* renderer,
-								  SpriteDescriptor&& descriptor);
+	Result<std::pair<Sprite, size_t>> 
+	LoadSpriteImpl(SDL_Renderer* renderer, std::string&& filepath, std::string&& spriteName);
+	//Result<Sprite> LoadSpriteImpl(SDL_Renderer* renderer, std::string filepath,
+	//							  std::string spriteName);
 
 	Result<std::vector<Sprite>> LoadSpritesImpl(SDL_Renderer* renderer,
 												SpriteDescriptors&& descriptors);
@@ -233,8 +250,9 @@ private:
 
 	size_t FindSuitableFreePlotIndex(int spriteW, int spriteH) const;
 
-	Result<Sprite> OverwriteSprite(SDL_Renderer* renderer, UniqueSurfacePtr& spriteSurface, 
-								   SpriteDescriptor&& descriptor, size_t freePlotIdx);
+	Result<std::pair<Sprite, size_t>> 
+	OverwriteSprite(SDL_Renderer* renderer, UniqueSurfacePtr& spriteSurface, 
+					std::string&& filepath, std::string&& spriteName, size_t freePlotIdx);
 
 	Result<Void> AddNewAtlasTexture(SDL_Renderer* renderer);
 
