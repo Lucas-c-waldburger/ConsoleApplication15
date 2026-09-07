@@ -49,7 +49,7 @@ public:
         return FromSprite(repo_.GetSpriteAtlas().GetSprite(spriteName));
     }
 
-    GuiTexture FromTextureResource(const Handle<TextureResource>& handle, const AtlasPlot& plot)
+    GuiTexture FromTextureResource(const Handle<TextureResource>& handle, const AtlasPlot& plot) const
     {
         if (!handle.IsValid())
         {

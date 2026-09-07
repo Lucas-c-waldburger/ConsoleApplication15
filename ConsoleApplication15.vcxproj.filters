@@ -576,6 +576,30 @@
     <ClCompile Include="test\ui\panel\EditorPanelManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\ui\asset_viewer\AssetTree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\asset_viewer\AssetItem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\asset_viewer\AssetGridViewerChild.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\asset_viewer\DirectoryViewerChild.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\asset_viewer\AssetViewerCommon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\asset_viewer\AssetGridCell.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\asset_viewer\AssetPreviewViewerChild.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\asset_viewer\AssetViewer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -3269,7 +3293,31 @@
     <ClInclude Include="test\ui\TextureLoaderUtility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\ui\AssetWindow.h">
+    <ClInclude Include="test\ui\asset_viewer\AssetViewerOld.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\asset_viewer\AssetTree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\asset_viewer\AssetItem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\asset_viewer\AssetViewerCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\asset_viewer\AssetGridViewerChild.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\asset_viewer\DirectoryViewerChild.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\asset_viewer\AssetGridCell.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\asset_viewer\AssetPreviewViewerChild.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\asset_viewer\AssetViewer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

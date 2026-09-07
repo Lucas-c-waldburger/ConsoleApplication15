@@ -185,6 +185,11 @@ void Editor::DrawToolbar(SceneFixture& fixture)
 		ImGui::EndMenu();
 	}
 
+	if (ImGui::MenuItem("Asset Viewer", nullptr, (activeWindows_ & WindowType::Assets)))
+	{
+		activeWindows_ ^= WindowType::Assets;
+	}
+
 	ImGui::EndMainMenuBar();
 }
 
@@ -230,19 +235,29 @@ struct AtUpdateBegin
 	const int historyCursor = ComponentEditHistory::GetCursor();
 };
 
-void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
+void Editor::Update(SceneFixture::WeakPtr weakFixture, float dt)
 {
-	auto scene = weakScene.lock();
-	if (!scene)
+	auto fixture = weakFixture.lock();
+	if (!fixture)
 	{
+		LOG_ERROR("Could not lock scene fixture");
+
+		return;
+	}
+
+	const auto& auxRepo = fixture->GetAuxTextureRepository();
+	if (!auxRepo)
+	{
+		LOG_ERROR("Auxilliary Texture Repository was null");
+
 		return;
 	}
 
 	ImGui::Begin("Editor", nullptr, ImGuiWindowFlags_MenuBar);
 
-	DrawToolbar(*scene);
+	DrawToolbar(*fixture);
 
-	InspectorEntityPanel::UpdateSelectionBoxPositions(scene->GetCamera());
+	InspectorEntityPanel::UpdateSelectionBoxPositions(fixture->GetCamera());
 
 	AtUpdateBegin atUpdateBegin{};
 	auto currentState = updateState_.Take();
@@ -266,11 +281,8 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 		{
 			activePanel_ = PanelType::Entities;
 
-			const auto& auxRepo = scene->GetAuxTextureRepository();
-			assert(auxRepo);
-
 			auto entityCtx = InspectorEntityPanel::ResourceContext{ 
-				.camera = scene->GetCamera(),
+				.camera = fixture->GetCamera(),
 				.textureRepo = *auxRepo
 			};
 			InspectorEntityPanel::Update(entityCtx);
@@ -282,11 +294,8 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 		{
 			activePanel_ = PanelType::Systems;
 
-			const auto& auxRepo = scene->GetAuxTextureRepository();
-			assert(auxRepo);
-
 			auto sysCtx = InspectorSystemPanel::ResourceContext{ 
-				.systemManager = scene->GetSystemManager(),
+				.systemManager = fixture->GetSystemManager(),
 				.textureRepo = *auxRepo
 			};
 			InspectorSystemPanel::Update(sysCtx);
@@ -318,7 +327,7 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 				auto e = ECS::GetEntityByID(selectedEntityId);
 				assert(e.IsValid());
 
-				InspectorComponentPanel::Update(e, *scene);
+				InspectorComponentPanel::Update(e, *fixture);
 			}
 
 			ImGui::EndTabItem();
@@ -330,11 +339,8 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 		{
 			activePanel_ = PanelType::Events;
 
-			const auto& auxRepo = scene->GetAuxTextureRepository();
-			assert(auxRepo);
-
 			auto evCtx = InspectorEventPanel::ResourceContext{
-				.eventBus = scene->GetEventBus(),
+				.eventBus = fixture->GetEventBus(),
 				.textureRepo = *auxRepo
 			};
 			InspectorEventPanel::Update(evCtx);
@@ -350,8 +356,8 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 		ImGui::EndTabBar();
 	}
 
-	HandleEntityDrag(scene->GetCamera(), atUpdateBegin.selectedEntity);
-	HandleCameraControl(scene->GetCamera(), dt);
+	HandleEntityDrag(fixture->GetCamera(), atUpdateBegin.selectedEntity);
+	HandleCameraControl(fixture->GetCamera(), dt);
 	ClearHoverSelectionIfNeeded();
 
 	ImGui::End();
@@ -363,11 +369,18 @@ void Editor::Update(SceneFixture::WeakPtr weakScene, float dt)
 			activeWindows_ &= ~WindowType::Console;
 		}
 	}
+	if (activeWindows_ & WindowType::Assets)
+	{
+		if (!assetViewer_.Draw(*auxRepo))
+		{
+			activeWindows_ &= ~WindowType::Assets;
+		}
+	}
 }
 
-Result<Void> Editor::Init(SceneFixture::SharedPtr& scene)
+Result<Void> Editor::Init(SceneFixture::SharedPtr& fixture)
 {
-	assert(scene);
+	assert(fixture);
 
 	ECS::RegisterComponent<InspectorTag>();
 	ECS::RegisterComponent<CallbackInfo>();
@@ -378,18 +391,19 @@ Result<Void> Editor::Init(SceneFixture::SharedPtr& scene)
 
 	AssignGuiStyles();
 
-	TRY(InspectorEntityPanel::Init(*scene));
-	TRY(InspectorSystemPanel::Init(*scene));
-	TRY(InspectorComponentPanel::Init(*scene));
-	TRY(InspectorEventPanel::Init(*scene));
+	TRY(InspectorEntityPanel::Init(*fixture));
+	TRY(InspectorSystemPanel::Init(*fixture));
+	TRY(InspectorComponentPanel::Init(*fixture));
+	TRY(InspectorEventPanel::Init(*fixture));
 
 	TRY(cameraControl_.Init());
+	TRY(assetViewer_.Init(*fixture));
 
-	assert(scene->IsSystemRegistered<GuiSystem>());
-	auto& guiSys = scene->GetSystem<GuiSystem>();
+	assert(fixture->IsSystemRegistered<GuiSystem>());
+	auto& guiSys = fixture->GetSystem<GuiSystem>();
 
-	guiSys.SetUI([weakScene = std::weak_ptr{scene}](float dt) mutable { 
-		Update(weakScene, dt); 
+	guiSys.SetUI([weakFixture = std::weak_ptr{fixture}](float dt) mutable {
+		Update(weakFixture, dt); 
 	});
 
 	return kVoid;

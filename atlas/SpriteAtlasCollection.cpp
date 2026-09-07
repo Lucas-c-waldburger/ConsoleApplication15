@@ -1093,6 +1093,21 @@ Result<Void> SpriteAtlas::Deserialize(SDL_Renderer* renderer, SerializedSpriteDe
     return kVoid;
 }
 
+SDL_Texture* SpriteAtlas::GetSpriteSourceTexture(const Sprite& sprite)
+{
+    if (!IsSpriteValid(sprite))
+    {
+        return nullptr;
+    }
+
+    const auto atlasIndex = spriteInfo_.GetView<&SpriteInfo::atlasIndex>(
+        static_cast<size_t>(sprite.resourceHandle.GetResourceIndex()));
+
+    assert(atlasIndex < spriteAtlasTextures_.size());
+
+    return spriteAtlasTextures_[atlasIndex].GetSourceTexture();
+}
+
 SpriteDescriptorPackage SpriteAtlas::ExportSpriteDescriptors() const
 {
     SpriteDescriptorPackage package;

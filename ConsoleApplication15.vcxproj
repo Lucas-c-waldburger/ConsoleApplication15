@@ -309,6 +309,14 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="test\setups\TileSet.cpp" />
+    <ClCompile Include="test\ui\asset_viewer\AssetGridViewerChild.cpp" />
+    <ClCompile Include="test\ui\asset_viewer\AssetGridCell.cpp" />
+    <ClCompile Include="test\ui\asset_viewer\AssetItem.cpp" />
+    <ClCompile Include="test\ui\asset_viewer\AssetPreviewViewerChild.cpp" />
+    <ClCompile Include="test\ui\asset_viewer\AssetTree.cpp" />
+    <ClCompile Include="test\ui\asset_viewer\AssetViewer.cpp" />
+    <ClCompile Include="test\ui\asset_viewer\AssetViewerCommon.cpp" />
+    <ClCompile Include="test\ui\asset_viewer\DirectoryViewerChild.cpp" />
     <ClCompile Include="test\ui\builder\EditorColliderBuilder.cpp" />
     <ClCompile Include="test\ui\builder\EditorComponentBuilderManager.cpp" />
     <ClCompile Include="test\ui\builder\EditorEventCallbackBuilder.cpp" />
@@ -892,7 +900,15 @@
     <ClInclude Include="test\demo\collider_maker\ColliderMakerCommon.h" />
     <ClInclude Include="test\FixtureLua.h" />
     <ClInclude Include="test\SceneRegistry.h" />
-    <ClInclude Include="test\ui\AssetWindow.h" />
+    <ClInclude Include="test\ui\asset_viewer\AssetGridViewerChild.h" />
+    <ClInclude Include="test\ui\asset_viewer\AssetGridCell.h" />
+    <ClInclude Include="test\ui\asset_viewer\AssetItem.h" />
+    <ClInclude Include="test\ui\asset_viewer\AssetPreviewViewerChild.h" />
+    <ClInclude Include="test\ui\asset_viewer\AssetTree.h" />
+    <ClInclude Include="test\ui\asset_viewer\AssetViewer.h" />
+    <ClInclude Include="test\ui\asset_viewer\AssetViewerOld.h" />
+    <ClInclude Include="test\ui\asset_viewer\AssetViewerCommon.h" />
+    <ClInclude Include="test\ui\asset_viewer\DirectoryViewerChild.h" />
     <ClInclude Include="test\ui\builder\EditorColliderBuilder.h" />
     <ClInclude Include="test\ui\builder\EditorComponentBuilderManager.h" />
     <ClInclude Include="test\ui\builder\EditorEventCallbackBuilder.h" />

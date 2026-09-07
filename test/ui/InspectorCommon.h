@@ -120,6 +120,20 @@ std::vector<Entity> GetAllColliderEntitiesForRigidBodyEntity(Entity& e);
 
 CollisionDataShapeInfo GetCollisionDataShapeInfo(Entity& e, const CollisionData& data);
 
+//class GuiSelectable
+//{
+//public:
+//	using SelectableSig = bool(*)(const char*, bool*, int, const ImVec2&);
+//
+//	GuiSelectable(std::string_view label, bool* b = nullptr, int flags = 0)
+//	{
+//		selectableClicked_ = ImGui::Selectable(label.data(), b, flags);
+//	}
+//
+//private:
+//	bool selectableClicked_ = false;
+//};
+
 } // ui
 
 #endif

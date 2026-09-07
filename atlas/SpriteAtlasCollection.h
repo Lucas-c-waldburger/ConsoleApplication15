@@ -237,6 +237,8 @@ public:
 
 	Result<Void> CopyContentsFrom(const SpriteAtlas& other, SDL_Renderer* renderer);
 
+	SDL_Texture* GetSpriteSourceTexture(const Sprite& sprite);
+
 private:
 	Result<std::pair<Sprite, size_t>> 
 	LoadSpriteImpl(SDL_Renderer* renderer, std::string&& filepath, std::string&& spriteName);

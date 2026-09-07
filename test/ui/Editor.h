@@ -6,6 +6,7 @@
 #include "../../core/commonObjects.h"
 #include "EntityDragUtility.h"
 #include "CameraControlUtility.h"
+#include "asset_viewer/AssetViewer.h"
 
 class Camera;
 class TextureRepository;
@@ -30,7 +31,8 @@ public:
 	enum WindowType : uint8_t
 	{
 		Main = 1 << 0,
-		Console = 1 << 1
+		Console = 1 << 1,
+		Assets = 1 << 2
 	};
 
 	struct UpdateState
@@ -64,7 +66,7 @@ public:
 		ResetForNewScene
 	};
 
-	static Result<Void> Init(SceneFixture::SharedPtr& scene);
+	static Result<Void> Init(SceneFixture::SharedPtr& fixture);
 
 	static void Update(SceneFixture::WeakPtr weakScene, float dt);
 
@@ -98,6 +100,7 @@ private:
 	static inline uint8_t activeWindows_ = WindowType::Main;
 	static inline EntityDragUtility entityDrag_{};
 	static inline CameraControlUtility cameraControl_{};
+	static inline AssetViewer assetViewer_;
 	static inline UpdateState updateState_{};
 };
 

@@ -59,6 +59,23 @@ using ResourcePathResult = Result<std::string>;
 class ResourcePath
 {
 public:
+	static Result<std::string> Root()
+	{
+		auto path = FilePathUtility::GetRootPath() / kResourcesDirName;
+		auto pathStr = path.string();
+
+		if (!fs::exists(path))
+		{
+			return MAKE_ERROR_FMT("Root path does not exist: '{}'", pathStr);
+		}
+		if (!fs::is_directory(path))
+		{
+			return MAKE_ERROR_FMT("Root path is not a directory: '{}'", pathStr);
+		}
+
+		return pathStr;
+	}
+
 	static Result<std::string> Music(std::string_view file)
 	{
 		return JoinPaths(kAudioDirName, kMusicDirName, file);
