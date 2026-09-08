@@ -1,11 +1,25 @@
 #include "AssetViewerCommon.h"
 #include <boost/pfr.hpp>
+#include <ranges>
 #include "../../../atlas/NewTextureRepository.h"
 #include "../../../file/FilePathUtility.h"
 
 namespace ui {
 
 namespace {
+
+constexpr std::array kIconResourcePaths{
+	"ui/editor/file_folder_open_icon_small.png",
+	"ui/editor/file_folder_open_icon_large.png",
+	"ui/editor/file_folder_closed_icon_small.png",
+	"ui/editor/file_folder_closed_icon_large.png",
+	"ui/editor/image_file_icon_small.png",
+	"ui/editor/audio_file_icon_small.png",
+	"ui/editor/font_file_icon_small.png",
+	"ui/editor/script_file_icon_small.png",
+	"ui/editor/unknown_file_icon_small.png",
+	"ui/editor/media_folder_icon_large.png"
+};
 
 template <std::size_t...Is>
 bool IsLoadedImpl(const AssetViewerIcons& icons, std::index_sequence<Is...>)
@@ -25,6 +39,39 @@ Result<AssetViewerIcons> AssetViewerIcons::Load(SDL_Renderer* renderer, SpriteAt
 {
 	assert(renderer);
 
+	/*static_assert(boost::pfr::tuple_size_v<AssetViewerIcons> == kIconResourcePaths.size());
+
+	AssetViewerIcons icons{};
+	Error err{};
+
+	boost::pfr::for_each_field(icons, [&err, &atlas, renderer](auto& icon, size_t i) {
+		if (!err.GetMessage().empty())
+		{
+			return;
+		}
+		auto pathResult = ResourcePath::Sprite(kIconResourcePaths[i]);
+		if (!pathResult.Success())
+		{
+			err = std::move(pathResult).GetError();
+			return;
+		}
+		auto loadResult = atlas.LoadSprite(
+			renderer, { .filepath = std::move(pathResult).GetValue() });
+		if (!loadResult.Success())
+		{
+			err = std::move(loadResult).GetError();
+			return;
+		}
+		icon = std::move(loadResult).GetValue();
+	});
+
+	if (!err.GetMessage().empty())
+	{
+		return err;
+	}
+
+	return icons;*/
+
 	TRY(ResourcePath::Sprite("ui/editor/file_folder_open_icon_small.png"),
 		folderOpenSmallPath);
 	TRY(ResourcePath::Sprite("ui/editor/file_folder_open_icon_large.png"),
@@ -43,6 +90,12 @@ Result<AssetViewerIcons> AssetViewerIcons::Load(SDL_Renderer* renderer, SpriteAt
 		scriptFileSmallPath);
 	TRY(ResourcePath::Sprite("ui/editor/unknown_file_icon_small.png"),
 		unknownFileSmallPath);
+	TRY(ResourcePath::Sprite("ui/editor/media_folder_icon_large.png"),
+		mediaFolderLargePath);
+	TRY(ResourcePath::Sprite("ui/editor/music_file_icon_large.png"),
+		musicFileLargePath);
+	TRY(ResourcePath::Sprite("ui/editor/sound_file_icon_large.png"),
+		soundFileLargePath);
 
 	AssetViewerIcons icons{};
 
@@ -60,10 +113,16 @@ Result<AssetViewerIcons> AssetViewerIcons::Load(SDL_Renderer* renderer, SpriteAt
 		renderer, { .filepath = std::move(audioFileSmallPath) }));
 	TRY_ASSIGN(icons.fontFileSmallSprite, atlas.LoadSprite(
 		renderer, { .filepath = std::move(fontFileSmallPath) }));
-	TRY_ASSIGN(icons.unknownFileSmallSprite, atlas.LoadSprite(
-		renderer, { .filepath = std::move(unknownFileSmallPath) }));
 	TRY_ASSIGN(icons.scriptFileSmallSprite, atlas.LoadSprite(
 		renderer, { .filepath = std::move(scriptFileSmallPath) }));
+	TRY_ASSIGN(icons.unknownFileSmallSprite, atlas.LoadSprite(
+		renderer, { .filepath = std::move(unknownFileSmallPath) }));
+	TRY_ASSIGN(icons.mediaFolderLargeSprite, atlas.LoadSprite(
+		renderer, { .filepath = std::move(mediaFolderLargePath) }));
+	TRY_ASSIGN(icons.musicFileLargeSprite, atlas.LoadSprite(
+		renderer, { .filepath = std::move(musicFileLargePath) }));
+	TRY_ASSIGN(icons.soundFileLargeSprite, atlas.LoadSprite(
+		renderer, { .filepath = std::move(souldFileLargePath) }));
 
 	return icons;
 }

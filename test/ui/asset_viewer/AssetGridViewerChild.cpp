@@ -7,6 +7,96 @@ namespace ui {
 
 namespace {
 
+constexpr float kThumbnailTextureSize = 64.0f;
+constexpr float kGridCellWidth = 80.0f;
+
+int GetGridColumnCount()
+{
+	const float cellHeight = kThumbnailTextureSize + 4.0f + ImGui::GetTextLineHeightWithSpacing();
+	const float panelWidth = ImGui::GetContentRegionAvail().x;
+
+	return std::max(1, static_cast<int>(panelWidth / kGridCellWidth));
+}
+
+Result<Sprite> RenameSpriteAndUpdateEntities(std::string_view oldName, std::string_view newName,
+											 SDL_Renderer* renderer, SpriteAtlas& loadTargetAtlas)
+{
+	assert(renderer);
+
+	if (newName.empty())
+	{
+		return Sprite{};
+	}
+	if (loadTargetAtlas.HasSprite(newName))
+	{
+		return MAKE_ERROR_FMT("New sprite name '{}' already exists in atlas", newName);
+	}
+
+	const auto sprite = loadTargetAtlas.GetSprite(oldName);
+	if (!sprite.resourceHandle.IsValid())
+	{
+		return sprite;
+	}
+
+	const auto info = loadTargetAtlas.GetSpriteInfo<&SpriteInfo::filepath>(sprite);
+	assert(info.has_value());
+
+	const auto filepath = *info;
+	assert(!filepath.empty());
+
+	auto esToUpdate = ECS::GetAllEntitiesWith<SpriteRenderableComponent>(
+		[handle = sprite.resourceHandle](auto& r) { return r.sprite.resourceHandle == handle; });
+
+	[[maybe_unused]] const bool erased = loadTargetAtlas.EraseSprite(sprite);
+	assert(erased);
+
+	TRY(loadTargetAtlas.LoadSprite(renderer, { .filepath = std::move(filepath) }), newSprite);
+	assert(newSprite.resourceHandle.IsValid());
+
+	for (auto& e : esToUpdate)
+	{
+		e.GetComponent<SpriteRenderableComponent>().sprite = newSprite;
+	}
+
+	return newSprite;
+}
+
+Result<Void> RenameSpriteSeriesAndUpdateEntities(std::string_view oldName, std::string_view newName, 
+												 SpriteAtlas& loadTargetAtlas)
+{
+	if (newName.empty())
+	{
+		return kVoid;
+	}
+	if (loadTargetAtlas.HasSpriteSeries(newName))
+	{
+		return MAKE_ERROR_FMT("New sprite series name '{}' already exists in atlas", newName);
+	}
+
+	auto memberSprites = loadTargetAtlas.GetSpriteSeries(oldName);
+
+	[[maybe_unused]] const bool removed = loadTargetAtlas.RemoveSpriteSeries(oldName);
+	assert(removed);
+
+	TRY(loadTargetAtlas.DefineSpriteSeries(newName, memberSprites));
+
+	auto esToUpdate = ECS::GetAllEntitiesWith<SpriteAnimationComponent>([oldName](const auto& anim) {
+		return anim.spriteSeriesName == oldName;
+	});
+
+	for (auto& e : esToUpdate)
+	{
+		e.GetComponent<SpriteAnimationComponent>().spriteSeriesName = newName;
+	}
+
+	return kVoid;
+}
+
+constexpr bool IsAssetItemTypeFile(AssetItem::Type type) noexcept
+{
+	return type != AssetItem::Type::Unknown && type != AssetItem::Type::Directory;
+}
+
 size_t GetPayloadAssetId(const std::string_view payloadName)
 {
 	if (const auto* payload = ImGui::AcceptDragDropPayload(payloadName.data()))
@@ -40,8 +130,8 @@ void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
 		return;
 	}
 
-	auto getTabFlags = [type = ctx.openAssetTabType](AssetItem::Type tabType) -> int {
-		if (type != AssetItem::Type::Unknown && type != AssetItem::Type::Directory)
+	auto getTabFlags = [type = openAssetTabType_](AssetItem::Type tabType) -> int {
+		if (IsAssetItemTypeFile(type))
 		{
 			return ImGuiTabItemFlags_SetSelected;
 		}
@@ -50,7 +140,11 @@ void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
 
 	if (ImGui::BeginTabItem("Sprites", nullptr, getTabFlags(AssetItem::Type::Image)))
 	{
-		DrawSpriteAssetGrid(fixture.GetTextureRepository().GetSpriteAtlas(), ctx);
+		DrawSpriteAssetGrid(fixture.GetTextureRepository(), ctx);
+
+		ResolveSpritePopupContextActions(fixture.GetTextureRepository().GetSpriteAtlas());
+
+		openAssetTabType_ = AssetItem::Type::Image;
 
 		ImGui::EndTabItem();
 	}
@@ -58,13 +152,13 @@ void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
 	ImGui::EndTabBar();
 }
 
-AssetItem::Type AssetGridViewerChild::HandleAssetDragDropTarget(SceneFixture& fixture, ResourceContext& ctx)
+void AssetGridViewerChild::HandleAssetDragDropTarget(SceneFixture& fixture, ResourceContext& ctx)
 {
 	AssetItem::Type lastLoadedAssetType = AssetItem::Type::Unknown;
 
 	if (!ImGui::BeginDragDropTarget())
 	{
-		return lastLoadedAssetType;
+		return;
 	}
 
 	if (const auto& item = GetPayloadAssetItem(ctx.assetTree, kDirectoryPayloadName))
@@ -85,104 +179,141 @@ AssetItem::Type AssetGridViewerChild::HandleAssetDragDropTarget(SceneFixture& fi
 
 	ImGui::EndDragDropTarget();
 
-	return lastLoadedAssetType;
+	if (IsAssetItemTypeFile(lastLoadedAssetType))
+	{
+		openAssetTabType_ = lastLoadedAssetType;
+	}
 }
 
-void AssetGridViewerChild::DrawSpriteAssetGrid(SpriteAtlas& loadTargetAtlas, ResourceContext& ctx)
+void AssetGridViewerChild::DrawSpriteAssetGrid(TextureRepository& loadTargetRepo, ResourceContext& ctx)
 {
-	constexpr float thumbnailSize = 64.0f;
-	constexpr float cellWidth = 80.0f;
-	const float cellHeight = thumbnailSize + 4.0f + ImGui::GetTextLineHeightWithSpacing();
-	const float panelWidth = ImGui::GetContentRegionAvail().x;
-
-	const int columns = std::max(1, static_cast<int>(panelWidth / cellWidth));
-
-	if (!ImGui::BeginTable("Sprite Asset Grid", columns))
+	if (!ImGui::BeginTable("Sprite Asset Grid", GetGridColumnCount()))
 	{
 		return;
 	}
 
+	GuiTextureConverter loadTargetConverter{ loadTargetRepo };
+
+	int guiId = 0;
+
 	if (!spriteSelection_.spriteSeries.empty() &&
-		spriteSelection_.viewingInsideSeries)
+		(spriteSelection_.state & GridSelectionState::ViewingInsideSeries))
 	{
-		auto sprites = loadTargetAtlas.GetSpriteSeries(spriteSelection_.spriteSeries);
+		auto sprites = loadTargetRepo.GetSpriteAtlas().GetSpriteSeries(spriteSelection_.spriteSeries);
 		if (sprites.empty())
 		{
 			spriteSelection_.spriteSeries.clear();
 			spriteSelection_.sprite = {};
 		}
 
-		for (size_t i = 0; i < sprites.size(); ++i)
+		for (const auto& sprite : sprites)
 		{
 			ImGui::TableNextColumn();
-			ImGui::PushID(static_cast<int>(i));
-
-			auto& sprite = sprites[i];
+			ImGui::PushID(guiId);
 
 			const auto gridCell = AssetGridCell::Place();
 
 			if (gridCell.Clicked())
 			{
-				spriteSelection_.sprite = sprite;
+				if (spriteSelection_.sprite != sprite)
+				{
+					spriteSelection_.ClearRename();
+					spriteSelection_.sprite = sprite;
+				}
 			}
 
-			auto tx = ctx.converter.FromSprite(sprite);
-			assert(tx.textureId != 0);
+			bool alreadyRenaming = spriteSelection_.IsRenaming();
 
-			gridCell.DrawThumbnailTexture(tx);
+			DrawSpritePopupContextMenu(loadTargetRepo.GetSpriteAtlas());
 
-			if (spriteSelection_.sprite == sprite)
+			const bool currentCellSelected = spriteSelection_.sprite == sprite;
+			if (currentCellSelected)
 			{
 				gridCell.DrawSelectedHighlight();
 			}
 
-			auto spriteNameOp = loadTargetAtlas.GetSpriteInfo<&SpriteInfo::spriteName>(sprite);
+			auto tx = loadTargetConverter.FromSprite(sprite);
+			assert(tx.textureId != 0);
+
+			gridCell.DrawThumbnailTexture(tx);
+
+			auto spriteNameOp = 
+				loadTargetRepo.GetSpriteAtlas().GetSpriteInfo<&SpriteInfo::spriteName>(sprite);
 			assert(spriteNameOp.has_value());
 
-			gridCell.DrawDisplayText(*spriteNameOp);
+			if (currentCellSelected && spriteSelection_.IsRenaming())
+			{
+				HandleSpriteSelectionRename(gridCell, loadTargetRepo.GetSpriteAtlas(),
+											!alreadyRenaming);
+			}
+			else
+			{
+				gridCell.DrawDisplayText(*spriteNameOp);
+			}
 
 			ImGui::PopID();
+
+			++guiId;
 		}
 	}
 	else
 	{
-		const auto seriesNames = loadTargetAtlas.GetSpriteSeriesNames();
+		const auto seriesNames = loadTargetRepo.GetSpriteAtlas().GetSpriteSeriesNames();
 		if (!seriesNames.empty())
 		{
-			for (size_t i = 0; i < seriesNames.size(); ++i)
+			for (const auto& seriesName : seriesNames)
 			{
 				ImGui::TableNextColumn();
-				ImGui::PushID(static_cast<int>(i));
+				ImGui::PushID(guiId);
 
 				const auto gridCell = AssetGridCell::Place();
 
 				if (gridCell.Clicked())
 				{
-					spriteSelection_.spriteSeries = seriesNames[i];
-					spriteSelection_.sprite = {};
+					if (spriteSelection_.spriteSeries != seriesName)
+					{
+						spriteSelection_.ClearRename();
+						spriteSelection_.spriteSeries = seriesName;
+						spriteSelection_.sprite = {};
+					}
 				}
 
-				auto tx = ctx.converter.FromSprite(ctx.icons.folderClosedLargeSprite);
-				assert(tx.textureId != 0);
+				bool alreadyRenaming = spriteSelection_.IsRenaming();
 
-				gridCell.DrawThumbnailTexture(tx);
+				DrawSpritePopupContextMenu(loadTargetRepo.GetSpriteAtlas());
 
-				if (spriteSelection_.spriteSeries == seriesNames[i])
+				const bool currentCellSelected = spriteSelection_.spriteSeries == seriesName;
+				if (currentCellSelected)
 				{
 					gridCell.DrawSelectedHighlight();
 				}
 
-				gridCell.DrawDisplayText(seriesNames[i]);
+				auto tx = ctx.uiTexturesConverter.FromSprite(ctx.icons.mediaFolderLargeSprite);
+				assert(tx.textureId != 0);
+
+				gridCell.DrawThumbnailTexture(tx);
+
+				if (currentCellSelected && spriteSelection_.IsRenaming())
+				{
+					HandleSpriteSelectionRename(gridCell, loadTargetRepo.GetSpriteAtlas(),
+												!alreadyRenaming);
+				}
+				else
+				{
+					gridCell.DrawDisplayText(seriesName);
+				}
 
 				ImGui::PopID();
+
+				++guiId;
 			}
 		}
 
-		auto it = loadTargetAtlas.IterSpriteInfo<&SpriteInfo::filepath,
-												 &SpriteInfo::spriteName,
-												 &SpriteInfo::plot,
-												 &SpriteInfo::atlasId,
-												 &SpriteInfo::generation>();
+		auto it = loadTargetRepo.GetSpriteAtlas().IterSpriteInfo<&SpriteInfo::filepath,
+																 &SpriteInfo::spriteName,
+																 &SpriteInfo::plot,
+																 &SpriteInfo::atlasId,
+																 &SpriteInfo::generation>();
 		size_t counter = 0;
 		for (const auto [filepath, spriteName, plot, atlasId, gen] : it)
 		{
@@ -194,34 +325,100 @@ void AssetGridViewerChild::DrawSpriteAssetGrid(SpriteAtlas& loadTargetAtlas, Res
 			}
 
 			ImGui::TableNextColumn();
-			ImGui::PushID(static_cast<int>(i));
+			ImGui::PushID(guiId);
 
-			auto handle = Handle<TextureResource>::Create(atlasId, i, gen);
+			Sprite sprite{
+				.resourceHandle = Handle<TextureResource>::Create(atlasId, i, gen),
+				.plot = plot
+			};
 
 			const auto gridCell = AssetGridCell::Place();
 
 			if (gridCell.Clicked())
 			{
-				spriteSelection_.spriteSeries.clear();
-				spriteSelection_.sprite.resourceHandle = handle;
-				spriteSelection_.sprite.plot = plot;
+				if (spriteSelection_.sprite != sprite)
+				{
+					spriteSelection_.ClearRename();
+					spriteSelection_.spriteSeries.clear();
+					spriteSelection_.sprite = sprite;
+				}
 			}
 
-			auto tx = ctx.converter.FromTextureResource(handle, plot);
-			assert(tx.textureId != 0);
+			bool alreadyRenaming = spriteSelection_.IsRenaming();
 
-			gridCell.DrawThumbnailTexture(tx);
+			DrawSpritePopupContextMenu(loadTargetRepo.GetSpriteAtlas());
 
-			if (spriteSelection_.sprite.resourceHandle == handle &&
-				spriteSelection_.sprite.plot == plot)
+			const bool currentCellSelected = spriteSelection_.sprite == sprite;
+			if (currentCellSelected)
 			{
 				gridCell.DrawSelectedHighlight();
 			}
 
-			gridCell.DrawDisplayText(spriteName);
+			auto tx = loadTargetConverter.FromSprite(sprite);
+			assert(tx.textureId != 0);
+
+			gridCell.DrawThumbnailTexture(tx);
+
+			if (currentCellSelected && spriteSelection_.IsRenaming())
+			{
+				HandleSpriteSelectionRename(gridCell, loadTargetRepo.GetSpriteAtlas(),
+											!alreadyRenaming);
+			}
+			else
+			{
+				gridCell.DrawDisplayText(spriteName);
+			}
 
 			ImGui::PopID();
+
+			++guiId;
 		}
+	}
+
+	ImGui::EndTable();
+}
+
+void AssetGridViewerChild::DrawAudioAssetGrid(AudioBank& audioBank, ResourceContext& ctx)
+{
+	if (!ImGui::BeginTable("Audio Asset Grid", GetGridColumnCount()))
+	{
+		return;
+	}
+
+	int guiId = 0;
+	auto it = audioBank.IterAudioInfo<&AudioInfo::audioType, &AudioInfo::name>();
+	for (const auto [audioType, audioName] : it)
+	{
+		ImGui::TableNextColumn();
+		ImGui::PushID(guiId);
+
+		auto gridCell = AssetGridCell::Place();
+
+		if (gridCell.Clicked() && audioSelection_.audioName != audioName)
+		{
+			audioSelection_.audioName = audioName;
+		}
+
+		bool alreadyRenaming = audioSelection_.IsRenaming();
+
+		DrawAudioPopupContextMenu(audioBank);
+
+		const bool currentCellSelected = audioSelection_.audioName == audioName;
+		if (currentCellSelected)
+		{
+			gridCell.DrawSelectedHighlight();
+		}
+
+		const auto& sprite = (audioType == AudioType::Music)
+			? ctx.icons.musicFileLargeSprite
+			: ctx.icons.soundFileLargeSprite;
+
+		auto tx = ctx.uiTexturesConverter.FromSprite(sprite);
+		assert(tx.textureId != 0);
+
+		gridCell.DrawThumbnailTexture(tx);
+
+		++guiId;
 	}
 
 	ImGui::EndTable();
@@ -266,6 +463,151 @@ AssetItem::Type AssetGridViewerChild::HandleSpriteAssetDragDropTarget(const Asse
 	LOG_IF_ERROR(loadTargetAtlas.LoadSprite(renderer, { .filepath = item.path.string() }));
 
 	return AssetItem::Type::Image;
+}
+
+void AssetGridViewerChild::DrawSpritePopupContextMenu(SpriteAtlas& loadTargetAtlas)
+{
+	if (!spriteSelection_.HasSelection())
+	{
+		return;
+	}
+
+	if (ImGui::BeginPopupContextItem("SpriteThumbnailContextMenu"))
+	{
+		if (ImGui::MenuItem("Rename"))
+		{
+			spriteSelection_.currentRename.clear();
+
+			if (spriteSelection_.sprite.resourceHandle.IsValid())
+			{
+				auto spriteName =
+					loadTargetAtlas.GetSpriteInfo<&SpriteInfo::spriteName>(spriteSelection_.sprite);
+				assert(spriteName.has_value());
+
+				spriteSelection_.currentRename = *spriteName;
+			}
+			else if (!spriteSelection_.spriteSeries.empty())
+			{
+				spriteSelection_.currentRename = spriteSelection_.spriteSeries;
+			}
+
+			spriteSelection_.state |= GridSelectionState::Renaming;
+		}
+
+		if (ImGui::MenuItem("Erase"))
+		{
+			spriteSelection_.state |= GridSelectionState::MarkedErase;
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
+void AssetGridViewerChild::DrawAudioPopupContextMenu(AudioBank& audioBank)
+{
+
+}
+
+void AssetGridViewerChild::ResolveSpritePopupContextActions(SpriteAtlas& loadTargetAtlas)
+{
+	if (spriteSelection_.state & GridSelectionState::MarkedErase)
+	{
+		if (loadTargetAtlas.IsSpriteValid(spriteSelection_.sprite))
+		{
+			const bool erased = loadTargetAtlas.EraseSprite(spriteSelection_.sprite);
+			if (!erased)
+			{
+				LOG_ERROR("Failed to erase sprite");
+			}
+			else
+			{
+				spriteSelection_.sprite = {};
+			}
+		}
+		else if (loadTargetAtlas.HasSpriteSeries(spriteSelection_.spriteSeries))
+		{
+			const bool removed = loadTargetAtlas.RemoveSpriteSeries(spriteSelection_.spriteSeries);
+			if (!removed)
+			{
+				LOG_ERROR_FMT("Failed to remove sprite series '{}'", spriteSelection_.spriteSeries);
+			}
+			else
+			{
+				spriteSelection_.spriteSeries.clear();
+				spriteSelection_.state &= ~GridSelectionState::ViewingInsideSeries;
+			}
+		}
+
+		spriteSelection_.currentRename.clear();
+		spriteSelection_.state &= ~(GridSelectionState::MarkedErase |
+									GridSelectionState::Renaming);
+	}
+}
+
+void AssetGridViewerChild::HandleSpriteSelectionRename(const AssetGridCell& gridCell, 
+													   SpriteAtlas& loadTargetAtlas,
+													   bool renameStartedThisFrame)
+{
+	assert(spriteSelection_.IsRenaming());
+
+	const auto outcome = gridCell.DrawDisplayTextRenaming(spriteSelection_.currentRename,
+														  renameStartedThisFrame);
+
+	if (outcome == AssetGridCell::RenameOutcome::Continue)
+	{
+		return;
+	}
+
+	if (outcome == AssetGridCell::RenameOutcome::Complete)
+	{
+		if (loadTargetAtlas.IsSpriteValid(spriteSelection_.sprite))
+		{
+			LOG_IF_ERROR(loadTargetAtlas.SetSpriteName(spriteSelection_.sprite, 
+													   spriteSelection_.currentRename));
+		}
+		else if (loadTargetAtlas.HasSpriteSeries(spriteSelection_.spriteSeries))
+		{
+			LOG_IF_ERROR(RenameSpriteSeriesAndUpdateEntities(spriteSelection_.spriteSeries,
+															 spriteSelection_.currentRename, 
+															 loadTargetAtlas));
+		}
+	}
+
+	spriteSelection_.currentRename.clear();
+	spriteSelection_.state &= ~GridSelectionState::Renaming;
+}
+
+void AssetGridViewerChild::HandleAudioSelectionRename(const AssetGridCell& gridCell,
+													  AudioBank& audioBank, 
+													  bool renameStartedThisFrame)
+{
+	assert(audioSelection_.IsRenaming());
+
+	const auto outcome = gridCell.DrawDisplayTextRenaming(audioSelection_.currentRename,
+														  renameStartedThisFrame);
+
+	if (outcome == AssetGridCell::RenameOutcome::Continue)
+	{
+		return;
+	}
+
+	if (outcome == AssetGridCell::RenameOutcome::Complete)
+	{
+		if (loadTargetAtlas.IsSpriteValid(spriteSelection_.sprite))
+		{
+			LOG_IF_ERROR(loadTargetAtlas.SetSpriteName(spriteSelection_.sprite,
+				spriteSelection_.currentRename));
+		}
+		else if (loadTargetAtlas.HasSpriteSeries(spriteSelection_.spriteSeries))
+		{
+			LOG_IF_ERROR(RenameSpriteSeriesAndUpdateEntities(spriteSelection_.spriteSeries,
+				spriteSelection_.currentRename,
+				loadTargetAtlas));
+		}
+	}
+
+	spriteSelection_.currentRename.clear();
+	spriteSelection_.state &= ~GridSelectionState::Renaming;
 }
 
 } // ui

@@ -176,6 +176,11 @@ struct draw_system<ScriptSystem>
 				removeTableId = id;
 
 				tableIdToFormattedFunctionStrings_.erase(id);
+
+				if (tableOpen)
+				{
+					ImGui::TreePop();
+				}
 			} 
 			else
 			{

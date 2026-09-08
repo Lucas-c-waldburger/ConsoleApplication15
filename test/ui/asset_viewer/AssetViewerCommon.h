@@ -25,7 +25,7 @@ static inline constexpr std::string_view kFontPayloadName = "ASSET_FONT";
 static inline constexpr std::string_view kAudioPayloadName = "ASSET_AUDIO";
 static inline constexpr std::string_view kScriptPayloadName = "ASSET_SCRIPT";
 
-struct AssetViewerIcons
+struct AssetViewerIcons 
 {
 	bool IsLoaded() const;
 
@@ -40,6 +40,9 @@ struct AssetViewerIcons
 	Sprite fontFileSmallSprite;
 	Sprite scriptFileSmallSprite;
 	Sprite unknownFileSmallSprite;
+	Sprite mediaFolderLargeSprite;
+	Sprite musicFileLargeSprite;
+	Sprite soundFileLargeSprite;
 };
 
 } // ui

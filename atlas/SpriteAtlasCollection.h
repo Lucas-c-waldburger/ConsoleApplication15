@@ -222,6 +222,8 @@ public:
 
 	bool EraseSprite(const Sprite& sprite);
 
+	Result<Void> SetSpriteName(const Sprite& sprite, std::string_view newName);
+
 	size_t GetTextureCount() const;
 	size_t GetSpriteCount() const;
 
@@ -260,7 +262,9 @@ private:
 
 	bool IsPlotEmpty(size_t spriteInfoIdx) const;
 
-	TextureAtlasID GetTextureAtlasIdForSpriteIndex(size_t ) const;
+	TextureAtlasID GetTextureAtlasIdForSpriteIndex(size_t spriteInfoIdx) const;
+
+	size_t GetSpriteInfoIndex(const Sprite& sprite) const;
 
 	std::vector<SpriteAtlasTexture> spriteAtlasTextures_;
 	SpriteInfoSOA spriteInfo_;

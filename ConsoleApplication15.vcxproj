@@ -77,7 +77,7 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui\misc\cpp;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -101,7 +101,7 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui\misc\cpp;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -125,7 +125,7 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui\misc\cpp;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -149,7 +149,7 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui\misc\cpp;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -167,6 +167,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\..\Libraries\imgui\misc\cpp\imgui_stdlib.cpp" />
     <ClCompile Include="atlas\GlyphAtlasCollection.cpp" />
     <ClCompile Include="atlas\NewAtlas.cpp" />
     <ClCompile Include="atlas\NewGlyphAtlas.cpp" />

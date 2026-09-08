@@ -12,13 +12,22 @@ struct AssetGridCell
 	enum InteractionState : uint8_t
 	{
 		Hovered = 1 << 0,
-		ClickSingle = 1 << 1,
-		ClickDouble = 1 << 2,
-		AnyClick = ClickSingle | ClickDouble
+		LeftClickSingle = 1 << 1,
+		LeftClickDouble = 1 << 2,
+		RightClickSingle = 1 << 3,
+		AnyClick = LeftClickSingle | LeftClickDouble | RightClickSingle
+	};
+
+	enum class RenameOutcome : uint8_t
+	{
+		Complete,
+		Continue,
+		Abort
 	};
 
 	void DrawThumbnailTexture(const GuiTexture& tx) const;
 	void DrawDisplayText(std::string_view text) const;
+	RenameOutcome DrawDisplayTextRenaming(std::string& renameText, bool startedThisFrame) const;
 	void DrawSelectedHighlight() const;
 	bool Clicked() const;
 

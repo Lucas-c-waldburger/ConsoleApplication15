@@ -35,6 +35,13 @@ struct SimpleButton
 	bool isHovered = false;
 };
 
+struct BinaryButton
+{
+	Sprite defaultSprite;
+	Sprite activatedSprite;
+	bool isHovered = false;
+};
+
 template <typename T>
 struct MapButton
 {
@@ -58,7 +65,7 @@ struct SingleSpriteButton
 {
 	Sprite sprite;
 	TypeIndexedBitset<TList> isHovered;
-};
+}; 
 
 template <typename T, typename TList>
 bool DrawButton(Button<TList>& button, const GuiTexture& texture, 

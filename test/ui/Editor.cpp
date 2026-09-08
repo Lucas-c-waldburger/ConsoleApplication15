@@ -371,11 +371,41 @@ void Editor::Update(SceneFixture::WeakPtr weakFixture, float dt)
 	}
 	if (activeWindows_ & WindowType::Assets)
 	{
-		if (!assetViewer_.Draw(*auxRepo))
+		if (!assetViewer_.Draw(*fixture))
 		{
 			activeWindows_ &= ~WindowType::Assets;
 		}
 	}
+}
+
+Result<Void> Editor::InitUtilities()
+{
+	GuiResource::Init();
+	GuiMouse::Init();
+
+	AssignGuiStyles();
+
+	TRY(cameraControl_.Init());
+
+	return kVoid;
+}
+
+Result<Void> Editor::InitWindows(SceneFixture& fixture)
+{
+	GuiConsole::Init();
+	TRY(assetViewer_.Init(fixture));
+
+	return kVoid;
+}
+
+Result<Void> Editor::InitPanels(SceneFixture& fixture)
+{
+	TRY(InspectorEntityPanel::Init(fixture));
+	TRY(InspectorSystemPanel::Init(fixture));
+	TRY(InspectorComponentPanel::Init(fixture));
+	TRY(InspectorEventPanel::Init(fixture));
+
+	return kVoid;
 }
 
 Result<Void> Editor::Init(SceneFixture::SharedPtr& fixture)
@@ -385,19 +415,9 @@ Result<Void> Editor::Init(SceneFixture::SharedPtr& fixture)
 	ECS::RegisterComponent<InspectorTag>();
 	ECS::RegisterComponent<CallbackInfo>();
 
-	GuiResource::Init();
-	GuiMouse::Init();
-	GuiConsole::Init();
-
-	AssignGuiStyles();
-
-	TRY(InspectorEntityPanel::Init(*fixture));
-	TRY(InspectorSystemPanel::Init(*fixture));
-	TRY(InspectorComponentPanel::Init(*fixture));
-	TRY(InspectorEventPanel::Init(*fixture));
-
-	TRY(cameraControl_.Init());
-	TRY(assetViewer_.Init(*fixture));
+	TRY(InitUtilities());
+	TRY(InitPanels(*fixture));
+	TRY(InitWindows(*fixture));
 
 	assert(fixture->IsSystemRegistered<GuiSystem>());
 	auto& guiSys = fixture->GetSystem<GuiSystem>();

@@ -95,6 +95,10 @@ private:
 	static void DrawDebugMenu(SceneFixture& fixture);
 
 	static void UpdateForHistoryChange();
+
+	static Result<Void> InitUtilities();
+	static Result<Void> InitWindows(SceneFixture& fixture);
+	static Result<Void> InitPanels(SceneFixture& fixture);
 	
 	static inline PanelType activePanel_ = PanelType::Entities;
 	static inline uint8_t activeWindows_ = WindowType::Main;

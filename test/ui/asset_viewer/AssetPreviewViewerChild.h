@@ -2,6 +2,7 @@
 #include "AssetGridViewerChild.h"
 
 #if IMGUI_ENABLED
+#include "../InspectorCommon.h"
 
 namespace ui {
 
@@ -13,20 +14,58 @@ public:
 	struct ResourceContext
 	{
 		const SpriteAssetGridSelection& spriteSelection;
-		const GuiTextureConverter& converter;
+		const GuiTextureConverter& loadTargetConverter;
+		const GuiTextureConverter& uiTexturesConverter;
 	};
 
-	static void Draw(SceneFixture& fixture, ResourceContext& ctx);
+	struct PlayerIcons
+	{
+		Sprite playSprite;
+		Sprite pauseSprite;
+		Sprite rewindSprite;
+		Sprite fastForwardSprite;
+	};
+
+	enum PlayerState : uint8_t
+	{
+		Playing = 1 << 0,
+		Paused = 1 << 1,
+		RewindClicked = 1 << 2,
+		FastForwardClicked = 1 << 3
+	};
+
+	struct SpriteSeriesAnimator
+	{
+		float animationSpeed = 0.2f;
+		float elapsed = 0.0f;
+		SpriteSeriesIndex index;
+		uint8_t state = 0;
+
+		void Reset() { *this = {}; }
+	};
+
+	void Draw(SceneFixture& fixture, ResourceContext& ctx);
+
+	Result<Void> Init(SceneFixture& fixture);
 
 private:
-	AssetPreviewViewerChild() = default;
+	void DrawSpriteAssetPreview(ResourceContext& ctx,
+								const SpriteAtlas& spriteAtlas, float dt);
 
-	static void DrawSpriteAssetPreview(const SpriteAssetGridSelection& spriteSelection, 
-									   const GuiTextureConverter& converter,
-									   const SpriteAtlas& spriteAtlas);
+	void DrawSpriteAssetSinglePreview(const Sprite& sprite, 
+									  const GuiTextureConverter& loadTargetConverter,
+									  const SpriteAtlas& spriteAtlas);
+	void DrawSpriteSeriesAssetsPreview(const std::vector<Sprite>& sprites,
+									  const GuiTextureConverter& loadTargetConverter,
+									  const GuiTextureConverter& uiTexturesConverter,
+									  const SpriteAtlas& spriteAtlas, float dt);
 
-	static void DrawSpriteAssetSinglePreview(const Sprite& sprite, const GuiTextureConverter& converter,
-											 const SpriteAtlas& spriteAtlas);
+	void DrawPlayerButtons(const GuiTextureConverter& uiTexturesConverter);
+
+	Result<Void> LoadResources(SceneFixture& fixture);
+
+	PlayerIcons playerIcons_;
+	SpriteSeriesAnimator spriteSeriesAnimator_;
 };
 
 

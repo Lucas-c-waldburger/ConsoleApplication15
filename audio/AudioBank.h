@@ -15,6 +15,7 @@ struct AudioInfo
     std::string name;
     std::string filepath;
     size_t storageIndex = std::numeric_limits<size_t>::max();
+    uint32_t generation = 0;
 };
 
 using AudioInfoSOA = StableSOA<
@@ -22,7 +23,8 @@ using AudioInfoSOA = StableSOA<
 	&AudioInfo::audioType,
 	&AudioInfo::name,
 	&AudioInfo::filepath,
-    &AudioInfo::storageIndex 
+    &AudioInfo::storageIndex,
+    &AudioInfo::generation
 >;
 
 class AudioBank
@@ -43,9 +45,14 @@ public:
     AudioBank& operator=(AudioBank&&) noexcept = default;
 
     Handle<Audio> GetAudio(std::string_view name) const;
-
 	Result<Handle<Audio>> LoadAudio(AudioDescriptor&& desc);
 	bool HasAudio(std::string_view name) const;
+
+    bool IsAudioValid(const Handle<Audio>& handle) const;
+
+    bool EraseAudio(const Handle<Audio>& handle);
+
+    Result<Void> RenameAudio(const Handle<Audio>& handle);
 
     template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 1)
     auto GetAudioInfo(const Handle<Audio>& handle) const
@@ -86,7 +93,6 @@ public:
             ? it->second
             : std::numeric_limits<size_t>::max());
     }
-
 
     template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 0)
     auto IterAudioInfo() const
@@ -148,6 +154,9 @@ private:
     std::vector<MusicPtr> music_;
     AudioInfoSOA audioInfo_;
     UnorderedDictionary<size_t> nameToInfoIdx_;
+
+    std::vector<size_t> freeSoundSlots_;
+    std::vector<size_t> freeMusicSlots_;
 };
 
 template <typename T> requires (std::same_as<T, Mix_Chunk> ||

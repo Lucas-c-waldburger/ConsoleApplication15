@@ -25,7 +25,10 @@ void SpriteAnimationSystem::Update(const TextureRepository& textureRepo)
 		const size_t seriesSize = 
 			spriteAtlas.GetSpriteSeriesSize(anim.spriteSeriesName);
 
-		assert(seriesSize > 0);
+		if (seriesSize == 0)
+		{
+			continue;
+		}
 
 		if (seriesSize == std::numeric_limits<size_t>::max())
 		{

@@ -9,7 +9,7 @@ namespace ui {
 class AssetViewer
 {
 public:
-	void Draw(SceneFixture& fixture);
+	bool Draw(SceneFixture& fixture);
 
 	Result<Void> Init(SceneFixture& fixture);
 
@@ -17,6 +17,7 @@ private:
 	AssetViewerIcons icons_;
 	DirectoryViewerChild directoryViewer_;
 	AssetGridViewerChild assetGridViewer_;
+	AssetPreviewViewerChild assetPreviewViewer_;
 };
 
 

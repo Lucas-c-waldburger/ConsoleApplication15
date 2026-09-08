@@ -344,6 +344,40 @@ bool SpriteAtlas::EraseSprite(const Sprite& sprite)
     return true;
 }
 
+Result<Void> SpriteAtlas::SetSpriteName(const Sprite& sprite, std::string_view newName)
+{
+    if (newName.empty())
+    {
+        return MAKE_ERROR("New sprite name was empty");
+    }
+    if (spriteNameIndices_.contains(newName))
+    {
+        return MAKE_ERROR_FMT("New sprite name '{}' already exists in atlas", newName);
+    }
+
+    if (!IsSpriteValid(sprite))
+    {
+        return kVoid;
+    }
+
+    const auto spriteIdx = static_cast<size_t>(sprite.resourceHandle.GetResourceIndex());
+
+    auto& spriteName = spriteInfo_.GetView<&SpriteInfo::spriteName>(spriteIdx);
+    assert(!spriteName.empty());
+
+    auto it = spriteNameIndices_.find(spriteName);
+    assert(it != spriteNameIndices_.end());
+    assert(it->second == spriteIdx);
+
+    spriteNameIndices_.erase(spriteName);
+
+    spriteName = newName;
+
+    spriteNameIndices_.emplace(spriteName, spriteIdx);
+
+    return kVoid;
+}
+
 std::vector<std::string_view> SpriteAtlas::GetSpriteSeriesNames() const
 {
     return spriteSeriesDefs_ | std::views::transform([](const auto& pair) {
@@ -1106,6 +1140,16 @@ SDL_Texture* SpriteAtlas::GetSpriteSourceTexture(const Sprite& sprite)
     assert(atlasIndex < spriteAtlasTextures_.size());
 
     return spriteAtlasTextures_[atlasIndex].GetSourceTexture();
+}
+
+size_t SpriteAtlas::GetSpriteInfoIndex(const Sprite& sprite) const
+{
+    if (!IsSpriteValid(sprite))
+    {
+        return std::numeric_limits<size_t>::max();
+    }
+
+    return static_cast<size_t>(sprite.resourceHandle.GetResourceIndex());
 }
 
 SpriteDescriptorPackage SpriteAtlas::ExportSpriteDescriptors() const
