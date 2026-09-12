@@ -2,6 +2,7 @@
 
 #if IMGUI_ENABLED
 #include "../../Fixtures.h"
+#include "../../../audio/AudioBank.h"
 
 namespace ui {
 
@@ -121,6 +122,47 @@ const AssetItem& GetPayloadAssetItem(const AssetTree& assetTree, const std::stri
 	return Null<AssetItem>();
 }
 
+std::string_view GetAudioConvertPopupText(const Handle<Audio>& handle, const AudioBank& bank)
+{
+	static constexpr std::string_view kToMusic = "Convert to Music";
+	static constexpr std::string_view kToSound = "Convert to Sound";
+
+	auto audioType = bank.GetAudioInfo<&AudioInfo::audioType>(handle);
+	if (audioType.has_value())
+	{
+		switch (*audioType)
+		{
+		case AudioType::Music: return kToSound;
+		case AudioType::Sound: return kToMusic;
+		}
+	}
+
+	return "";
+}
+
+void StopEntitiesWithAudio(const Handle<Audio>& handle)
+{
+	auto es = ECS::GetAllEntitiesWith<ActiveAudio>([&handle](const auto& aa) {
+		return aa.audioHandle == handle;
+	});
+
+	for (auto& e : es)
+	{
+		auto& req = e.AddComponent<AudioUpdateRequest>();
+		req.instanceId = e.GetComponent<ActiveAudio>().instanceId;
+		req.command = AudioPlayCommand::Stop;
+	}
+}
+
+bool ReadyToPerformAudioRequest(const AssetGridViewerChild::AudioAssetGridSelection& sel,
+								uint8_t audioReqFlag)
+{
+	using enum AssetGridViewerChild::GridSelectionState;
+
+	return (sel.state & (audioReqFlag | GameLoopPassedSinceRequest)) ==
+		(audioReqFlag | GameLoopPassedSinceRequest);
+}
+
 } // unnamed
 
 void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
@@ -130,12 +172,8 @@ void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
 		return;
 	}
 
-	auto getTabFlags = [type = openAssetTabType_](AssetItem::Type tabType) -> int {
-		if (IsAssetItemTypeFile(type))
-		{
-			return ImGuiTabItemFlags_SetSelected;
-		}
-		return 0;
+	auto getTabFlags = [this](AssetItem::Type tabType) -> int {
+		return (forceAssetTabOpen_ == tabType) ? ImGuiTabItemFlags_SetSelected : 0;
 	};
 
 	if (ImGui::BeginTabItem("Sprites", nullptr, getTabFlags(AssetItem::Type::Image)))
@@ -144,10 +182,18 @@ void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
 
 		ResolveSpritePopupContextActions(fixture.GetTextureRepository().GetSpriteAtlas());
 
-		openAssetTabType_ = AssetItem::Type::Image;
+		ImGui::EndTabItem();
+	}
+	if (ImGui::BeginTabItem("Audio", nullptr, getTabFlags(AssetItem::Type::Audio)))
+	{
+		DrawAudioAssetGrid(fixture.GetAudioBank(), ctx);
+
+		ResolveAudioPopupContextActions(fixture.GetAudioBank());
 
 		ImGui::EndTabItem();
 	}
+
+	forceAssetTabOpen_.reset();
 
 	ImGui::EndTabBar();
 }
@@ -176,12 +222,20 @@ void AssetGridViewerChild::HandleAssetDragDropTarget(SceneFixture& fixture, Reso
 			fixture.GetTextureRepository().GetSpriteAtlas(),
 			fixture.GetRenderer());
 	}
+	else if (const auto& item = GetPayloadAssetItem(ctx.assetTree, kAudioPayloadName))
+	{
+		assert(item.type == AssetItem::Type::Audio);
+
+		lastLoadedAssetType = HandleAudioAssetDragDropTarget(
+			item,
+			fixture.GetAudioBank());
+	}
 
 	ImGui::EndDragDropTarget();
 
 	if (IsAssetItemTypeFile(lastLoadedAssetType))
 	{
-		openAssetTabType_ = lastLoadedAssetType;
+		forceAssetTabOpen_ = lastLoadedAssetType;
 	}
 }
 
@@ -380,30 +434,47 @@ void AssetGridViewerChild::DrawSpriteAssetGrid(TextureRepository& loadTargetRepo
 
 void AssetGridViewerChild::DrawAudioAssetGrid(AudioBank& audioBank, ResourceContext& ctx)
 {
+	audioSelection_.UpdateGameLoopPassedFlag();
+
 	if (!ImGui::BeginTable("Audio Asset Grid", GetGridColumnCount()))
 	{
 		return;
 	}
 
-	int guiId = 0;
-	auto it = audioBank.IterAudioInfo<&AudioInfo::audioType, &AudioInfo::name>();
-	for (const auto [audioType, audioName] : it)
+	auto it = audioBank.IterAudioInfo<&AudioInfo::audioType, 
+									  &AudioInfo::name, 
+									  &AudioInfo::storageIndex,
+									  &AudioInfo::generation>();
+	size_t counter = 0;
+	for (const auto [audioType, audioName, storageIdx, gen] : it)
 	{
+		if (audioName.empty())
+		{
+			++counter;
+			continue; 
+		}
+
 		ImGui::TableNextColumn();
-		ImGui::PushID(guiId);
+		ImGui::PushID(static_cast<int>(counter));
 
 		auto gridCell = AssetGridCell::Place();
 
-		if (gridCell.Clicked() && audioSelection_.audioName != audioName)
+		auto handle = Handle<Audio>::Create(audioBank.GetBankID(), counter, gen);
+
+		if (gridCell.Clicked())
 		{
-			audioSelection_.audioName = audioName;
+			if (audioSelection_.audioHandle != handle)
+			{
+				audioSelection_.ClearRename();
+				audioSelection_.audioHandle = handle;
+			}
 		}
 
 		bool alreadyRenaming = audioSelection_.IsRenaming();
 
 		DrawAudioPopupContextMenu(audioBank);
 
-		const bool currentCellSelected = audioSelection_.audioName == audioName;
+		const bool currentCellSelected = audioSelection_.audioHandle == handle;
 		if (currentCellSelected)
 		{
 			gridCell.DrawSelectedHighlight();
@@ -418,7 +489,21 @@ void AssetGridViewerChild::DrawAudioAssetGrid(AudioBank& audioBank, ResourceCont
 
 		gridCell.DrawThumbnailTexture(tx);
 
-		++guiId;
+		auto audioNameOp = audioBank.GetAudioInfo<&AudioInfo::name>(handle);
+		assert(audioNameOp.has_value());
+
+		if (currentCellSelected && audioSelection_.IsRenaming())
+		{
+			HandleAudioSelectionRename(gridCell, audioBank, !alreadyRenaming);
+		}
+		else
+		{
+			gridCell.DrawDisplayText(*audioNameOp);
+		}
+
+		ImGui::PopID();
+
+		++counter;
 	}
 
 	ImGui::EndTable();
@@ -443,9 +528,15 @@ AssetItem::Type AssetGridViewerChild::HandleDirectoryAssetDragDropTarget(const A
 		{
 		case AssetItem::Type::Image:
 			lastLoadedAssetType = HandleSpriteAssetDragDropTarget(
-				item,
+				childItem,
 				fixture.GetTextureRepository().GetSpriteAtlas(),
 				fixture.GetRenderer());
+
+			break;
+		case AssetItem::Type::Audio:
+			lastLoadedAssetType = HandleAudioAssetDragDropTarget(
+				childItem,
+				fixture.GetAudioBank());
 
 			break;
 		}
@@ -463,6 +554,14 @@ AssetItem::Type AssetGridViewerChild::HandleSpriteAssetDragDropTarget(const Asse
 	LOG_IF_ERROR(loadTargetAtlas.LoadSprite(renderer, { .filepath = item.path.string() }));
 
 	return AssetItem::Type::Image;
+}
+
+AssetItem::Type AssetGridViewerChild::HandleAudioAssetDragDropTarget(const AssetItem& item, 
+																	 AudioBank& audioBank)
+{
+	LOG_IF_ERROR(audioBank.LoadAudio({ .audioType = AudioType::Music, .filepath = item.path.string() }));
+
+	return AssetItem::Type::Audio;
 }
 
 void AssetGridViewerChild::DrawSpritePopupContextMenu(SpriteAtlas& loadTargetAtlas)
@@ -496,7 +595,7 @@ void AssetGridViewerChild::DrawSpritePopupContextMenu(SpriteAtlas& loadTargetAtl
 
 		if (ImGui::MenuItem("Erase"))
 		{
-			spriteSelection_.state |= GridSelectionState::MarkedErase;
+			spriteSelection_.state |= GridSelectionState::RequestErase;
 		}
 
 		ImGui::EndPopup();
@@ -505,12 +604,50 @@ void AssetGridViewerChild::DrawSpritePopupContextMenu(SpriteAtlas& loadTargetAtl
 
 void AssetGridViewerChild::DrawAudioPopupContextMenu(AudioBank& audioBank)
 {
+	if (!audioSelection_.HasSelection())
+	{
+		return;
+	}
 
+	if (ImGui::BeginPopupContextItem("AudioThumbnailContextMenu"))
+	{
+		if (ImGui::MenuItem("Rename"))
+		{
+			audioSelection_.currentRename.clear();
+
+			auto audioName = audioBank.GetAudioInfo<&AudioInfo::name>(audioSelection_.audioHandle);
+			assert(audioName.has_value());
+			assert(!(*audioName).empty());
+
+			audioSelection_.currentRename = audioName;
+			audioSelection_.state |= GridSelectionState::Renaming;
+		}
+
+		if (ImGui::MenuItem("Erase"))
+		{
+			audioSelection_.state |= GridSelectionState::RequestErase;
+
+			StopEntitiesWithAudio(audioSelection_.audioHandle);
+		}
+		
+		std::string_view convertPopupText =
+			GetAudioConvertPopupText(audioSelection_.audioHandle, audioBank);
+		assert(!convertPopupText.empty());
+
+		if (ImGui::MenuItem(convertPopupText.data()))
+		{
+			audioSelection_.state |= GridSelectionState::RequestConvertAudioType;
+
+			StopEntitiesWithAudio(audioSelection_.audioHandle);
+		}
+
+		ImGui::EndPopup();
+	}
 }
 
 void AssetGridViewerChild::ResolveSpritePopupContextActions(SpriteAtlas& loadTargetAtlas)
 {
-	if (spriteSelection_.state & GridSelectionState::MarkedErase)
+	if (spriteSelection_.state & GridSelectionState::RequestErase)
 	{
 		if (loadTargetAtlas.IsSpriteValid(spriteSelection_.sprite))
 		{
@@ -539,8 +676,80 @@ void AssetGridViewerChild::ResolveSpritePopupContextActions(SpriteAtlas& loadTar
 		}
 
 		spriteSelection_.currentRename.clear();
-		spriteSelection_.state &= ~(GridSelectionState::MarkedErase |
+		spriteSelection_.state &= ~(GridSelectionState::RequestErase |
 									GridSelectionState::Renaming);
+	}
+}
+
+void AssetGridViewerChild::ResolveAudioPopupContextActions(AudioBank& audioBank)
+{
+	if (ReadyToPerformAudioRequest(audioSelection_, GridSelectionState::RequestConvertAudioType))
+	{
+		if (audioBank.IsAudioValid(audioSelection_.audioHandle))
+		{
+			const auto info = audioBank.GetAudioInfo<&AudioInfo::audioType,
+													 &AudioInfo::name,
+													 &AudioInfo::filepath>(audioSelection_.audioHandle);
+			assert(info.has_value());
+
+			const auto [audioType, name, filepath] = *info;
+			assert(audioType == AudioType::Music || audioType == AudioType::Sound);
+
+			const auto flippedAudioType = (audioType == AudioType::Music)
+				? AudioType::Sound
+				: AudioType::Music;
+
+			AudioDescriptor newDescriptor{
+				.audioType = flippedAudioType,
+				.name = name,
+				.filepath = filepath
+			};
+
+			const bool erased = audioBank.EraseAudio(audioSelection_.audioHandle);
+			audioSelection_.audioHandle = {};
+
+			if (!erased)
+			{
+				LOG_ERROR("Failed to erase audio");
+			}
+			else
+			{
+				auto reloadResult = audioBank.LoadAudio(std::move(newDescriptor));
+				if (!reloadResult.Success())
+				{
+					LOG_ERROR(reloadResult.GetError().GetMessage());
+				}
+				else
+				{
+					audioSelection_.audioHandle = reloadResult.GetValue();
+				}
+			}
+		}
+
+		audioSelection_.currentRename.clear();
+		audioSelection_.state &= ~(GridSelectionState::RequestErase |
+								   GridSelectionState::Renaming |
+								   GridSelectionState::RequestConvertAudioType |
+								   GridSelectionState::GameLoopPassedSinceRequest);
+	}
+	if (ReadyToPerformAudioRequest(audioSelection_, GridSelectionState::RequestErase))
+	{
+		if (audioBank.IsAudioValid(audioSelection_.audioHandle))
+		{
+			const bool erased = audioBank.EraseAudio(audioSelection_.audioHandle);
+			audioSelection_.audioHandle = {};
+
+			if (!erased)
+			{
+				LOG_ERROR("Failed to erase audio");
+			}
+		}
+
+		audioSelection_.currentRename.clear();
+		audioSelection_.state &= ~(GridSelectionState::RequestErase |
+								   GridSelectionState::Renaming |
+								   GridSelectionState::RequestConvertAudioType |
+								   GridSelectionState::GameLoopPassedSinceRequest);
 	}
 }
 
@@ -593,21 +802,15 @@ void AssetGridViewerChild::HandleAudioSelectionRename(const AssetGridCell& gridC
 
 	if (outcome == AssetGridCell::RenameOutcome::Complete)
 	{
-		if (loadTargetAtlas.IsSpriteValid(spriteSelection_.sprite))
+		if (audioBank.IsAudioValid(audioSelection_.audioHandle))
 		{
-			LOG_IF_ERROR(loadTargetAtlas.SetSpriteName(spriteSelection_.sprite,
-				spriteSelection_.currentRename));
-		}
-		else if (loadTargetAtlas.HasSpriteSeries(spriteSelection_.spriteSeries))
-		{
-			LOG_IF_ERROR(RenameSpriteSeriesAndUpdateEntities(spriteSelection_.spriteSeries,
-				spriteSelection_.currentRename,
-				loadTargetAtlas));
+			LOG_IF_ERROR(audioBank.SetAudioName(audioSelection_.audioHandle, 
+											    audioSelection_.currentRename));
 		}
 	}
 
-	spriteSelection_.currentRename.clear();
-	spriteSelection_.state &= ~GridSelectionState::Renaming;
+	audioSelection_.currentRename.clear();
+	audioSelection_.state &= ~GridSelectionState::Renaming;
 }
 
 } // ui

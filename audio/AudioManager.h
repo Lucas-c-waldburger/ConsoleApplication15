@@ -36,6 +36,7 @@ public:
 
     void ClearChannels();
     void ClearStage();
+    void ClearInstance(const AudioInstanceID& instanceId);
     void UpdateChannels(float dt);
 
     InstanceChannelAndStatus

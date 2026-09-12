@@ -7,7 +7,9 @@ enum AudioForcing : uint8_t
 {
     ForceStage = 1 << 0,
     ForceChannelGraceful = 1 << 1,
-    ForceChannelHalt = 1 << 2
+    ForceChannelHalt = 1 << 2,
+    ForcePausedAtStart = 1 << 3,
+    ForcePauseAtEnd = 1 << 4
 };
 
 template <typename T>

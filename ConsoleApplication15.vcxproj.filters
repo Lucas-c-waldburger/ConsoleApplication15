@@ -603,6 +603,9 @@
     <ClCompile Include="..\..\..\..\..\Libraries\imgui\misc\cpp\imgui_stdlib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\ui\asset_viewer\MusicVisualizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -3321,6 +3324,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\ui\asset_viewer\AssetViewer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\asset_viewer\AssetMediaPlayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\asset_viewer\MusicVisualizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio\AudioManager2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

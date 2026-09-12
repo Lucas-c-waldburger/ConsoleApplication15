@@ -2,8 +2,15 @@
 #include "../ecs/Ecs.h"
 #include <cassert>
 
+
 //// TODO: Remove instance id audio update request component
-inline void AudioSystem::HandleAudioUpdateRequests()
+//// FIX: remove expired music/sound -> immediately move stages up -> ???
+AudioSystem::AudioSystem()
+{
+	ObserveEntityDestroyed();
+}
+
+void AudioSystem::HandleAudioUpdateRequests()
 {
 	auto entities = ECS::GetAllEntitiesWith<AudioUpdateRequest>();
 
@@ -29,6 +36,8 @@ inline void AudioSystem::HandleAudioUpdateRequests()
 
 		if (status == AudioStatus::Stopped)
 		{
+			audioManager_.ClearInstance(updateRequest.instanceId);
+
 			entity.RemoveComponent<ActiveAudio>(GetEntityPassKey());
 		}
 
@@ -84,6 +93,19 @@ void AudioSystem::HandleNewAudioRequests()
 				.force = newRequest.force
 			};
 
+			if (entity.HasComponent<ActiveAudio>())
+			{
+				auto& oldActiveAudio = entity.GetComponent<ActiveAudio>();
+
+				AudioStatus stopResultStatus = audioManager_.ExecuteAudioCommand(
+					oldActiveAudio.instanceId, AudioPlayCommand::Stop);
+
+				if (stopResultStatus == AudioStatus::Stopped)
+				{
+					audioManager_.ClearInstance(oldActiveAudio.instanceId);
+				}
+			}
+
 			auto [channelIdx, status] = audioManager_.StageAudio(std::move(stageSlot));
 			if (channelIdx == AudioManager::kInvalidChannelIndex)
 			{
@@ -95,19 +117,6 @@ void AudioSystem::HandleNewAudioRequests()
 			assert(status == AudioStatus::Staged);
 
 			// successfully staged. check if this entity had active audio and stop/unstage it
-			if (entity.HasComponent<ActiveAudio>())
-			{
-				auto& oldActiveAudio = entity.GetComponent<ActiveAudio>();
-
-				AudioStatus stopResultStatus = 
-					audioManager_.ExecuteAudioCommand(oldActiveAudio.instanceId, 
-													  AudioPlayCommand::Stop);
-
-				assert((stopResultStatus == AudioStatus::Stopped && 
-					    oldActiveAudio.status == AudioStatus::Staged) ||
-				       (stopResultStatus == AudioStatus::Stopping &&
-						oldActiveAudio.status != AudioStatus::Staged));
-			}
 
 			// add active audio either adds new one or overwrites old one
 			// (it's okay if the old active audio is stopping, 
@@ -157,11 +166,6 @@ void AudioSystem::HandleNewAudioRequests()
 				AudioStatus stopResultStatus =
 					audioManager_.ExecuteAudioCommand(oldActiveAudio.instanceId,
 													  AudioPlayCommand::Stop);
-
-				assert((stopResultStatus == AudioStatus::Stopped &&
-					    oldActiveAudio.status == AudioStatus::Staged) ||
-					   (stopResultStatus == AudioStatus::Stopping &&
-						oldActiveAudio.status != AudioStatus::Staged));
 			}
 
 			// add active audio either adds new one or overwrites old one
@@ -184,17 +188,46 @@ void AudioSystem::HandleNewAudioRequests()
 	}
 }
 
-void AudioSystem::UpdateActiveAudioComponents()
+void AudioSystem::CleanExpiredAudioInstances(std::vector<Entity>& entities)
 {
-	auto entities = ECS::GetAllEntitiesWith<ActiveAudio>();
-
-	for (auto& entity : entities)
+	size_t i = 0;
+	while (i < entities.size())
 	{
 		// updates should have been handled and removed already
-		assert(!entity.HasComponent<NewAudioRequest>());
-		assert(!entity.HasComponent<AudioUpdateRequest>());
+		assert(!entities[i].HasComponent<NewAudioRequest>());
+		assert(!entities[i].HasComponent<AudioUpdateRequest>());
 
+		assert(entities[i].HasComponent<ActiveAudio>());
+		auto& activeAudio = entities[i].GetComponent<ActiveAudio>(GetEntityPassKey());
+
+		if (audioManager_.AudioInstanceValid(activeAudio.instanceId) &&
+			!audioBank_.IsAudioValid(activeAudio.audioHandle))
+		{
+			// audio was erased
+			audioManager_.ClearInstance(activeAudio.instanceId);
+
+			entities[i].RemoveComponent<ActiveAudio>(GetEntityPassKey());
+			
+			size_t backIdx = entities.size() - 1;
+				
+			std::swap(entities[i], entities[backIdx]);
+			
+			entities.pop_back();
+		}
+		else
+		{
+			++i;
+		}
+	}
+}
+
+void AudioSystem::UpdateActiveAudioEntities(std::vector<Entity>& entities)
+{
+	for (auto& entity : entities)
+	{
+		assert(entity.HasComponent<ActiveAudio>());
 		auto& activeAudio = entity.GetComponent<ActiveAudio>(GetEntityPassKey());
+
 		if (!audioManager_.AudioInstanceValid(activeAudio.instanceId))
 		{
 			// audio was stopped
@@ -243,7 +276,7 @@ Result<Void> AudioSystem::ResolveUpdateRequestInstanceId(Entity& entity)
 	//		"update request's instance id");
 	//}
 
-	return Void{};
+	return kVoid;
 }
 
 
@@ -257,12 +290,16 @@ void AudioSystem::Update(float dt)
 	HandleAudioUpdateRequests();
 	HandleNewAudioRequests();
 
+	auto activeAudioEntities = ECS::GetAllEntitiesWith<ActiveAudio>();
+
+	CleanExpiredAudioInstances(activeAudioEntities);
+
 	audioManager_.UpdateChannels(dt);
 
-	UpdateActiveAudioComponents();
+	UpdateActiveAudioEntities(activeAudioEntities);
 }
 
-void AudioSystem::EntityDestroyed(Entity& entity)
+void AudioSystem::OnEntityDestroyed(Entity entity)
 {
 	assert(entity.IsValid());
 

@@ -1,26 +1,45 @@
 #include "AudioBank.h"
 #include <filesystem>
 
-//AudioBank::AudioBank(AudioBank&& other) noexcept : audioBankInstanceId_(other.audioBankInstanceId_),
-//    sounds_(std::move(other.sounds_)), music_(std::move(other.music_)), 
-//    audioInfo_(std::move(other.audioInfo_))
-//{
-//    RepopulateAudioNameIndexMap(audioInfo_.Capacity());
-//}
-//
-//AudioBank& AudioBank::operator=(AudioBank&& other) noexcept
-//{
-//    if (this == &other) { return *this; }
-//
-//    audioBankInstanceId_ = other.audioBankInstanceId_;
-//    sounds_ = std::move(other.sounds_);
-//    music_ = std::move(other.music_);
-//    audioInfo_ = std::move(other.audioInfo_);
-//
-//    RepopulateAudioNameIndexMap(audioInfo_.Capacity());
-//
-//    return *this;
-//}
+uint32_t GetAudioLength(const MusicPtr& musicPtr)
+{
+    const double len = Mix_MusicDuration(musicPtr.get());
+    if (len < 0.0)
+    {
+        return 0;
+    }
+
+    return static_cast<uint32_t>(len * 1000.0);
+}
+
+uint32_t GetAudioLength(const SoundPtr& soundPtr)
+{
+    if (!soundPtr)
+    {
+        return 0;
+    }
+
+    int freq;
+    int channels;
+    Uint16 format;
+
+    if (Mix_QuerySpec(&freq, &format, &channels) == 0)
+    {
+        return 0; // sound not open
+    }
+
+    if (format == 0 || channels == 0)
+    {
+        return 0;
+    }
+
+    int sampleSize = SDL_AUDIO_BITSIZE(format) / 8;
+
+    Uint32 points = soundPtr->alen / sampleSize;
+    Uint32 frames = points / channels;
+
+    return (frames * 1000) / freq;
+}
 
 Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
 {
@@ -53,7 +72,7 @@ Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
             const size_t infoIdx = freeSlotContainer.back();
             assert(infoIdx < audioInfo_.Size());
 
-            auto [audioType, name, filepath, storageIdx, gen] =
+            auto [audioType, name, filepath, len, storageIdx, gen] =
                 audioInfo_.GetView(infoIdx);
 
             assert(audioType != AudioType::Unknown);
@@ -61,13 +80,14 @@ Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
             assert(!nameToInfoIdx_.contains(name));
             assert(filepath.empty());
             assert(gen > 0);
-            assert(storageIdx < ptrContainer.size())
+            assert(storageIdx < ptrContainer.size());
             assert(!ptrContainer[storageIdx]);
 
             name = desc.name;
             filepath = std::move(desc.filepath);
+            len = GetAudioLength(newPtr);
 
-            ptrContainer[newStorageIdx] = std::move(newPtr);
+            ptrContainer[storageIdx] = std::move(newPtr);
 
             [[maybe_unused]] auto [_, nameInserted] = 
                 nameToInfoIdx_.try_emplace(std::move(name), infoIdx);
@@ -81,15 +101,16 @@ Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
         {
             const size_t newStorageIdx = ptrContainer.size();
 
-            ptrContainer.emplace_back(std::move(newPtr));
-
             const size_t newResourceIdx = audioInfo_.PushBack({
                 .audioType = desc.audioType,
                 .name = desc.name,
                 .filepath = std::move(desc.filepath),
+                .length = GetAudioLength(newPtr),
                 .storageIndex = newStorageIdx,
                 .generation = 0
              });
+
+            ptrContainer.emplace_back(std::move(newPtr));
 
             [[maybe_unused]] auto [_, nameInserted] = 
                 nameToInfoIdx_.try_emplace(std::move(desc.name), newStorageIdx);
@@ -102,9 +123,9 @@ Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
     switch (desc.audioType)
     {
     case AudioType::Sound:
-        return impl(sounds_, MakeSoundPtr, freeSoundSlots_);
+        return impl(freeSoundSlots_, sounds_, MakeSoundPtr);
     case AudioType::Music:
-        return impl(music_, MakeMusicPtr, freeMusicSlots_);
+        return impl(freeMusicSlots_, music_, MakeMusicPtr);
     case AudioType::Unknown: default:
         return MAKE_ERROR("Audio descriptor's audio type was Unknown");
     }
@@ -117,10 +138,20 @@ bool AudioBank::HasAudio(std::string_view name) const
 
 bool AudioBank::IsAudioValid(const Handle<Audio>& handle) const
 {
-    return handle.GetSourceId() == audioBankInstanceId_ &&
-           handle.GetResourceIndex() < audioInfo_.Size() &&
-           audioInfo_.GetView<&AudioInfo::generation>(handle.GetResourceIndex()) ==
-           handle.GetGeneration();
+    if (handle.GetSourceId() != audioBankInstanceId_ ||
+        handle.GetResourceIndex() >= audioInfo_.Size())
+    {
+        return false;
+    }
+
+    const auto [audioType, gen, storageIdx] = audioInfo_.GetView<&AudioInfo::audioType,
+                                                                 &AudioInfo::generation,
+                                                                 &AudioInfo::storageIndex>
+                                                                 (handle.GetResourceIndex());
+
+    return gen == handle.GetGeneration() && (audioType == AudioType::Music)
+        ? (storageIdx < music_.size() && music_[storageIdx])
+        : (storageIdx < sounds_.size() && sounds_[storageIdx]);
 }
 
 bool AudioBank::EraseAudio(const Handle<Audio>& handle)
@@ -130,7 +161,7 @@ bool AudioBank::EraseAudio(const Handle<Audio>& handle)
         return false;
     }
 
-    auto [audioType, name, filepath, storageIdx, gen] = 
+    auto [audioType, name, filepath, duration, storageIdx, gen] = 
         audioInfo_.GetView(handle.GetResourceIndex());
 
     assert(audioType != AudioType::Unknown);
@@ -153,20 +184,44 @@ bool AudioBank::EraseAudio(const Handle<Audio>& handle)
         ? freeMusicSlots_
         : freeSoundSlots_;
 
+    [[maybe_unused]] const size_t nameErased = nameToInfoIdx_.erase(name);
+    assert(nameErased > 0);
+
     name.clear();
     filepath.clear();
+    duration = 0;
     ++gen;
 
     (audioType == AudioType::Music)
         ? music_[storageIdx].reset()
         : sounds_[storageIdx].reset();
 
-    [[maybe_unused]] const size_t nameErased = nameToInfoIdx_.erase(name);
-    assert(nameErased > 0);
-
     freeSlots.emplace_back(handle.GetResourceIndex());
 
     return true;
+}
+
+Result<Void> AudioBank::SetAudioName(const Handle<Audio>& handle, std::string_view newName)
+{
+    if (!IsAudioValid(handle))
+    {
+        return MAKE_ERROR("Audio handle was invalid");
+    }
+    if (nameToInfoIdx_.contains(newName))
+    {
+        return MAKE_ERROR_FMT("Duplicate audio name '{}' already exists in bank", newName);
+    }
+
+    auto& oldName = audioInfo_.GetView<&AudioInfo::name>(handle.GetResourceIndex());
+
+    [[maybe_unused]] const size_t nameErased = nameToInfoIdx_.erase(oldName);
+    assert(nameErased > 0);
+
+    oldName = newName;
+
+    nameToInfoIdx_.try_emplace(newName, handle.GetResourceIndex());
+
+    return kVoid;
 }
 
 Result<SoundInstanceResource> AudioBank::GetSoundInstanceResouce(const Handle<Audio>& handle)
@@ -214,6 +269,18 @@ std::vector<AudioDescriptor> AudioBank::ExportAudioDescriptors() const
 
 	return descriptors; 
  }
+
+size_t AudioBank::GetSoundCount() const
+{
+    assert(sounds_.size() >= freeSoundSlots_.size());
+    return sounds_.size() - freeSoundSlots_.size();
+}
+
+size_t AudioBank::GetMusicCount() const
+{
+    assert(music_.size() >= freeMusicSlots_.size());
+    return music_.size() - freeMusicSlots_.size();
+}
 
 //void AudioBank::RepopulateAudioNameIndexMap(size_t newSize)
 //{

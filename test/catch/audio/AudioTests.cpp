@@ -31,6 +31,40 @@ constexpr std::string_view kSword5Name = "sword_5";
 constexpr int kBellHitDurationMs = 4000;
 constexpr int kGateSlamDurationMs = 2000;
 
+Result<AudioDescriptor> MakeSoundAudioDescriptor(std::string_view file)
+{
+	TRY(ResourcePath::Sound(file), path);
+
+	return AudioDescriptor{
+		.audioType = AudioType::Sound,
+		.filepath = std::move(path)
+	};
+}
+
+Result<AudioDescriptor> MakeMusicAudioDescriptor(std::string_view file)
+{
+	TRY(ResourcePath::Music(file), path);
+
+	return AudioDescriptor{
+		.audioType = AudioType::Music,
+		.filepath = std::move(path)
+	};
+}
+
+Result<Handle<Audio>> MakeSoundAudioDescriptorAndLoad(std::string_view file, AudioBank& bank)
+{
+	TRY(MakeSoundAudioDescriptor(file), descriptor);
+
+	return bank.LoadAudio(std::move(descriptor));
+}
+
+Result<Handle<Audio>> MakeMusicAudioDescriptorAndLoad(std::string_view file, AudioBank& bank)
+{
+	TRY(MakeMusicAudioDescriptor(file), descriptor);
+
+	return bank.LoadAudio(std::move(descriptor));
+}
+
 Result<std::vector<AudioDescriptor>> MakeAudioDescriptors()
 {
 	using AD = AudioDescriptor;
@@ -393,4 +427,284 @@ TEST_CASE("Track Position updates correctly", "[audio]")
 	//	REQUIRE(soundLoadResult.Success());
 	//	REQUIRE(soundLoadResult.GetValue().IsValid());
 	//}
+}
+
+TEST_CASE("Calculating audio length", "[audio]")
+{
+	static constexpr uint32_t kSoundWiggleRoom = 10;
+	static constexpr uint32_t kMusicWiggleRoom = 50;
+
+	Logger::StartSession();
+	auto status = SDLite::Start();
+	REQUIRE(status.Good());
+
+	AudioBank audioBank{};
+
+	auto checkAudioLen = [&audioBank](std::string_view file, AudioType type, uint32_t expectedDur) {
+		REQUIRE((type == AudioType::Music || type == AudioType::Sound));
+		auto loadResult = (type == AudioType::Music)
+			? MakeMusicAudioDescriptorAndLoad(file, audioBank)
+			: MakeSoundAudioDescriptorAndLoad(file, audioBank);
+		REQUIRE(loadResult.Success());
+		const auto& handle = loadResult.GetValue();
+		CHECK(audioBank.IsAudioValid(handle));
+
+		auto len = audioBank.GetAudioInfo<&AudioInfo::length>(handle);
+		REQUIRE(len.has_value());
+
+		const uint32_t wiggleRoom = (type == AudioType::Music)
+			? kMusicWiggleRoom
+			: kSoundWiggleRoom;
+
+		const uint32_t lowerBound = expectedDur - wiggleRoom;
+		const uint32_t upperBound = expectedDur + wiggleRoom;
+
+		return (*len >= lowerBound && *len <= upperBound);
+	};
+
+	SECTION("Music")
+	{
+		static constexpr uint32_t kFutureBeatLenMs = 121364;
+		static constexpr uint32_t kGreenpathLenMs = 366097;
+		static constexpr uint32_t kMrBlueSkyLenMs = 222197;
+		static constexpr uint32_t kOneMoreTimeLenMs = 179544;
+
+		CHECK(checkAudioLen("futuristic_beat.mp3", AudioType::Music, kFutureBeatLenMs));
+		CHECK(checkAudioLen("greenpath.ogg", AudioType::Music, kGreenpathLenMs));
+		CHECK(checkAudioLen("mr_blue_sky.ogg", AudioType::Music, kMrBlueSkyLenMs));
+		CHECK(checkAudioLen("one_more_time.ogg", AudioType::Music, kOneMoreTimeLenMs));
+	}
+
+	SECTION("Sounds")
+	{
+		static constexpr uint32_t kSecretAreaDiscoveredLen = 4130;
+		static constexpr uint32_t kChestOpenLenMs = 1360;
+		static constexpr uint32_t kHeroRunFootstepsStoneLenMs = 2030;
+		static constexpr uint32_t kExplosionOneLenMs = 1610;
+
+		CHECK(checkAudioLen("secret_area_discovered.wav", AudioType::Sound, kSecretAreaDiscoveredLen));
+		CHECK(checkAudioLen("chest_open.wav", AudioType::Sound, kChestOpenLenMs));
+		CHECK(checkAudioLen("hero_run_footsteps_stone.wav", AudioType::Sound, kHeroRunFootstepsStoneLenMs));
+		CHECK(checkAudioLen("explosion_1.wav", AudioType::Sound, kExplosionOneLenMs));
+	}
+
+	SDLite::Exit();
+}
+
+TEST_CASE("Erasing Audio", "[audio]")
+{
+	Logger::StartSession();
+	auto status = SDLite::Start();
+	REQUIRE(status.Good());
+
+	AudioBank audioBank{};
+	CHECK(audioBank.GetMusicCount() == 0);
+	CHECK(audioBank.GetSoundCount() == 0);
+
+	auto greenPathMusicDescriptor = MakeMusicAudioDescriptor("greenpath.ogg");
+	REQUIRE(greenPathMusicDescriptor.Success());
+	auto futureBeatMusicDescriptor = MakeMusicAudioDescriptor("futuristic_beat.mp3");
+	REQUIRE(futureBeatMusicDescriptor.Success());
+	auto bellHitSoundDescriptor = MakeSoundAudioDescriptor("bell_hit.flac");
+	REQUIRE(bellHitSoundDescriptor.Success());
+	auto bossStunSoundDescriptor = MakeSoundAudioDescriptor("boss_stun.wav");
+	REQUIRE(bossStunSoundDescriptor.Success());
+
+	auto futureBeatFilepath = futureBeatMusicDescriptor.GetValue().filepath;
+	auto bossStunFilepath = bossStunSoundDescriptor.GetValue().filepath;
+
+	auto greenPathLoadResult = audioBank.LoadAudio(std::move(greenPathMusicDescriptor.GetValue()));
+	REQUIRE(greenPathLoadResult.Success());
+	CHECK(audioBank.GetMusicCount() == 1);
+	CHECK(audioBank.GetSoundCount() == 0);
+
+	auto futureBeatLoadResult = audioBank.LoadAudio(std::move(futureBeatMusicDescriptor.GetValue()));
+	REQUIRE(futureBeatLoadResult.Success());
+	CHECK(audioBank.GetMusicCount() == 2);
+	CHECK(audioBank.GetSoundCount() == 0);
+
+	auto bellHitLoadResult = audioBank.LoadAudio(std::move(bellHitSoundDescriptor.GetValue()));
+	REQUIRE(bellHitLoadResult.Success());
+	CHECK(audioBank.GetMusicCount() == 2);
+	CHECK(audioBank.GetSoundCount() == 1);
+
+	auto bossStunLoadResult = audioBank.LoadAudio(std::move(bossStunSoundDescriptor.GetValue()));
+	REQUIRE(bossStunLoadResult.Success());
+	CHECK(audioBank.GetMusicCount() == 2);
+	CHECK(audioBank.GetSoundCount() == 2);
+
+	const auto& greenPathHandle = greenPathLoadResult.GetValue();
+	CHECK(greenPathHandle.IsValid());
+	CHECK(audioBank.IsAudioValid(greenPathHandle));
+	const auto& futureBeatHandle = futureBeatLoadResult.GetValue();
+	CHECK(futureBeatHandle.IsValid());
+	CHECK(audioBank.IsAudioValid(futureBeatHandle));
+	const auto& bellHitHandle = bellHitLoadResult.GetValue();
+	CHECK(bellHitHandle.IsValid());
+	CHECK(audioBank.IsAudioValid(bellHitHandle));
+	const auto& bossStunHandle = bossStunLoadResult.GetValue();
+	CHECK(bossStunHandle.IsValid());
+	CHECK(audioBank.IsAudioValid(bossStunHandle));
+
+	auto futureBeatInfo = audioBank.GetAudioInfo(futureBeatHandle);
+	REQUIRE(futureBeatInfo.has_value());
+	{
+		const auto [audioType, name, filepath, duration, storageIndex, gen] = *futureBeatInfo;
+		CHECK(audioType == AudioType::Music);
+		CHECK(name == "futuristic_beat");
+		CHECK(filepath == futureBeatFilepath);
+		CHECK(duration > 0);
+		CHECK(storageIndex == 1);
+		CHECK(gen == 0);
+	}
+	auto bossStunInfo = audioBank.GetAudioInfo(bossStunHandle);
+	REQUIRE(bossStunInfo.has_value());
+	{
+		const auto [audioType, name, filepath, duration, storageIndex, gen] = *bossStunInfo;
+		CHECK(audioType == AudioType::Sound);
+		CHECK(name == "boss_stun");
+		CHECK(filepath == bossStunFilepath);
+		CHECK(duration > 0);
+		CHECK(storageIndex == 1);
+		CHECK(gen == 0);
+	}
+
+	const bool futureBeatErased = audioBank.EraseAudio(futureBeatHandle);
+	CHECK(futureBeatErased);
+	CHECK_FALSE(audioBank.IsAudioValid(futureBeatHandle));
+	CHECK(audioBank.GetMusicCount() == 1);
+	CHECK(audioBank.GetSoundCount() == 2);
+	{
+		const auto [audioType, name, filepath, duration, storageIndex, gen] = *futureBeatInfo;
+		CHECK(audioType == AudioType::Music);
+		CHECK(name.empty());
+		CHECK(filepath.empty());
+		CHECK(duration == 0);
+		CHECK(storageIndex == 1);
+		CHECK(gen == 1);
+	}
+
+	const bool bossStunErased = audioBank.EraseAudio(bossStunHandle);
+	CHECK(bossStunErased);
+	CHECK_FALSE(audioBank.IsAudioValid(bossStunHandle));
+	CHECK(audioBank.GetMusicCount() == 1);
+	CHECK(audioBank.GetSoundCount() == 1);
+	{
+		const auto [audioType, name, filepath, duration, storageIndex, gen] = *bossStunInfo;
+		CHECK(audioType == AudioType::Sound);
+		CHECK(name.empty());
+		CHECK(filepath.empty());
+		CHECK(duration == 0);
+		CHECK(storageIndex == 1);
+		CHECK(gen == 1);
+	}
+
+	auto mrBlueSkyMusicDescriptor = MakeMusicAudioDescriptor("mr_blue_sky.ogg");
+	REQUIRE(mrBlueSkyMusicDescriptor.Success());
+
+	auto mrBlueSkyFilepath = mrBlueSkyMusicDescriptor.GetValue().filepath;
+
+	auto mrBlueSkyLoadResult = audioBank.LoadAudio(std::move(mrBlueSkyMusicDescriptor.GetValue()));
+	REQUIRE(mrBlueSkyLoadResult.Success());
+	CHECK(audioBank.GetMusicCount() == 2);
+	CHECK(audioBank.GetSoundCount() == 1);
+	const auto& mrBlueSkyHandle = mrBlueSkyLoadResult.GetValue();
+	CHECK(mrBlueSkyHandle.IsValid());
+	CHECK(audioBank.IsAudioValid(mrBlueSkyHandle));
+
+	auto mrBlueSkyInfo = audioBank.GetAudioInfo(mrBlueSkyHandle);
+	REQUIRE(mrBlueSkyInfo.has_value());
+	{
+		const auto [audioType, name, filepath, duration, storageIndex, gen] = *mrBlueSkyInfo;
+		CHECK(audioType == AudioType::Music);
+		CHECK(name == "mr_blue_sky");
+		CHECK(filepath == mrBlueSkyFilepath);
+		CHECK(duration > 0);
+		CHECK(storageIndex == 1);
+		CHECK(gen == 1);
+	}
+
+	auto chestOpenSoundDescriptor = MakeSoundAudioDescriptor("chest_open.wav");
+	REQUIRE(chestOpenSoundDescriptor.Success());
+
+	auto chestOpenFilepath = chestOpenSoundDescriptor.GetValue().filepath;
+
+	auto chestOpenLoadResult = audioBank.LoadAudio(std::move(chestOpenSoundDescriptor.GetValue()));
+	REQUIRE(chestOpenLoadResult.Success());
+	CHECK(audioBank.GetMusicCount() == 2);
+	CHECK(audioBank.GetSoundCount() == 2);
+	const auto& chestOpenHandle = chestOpenLoadResult.GetValue();
+	CHECK(chestOpenHandle.IsValid());
+	CHECK(audioBank.IsAudioValid(chestOpenHandle));
+
+	auto chestOpenInfo = audioBank.GetAudioInfo(chestOpenHandle);
+	REQUIRE(chestOpenInfo.has_value());
+	{
+		const auto [audioType, name, filepath, duration, storageIndex, gen] = *chestOpenInfo;
+		CHECK(audioType == AudioType::Sound);
+		CHECK(name == "chest_open");
+		CHECK(filepath == chestOpenFilepath);
+		CHECK(duration > 0);
+		CHECK(storageIndex == 1);
+		CHECK(gen == 1);
+	}
+
+	SDLite::Exit();
+}
+
+TEST_CASE("Audio forcing - force paused at start", "[audio][e]")
+{
+	auto fixtureResult = SceneFixture::GetInstance();
+	REQUIRE(fixtureResult.Success());
+
+	auto& fixture = fixtureResult.GetValue();
+	REQUIRE(fixture);
+
+	auto& audioBank = fixture->GetAudioBank();
+
+	SECTION("Music")
+	{
+		auto loadResult = MakeMusicAudioDescriptorAndLoad("mr_blue_sky.ogg", audioBank);
+		REQUIRE(loadResult.Success());
+
+		auto handle = loadResult.GetValue();
+		audioBank.IsAudioValid(handle);
+
+		auto e = ECS::CreateEntity();
+		REQUIRE(e.IsValid());
+
+		auto& req = e.AddComponent<NewAudioRequest>();
+		req.audioHandle = handle;
+		req.force = AudioForcing::ForcePausedAtStart;
+
+		fixture->StepGameLoop(1);
+
+		REQUIRE_FALSE(e.HasComponent<NewAudioRequest>());
+		REQUIRE(e.HasComponent<ActiveAudio>());
+
+		CHECK(e.GetComponent<ActiveAudio>().status == AudioStatus::Paused);
+	}
+
+	SECTION("Sound")
+	{
+		auto loadResult = MakeSoundAudioDescriptorAndLoad("secret_area_discovered.wav", audioBank);
+		REQUIRE(loadResult.Success());
+
+		auto handle = loadResult.GetValue();
+		audioBank.IsAudioValid(handle);
+
+		auto e = ECS::CreateEntity();
+		REQUIRE(e.IsValid());
+
+		auto& req = e.AddComponent<NewAudioRequest>();
+		req.audioHandle = handle;
+		req.force = AudioForcing::ForcePausedAtStart;
+
+		fixture->StepGameLoop(1);
+
+		REQUIRE_FALSE(e.HasComponent<NewAudioRequest>());
+		REQUIRE(e.HasComponent<ActiveAudio>());
+
+		CHECK(e.GetComponent<ActiveAudio>().status == AudioStatus::Paused);
+	}
 }

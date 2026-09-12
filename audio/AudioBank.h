@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <vector>
 #include <cassert>
+#include <unordered_set>
 #include "../core/Result.h"
 #include "../core/ResourceHandle.h"
 #include "AudioInstance.h"
@@ -9,11 +10,13 @@
 #include "../core/StableSOA.h"
 #include "../core/Dictionary.h"
 
+//// TODO: MAKE SURE AUDIO SYSTEM / MANAGER CAN HANDLE ERASEAUDIO!!
 struct AudioInfo
 {
     AudioType audioType = AudioType::Unknown;
     std::string name;
     std::string filepath;
+    uint32_t length;
     size_t storageIndex = std::numeric_limits<size_t>::max();
     uint32_t generation = 0;
 };
@@ -23,6 +26,7 @@ using AudioInfoSOA = StableSOA<
 	&AudioInfo::audioType,
 	&AudioInfo::name,
 	&AudioInfo::filepath,
+    &AudioInfo::length,
     &AudioInfo::storageIndex,
     &AudioInfo::generation
 >;
@@ -52,7 +56,21 @@ public:
 
     bool EraseAudio(const Handle<Audio>& handle);
 
-    Result<Void> RenameAudio(const Handle<Audio>& handle);
+    Result<Void> SetAudioName(const Handle<Audio>& handle, std::string_view newName);
+
+    auto GetAudioInfo(const Handle<Audio>& handle) const
+    {
+        using Ret = decltype(audioInfo_.TryGetView(0));
+
+        if (!IsAudioValid(handle))
+        {
+            return Ret{ std::nullopt };
+        }
+
+        const auto& cInfo = audioInfo_;
+
+        return cInfo.TryGetView(handle.GetResourceIndex());
+    }
 
     template <auto...MemberPtrs> requires (sizeof...(MemberPtrs) > 1)
     auto GetAudioInfo(const Handle<Audio>& handle) const
@@ -105,12 +123,82 @@ public:
     size_t GetAudioInfoSize() const { return audioInfo_.Size(); }
     size_t GetAudioInfoCapacity() const { return audioInfo_.Capacity(); }
 
-private:
+    size_t GetSoundCount() const;
+    size_t GetMusicCount() const;
+
+    uint32_t GetBankID() const noexcept { return audioBankInstanceId_; }
+
+    template <SomeMixType T>
+    T* GetAudioPtr(const Handle<Audio>& handle)
+    {
+        if (!IsAudioValid(handle))
+        {
+            return nullptr;
+        }
+
+        const auto [audioType, storageIdx] = audioInfo_.GetView<&AudioInfo::audioType, 
+                                                                &AudioInfo::storageIndex>
+                                                                (handle.GetResourceIndex());
+        if constexpr (std::same_as<T, Mix_Music>)
+        {
+            if (audioType != AudioType::Music)
+            {
+                return nullptr;
+            }
+            assert(storageIdx < music_.size());
+
+            return music_[storageIdx].get();
+        }
+        else
+        {
+            if (audioType != AudioType::Sound)
+            {
+                return nullptr;
+            }
+            assert(storageIdx < sounds_.size());
+
+            return sounds_[storageIdx].get();
+        }
+    }
+
+    template <SomeMixType T>
+    T* GetAudioPtr(const Handle<Audio>& handle) const
+    {
+        if (!IsAudioValid(handle))
+        {
+            return nullptr;
+        }
+
+        const auto [audioType, storageIdx] = audioInfo_.GetView<&AudioInfo::audioType,
+                                                                &AudioInfo::storageIndex>
+                                                                (handle.GetResourceIndex());
+        if constexpr (std::same_as<T, Mix_Music>)
+        {
+            if (audioType != AudioType::Music)
+            {
+                return nullptr;
+            }
+            assert(storageIdx < music_.size());
+
+            return music_[storageIdx].get();
+        }
+        else
+        {
+            if (audioType != AudioType::Sound)
+            {
+                return nullptr;
+            }
+            assert(storageIdx < sounds_.size());
+
+            return sounds_[storageIdx].get();
+        }
+    }
+
+
     Result<SoundInstanceResource> GetSoundInstanceResouce(const Handle<Audio>& handle);
     Result<MusicInstanceResource> GetMusicInstanceResource(const Handle<Audio>& handle);
 
-    //void RepopulateAudioNameIndexMap(size_t newSize);
-
+private:
     template <typename T> requires (std::same_as<T, Mix_Chunk> ||
                                     std::same_as<T, Mix_Music>)
     Result<AudioInstanceResource<T>> GetAudioInstanceDataInternal(const Handle<Audio>& handle);
@@ -157,6 +245,7 @@ private:
 
     std::vector<size_t> freeSoundSlots_;
     std::vector<size_t> freeMusicSlots_;
+    //std::unordered_set<std::uintptr_t> staleAudioPointers_;
 };
 
 template <typename T> requires (std::same_as<T, Mix_Chunk> ||

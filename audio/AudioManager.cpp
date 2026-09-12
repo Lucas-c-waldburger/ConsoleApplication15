@@ -36,6 +36,13 @@ bool ChannelAvailable(const T& channel)
 }
 
 template <SomeAudioChannel T>
+bool ChannelOccupied(const T& channel)
+{
+    return channel.HasAudioPtr() && 
+          (channel.IsPlaying() || channel.IsPaused() || channel.IsStopping());
+}
+
+template <SomeAudioChannel T>
 bool ShouldForceChannelStop(const T& channel, uint8_t force)
 {
     constexpr uint8_t eitherChannelForcing = (AudioForcing::ForceChannelGraceful |
@@ -59,6 +66,7 @@ void TransferStagedSettings(AudioStageSlot<T>& stageSlot,
     slotSettings.volume = volume.value_or(slotSettings.volume);
     slotSettings.loopCount = loopCount.value_or(slotSettings.loopCount);
     slotSettings.fadeMs = fadeMs.value_or(slotSettings.fadeMs);
+    slotSettings.trackPosition = trackPos.value_or(slotSettings.trackPosition);
 
     if constexpr (std::same_as<T, Mix_Music>)
     {
@@ -95,7 +103,11 @@ void TransferChannelSettingsAndApply(AudioChannelSettingsPair<T>& channelSetting
 
     if constexpr (std::same_as<T, MusicChannel>)
     {
-        return;
+        if (trackPos.has_value() && trackPos != channelSettings.trackPosition)
+        {
+            channel.SetTrackPositionSec(static_cast<float>(*trackPos));
+            channelSettings.trackPosition = *trackPos;
+        }
     }
     else
     {
@@ -211,8 +223,68 @@ void AudioManager::ClearStage()
     stage_.fairSoundForceIdx = 0;
 }
 
-void AudioManager::UpdateChannels(float dt)
+void AudioManager::ClearInstance(const AudioInstanceID& instanceId)
 {
+    auto it = instanceLog_.find(instanceId);
+    if (it == instanceLog_.end())
+    {
+        return;
+    }
+
+    const auto [channelIdx, status] = it->second;
+    assert(channelIdx <= kMusicChannelIndex);
+
+    if (channelIdx == kMusicChannelIndex)
+    {
+        if (status == AudioStatus::Staged)
+        {
+            auto& [musicWaiting, musicOnDeck] = stage_.stagedMusic;
+
+            if (musicWaiting.instance.id == instanceId)
+            {
+                musicWaiting = {};
+            }
+            if (musicOnDeck.instance.id == instanceId)
+            {
+                musicOnDeck = {};
+            }
+        }
+        else
+        {
+            auto& musicChannel = channels_.musicChannel.first;
+            musicChannel.Stop();
+            musicChannel.SetMusicInstance({});
+        }
+    }
+    else
+    {
+        if (status == AudioStatus::Staged)
+        {
+            auto& [soundWaiting, soundOnDeck] = stage_.stagedSounds[channelIdx];
+
+            if (soundWaiting.instance.id == instanceId)
+            {
+                soundWaiting = {};
+            }
+            if (soundOnDeck.instance.id == instanceId)
+            {
+                soundOnDeck = {};
+            }
+        }
+        else
+        {
+            auto& soundChannel = channels_.soundChannels[channelIdx].first;
+
+            soundChannel.Stop();
+            soundChannel.SetSoundInstance({});
+        }
+    }
+
+    instanceLog_.erase(it);
+}
+
+void AudioManager::UpdateChannels(float dt)
+{  
     UpdateMusicChannel();
     UpdateSoundChannels(dt);
 }
@@ -343,8 +415,8 @@ AudioStatus AudioManager::ExecuteAudioCommand(const AudioInstanceID& instanceId,
 
                 assert(matchingSlot.instance.id == instanceId);
 
-                matchingSlot.instance = {};
-                instanceLog_.erase(instanceId);
+                //matchingSlot.instance = {};
+                //instanceLog_.erase(instanceId);
             }
             else
             {
@@ -355,8 +427,8 @@ AudioStatus AudioManager::ExecuteAudioCommand(const AudioInstanceID& instanceId,
 
                 assert(matchingSlot.instance.id == instanceId);
 
-                matchingSlot.instance = {};
-                instanceLog_.erase(instanceId);
+                //matchingSlot.instance = {};
+                //instanceLog_.erase(instanceId);
             }
         }
 
@@ -402,22 +474,28 @@ AudioStatus AudioManager::ExecuteAudioCommand(const AudioInstanceID& instanceId,
             : channels_.soundChannels[channelIdx].first.Stop(
                 channels_.soundChannels[channelIdx].second.fadeMs.out);
 
-        const auto& channelSettings = 
-            (channelIdx == kMusicChannelIndex)
-                ? channels_.musicChannel.second
-                : channels_.soundChannels[channelIdx].second;
+        //const auto& channelSettings = 
+        //    (channelIdx == kMusicChannelIndex)
+        //        ? channels_.musicChannel.second
+        //        : channels_.soundChannels[channelIdx].second;
 
-        const bool willStopImmediately = channelSettings.fadeMs.out <= 0;
+        //const bool willStopImmediately = channelSettings.fadeMs.out <= 0;
+        const bool willStopImmediately = (channelIdx == kMusicChannelIndex)
+            ? !channels_.musicChannel.first.IsFadingOut()
+            : !channels_.soundChannels[channelIdx].first.IsFadingOut();
         if (willStopImmediately)
         {
-            instanceLog_.erase(it);
-            return AudioStatus::Stopped;
+            //instanceLog_.erase(it);
+            //return AudioStatus::Stopped;
+            status = AudioStatus::Stopped;
         }
         else
         {
             status = AudioStatus::Stopping;
-            break;
+            //break;
         }
+
+        break;
     }
     default:
         assert(false);
@@ -615,10 +693,10 @@ void AudioManager::UpdateMusicChannel()
     };
 
     // cleanup instance if music done
-    if (ChannelAvailable(musicChannel) && musicChannel.HasAudioInstance())
+    //if (ChannelAvailable(musicChannel) && musicChannel.HasAudioInstance())
+    if (!ChannelOccupied(musicChannel))
     {
-        size_t erased = instanceLog_.erase(musicChannel.GetActiveAudioInstance().id);
-        assert(erased > 0);
+        instanceLog_.erase(musicChannel.GetActiveAudioInstance().id);
         musicChannel.SetMusicInstance({});
     }
 
@@ -644,7 +722,8 @@ void AudioManager::UpdateMusicChannel()
     auto& [musicOnNext, musicOnAfter] = stage_.stagedMusic;
 
     // if music playing, check to see if we should stop it
-    if (!ChannelAvailable(musicChannel))
+    //if (!ChannelAvailable(musicChannel))
+    if (ChannelOccupied(musicChannel))
     {
         if (ShouldForceChannelStop(musicChannel, musicOnNext.force))
         {
@@ -662,39 +741,52 @@ void AudioManager::UpdateMusicChannel()
             }
 
             const bool willStopImmediately = (musicChannelSettings.fadeMs.out <= 0);
+                  
+            musicChannel.Stop(musicChannelSettings.fadeMs.out);
 
             if (willStopImmediately)
             {
                 instanceLog_.erase(it);
+                musicChannel.SetMusicInstance({});
             }
             else
             {
                 instanceStatus = AudioStatus::Stopping;
             }
-                  
-            musicChannel.Stop(musicChannelSettings.fadeMs.out);
         }
     }
 
     // if music had no fade or forced halt, put musicOnNext on channel and play
-    if (ChannelAvailable(musicChannel))
+    //if (ChannelAvailable(musicChannel))
+    if (!ChannelOccupied(musicChannel))
     {
         auto it = instanceLog_.find(musicOnNext.instance.id);
         assert(it != instanceLog_.end());
 
         auto& musicOnNextStatus = it->second.second;
         assert(musicOnNextStatus == AudioStatus::Staged);
-        musicOnNextStatus = AudioStatus::Playing;
+        musicOnNextStatus = (musicOnNext.force & AudioForcing::ForcePausedAtStart)
+            ? AudioStatus::Paused 
+            : AudioStatus::Playing;
 
         musicChannel.SetMusicInstance(musicOnNext.instance);
 
         musicChannelSettings = std::move(musicOnNext.settings);
-        musicChannelSettings.trackPosition = 0.0f;
 
         musicOnNext.instance = {};
        
         musicChannel.Play(musicChannelSettings.loopCount,
                           musicChannelSettings.fadeMs.in);
+
+        if (musicChannelSettings.trackPosition != 0.0f)
+        {
+            musicChannel.SetTrackPositionSec(musicChannelSettings.trackPosition);
+        }
+
+        if (musicOnNext.force & AudioForcing::ForcePausedAtStart)
+        {
+            musicChannel.Pause();
+        }
 
         if (ValidStageSlot(musicOnAfter))
         {
@@ -719,12 +811,10 @@ void AudioManager::UpdateSoundChannels(float dt)
             }
         };
 
-        if (ChannelAvailable(soundChannel) && soundChannel.HasAudioInstance())
+        //if (ChannelAvailable(soundChannel) && soundChannel.HasAudioInstance())
+        if (!ChannelOccupied(soundChannel))
         {
-            [[maybe_unused]] const size_t erased = 
-                instanceLog_.erase(soundChannel.GetActiveAudioInstance().id);
-            assert(erased > 0);
-
+            instanceLog_.erase(soundChannel.GetActiveAudioInstance().id);
             soundChannel.SetSoundInstance({});
         }
 
@@ -746,7 +836,8 @@ void AudioManager::UpdateSoundChannels(float dt)
 
         auto& [soundOnNext, soundOnAfter] = stage_.stagedSounds[i];
 
-        if (!ChannelAvailable(soundChannel))
+        if (ChannelOccupied(soundChannel))
+        //if (!ChannelAvailable(soundChannel))
         {
             if (ShouldForceChannelStop(soundChannel, soundOnNext.force))
             {
@@ -765,37 +856,46 @@ void AudioManager::UpdateSoundChannels(float dt)
 
                 const bool willStopImmediately = (soundChannelSettings.fadeMs.out <= 0);
 
+                soundChannel.Stop(soundChannelSettings.fadeMs.out);
+
                 if (willStopImmediately)
                 {
                     instanceLog_.erase(it);
+                    soundChannel.SetSoundInstance({});
                 }
                 else
                 {
                     instanceStatus = AudioStatus::Stopping;
                 }
-
-                soundChannel.Stop(soundChannelSettings.fadeMs.out);
             }
         }
 
-        if (ChannelAvailable(soundChannel))
+        if (!ChannelOccupied(soundChannel))
+        //if (ChannelAvailable(soundChannel))
         {
             auto it = instanceLog_.find(soundOnNext.instance.id);
             assert(it != instanceLog_.end());
 
             auto& soundOnNextStatus = it->second.second;
             assert(soundOnNextStatus == AudioStatus::Staged);
-            soundOnNextStatus = AudioStatus::Playing;
+
+            soundOnNextStatus = (soundOnNext.force & AudioForcing::ForcePausedAtStart)
+                ? AudioStatus::Paused
+                : AudioStatus::Playing;
 
             soundChannel.SetSoundInstance(soundOnNext.instance);
 
             soundChannelSettings = std::move(soundOnNext.settings);
-            soundChannelSettings.trackPosition = 0.0f;
 
             soundOnNext.instance = {};
 
             soundChannel.Play(soundChannelSettings.loopCount,
                               soundChannelSettings.fadeMs.in);
+
+            if (soundOnNext.force & AudioForcing::ForcePausedAtStart)
+            {
+                soundChannel.Pause();
+            }
 
             if (ValidStageSlot(soundOnAfter))
             {

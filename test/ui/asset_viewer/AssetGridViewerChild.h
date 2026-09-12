@@ -6,6 +6,7 @@
 #include "AssetTree.h"
 
 class SceneFixture;
+class AudioBank;
 
 namespace ui {
 
@@ -15,8 +16,10 @@ public:
 	enum GridSelectionState : uint8_t
 	{
 		Renaming = 1 << 0,
-		MarkedErase = 1 << 1,
-		ViewingInsideSeries = 1 << 2
+		RequestErase = 1 << 1,
+		ViewingInsideSeries = 1 << 2,
+		RequestConvertAudioType = 1 << 3,
+		GameLoopPassedSinceRequest = 1 << 4
 	};
 
 	struct GridSelection
@@ -63,8 +66,22 @@ public:
 
 	struct AudioAssetGridSelection : GridSelection
 	{
-		std::string audioName;
 		Handle<Audio> audioHandle;
+		//Entity_t playerEntityId = kInvalidEntity;
+
+		bool HasSelection() const
+		{
+			return audioHandle.IsValid();
+		}
+
+		void UpdateGameLoopPassedFlag()
+		{
+			if (state & (GridSelectionState::RequestConvertAudioType |
+						 GridSelectionState::RequestErase))
+			{
+				state |= GridSelectionState::GameLoopPassedSinceRequest;
+			}
+		}
 	};
 
 	struct ResourceContext
@@ -81,8 +98,6 @@ public:
 	const SpriteAssetGridSelection GetSpriteSelection() const { return spriteSelection_; }
 	const AudioAssetGridSelection GetAudioSelection() const { return audioSelection_; }
 
-	AssetItem::Type GetOpenAssetTabType() const noexcept { return openAssetTabType_; }
-
 private:
 	void DrawSpriteAssetGrid(TextureRepository& loadTargetRepo, ResourceContext& ctx);
 	void DrawAudioAssetGrid(AudioBank& audioBank, ResourceContext& ctx);
@@ -91,18 +106,20 @@ private:
 													   SceneFixture& fixture);
 	AssetItem::Type HandleSpriteAssetDragDropTarget(const AssetItem& item, SpriteAtlas& loadTargetAtlas,
 													SDL_Renderer* renderer);
+	AssetItem::Type HandleAudioAssetDragDropTarget(const AssetItem& item, AudioBank& audioBank);
 
 	void DrawSpritePopupContextMenu(SpriteAtlas& loadTargetAtlas);
 	void DrawAudioPopupContextMenu(AudioBank& audioBank);
 
 	void ResolveSpritePopupContextActions(SpriteAtlas& loadTargetAtlas);
+	void ResolveAudioPopupContextActions(AudioBank& audioBank);
 
 	void HandleSpriteSelectionRename(const AssetGridCell& gridCell, SpriteAtlas& loadTargetAtlas,
 									 bool renameStartedThisFrame);
 	void HandleAudioSelectionRename(const AssetGridCell& gridCell, AudioBank& audioBank,
 									 bool renameStartedThisFrame);
 
-	AssetItem::Type openAssetTabType_ = AssetItem::Type::Unknown;
+	std::optional<AssetItem::Type> forceAssetTabOpen_;
 	SpriteAssetGridSelection spriteSelection_;
 	AudioAssetGridSelection audioSelection_;
 };

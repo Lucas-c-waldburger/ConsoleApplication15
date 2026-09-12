@@ -43,10 +43,27 @@ struct int_val_or_nullopt<std::type_identity_t, val>
 {
     static constexpr int value = val;
 };
+
+template <template <typename> class Wrap, float val>
+struct float_val_or_nullopt;
+
+template <float val>
+struct float_val_or_nullopt<std::optional, val>
+{
+    static constexpr std::optional<float> value = std::nullopt;
+};
+template <float val>
+struct float_val_or_nullopt<std::type_identity_t, val>
+{
+    static constexpr float value = val;
+};
 } // detail
 
 template <template <typename> class Wrap, int val>
 static constexpr auto int_val_or_nullopt_v = detail::int_val_or_nullopt<Wrap, val>::value;
+
+template <template <typename> class Wrap, float val>
+static constexpr auto float_val_or_nullopt_v = detail::float_val_or_nullopt<Wrap, val>::value;
 
 
 //// TODO: Fix so that you can do designated initializer construction and still have volume 
@@ -58,7 +75,7 @@ struct AudioSettingsTemplate
     Wrap<int> loopCount = int_val_or_nullopt_v<Wrap, 0>;
     Wrap<AudioFadeMs> fadeMs;
     AudioSpatialData spatial;
-    float trackPosition = 0.0f;
+    Wrap<float> trackPosition = float_val_or_nullopt_v<Wrap, 0.0f>;
 
     static AudioChannelSettings Default() 
         requires is_same_template_v<Wrap, std::type_identity_t>

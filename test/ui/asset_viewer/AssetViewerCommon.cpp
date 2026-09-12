@@ -122,7 +122,7 @@ Result<AssetViewerIcons> AssetViewerIcons::Load(SDL_Renderer* renderer, SpriteAt
 	TRY_ASSIGN(icons.musicFileLargeSprite, atlas.LoadSprite(
 		renderer, { .filepath = std::move(musicFileLargePath) }));
 	TRY_ASSIGN(icons.soundFileLargeSprite, atlas.LoadSprite(
-		renderer, { .filepath = std::move(souldFileLargePath) }));
+		renderer, { .filepath = std::move(soundFileLargePath) }));
 
 	return icons;
 }

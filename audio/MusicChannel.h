@@ -16,6 +16,7 @@ public:
     {
         return activeMusic_.audioPtr != nullptr && activeMusic_.id.IsValid();
     }
+    bool HasAudioPtr() const { return activeMusic_.audioPtr; }
 
     int GetVolume() const { return Mix_GetMusicVolume(activeMusic_.audioPtr); }
     void SetVolume(int volume)

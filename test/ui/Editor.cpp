@@ -432,6 +432,7 @@ Result<Void> Editor::Init(SceneFixture::SharedPtr& fixture)
 void Editor::TearDown()
 {
 	InspectorEventPanel::TearDown();
+	assetViewer_.TearDown();
 }
 
 SceneFixture::SceneConfiguration Editor::GetSceneConfiguration()

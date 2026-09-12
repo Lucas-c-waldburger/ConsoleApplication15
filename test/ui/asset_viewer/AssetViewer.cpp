@@ -83,6 +83,8 @@ bool AssetViewer::Draw(SceneFixture& fixture)
 
 	AssetPreviewViewerChild::ResourceContext ctx{
 		.spriteSelection = assetGridViewer_.GetSpriteSelection(),
+		.audioSelection = assetGridViewer_.GetAudioSelection(),
+		.icons = icons_,
 		.loadTargetConverter = loadTargetConverter,
 		.uiTexturesConverter = uiTexturesConverter
 	};
@@ -112,6 +114,11 @@ Result<Void> AssetViewer::Init(SceneFixture& fixture)
 	TRY(assetPreviewViewer_.Init(fixture));
 
 	return kVoid;
+}
+
+void AssetViewer::TearDown()
+{
+	assetPreviewViewer_.TearDown();
 }
 
 } // ui

@@ -13,6 +13,8 @@ public:
 
 	Result<Void> Init(SceneFixture& fixture);
 
+	void TearDown();
+
 private:
 	AssetViewerIcons icons_;
 	DirectoryViewerChild directoryViewer_;

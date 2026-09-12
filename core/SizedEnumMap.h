@@ -5,7 +5,7 @@
 #include <cassert>
 
 
-
+//// TODO: Reimplement using magic_enum
 template <SomeSizedEnum EnumKey, typename Value>
 class SizedEnumMap
 {

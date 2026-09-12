@@ -1,20 +1,23 @@
 #pragma once
 #include "System.h"
 #include "Pausable.h"
+#include "Observers.h"
 #include "../audio/AudioManager.h"
 #include "../audio/AudioBank.h"
 
 class Entity;
 
 class AudioSystem : public System,
-				    public Pausable<AudioSystem>
+				    public Pausable<AudioSystem>,
+					public EntityDestroyedObserver<AudioSystem>
 {
 public:
 	friend class Pausable<AudioSystem>;
+	friend class EntityDestroyedObserver<AudioSystem>;
+
+	AudioSystem();
 
 	void Update(float dt);
-
-	void EntityDestroyed(Entity& entity);
 
 	void SetAudioBank(AudioBank&& bank);
 	AudioBank& GetAudioBank() { return audioBank_; }
@@ -26,11 +29,14 @@ private:
 
 	void HandleAudioUpdateRequests();
 	void HandleNewAudioRequests();
-	void UpdateActiveAudioComponents();
+	void CleanExpiredAudioInstances(std::vector<Entity>& entities);
+	void UpdateActiveAudioEntities(std::vector<Entity>& entities);
 
 	void CleanupForNewAudioBank();
 
 	Result<Void> ResolveUpdateRequestInstanceId(Entity& entity);
+
+	void OnEntityDestroyed(Entity entity);
 
 	AudioBank audioBank_;
 	AudioManager audioManager_;

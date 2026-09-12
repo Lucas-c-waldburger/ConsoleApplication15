@@ -2,7 +2,11 @@
 #include <concepts>
 #include "../ecs/EntityAccess.h"
 
-struct ISystem {};
+class ISystem 
+{
+public:
+	virtual ~ISystem() = default;
+};
 
 template <typename T>
 concept ImplementsSystemUpdate = requires (T& t, float dt) {

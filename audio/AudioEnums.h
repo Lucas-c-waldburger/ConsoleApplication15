@@ -13,7 +13,8 @@ enum class AudioPlayCommand
     Pause,
     Resume,
     Restart,
-    Stop
+    Stop,
+    Halt
 };
 
 enum class AudioStatus

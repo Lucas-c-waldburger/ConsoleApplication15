@@ -17,7 +17,7 @@ public:
     friend class IHandle<Handle<T>>;
 
     Handle() = default;
-    bool operator==(const Handle& rhs) const
+    constexpr bool operator==(const Handle& rhs) const
     {
         return sourceId_ == rhs.sourceId_ && resourceIndex_ == rhs.resourceIndex_ &&
                generation_ == rhs.generation_;
@@ -65,3 +65,51 @@ private:
     uint32_t resourceIndex_ = std::numeric_limits<uint32_t>::max();
     uint32_t generation_    = std::numeric_limits<uint32_t>::max();
 };
+
+//template <typename T, typename HandleGenerator>
+//    requires (std::is_invocable_r_v<Handle<T>, HandleGenerator, size_t>)
+//struct HandleIterator
+//{
+//	using iterator_category = std::forward_iterator_tag;
+//	using value_type = Handle<T>;
+//	using difference_type = std::ptrdiff_t;
+//	using reference = value_type;
+//	using pointer = void;
+//
+//    constexpr HandleIterator(HandleGenerator handleGen = {}, std::size_t idx = 0)
+//		: handleGenerator_(std::move(handleGen)), idx_(idx) {}
+//
+//	constexpr value_type operator*() const
+//	{
+//        if (handleGenerator_)
+//        {
+//            return std::invoke(handleGenerator_, idx_);
+//        }
+//        return Handle<T>{};
+//	}
+//
+//	constexpr HandleIterator& operator++()
+//	{
+//		++idx_;
+//		return *this;
+//	}
+//	constexpr HandleIterator operator++(int)
+//	{
+//        HandleIterator tmp = *this;
+//		++(*this);
+//		return tmp;
+//	}
+//
+//	constexpr bool operator==(HandleIterator const& other) const
+//	{
+//		return handleGenerator_ == other.handleGenerator_ && idx_ == other.idx_;
+//	}
+//	constexpr bool operator!=(HandleIterator const& other) const
+//	{
+//		return !(*this == other);
+//	}
+//
+//private:
+//    HandleGenerator handleGenerator_;
+//	size_t idx_;
+//};

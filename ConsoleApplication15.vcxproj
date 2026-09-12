@@ -31,6 +31,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -38,12 +39,14 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -51,6 +54,7 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -317,6 +321,7 @@
     <ClCompile Include="test\ui\asset_viewer\AssetTree.cpp" />
     <ClCompile Include="test\ui\asset_viewer\AssetViewer.cpp" />
     <ClCompile Include="test\ui\asset_viewer\AssetViewerCommon.cpp" />
+    <ClCompile Include="test\ui\asset_viewer\MusicVisualizer.cpp" />
     <ClCompile Include="test\ui\asset_viewer\DirectoryViewerChild.cpp" />
     <ClCompile Include="test\ui\builder\EditorColliderBuilder.cpp" />
     <ClCompile Include="test\ui\builder\EditorComponentBuilderManager.cpp" />
@@ -397,6 +402,7 @@
     <ClInclude Include="audio\AudioCommon.h" />
     <ClInclude Include="audio\AudioInstance.h" />
     <ClInclude Include="audio\AudioManager.h" />
+    <ClInclude Include="audio\AudioManager2.h" />
     <ClInclude Include="audio\AudioPtrs.h" />
     <ClInclude Include="audio\AudioSettings.h" />
     <ClInclude Include="audio\AudioStage.h" />
@@ -904,11 +910,13 @@
     <ClInclude Include="test\ui\asset_viewer\AssetGridViewerChild.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetGridCell.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetItem.h" />
+    <ClInclude Include="test\ui\asset_viewer\AssetMediaPlayer.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetPreviewViewerChild.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetTree.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetViewer.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetViewerOld.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetViewerCommon.h" />
+    <ClInclude Include="test\ui\asset_viewer\MusicVisualizer.h" />
     <ClInclude Include="test\ui\asset_viewer\DirectoryViewerChild.h" />
     <ClInclude Include="test\ui\builder\EditorColliderBuilder.h" />
     <ClInclude Include="test\ui\builder\EditorComponentBuilderManager.h" />
