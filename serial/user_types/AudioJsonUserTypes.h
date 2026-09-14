@@ -19,7 +19,8 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 		{ AudioPlayCommand::Pause,   "Pause" },
 		{ AudioPlayCommand::Resume,  "Resume" },
 		{ AudioPlayCommand::Restart, "Restart" },
-		{ AudioPlayCommand::Stop,    "Stop" }
+		{ AudioPlayCommand::Stop,    "Stop" },
+	    { AudioPlayCommand::Halt,    "Halt" }
 	}
 )
 

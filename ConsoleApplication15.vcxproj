@@ -180,7 +180,11 @@
     <ClCompile Include="atlas\SpriteAtlasCollection.cpp" />
     <ClCompile Include="atlas\TextureObserverSignal.cpp" />
     <ClCompile Include="audio\AudioBank.cpp" />
+    <ClCompile Include="audio\AudioChannel.cpp" />
+    <ClCompile Include="audio\AudioController.cpp" />
     <ClCompile Include="audio\AudioManager.cpp" />
+    <ClCompile Include="audio\AudioManager2.cpp" />
+    <ClCompile Include="audio\AudioQueue.cpp" />
     <ClCompile Include="components\builder\ColliderComponentBuilder.cpp" />
     <ClCompile Include="components\builder\RigidBodyComponentBuilder.cpp" />
     <ClCompile Include="core\Counter.cpp" />
@@ -231,6 +235,7 @@
     <ClCompile Include="deps\RectangleBinPack\SkylineBinPack.cpp" />
     <ClCompile Include="ecs\EntityDestructor.cpp" />
     <ClCompile Include="inputs\controller\GameControllerInputUpdater.cpp" />
+    <ClCompile Include="systems\AudioSystem2.cpp" />
     <ClCompile Include="systems\AudioSystem.cpp" />
     <ClCompile Include="systems\EntityDestructionSystem.cpp" />
     <ClCompile Include="inputs\mouse\Mouse.cpp" />
@@ -396,6 +401,8 @@
     <ClInclude Include="atlas\TextureResourceHandle.h" />
     <ClInclude Include="atlas\TextureObserverSignal.h" />
     <ClInclude Include="audio\AudioBank.h" />
+    <ClInclude Include="audio\AudioChannel.h" />
+    <ClInclude Include="audio\AudioController.h" />
     <ClInclude Include="audio\AudioDescriptor.h" />
     <ClInclude Include="audio\AudioEnums.h" />
     <ClInclude Include="audio\AudioHandle.h" />
@@ -404,6 +411,7 @@
     <ClInclude Include="audio\AudioManager.h" />
     <ClInclude Include="audio\AudioManager2.h" />
     <ClInclude Include="audio\AudioPtrs.h" />
+    <ClInclude Include="audio\AudioQueue.h" />
     <ClInclude Include="audio\AudioSettings.h" />
     <ClInclude Include="audio\AudioStage.h" />
     <ClInclude Include="audio\MusicChannel.h" />
@@ -888,6 +896,7 @@
     <ClInclude Include="serial\user_types\AudioJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\BitsetJsonUserTypes.h" />
     <ClInclude Include="serial\user_types\ScriptJsonUserTypes.h" />
+    <ClInclude Include="systems\AudioSystem2.h" />
     <ClInclude Include="systems\Observers.h" />
     <ClInclude Include="systems\Pausable.h" />
     <ClInclude Include="systems\ScriptableUserSubsystem.h" />

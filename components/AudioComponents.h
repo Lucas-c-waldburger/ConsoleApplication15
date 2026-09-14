@@ -11,11 +11,12 @@ struct NewAudioRequest : BaseComponent<NewAudioRequest>
 	Handle<Audio> audioHandle;
 	AudioChannelSettings settings;
 	uint8_t force = 0;
+	float timeInQueue = 0.0f;
 
 	friend bool operator==(const NewAudioRequest& lhs, const NewAudioRequest& rhs)
 	{
 		return lhs.audioHandle == rhs.audioHandle && lhs.settings == rhs.settings &&
-			   lhs.force == rhs.force;
+			   lhs.force == rhs.force && lhs.timeInQueue == rhs.timeInQueue;
 	}
 };
 

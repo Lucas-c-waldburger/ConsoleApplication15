@@ -32,12 +32,14 @@ bool GuiEdit(AudioPlayCommand& apc, const char* label)
 		"Pause",
 		"Resume",
 		"Restart",
-		"Stop"
+		"Stop",
+		"Halt"
 	};
 	int cur = apc == AudioPlayCommand::None ? 0 :
 			  apc == AudioPlayCommand::Pause ? 1 :
 			  apc == AudioPlayCommand::Resume ? 2 :
-			  apc == AudioPlayCommand::Restart ? 3 : 4;
+			  apc == AudioPlayCommand::Restart ? 3 : 
+		      apc == AudioPlayCommand::Stop ? 4 : 5;
 
 	if (ImGui::Combo(label, &cur, kNames, IM_ARRAYSIZE(kNames)))
 	{
@@ -48,6 +50,7 @@ bool GuiEdit(AudioPlayCommand& apc, const char* label)
 		case 2: apc = AudioPlayCommand::Resume; break;
 		case 3: apc = AudioPlayCommand::Restart; break;
 		case 4: apc = AudioPlayCommand::Stop; break;
+		case 5: apc = AudioPlayCommand::Halt; break;
 		}
 
 		return true;

@@ -47,7 +47,8 @@ DEF_LUA_USERTYPE(AudioPlayCommand) {
 				 "Pause", AudioPlayCommand::Pause,
 				 "Resume", AudioPlayCommand::Resume,
 				 "Restart", AudioPlayCommand::Restart,
-				 "Stop", AudioPlayCommand::Stop);
+				 "Stop", AudioPlayCommand::Stop,
+		         "Halt", AudioPlayCommand::Halt);
 }
 
 DEF_LUA_USERTYPE(AudioStatus) {

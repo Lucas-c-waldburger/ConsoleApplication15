@@ -1,6 +1,8 @@
 #include "AudioBank.h"
 #include <filesystem>
 
+namespace { 
+
 uint32_t GetAudioLength(const MusicPtr& musicPtr)
 {
     const double len = Mix_MusicDuration(musicPtr.get());
@@ -40,6 +42,26 @@ uint32_t GetAudioLength(const SoundPtr& soundPtr)
 
     return (frames * 1000) / freq;
 }
+
+void HaltAudio(const MusicPtr&)
+{
+    Mix_HaltMusic();
+}
+
+void HaltAudio(const SoundPtr& soundPtr)
+{
+    const int numChannels = Mix_AllocateChannels(-1);
+
+    for (int i = 0; i < numChannels; ++i) 
+    {
+        if (Mix_GetChunk(i) == soundPtr.get()) 
+        {
+            Mix_HaltChannel(i);
+        }
+    }
+}
+
+} // unnamed
 
 Result<Handle<Audio>> AudioBank::LoadAudio(AudioDescriptor&& desc)
 {
@@ -192,9 +214,16 @@ bool AudioBank::EraseAudio(const Handle<Audio>& handle)
     duration = 0;
     ++gen;
 
-    (audioType == AudioType::Music)
-        ? music_[storageIdx].reset()
-        : sounds_[storageIdx].reset();
+    if (audioType == AudioType::Music)
+    {
+        HaltAudio(music_[storageIdx]);
+        music_[storageIdx].reset();
+    }
+    else
+    {
+        HaltAudio(sounds_[storageIdx]);
+        sounds_[storageIdx].reset();
+    }
 
     freeSlots.emplace_back(handle.GetResourceIndex());
 

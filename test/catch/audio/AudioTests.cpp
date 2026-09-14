@@ -1,8 +1,10 @@
 #include <cassert>
+#include <chrono>
 #include "../CatchUtils.h"
 #include "../../Fixtures.h"
 #include "../../../ecs/Ecs.h"
 #include "../../../file/FilePathUtility.h"
+#include "../../../systems/AudioSystem2.h"
 
 namespace {
 
@@ -147,6 +149,33 @@ LoadTestAudioDescriptors(SceneFixture& scene,
 	return audioHandleMap;
 }
 
+Result<UnorderedDictionary<Handle<Audio>>>
+LoadTestAudioDescriptors(AudioBank& audioBank,
+	std::vector<AudioDescriptor>&& descriptors)
+{
+	UnorderedDictionary<Handle<Audio>> audioHandleMap;
+	audioHandleMap.reserve(descriptors.size());
+
+	for (auto&& descriptor : descriptors)
+	{
+		if (audioHandleMap.contains(descriptor.name))
+		{
+			return MAKE_ERROR_FMT("Duplicate descriptor name: '{}'",
+				descriptor.name);
+		}
+
+		auto [it, inserted] = audioHandleMap.try_emplace(descriptor.name,
+			Handle<Audio>{});
+		assert(inserted);
+
+		TRY_ASSIGN(it->second, audioBank.LoadAudio(std::move(descriptor)));
+
+		assert(audioBank.IsAudioValid(it->second));
+	}
+
+	return audioHandleMap;
+}
+
 const ActiveAudio& GetActiveAudio(Entity& ent)
 {
 	REQUIRE(ent.IsValid());
@@ -159,7 +188,435 @@ const ActiveAudio& GetActiveAudio(Entity& ent)
 	return activeAudio;
 }
 
+void WaitForAudio(AudioSystem2& audioSys, AudioBank& bank, std::chrono::duration<double> duration)
+{
+	using namespace std::chrono;
+
+	const auto start = steady_clock::now();
+	auto lastTimePoint = steady_clock::now();
+
+	while (steady_clock::now() - start < duration)
+	{
+		const auto now = std::chrono::steady_clock::now();
+
+		const auto dt = std::chrono::duration<float>(now - lastTimePoint).count();
+
+		audioSys.Update(dt, bank);
+
+		lastTimePoint = now;
+	}
+}
+
 } // unnamed
+
+TEST_CASE("AudioSystem2 Tests", "[audio][system]")
+{
+	using namespace std::chrono;
+
+	Logger::StartSession();
+	auto status = SDLite::Start();
+	REQUIRE(status.Good());
+
+	AudioBank audioBank{};
+	AudioSystem2 audioSystem{};
+
+	UnorderedDictionary<Handle<Audio>> audioHandleMap;
+
+	auto descriptorsResult = MakeAudioDescriptors();
+	REQUIRE(descriptorsResult.Success());
+
+	auto loadResult = LoadTestAudioDescriptors(audioBank,
+											   std::move(descriptorsResult.GetValue()));
+	REQUIRE(loadResult.Success());
+
+	audioHandleMap = std::move(loadResult.GetValue());
+
+	SECTION("New Audio Request")
+	{
+		auto entity = ECS::CreateEntity();
+		REQUIRE(entity.IsValid());
+
+		auto& newAudioReq = entity.AddComponent<NewAudioRequest>();
+		newAudioReq.audioHandle = audioHandleMap[kGreenpathName];
+
+		audioSystem.Update(0.0f, audioBank);
+
+		CHECK(!entity.HasComponent<NewAudioRequest>());
+		REQUIRE(entity.HasComponent<ActiveAudio>());
+
+		const auto& activeAudio = entity.GetComponent<ActiveAudio>();
+		CHECK(activeAudio.audioHandle == audioHandleMap[kGreenpathName]);
+		CHECK(activeAudio.instanceId.IsValid());
+		CHECK(activeAudio.onChannel == AudioQueue::kMusicChannelIndex);
+		CHECK(activeAudio.status == AudioStatus::Playing);
+	}
+
+	SECTION("Audio Update Requests")
+	{
+		auto entity = ECS::CreateEntity();
+		REQUIRE(entity.IsValid());
+
+		auto& newAudioReq = entity.AddComponent<NewAudioRequest>();
+		newAudioReq.audioHandle = audioHandleMap[kGreenpathName];
+
+		audioSystem.Update(0.0f, audioBank);
+
+		// pause
+		const auto& activeAudio1 = GetActiveAudio(entity);
+		CHECK(activeAudio1.status == AudioStatus::Playing);
+
+		auto& updateReq1 = entity.AddComponent<AudioUpdateRequest>();
+		updateReq1.instanceId = activeAudio1.instanceId;
+		updateReq1.command = AudioPlayCommand::Pause;
+
+		audioSystem.Update(0.0f, audioBank);
+
+		// resume
+		CHECK(!entity.HasComponent<AudioUpdateRequest>());
+
+		const auto& activeAudio2 = GetActiveAudio(entity);
+		CHECK(activeAudio2.status == AudioStatus::Paused);
+
+		auto& updateReq2 = entity.AddComponent<AudioUpdateRequest>();
+		updateReq2.instanceId = activeAudio2.instanceId;
+		updateReq2.command = AudioPlayCommand::Resume;
+
+		audioSystem.Update(0.0f, audioBank);
+
+		// stop with fade out
+		CHECK(!entity.HasComponent<AudioUpdateRequest>());
+
+		const auto& activeAudio3 = GetActiveAudio(entity);
+		CHECK(activeAudio3.status == AudioStatus::Playing);
+
+		auto& updateReq3 = entity.AddComponent<AudioUpdateRequest>();
+		updateReq3.instanceId = activeAudio3.instanceId;
+		updateReq3.command = AudioPlayCommand::Stop;
+		updateReq3.settings.fadeMs = AudioFadeMs{ .out = 1000 };
+
+		audioSystem.Update(0.0f, audioBank);
+
+		// stopping 
+		CHECK(!entity.HasComponent<AudioUpdateRequest>());
+
+		const auto& activeAudio4 = GetActiveAudio(entity);
+		CHECK(activeAudio4.status == AudioStatus::Stopping);
+
+		WaitForAudio(audioSystem, audioBank, 1.1s);
+
+		// faded fully, no active audio
+		CHECK(!entity.HasComponent<ActiveAudio>());
+	}
+
+	SECTION("Full Sound Queues")
+	{
+		std::array<Entity, 8> ents{};
+		std::generate(ents.begin(), ents.end(), [] { return ECS::CreateEntity(); });
+
+		ents[0].AddComponent(NewAudioRequest{ .audioHandle = audioHandleMap[kGateSlamName] });
+		ents[1].AddComponent(NewAudioRequest{ .audioHandle = audioHandleMap[kCrowdGaspName] });
+		ents[2].AddComponent(NewAudioRequest{ .audioHandle = audioHandleMap[kEnemyDamageName] });
+		ents[3].AddComponent(NewAudioRequest{ .audioHandle = audioHandleMap[kHeroDashName] });
+		ents[4].AddComponent(NewAudioRequest{ .audioHandle = audioHandleMap[kExplosion1Name] });
+		ents[5].AddComponent(NewAudioRequest{ .audioHandle = audioHandleMap[kBossStunName] });
+		ents[6].AddComponent(NewAudioRequest{ .audioHandle = audioHandleMap[kHeroParryName] });
+		ents[7].AddComponent(NewAudioRequest{ .audioHandle = audioHandleMap[kHeroJumpName] });
+
+		audioSystem.Update(0.0f, audioBank);
+
+		for (size_t i = 0; i < ents.size(); i++)
+		{
+			REQUIRE(ents[i].HasComponent<ActiveAudio>());
+			const auto& activeAudio = ents[i].GetComponent<ActiveAudio>();
+
+			CHECK(activeAudio.status == AudioStatus::Playing);
+			CHECK(activeAudio.instanceId.IsValid());
+			CHECK(activeAudio.onChannel == i);
+		}
+
+		auto newEnt = ECS::CreateEntity();
+		newEnt.AddComponent(NewAudioRequest{ .audioHandle = audioHandleMap[kBellHitName] });
+
+		audioSystem.Update(0.0f, audioBank);
+
+		// waiting for open sound channel
+		CHECK(newEnt.HasComponent<NewAudioRequest>());
+		CHECK_FALSE(newEnt.HasComponent<ActiveAudio>());
+
+		// all original ones still playing
+		for (size_t i = 0; i < ents.size(); i++)
+		{
+			REQUIRE(ents[i].HasComponent<ActiveAudio>());
+			const auto& activeAudio = ents[i].GetComponent<ActiveAudio>();
+
+			CHECK(activeAudio.status == AudioStatus::Playing);
+			CHECK(activeAudio.instanceId.IsValid());
+			CHECK(activeAudio.onChannel == i);
+		}
+
+		WaitForAudio(audioSystem, audioBank, 3s);
+
+		// prev sound(s) finished, active now
+		REQUIRE(newEnt.HasComponent<ActiveAudio>());
+		auto& newEntActiveAudio = newEnt.GetComponent<ActiveAudio>();
+
+		CHECK(newEntActiveAudio.status == AudioStatus::Playing);
+		CHECK(newEntActiveAudio.instanceId.IsValid());
+	}
+
+	SDLite::Exit();
+}
+
+TEST_CASE("AudioSystem2 Full music queue", "[audio][system]")
+{
+	using namespace std::chrono;
+
+	static const duration<double> kBellHitDuration = 4.636281s;
+	static const duration<double> kBossStunDuration = 1.600023s;
+	static const duration<double> kChestOpenDuration = 1.359478s;
+	static const duration<double> kCrowdGaspDuration = 1.836893s;
+
+	Logger::StartSession();
+	auto status = SDLite::Start();
+	REQUIRE(status.Good());
+
+	AudioBank audioBank{};
+	AudioSystem2 audioSystem{};
+
+	auto bellHitMusicDescriptor = MakeSoundAudioDescriptor("bell_hit.flac");
+	REQUIRE(bellHitMusicDescriptor.Success());
+	auto bossStunMusicDescriptor = MakeSoundAudioDescriptor("boss_stun.wav");
+	REQUIRE(bossStunMusicDescriptor.Success());
+	auto chestOpenMusicDescriptor = MakeSoundAudioDescriptor("chest_open.wav");
+	REQUIRE(chestOpenMusicDescriptor.Success());
+	auto crowdGaspMusicDescriptor = MakeSoundAudioDescriptor("crowd_gasp.wav");
+	REQUIRE(crowdGaspMusicDescriptor.Success());
+
+	bellHitMusicDescriptor.GetValue().audioType = AudioType::Music;
+	bossStunMusicDescriptor.GetValue().audioType = AudioType::Music;
+	chestOpenMusicDescriptor.GetValue().audioType = AudioType::Music;
+	crowdGaspMusicDescriptor.GetValue().audioType = AudioType::Music;
+
+	const auto bellHitHandleResult = audioBank.LoadAudio(std::move(bellHitMusicDescriptor.GetValue()));
+	REQUIRE(bellHitHandleResult.Success());
+	const auto bossStunHandleResult = audioBank.LoadAudio(std::move(bossStunMusicDescriptor.GetValue()));
+	REQUIRE(bossStunHandleResult.Success());
+	const auto chestOpenHandleResult = audioBank.LoadAudio(std::move(chestOpenMusicDescriptor.GetValue()));
+	REQUIRE(chestOpenHandleResult.Success());
+	const auto crowdGaspHandleResult = audioBank.LoadAudio(std::move(crowdGaspMusicDescriptor.GetValue()));
+	REQUIRE(crowdGaspHandleResult.Success());
+
+	const auto& bellHitHandle = bellHitHandleResult.GetValue();
+	const auto& bossStunHandle = bossStunHandleResult.GetValue();
+	const auto& chestOpenHandle = chestOpenHandleResult.GetValue();
+	const auto& crowdGaspHandle = crowdGaspHandleResult.GetValue();
+
+	auto e1 = ECS::CreateEntity();
+	auto e2 = ECS::CreateEntity();
+	auto e3 = ECS::CreateEntity();
+	auto e4 = ECS::CreateEntity();
+
+	REQUIRE(e1.IsValid());
+	REQUIRE(e2.IsValid());
+	REQUIRE(e3.IsValid());
+	REQUIRE(e4.IsValid());
+
+	e1.AddComponent(NewAudioRequest{ .audioHandle = bellHitHandle, .timeInQueue = 4.0f });
+	e2.AddComponent(NewAudioRequest{ .audioHandle = bossStunHandle, .timeInQueue = 3.0f });
+	e3.AddComponent(NewAudioRequest{ .audioHandle = chestOpenHandle, .timeInQueue = 2.0f });
+	e4.AddComponent(NewAudioRequest{ .audioHandle = crowdGaspHandle, .timeInQueue = 1.0f });
+
+	audioSystem.Update(0.0f, audioBank);
+
+	REQUIRE(e1.HasComponent<ActiveAudio>());
+	CHECK_FALSE(e2.HasComponent<ActiveAudio>());
+	CHECK_FALSE(e3.HasComponent<ActiveAudio>());
+	CHECK_FALSE(e4.HasComponent<ActiveAudio>());
+
+	CHECK_FALSE(e1.HasComponent<NewAudioRequest>());
+	REQUIRE(e2.HasComponent<NewAudioRequest>());
+	REQUIRE(e3.HasComponent<NewAudioRequest>());
+	REQUIRE(e4.HasComponent<NewAudioRequest>());
+
+	const auto& e1AA = e1.GetComponent<ActiveAudio>();
+	CHECK(e1AA.audioHandle == bellHitHandle);
+	CHECK(e1AA.instanceId.IsValid());
+	CHECK(e1AA.onChannel == AudioChannel::kMusicChannelIndex);
+	CHECK(e1AA.status == AudioStatus::Playing);
+
+	WaitForAudio(audioSystem, audioBank, kBellHitDuration + 0.05s);
+
+	CHECK_FALSE(e1.HasComponent<ActiveAudio>());
+	REQUIRE(e2.HasComponent<ActiveAudio>());
+	CHECK_FALSE(e3.HasComponent<ActiveAudio>());
+	CHECK_FALSE(e4.HasComponent<ActiveAudio>());
+
+	CHECK_FALSE(e1.HasComponent<NewAudioRequest>());
+	CHECK_FALSE(e2.HasComponent<NewAudioRequest>());
+	REQUIRE(e3.HasComponent<NewAudioRequest>());
+	REQUIRE(e4.HasComponent<NewAudioRequest>());
+
+	const auto& e2AA = e2.GetComponent<ActiveAudio>();
+	CHECK(e2AA.audioHandle == bossStunHandle);
+	CHECK(e2AA.instanceId.IsValid());
+	CHECK(e2AA.onChannel == AudioChannel::kMusicChannelIndex);
+	CHECK(e2AA.status == AudioStatus::Playing);
+
+	WaitForAudio(audioSystem, audioBank, kBossStunDuration + 0.05s);
+
+	CHECK_FALSE(e1.HasComponent<ActiveAudio>());
+	CHECK_FALSE(e2.HasComponent<ActiveAudio>());
+	REQUIRE(e3.HasComponent<ActiveAudio>());
+	CHECK_FALSE(e4.HasComponent<ActiveAudio>());
+
+	CHECK_FALSE(e1.HasComponent<NewAudioRequest>());
+	CHECK_FALSE(e2.HasComponent<NewAudioRequest>());
+	CHECK_FALSE(e3.HasComponent<NewAudioRequest>());
+	REQUIRE(e4.HasComponent<NewAudioRequest>());
+
+	const auto& e3AA = e3.GetComponent<ActiveAudio>();
+	CHECK(e3AA.audioHandle == chestOpenHandle);
+	CHECK(e3AA.instanceId.IsValid());
+	CHECK(e3AA.onChannel == AudioChannel::kMusicChannelIndex);
+	CHECK(e3AA.status == AudioStatus::Playing);
+
+	WaitForAudio(audioSystem, audioBank, kChestOpenDuration + 0.05s);
+
+	CHECK_FALSE(e1.HasComponent<ActiveAudio>());
+	CHECK_FALSE(e2.HasComponent<ActiveAudio>());
+	CHECK_FALSE(e3.HasComponent<ActiveAudio>());
+	REQUIRE(e4.HasComponent<ActiveAudio>());
+
+	CHECK_FALSE(e1.HasComponent<NewAudioRequest>());
+	CHECK_FALSE(e2.HasComponent<NewAudioRequest>());
+	CHECK_FALSE(e3.HasComponent<NewAudioRequest>());
+	CHECK_FALSE(e4.HasComponent<NewAudioRequest>());
+
+	const auto& e4AA = e4.GetComponent<ActiveAudio>();
+	CHECK(e4AA.audioHandle == crowdGaspHandle);
+	CHECK(e4AA.instanceId.IsValid());
+	CHECK(e4AA.onChannel == AudioChannel::kMusicChannelIndex);
+	CHECK(e4AA.status == AudioStatus::Playing);
+
+	WaitForAudio(audioSystem, audioBank, kCrowdGaspDuration + 0.05s);
+
+	CHECK_FALSE(e1.HasComponent<ActiveAudio>());
+	CHECK_FALSE(e2.HasComponent<ActiveAudio>());
+	CHECK_FALSE(e3.HasComponent<ActiveAudio>());
+	CHECK_FALSE(e4.HasComponent<ActiveAudio>());
+
+	CHECK_FALSE(e1.HasComponent<NewAudioRequest>());
+	CHECK_FALSE(e2.HasComponent<NewAudioRequest>());
+	CHECK_FALSE(e3.HasComponent<NewAudioRequest>());
+	CHECK_FALSE(e4.HasComponent<NewAudioRequest>());
+
+	SDLite::Exit();
+}
+
+TEST_CASE("AudioForcing", "[audio][system][h]")
+{
+	using namespace std::chrono;
+
+	Logger::StartSession();
+	auto status = SDLite::Start();
+	REQUIRE(status.Good());
+
+	AudioBank audioBank{};
+	AudioSystem2 audioSystem{};
+
+	auto greenPathMusicDescriptor = MakeMusicAudioDescriptor("greenpath.ogg");
+	REQUIRE(greenPathMusicDescriptor.Success());
+	auto futureBeatMusicDescriptor = MakeMusicAudioDescriptor("futuristic_beat.mp3");
+	REQUIRE(futureBeatMusicDescriptor.Success());
+
+	auto greenPathLoadResult = audioBank.LoadAudio(std::move(greenPathMusicDescriptor.GetValue()));
+	REQUIRE(greenPathLoadResult.Success());
+	auto futureBeatLoadResult = audioBank.LoadAudio(std::move(futureBeatMusicDescriptor.GetValue()));
+	REQUIRE(futureBeatLoadResult.Success());
+
+	const auto& greenPathHandle = greenPathLoadResult.GetValue();
+	const auto& futureBeatHandle = futureBeatLoadResult.GetValue();
+
+	auto e1 = ECS::CreateEntity();
+	auto e2 = ECS::CreateEntity();
+
+	REQUIRE(e1.IsValid());
+	REQUIRE(e2.IsValid());
+
+	e1.AddComponent(NewAudioRequest{ .audioHandle = greenPathHandle,
+		.settings = {.fadeMs = {.out = 1000 }}
+	});
+
+	audioSystem.Update(0.0f, audioBank);
+
+	SECTION("AudioForcing::ForceChannelHalt")
+	{
+		REQUIRE(e1.HasComponent<ActiveAudio>());
+		CHECK_FALSE(e1.HasComponent<NewAudioRequest>());
+
+		const auto& e1AA = e1.GetComponent<ActiveAudio>();
+		CHECK(e1AA.audioHandle == greenPathHandle);
+		CHECK(e1AA.instanceId.IsValid());
+		CHECK(e1AA.onChannel == AudioChannel::kMusicChannelIndex);
+		CHECK(e1AA.status == AudioStatus::Playing);
+
+		e2.AddComponent(NewAudioRequest{ 
+			.audioHandle = futureBeatHandle, 
+			.force = AudioForcing::ForceChannelHalt
+		});
+
+		audioSystem.Update(0.0f, audioBank);
+
+		CHECK_FALSE(e1.HasComponent<ActiveAudio>());
+		REQUIRE(e2.HasComponent<ActiveAudio>());
+		CHECK_FALSE(e2.HasComponent<NewAudioRequest>());
+
+		const auto& e2AA = e2.GetComponent<ActiveAudio>();
+		CHECK(e2AA.audioHandle == futureBeatHandle);
+		CHECK(e2AA.instanceId.IsValid());
+		CHECK(e2AA.onChannel == AudioChannel::kMusicChannelIndex);
+		CHECK(e2AA.status == AudioStatus::Playing);		
+	}
+
+	SECTION("AudioForcing::ForceChannelGraceful")
+	{
+		REQUIRE(e1.HasComponent<ActiveAudio>());
+		CHECK_FALSE(e1.HasComponent<NewAudioRequest>());
+
+		const auto& e1AA = e1.GetComponent<ActiveAudio>();
+		CHECK(e1AA.audioHandle == greenPathHandle);
+		CHECK(e1AA.instanceId.IsValid());
+		CHECK(e1AA.onChannel == AudioChannel::kMusicChannelIndex);
+		CHECK(e1AA.status == AudioStatus::Playing);
+
+		e2.AddComponent(NewAudioRequest{
+			.audioHandle = futureBeatHandle,
+			.force = AudioForcing::ForceChannelGraceful
+		});
+
+		audioSystem.Update(0.0f, audioBank);
+
+		REQUIRE(e1.HasComponent<ActiveAudio>());
+		CHECK_FALSE(e2.HasComponent<ActiveAudio>());
+		CHECK(e2.HasComponent<NewAudioRequest>());
+
+		CHECK(e1.GetComponent<ActiveAudio>().status == AudioStatus::Stopping);
+
+		WaitForAudio(audioSystem, audioBank, 1.05s);
+
+		CHECK_FALSE(e1.HasComponent<ActiveAudio>());
+		REQUIRE(e2.HasComponent<ActiveAudio>());
+		CHECK_FALSE(e2.HasComponent<NewAudioRequest>());
+
+		const auto& e2AA = e2.GetComponent<ActiveAudio>();
+		CHECK(e2AA.audioHandle == futureBeatHandle);
+		CHECK(e2AA.instanceId.IsValid());
+		CHECK(e2AA.onChannel == AudioChannel::kMusicChannelIndex);
+		CHECK(e2AA.status == AudioStatus::Playing);
+	}
+
+	SDLite::Exit();
+}
 
 TEST_CASE("Audio System Tests", "[audio][system]")
 {
