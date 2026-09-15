@@ -182,6 +182,8 @@ void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
 
 		ResolveSpritePopupContextActions(fixture.GetTextureRepository().GetSpriteAtlas());
 
+		currentAssetTab_ = AssetItem::Type::Image;
+
 		ImGui::EndTabItem();
 	}
 	if (ImGui::BeginTabItem("Audio", nullptr, getTabFlags(AssetItem::Type::Audio)))
@@ -189,6 +191,8 @@ void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
 		DrawAudioAssetGrid(fixture.GetAudioBank(), ctx);
 
 		ResolveAudioPopupContextActions(fixture.GetAudioBank());
+
+		currentAssetTab_ = AssetItem::Type::Audio;
 
 		ImGui::EndTabItem();
 	}
@@ -509,6 +513,81 @@ void AssetGridViewerChild::DrawAudioAssetGrid(AudioBank& audioBank, ResourceCont
 	ImGui::EndTable();
 }
 
+void AssetGridViewerChild::DrawFontAssetGrid(FontAtlas& fontAtlas, ResourceContext& ctx)
+{
+	/*if (!ImGui::BeginTable("Font Asset Grid", GetGridColumnCount()))
+	{
+		return;
+	}
+
+	auto it = fontAtlas.IterAudioInfo<&FontInfo::,
+									  &AudioInfo::name,
+									  &AudioInfo::storageIndex,
+									  &AudioInfo::generation>();
+	size_t counter = 0;
+	for (const auto [audioType, audioName, storageIdx, gen] : it)
+	{
+		if (audioName.empty())
+		{
+			++counter;
+			continue;
+		}
+
+		ImGui::TableNextColumn();
+		ImGui::PushID(static_cast<int>(counter));
+
+		auto gridCell = AssetGridCell::Place();
+
+		auto handle = Handle<Audio>::Create(audioBank.GetBankID(), counter, gen);
+
+		if (gridCell.Clicked())
+		{
+			if (audioSelection_.audioHandle != handle)
+			{
+				audioSelection_.ClearRename();
+				audioSelection_.audioHandle = handle;
+			}
+		}
+
+		bool alreadyRenaming = audioSelection_.IsRenaming();
+
+		DrawAudioPopupContextMenu(audioBank);
+
+		const bool currentCellSelected = audioSelection_.audioHandle == handle;
+		if (currentCellSelected)
+		{
+			gridCell.DrawSelectedHighlight();
+		}
+
+		const auto& sprite = (audioType == AudioType::Music)
+			? ctx.icons.musicFileLargeSprite
+			: ctx.icons.soundFileLargeSprite;
+
+		auto tx = ctx.uiTexturesConverter.FromSprite(sprite);
+		assert(tx.textureId != 0);
+
+		gridCell.DrawThumbnailTexture(tx);
+
+		auto audioNameOp = audioBank.GetAudioInfo<&AudioInfo::name>(handle);
+		assert(audioNameOp.has_value());
+
+		if (currentCellSelected && audioSelection_.IsRenaming())
+		{
+			HandleAudioSelectionRename(gridCell, audioBank, !alreadyRenaming);
+		}
+		else
+		{
+			gridCell.DrawDisplayText(*audioNameOp);
+		}
+
+		ImGui::PopID();
+
+		++counter;
+	}
+
+	ImGui::EndTable();*/
+}
+
 AssetItem::Type AssetGridViewerChild::HandleDirectoryAssetDragDropTarget(const AssetItem& item, 
 																		 const AssetTree& assetTree,
 																		 SceneFixture& fixture)
@@ -539,6 +618,13 @@ AssetItem::Type AssetGridViewerChild::HandleDirectoryAssetDragDropTarget(const A
 				fixture.GetAudioBank());
 
 			break;
+		case AssetItem::Type::Font:
+			lastLoadedAssetType = HandleFontAssetDragDropTarget(
+				childItem,
+				fixture.GetTextureRepository().GetFontAtlas(),
+				fixture.GetRenderer());
+
+			break;
 		}
 	}
 
@@ -562,6 +648,15 @@ AssetItem::Type AssetGridViewerChild::HandleAudioAssetDragDropTarget(const Asset
 	LOG_IF_ERROR(audioBank.LoadAudio({ .audioType = AudioType::Music, .filepath = item.path.string() }));
 
 	return AssetItem::Type::Audio;
+}
+
+AssetItem::Type AssetGridViewerChild::HandleFontAssetDragDropTarget(const AssetItem& item, 
+																    FontAtlas& fontAtlas,
+																	SDL_Renderer* renderer)
+{
+	LOG_IF_ERROR(fontAtlas.LoadFont(renderer, { .filepath = item.path.string() }));
+
+	return AssetItem::Type::Font;
 }
 
 void AssetGridViewerChild::DrawSpritePopupContextMenu(SpriteAtlas& loadTargetAtlas)

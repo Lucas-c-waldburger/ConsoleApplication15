@@ -63,7 +63,8 @@ public:
 	const SpriteSeriesPlayer& GetSpriteSeriesAnimator() const { return spriteSeriesAnimator_; }
 	const AudioPlayer& GetAudioPlayer() const { return audioPlayer_; }
 
-	void Draw(SceneFixture& fixture, ResourceContext& ctx);
+	void Draw(SceneFixture& fixture, ResourceContext& ctx, 
+			  const DataRecord<AssetItem::Type>& assetGridTabType);
 
 	Result<Void> Init(SceneFixture& fixture);
 
@@ -91,6 +92,7 @@ private:
 	PlayerIcons playerIcons_;
 	SpriteSeriesPlayer spriteSeriesAnimator_;
 	AudioPlayer audioPlayer_;
+	AssetItem::Type openAssetTab_ = AssetItem::Type::Unknown;
 };
 
 

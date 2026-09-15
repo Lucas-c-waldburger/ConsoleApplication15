@@ -2,6 +2,11 @@
 #include <ranges>
 #include "../ecs/Ecs.h"
 
+AudioSystem2::AudioSystem2()
+{
+	ObserveEntityDestroyed();
+}
+
 void AudioSystem2::Update(float dt, AudioBank& audioBank)
 {
 	if (!IsPaused())
@@ -159,25 +164,12 @@ void AudioSystem2::OnEntityDestroyed(Entity entity)
 
 void AudioSystem2::SetPausedImpl(bool doPause)
 {
-	auto es = ECS::GetAllEntitiesWith<ActiveAudio>();
-
-	for (auto& e : es)
+	if (doPause)
 	{
-		auto& aa = e.GetComponent<ActiveAudio>();
-
-		if (doPause)
-		{
-			if (aa.status == AudioStatus::Playing || aa.status == AudioStatus::Stopping)
-			{
-				audioManager_.PauseAll();
-			}
-		}
-		else
-		{
-			if (aa.status == AudioStatus::Paused)
-			{
-				audioManager_.ResumeAll();
-			}
-		}
+		audioManager_.PauseAll();
+	}
+	else
+	{
+		audioManager_.ResumeAll();
 	}
 }

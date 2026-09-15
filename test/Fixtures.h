@@ -229,6 +229,7 @@ private:
 
 	TextureRepository textureRepo_;
 	std::unique_ptr<TextureRepository> auxTextureRepo_;
+	AudioBank audioBank_;
 	HookManager hooks_;
 	B2World world_;
 	ScriptManager scripts_;

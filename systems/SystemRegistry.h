@@ -10,6 +10,7 @@
 #include "SpriteAnimationSystem.h"
 #include "GameLoopSystem.h"
 #include "AudioSystem.h"
+#include "AudioSystem2.h"
 #include "SerializationSystem.h"
 #include "ScriptSystem.h"
 
@@ -24,7 +25,8 @@ using CoreSystemTypeList = TypeList<
 	TimerSystem,  
 	SpriteAnimationSystem,
 	GameLoopSystem,
-	AudioSystem,
+	//AudioSystem,
+	AudioSystem2,
 	NewRenderSystem,
 	SerializationSystem,
 	ScriptSystem

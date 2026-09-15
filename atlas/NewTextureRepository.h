@@ -314,7 +314,14 @@ private:
 	{
 		return [this](TextureAtlasID atlasId, SDL_Texture* texture) 
 		{
-			sourceTextureMap_[atlasId] = texture;
+			if (!texture)
+			{
+				sourceTextureMap_.erase(atlasId);
+			}
+			else
+			{
+				sourceTextureMap_[atlasId] = texture;
+			}
 		};
 	}
 

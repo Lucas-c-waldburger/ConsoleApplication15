@@ -12,11 +12,10 @@ struct FontInfo
 	std::string filepath;
 	int fontSize = 0;
 	int fontHeight = 0;
+	size_t atlasIndex = std::numeric_limits<size_t>::max();
 
 	bool operator==(const FontInfo & rhs) const = default;
 };
-
-//using FontInfo = FontDescriptor;
 
 using FontInfoSOA = StableSOA<
 	FontInfo,
@@ -24,7 +23,8 @@ using FontInfoSOA = StableSOA<
 	&FontInfo::fontName,
 	&FontInfo::filepath,
 	&FontInfo::fontSize,
-	&FontInfo::fontHeight
+	&FontInfo::fontHeight,
+	&FontInfo::atlasIndex
 >;
 
 class FontAtlasTexture : public TextureAtlas
@@ -58,7 +58,7 @@ public:
 	}
 
 	static Result<FontAtlasTexture> Create(SDL_Renderer* renderer, 
-										FontDescriptor& descriptor);
+										   FontDescriptor& descriptor);
 
 	Glyph GetGlyph(char c) const;
 	std::vector<Glyph> GetGlyphsForString(std::string_view text) const;
@@ -121,6 +121,7 @@ public:
 	Result<Void> RebuildSourceTextures(SDL_Renderer* renderer);
 
 	size_t GetTextureCount() const;
+	size_t GetFontCount() const;
 
 	FontDescriptors ExportFontDescriptors() const;
 
@@ -247,10 +248,16 @@ public:
 		return fontInfo_.ForEach<MemberPtrs...>();
 	}
 
+	bool EraseFont(std::string_view fontName);
+
 private:
 	//void RepopulateFontNameIndexMap(size_t newSize);
+
+	const FontAtlasTexture& GetFontAtlasTextureFor(std::string_view fontName) const;
+	const FontAtlasTexture& GetFontAtlasTextureFor(const Handle<TextureResource>& handle) const;
 
 	std::vector<FontAtlasTexture> fontAtlasTextures_;
 	FontInfoSOA fontInfo_;
 	FontIndexMap fontNameIndices_;
+	std::vector<size_t> freeFontSlots_;
 };

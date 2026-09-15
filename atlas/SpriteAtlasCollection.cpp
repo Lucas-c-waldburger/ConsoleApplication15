@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <SDL_image.h>
 #include <ranges>
+#include "GlyphAtlasCollection.h"
 
 namespace {
 

@@ -45,11 +45,11 @@ bool AudioController::IsStopped(int channelIdx)
 {
 	if constexpr (std::same_as<T, Mix_Music>)
 	{
-		return Mix_PlayingMusic() == 0 && Mix_PausedMusic() == 0;
+		return Mix_PlayingMusic() == 0;
 	}
 	else
 	{
-		return Mix_Playing(channelIdx) == 0 && Mix_Paused(channelIdx) == 0;
+		return Mix_Playing(channelIdx) == 0;
 	}
 }
 
@@ -58,11 +58,11 @@ bool AudioController::IsPaused(int channelIdx)
 {
 	if constexpr (std::same_as<T, Mix_Music>)
 	{
-		return Mix_PausedMusic() != 0;
+		return Mix_PausedMusic() != 0 && Mix_PlayingMusic();
 	}
 	else
 	{
-		return Mix_Paused(channelIdx) != 0;
+		return Mix_Paused(channelIdx) != 0 && Mix_Playing(channelIdx);
 	}
 }
 

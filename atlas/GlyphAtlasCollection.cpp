@@ -307,6 +307,36 @@ Result<Handle<TextureResource>> FontAtlas::LoadFont(SDL_Renderer* renderer,
 		return MAKE_ERROR_FMT("Duplicate font name: '{}'", fontDescriptor.fontName);
 	}
 
+    if (!freeFontSlots_.empty())
+    {
+        const auto infoIdx = freeFontSlots_.back();
+        assert(infoIdx < fontInfo_.Size());
+
+        auto [atlasId, fontName, filepath, fontSize, fontHeight, atlasIdx] = fontInfo_.GetView(infoIdx);
+
+        assert(atlasIdx < fontAtlasTextures_.size());
+
+        auto& fontAtlasTexture = fontAtlasTextures_[atlasIdx];
+        assert(!fontAtlasTexture.IsLoaded());
+
+        TRY_ASSIGN(fontAtlasTexture, FontAtlasTexture::Create(renderer, fontDescriptor));
+
+        NotifyTextureCreated(fontAtlasTexture.GetAtlasID(), fontAtlasTexture.GetSourceTexture());
+
+        atlasId = fontAtlasTexture.GetAtlasID();
+        fontName = fontDescriptor.fontName;
+        filepath = std::move(fontDescriptor.filepath);
+        fontSize = fontDescriptor.fontSize;
+        fontHeight = fontDescriptor.fontHeight;
+
+        auto [_, inserted] = fontNameIndices_.try_emplace(std::move(fontName), infoIdx);
+        assert(inserted);
+
+        freeFontSlots_.pop_back();
+
+        return Handle<TextureResource>::Create(fontAtlasTexture.GetAtlasID(), infoIdx);
+    }
+
 	TRY_ASSIGN(fontAtlasTextures_.emplace_back(),
 		FontAtlasTexture::Create(renderer, fontDescriptor));
 
@@ -314,29 +344,19 @@ Result<Handle<TextureResource>> FontAtlas::LoadFont(SDL_Renderer* renderer,
 
 	NotifyTextureCreated(newAtlas.GetAtlasID(), newAtlas.GetSourceTexture());
 
-    //bool needRepopulateViews = fontInfo_.Size() == fontInfo_.Capacity();
-    //if (needRepopulateViews)
-    //{
-    //    const size_t newSize = fontInfo_.Size() + kDefaultFrontInfoCapacity;
-
-    //    fontInfo_.Reserve(newSize);
-    //    RepopulateFontNameIndexMap(newSize);
-    //}
-
-    const size_t fontIdx = fontInfo_.PushBack(FontInfo{
+    const size_t infoIdx = fontInfo_.PushBack(FontInfo{
         .atlasId = newAtlas.GetAtlasID(),
-        .fontName = std::move(fontDescriptor.fontName),
+        .fontName = fontDescriptor.fontName,
         .filepath = std::move(fontDescriptor.filepath),
         .fontSize = fontDescriptor.fontSize,
-        .fontHeight = fontDescriptor.fontHeight
+        .fontHeight = fontDescriptor.fontHeight,
+        .atlasIndex = fontAtlasTextures_.size() - 1
     });
 
-	auto [_, inserted] = fontNameIndices_.try_emplace(
-        fontInfo_.GetView<&FontInfo::fontName>(fontIdx), fontIdx
-    );
+	auto [_, inserted] = fontNameIndices_.try_emplace(std::move(fontDescriptor.fontName), infoIdx);
     assert(inserted);
 
-    return Handle<TextureResource>::Create(newAtlas.GetAtlasID(), fontIdx);
+    return Handle<TextureResource>::Create(newAtlas.GetAtlasID(), infoIdx);
 }
 
 Result<Void> FontAtlas::LoadFonts(SDL_Renderer* renderer, 
@@ -357,68 +377,69 @@ Result<Void> FontAtlas::LoadFonts(SDL_Renderer* renderer,
 
 const FontAtlasTexture& FontAtlas::GetFont(std::string_view fontName) const
 {
-	auto it = fontNameIndices_.find(fontName);
-	if (it == fontNameIndices_.end())
-	{
+    if (!HasFont(fontName))
+    {
         return kInvalidGlyphAtlas;
-	}
+    }
 
-	assert(it->second < fontAtlasTextures_.size());
-    assert(fontInfo_.Size() == fontAtlasTextures_.size());
-    assert(fontName == fontInfo_.GetView<&FontInfo::fontName>(it->second));
-
-	return fontAtlasTextures_[it->second];
+    return GetFontAtlasTextureFor(fontName);
 }
 
 const FontAtlasTexture& 
 FontAtlas::GetFont(const Handle<TextureResource>& handle) const
 {
-    const size_t fontIdx = static_cast<size_t>(handle.GetResourceIndex());
-    if (fontIdx >= fontAtlasTextures_.size())
+    if (!HasFont(handle))
     {
         return kInvalidGlyphAtlas;
     }
 
-    assert(fontInfo_.Size() == fontAtlasTextures_.size());
-    assert(handle.GetAtlasID() == fontAtlasTextures_[fontIdx].GetAtlasID());
-
-    return fontAtlasTextures_[fontIdx];
+    return GetFontAtlasTextureFor(handle);
 }
 
 bool FontAtlas::HasFont(std::string_view fontName) const
 {
-	return fontNameIndices_.contains(fontName);
-}
-
-bool FontAtlas::HasFont(const Handle<TextureResource>& handle) const
-{
-    assert(fontInfo_.Size() == fontAtlasTextures_.size());
-
-    const size_t fontIdx = static_cast<size_t>(handle.GetResourceIndex());
-
-    if (handle.GetResourceIndex() >= fontInfo_.Size())
+    auto it = fontNameIndices_.find(fontName);
+    if (it == fontNameIndices_.end())
     {
         return false;
     }
 
-    return fontIdx < fontInfo_.Size() && 
-           fontAtlasTextures_[fontIdx].GetAtlasID() == handle.GetAtlasID();
+    assert(it->second < fontInfo_.Size());
+    assert(it->second < fontAtlasTextures_.size());
+    assert(fontAtlasTextures_[it->second].IsLoaded());
+
+    return true;
+}
+
+bool FontAtlas::HasFont(const Handle<TextureResource>& handle) const
+{
+    const auto fontIdx = static_cast<size_t>(handle.GetResourceIndex());
+
+    if (fontIdx >= fontInfo_.Size())
+    {
+        return false;
+    }
+
+    const auto atlasIdx = fontInfo_.GetView<&FontInfo::atlasIndex>(fontIdx);
+
+    assert(atlasIdx < fontInfo_.Size());
+
+    auto& atlasTexture = fontAtlasTextures_[atlasIdx];
+
+    return atlasTexture.IsLoaded() &&  handle.GetAtlasID() == atlasTexture.GetAtlasID();
 }
 
 GlyphTextWriter FontAtlas::GetTextWriter(std::string_view fontName) const
 {
-    auto it = fontNameIndices_.find(fontName);
-    if (it == fontNameIndices_.end())
+    if (!HasFont(fontName))
     {
         return {};
     }
 
-    assert(it->second < fontAtlasTextures_.size());
-    assert(fontInfo_.Size() == fontAtlasTextures_.size());
-    assert(fontName == fontInfo_.GetView<&FontInfo::fontName>(it->second));
+    const auto atlasIdx = fontNameIndices_[fontName];
 
     const auto handle = Handle<TextureResource>::Create(
-        fontAtlasTextures_[it->second].GetAtlasID(), it->second
+        fontAtlasTextures_[atlasIdx].GetAtlasID(), atlasIdx
     );
 
     return GlyphTextWriter{ .resourceHandle = handle };
@@ -465,7 +486,67 @@ std::vector<FontDescriptor> FontAtlas::ExportFontDescriptors() const
 
 size_t FontAtlas::GetTextureCount() const
 {
-    return fontAtlasTextures_.size();
+    assert(freeFontSlots_.size() <= fontAtlasTextures_.size());
+    return fontAtlasTextures_.size() - freeFontSlots_.size();
+}
+
+size_t FontAtlas::GetFontCount() const
+{
+    return GetTextureCount();
+}
+
+bool FontAtlas::EraseFont(std::string_view fontName)
+{
+    auto it = fontNameIndices_.find(fontName);
+    if (it == fontNameIndices_.end())
+    {
+        return false;
+    }
+
+    const size_t infoIdx = it->second;
+    if (infoIdx >= fontInfo_.Size())
+    {
+        return false;
+    }
+
+    auto [name, filepath, atlasIdx] = fontInfo_.GetView<&FontInfo::fontName, 
+                                                        &FontInfo::filepath,
+                                                        &FontInfo::atlasIndex>(infoIdx);
+
+    assert(!name.empty());
+    assert(name == fontName);
+    assert(!filepath.empty());
+    assert(atlasIdx < fontAtlasTextures_.size());
+    assert(fontAtlasTextures_[atlasIdx].IsLoaded());
+
+    fontNameIndices_.erase(name);
+
+    name.clear();
+    filepath.clear();
+
+    auto& atlasTexture = fontAtlasTextures_[atlasIdx];
+
+    NotifyTextureCreated(atlasTexture.GetAtlasID(), nullptr);
+
+    atlasTexture = {};
+
+    freeFontSlots_.emplace_back(infoIdx);
+
+    return true;
+}
+
+const FontAtlasTexture& FontAtlas::GetFontAtlasTextureFor(std::string_view fontName) const
+{
+    return fontAtlasTextures_[fontInfo_.GetView<&FontInfo::atlasIndex>(
+        fontNameIndices_[fontName]
+    )];
+}
+
+const FontAtlasTexture& FontAtlas::GetFontAtlasTextureFor(const Handle<TextureResource>& handle) const
+{
+    return fontAtlasTextures_[fontInfo_.GetView<&FontInfo::atlasIndex>(
+        static_cast<size_t>(handle.GetResourceIndex())
+    )];
 }
 
 //void FontAtlas::RepopulateFontNameIndexMap(size_t newSize)

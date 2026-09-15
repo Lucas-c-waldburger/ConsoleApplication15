@@ -12,6 +12,8 @@ public:
 	friend class Pausable<AudioSystem2>;
 	friend class EntityDestroyedObserver<AudioSystem2>;
 
+	AudioSystem2();
+
 	void Update(float dt, AudioBank& audioBank);
 
 private:

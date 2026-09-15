@@ -17,7 +17,14 @@ struct MockTextureObserver : public TextureObserver
 	{
 		token = collection.ConnectTextureObserver(GetTextureObserverPassKey(),
 			[this](TextureAtlasID id, SDL_Texture* tx) {
-				atlasIdToTexture[id] = tx;
+				if (!tx)
+				{
+					atlasIdToTexture.erase(id);
+				}
+				else
+				{
+					atlasIdToTexture[id] = tx;
+				}
 			});
 	}
 };
@@ -126,7 +133,7 @@ TEST_CASE("Font Atlas Tests", "[atlas]")
 		auto info = fontAtlas.GetFontInfo("GoNotoKurrent-Regular");
 		REQUIRE(info.has_value());
 
-		const auto [atlasId, name, path, size, height] = *info;
+		const auto [atlasId, name, path, size, height, _] = *info;
 		CHECK(atlasId != kInvalidTextureAtlasID);
 		CHECK(name == "GoNotoKurrent-Regular");
 		CHECK(path == regPathResult.GetValue());
@@ -184,7 +191,7 @@ TEST_CASE("Font Atlas Tests", "[atlas]")
 		auto regInfo = fontAtlas.GetFontInfo("GoNotoKurrent-Regular");
 		REQUIRE(regInfo.has_value());
 
-		const auto [regAtlasId, regName, regPath, regSize, regHeight] = *regInfo;
+		const auto [regAtlasId, regName, regPath, regSize, regHeight, _1] = *regInfo;
 		CHECK(regAtlasId != kInvalidTextureAtlasID);
 		CHECK(regName == "GoNotoKurrent-Regular");
 		CHECK(regPath == regPathResult.GetValue());
@@ -194,7 +201,7 @@ TEST_CASE("Font Atlas Tests", "[atlas]")
 		auto boldInfo = fontAtlas.GetFontInfo("GoNotoKurrent-Bold");
 		REQUIRE(boldInfo.has_value());
 
-		const auto [boldAtlasId, boldName, boldPath, boldSize, boldHeight] = *boldInfo;
+		const auto [boldAtlasId, boldName, boldPath, boldSize, boldHeight, _2] = *boldInfo;
 		CHECK(boldAtlasId != kInvalidTextureAtlasID);
 		CHECK(boldName == "GoNotoKurrent-Bold");
 		CHECK(boldPath == boldPathResult.GetValue());
@@ -284,6 +291,106 @@ TEST_CASE("Font Atlas Tests", "[atlas]")
 		CHECK(atlasId == regFont.GetAtlasID());
 		CHECK(texture == regFont.GetSourceTexture());
 	}
+
+	SDLite::Exit();
+}
+
+TEST_CASE("FontAtlas::EraseFont", "[font][atlas]")
+{
+	Logger::StartSession();
+	auto status = SDLite::Start();
+	REQUIRE(status.Good());
+
+	auto regPathResult = ResourcePath::Font(kFontReg);
+	REQUIRE_RESULT(regPathResult);
+
+	FontDescriptor descriptorReg{
+		.fontName = "GoNotoKurrent-Regular",
+		.filepath = regPathResult.GetValue(),
+		.fontSize = 24
+	};
+	auto descriptorRegCopy = descriptorReg;
+
+	auto boldPathResult = ResourcePath::Font(kFontBold);
+	REQUIRE_RESULT(boldPathResult);
+
+	FontDescriptor descriptorBold{
+		.fontName = "GoNotoKurrent-Bold",
+		.filepath = boldPathResult.GetValue(),
+		.fontSize = 36
+	};
+	auto descriptorBoldCopy = descriptorBold;
+
+	FontAtlas fontAtlas{};
+	CHECK(fontAtlas.GetFontCount() == 0);
+
+	MockTextureObserver mockObserver{};
+	mockObserver.Connect(fontAtlas);
+
+	CHECK(mockObserver.token.IsConnected());
+	CHECK(mockObserver.atlasIdToTexture.empty());
+
+	auto regLoadResult = fontAtlas.LoadFont(SDLite::Renderer(), std::move(descriptorReg));
+	REQUIRE(regLoadResult.Success());
+
+	const auto& regHandle = regLoadResult.GetValue();
+
+	CHECK(fontAtlas.GetFontCount() == 1);
+	CHECK(fontAtlas.HasFont("GoNotoKurrent-Regular"));
+	CHECK(fontAtlas.HasFont(regHandle));
+
+	REQUIRE(mockObserver.atlasIdToTexture.size() == 1);
+	REQUIRE(mockObserver.atlasIdToTexture.contains(regHandle.GetAtlasID()));
+	CHECK(mockObserver.atlasIdToTexture.at(regHandle.GetAtlasID()) != nullptr);
+
+	auto boldLoadResult = fontAtlas.LoadFont(SDLite::Renderer(), std::move(descriptorBold));
+	REQUIRE(boldLoadResult.Success());
+
+	const auto& boldHandle = boldLoadResult.GetValue();
+
+	CHECK(fontAtlas.GetFontCount() == 2);
+	CHECK(fontAtlas.HasFont("GoNotoKurrent-Bold"));
+	CHECK(fontAtlas.HasFont(boldHandle));
+
+	REQUIRE(mockObserver.atlasIdToTexture.size() == 2);
+	REQUIRE(mockObserver.atlasIdToTexture.contains(regHandle.GetAtlasID()));
+	CHECK(mockObserver.atlasIdToTexture.at(regHandle.GetAtlasID()) != nullptr);
+	REQUIRE(mockObserver.atlasIdToTexture.contains(boldHandle.GetAtlasID()));
+	CHECK(mockObserver.atlasIdToTexture.at(boldHandle.GetAtlasID()) != nullptr);
+
+	const bool regErased = fontAtlas.EraseFont("GoNotoKurrent-Regular");
+	CHECK(regErased);
+	CHECK(fontAtlas.GetFontCount() == 1);
+	CHECK_FALSE(fontAtlas.HasFont("GoNotoKurrent-Regular"));
+	CHECK_FALSE(fontAtlas.HasFont(regHandle));
+	CHECK(fontAtlas.HasFont("GoNotoKurrent-Bold"));
+	CHECK(fontAtlas.HasFont(boldHandle));
+
+	REQUIRE(mockObserver.atlasIdToTexture.size() == 1);
+	CHECK_FALSE(mockObserver.atlasIdToTexture.contains(regHandle.GetAtlasID()));
+	REQUIRE(mockObserver.atlasIdToTexture.contains(boldHandle.GetAtlasID()));
+	CHECK(mockObserver.atlasIdToTexture.at(boldHandle.GetAtlasID()) != nullptr);
+
+	auto regAgainLoadResult = fontAtlas.LoadFont(SDLite::Renderer(), std::move(descriptorRegCopy));
+	REQUIRE(regAgainLoadResult.Success());
+
+	const auto& regAgainHandle = regAgainLoadResult.GetValue();
+
+	CHECK(fontAtlas.GetFontCount() == 2);
+	CHECK(fontAtlas.HasFont("GoNotoKurrent-Regular"));
+	CHECK(fontAtlas.HasFont(regAgainHandle));
+	CHECK_FALSE(fontAtlas.HasFont(regHandle));
+	CHECK(fontAtlas.HasFont("GoNotoKurrent-Bold"));
+	CHECK(fontAtlas.HasFont(boldHandle));
+
+	REQUIRE(mockObserver.atlasIdToTexture.size() == 2);
+	REQUIRE(mockObserver.atlasIdToTexture.contains(regAgainHandle.GetAtlasID()));
+	CHECK(mockObserver.atlasIdToTexture.at(regAgainHandle.GetAtlasID()) != nullptr);
+	REQUIRE(mockObserver.atlasIdToTexture.contains(boldHandle.GetAtlasID()));
+	CHECK(mockObserver.atlasIdToTexture.at(boldHandle.GetAtlasID()) != nullptr);
+
+	CHECK(regAgainHandle.GetResourceIndex() == regHandle.GetResourceIndex());
+	CHECK_FALSE(regAgainHandle.GetAtlasID() == regHandle.GetAtlasID());
 
 	SDLite::Exit();
 }

@@ -67,7 +67,6 @@ public:
 	struct AudioAssetGridSelection : GridSelection
 	{
 		Handle<Audio> audioHandle;
-		//Entity_t playerEntityId = kInvalidEntity;
 
 		bool HasSelection() const
 		{
@@ -84,6 +83,22 @@ public:
 		}
 	};
 
+	struct FontAssetGridSelection : GridSelection
+	{
+		GlyphTextWriter writer;
+
+		void Reset()
+		{
+			writer = {};
+			state &= ~GridSelectionState::Renaming;
+		}
+
+		bool HasSelection() const
+		{
+			return writer.resourceHandle.IsValid();
+		}
+	};
+
 	struct ResourceContext
 	{
 		const AssetTree& assetTree;
@@ -97,31 +112,43 @@ public:
 
 	const SpriteAssetGridSelection GetSpriteSelection() const { return spriteSelection_; }
 	const AudioAssetGridSelection GetAudioSelection() const { return audioSelection_; }
+	const FontAssetGridSelection GetFontSelection() const { return fontSelection_; }
+
+	AssetItem::Type GetOpenAssetTabType() const noexcept { return currentAssetTab_; }
 
 private:
 	void DrawSpriteAssetGrid(TextureRepository& loadTargetRepo, ResourceContext& ctx);
 	void DrawAudioAssetGrid(AudioBank& audioBank, ResourceContext& ctx);
+	void DrawFontAssetGrid(FontAtlas& fontAtlas, ResourceContext& ctx);
 
 	AssetItem::Type HandleDirectoryAssetDragDropTarget(const AssetItem& item, const AssetTree& assetTree,
 													   SceneFixture& fixture);
 	AssetItem::Type HandleSpriteAssetDragDropTarget(const AssetItem& item, SpriteAtlas& loadTargetAtlas,
 													SDL_Renderer* renderer);
 	AssetItem::Type HandleAudioAssetDragDropTarget(const AssetItem& item, AudioBank& audioBank);
+	AssetItem::Type HandleFontAssetDragDropTarget(const AssetItem& item, FontAtlas& fontAtlas, 
+												  SDL_Renderer* renderer);
 
 	void DrawSpritePopupContextMenu(SpriteAtlas& loadTargetAtlas);
 	void DrawAudioPopupContextMenu(AudioBank& audioBank);
+	void DrawFontPopupContextMenu(FontAtlas& fontAtlas);
 
 	void ResolveSpritePopupContextActions(SpriteAtlas& loadTargetAtlas);
 	void ResolveAudioPopupContextActions(AudioBank& audioBank);
+	void ResolveFontPopupContextActions(FontAtlas& fontAtlas);
 
 	void HandleSpriteSelectionRename(const AssetGridCell& gridCell, SpriteAtlas& loadTargetAtlas,
 									 bool renameStartedThisFrame);
 	void HandleAudioSelectionRename(const AssetGridCell& gridCell, AudioBank& audioBank,
 									 bool renameStartedThisFrame);
+	void HandleFontSelectionRename(const AssetGridCell& gridCell, AudioBank& audioBank,
+								   bool renameStartedThisFrame);
 
 	std::optional<AssetItem::Type> forceAssetTabOpen_;
 	SpriteAssetGridSelection spriteSelection_;
 	AudioAssetGridSelection audioSelection_;
+	FontAssetGridSelection fontSelection_;
+	AssetItem::Type currentAssetTab_ = AssetItem::Type::Image;
 };
 
 } // ui

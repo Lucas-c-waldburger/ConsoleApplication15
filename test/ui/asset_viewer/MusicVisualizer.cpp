@@ -36,7 +36,11 @@ void MusicVisualizer::DrawWaveform()
     constexpr float width = 300.0f;
     constexpr float height = 80.0f;
 
-    const ImVec2 min = ImGui::GetCursorScreenPos();
+    ImVec2 min = ImGui::GetCursorScreenPos();
+    min.x += std::max(
+        (ImGui::GetContentRegionAvail().x - width) * 0.5f,
+        0.0f);
+
     const ImVec2 max = {
         min.x + width,
         min.y + height

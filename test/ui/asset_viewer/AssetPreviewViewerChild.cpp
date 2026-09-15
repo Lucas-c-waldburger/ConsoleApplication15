@@ -138,7 +138,7 @@ void AssetPreviewViewerChild::AudioPlayer::Update(const Handle<Audio>& handle,
 	{
 		auto& newReq = e.AddComponent<NewAudioRequest>();
 		newReq.audioHandle = handle;
-		newReq.force = AudioForcing::ForcePausedAtStart;
+		newReq.force = (AudioForcing::ForcePausedAtStart | AudioForcing::ForceChannelHalt);
 
 		musicVisualizer.Reset();
 		state &= ~PlayerState::Playing;
@@ -152,7 +152,7 @@ void AssetPreviewViewerChild::AudioPlayer::Reset()
 		const auto& aa = e.GetComponent<ActiveAudio>();
 		auto& req = e.AddComponent<AudioUpdateRequest>();
 
-		req.command = AudioPlayCommand::Stop;
+		req.command = AudioPlayCommand::Halt;
 		req.instanceId = aa.instanceId;
 	}
 
@@ -178,16 +178,34 @@ void AssetPreviewViewerChild::AudioPlayer::SetVolume(int vol)
 	}
 }
 
-void AssetPreviewViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
+void AssetPreviewViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx, 
+								   const DataRecord<AssetItem::Type>& assetGridTabType)
 {
-	if (ctx.spriteSelection.HasSelection())
+	if (assetGridTabType.last != assetGridTabType.now)
+	{
+		switch (assetGridTabType.last)
+		{
+		case AssetItem::Type::Image:
+			spriteSeriesAnimator_.Reset();
+			break;
+		case AssetItem::Type::Audio:
+			audioPlayer_.Reset();
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (assetGridTabType.now == AssetItem::Type::Image && 
+		ctx.spriteSelection.HasSelection())
 	{
 		DrawSpriteAssetPreview(
 			ctx,
 			fixture.GetTextureRepository().GetSpriteAtlas(),
 			fixture.GetDeltaTime());
 	}
-	else if (ctx.audioSelection.HasSelection())
+	else if (assetGridTabType.now == AssetItem::Type::Audio &&
+		     ctx.audioSelection.HasSelection())
 	{
 		DrawAudioAssetPreview(
 			ctx,

@@ -125,7 +125,8 @@ LoadTestAudioDescriptors(SceneFixture& scene,
 	UnorderedDictionary<Handle<Audio>> audioHandleMap;
 	audioHandleMap.reserve(descriptors.size());
 
-	AudioBank bank{};
+	//AudioBank bank{};
+	auto& bank = scene.GetAudioBank();
 
 	for (auto&& descriptor : descriptors)
 	{
@@ -144,7 +145,7 @@ LoadTestAudioDescriptors(SceneFixture& scene,
 		assert(it->second.IsValid());
 	}
 
-	scene.GetSystem<AudioSystem>().SetAudioBank(std::move(bank));
+	//scene.GetSystem<AudioSystem>().SetAudioBank(std::move(bank));
 
 	return audioHandleMap;
 }
@@ -786,7 +787,7 @@ TEST_CASE("Track Position updates correctly", "[audio]")
 	auto& scene = sceneResult.GetValue();
 	REQUIRE(scene);
 
-	REQUIRE(scene->IsSystemRegistered<AudioSystem>());
+	//REQUIRE(scene->IsSystemRegistered<AudioSystem>());
 	auto& bank = scene->GetAudioBank();
 
 	auto e = ECS::CreateEntity();

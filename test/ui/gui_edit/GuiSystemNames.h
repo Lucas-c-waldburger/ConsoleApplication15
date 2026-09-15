@@ -44,7 +44,8 @@ template <> struct GuiSystemName<sys> { \
 
 } // ui
 
-DEF_GUI_SYS_NAME(AudioSystem)
+//DEF_GUI_SYS_NAME(AudioSystem)
+DEF_GUI_SYS_NAME(AudioSystem2)
 DEF_GUI_SYS_NAME(CameraSystem)
 DEF_GUI_SYS_NAME(PhysicsSystem)
 DEF_GUI_SYS_NAME(SpriteAnimationSystem)

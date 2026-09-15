@@ -45,43 +45,48 @@ bool AssetViewer::Draw(SceneFixture& fixture)
 	const float resizeHitbox = g->WindowsBorderHoverPadding;
 	g->WindowsBorderHoverPadding = resizeHitbox * 2.0f;
 
-	if (ImGui::BeginChild("AssetBrowser", ImVec2(available.x, topHeight),
-		ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeY))
-	{
-		// Directories //
-		ImGui::BeginChild("Directories", ImVec2(leftWidth, 0.0f),
-			(ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX));
+	DataRecord<AssetItem::Type> openGridTabTypeRecord{
+		.last = assetGridViewer_.GetOpenAssetTabType()
+	};
 
-		directoryViewer_.Draw(icons_, uiTexturesConverter);
+	ImGui::BeginChild("AssetBrowser", ImVec2(available.x, topHeight),
+		ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeY);
+	
+	// Directories //
+	ImGui::BeginChild("Directories", ImVec2(leftWidth, 0.0f),
+		(ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX));
 
-		ImGui::EndChild();
+	directoryViewer_.Draw(icons_, uiTexturesConverter);
 
-		ImGui::SameLine(0.0f, spacing);
+	ImGui::EndChild();
 
-		// Asset Grid //
-		ImGui::BeginChild("AssetGrid", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders);
+	ImGui::SameLine(0.0f, spacing);
 
-		AssetGridViewerChild::ResourceContext ctx{
-			.assetTree = directoryViewer_.GetAssetTree(),
-			.icons = icons_,
-			.uiTexturesConverter = uiTexturesConverter
-		};
+	// Asset Grid //
+	ImGui::BeginChild("AssetGrid", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders);
 
-		assetGridViewer_.Draw(fixture, ctx);
+	AssetGridViewerChild::ResourceContext gridCtx{
+		.assetTree = directoryViewer_.GetAssetTree(),
+		.icons = icons_,
+		.uiTexturesConverter = uiTexturesConverter
+	};
 
-		ImGui::EndChild();
+	assetGridViewer_.Draw(fixture, gridCtx);
 
-		assetGridViewer_.HandleAssetDragDropTarget(fixture, ctx);
-	}
+	ImGui::EndChild();
+
+	assetGridViewer_.HandleAssetDragDropTarget(fixture, gridCtx);
 
 	ImGui::EndChild();
 
 	g->WindowsBorderHoverPadding = resizeHitbox;
 
-	// Sprite Viewer //
-	ImGui::BeginChild("SpriteViewer", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders);
+	// Asset Preview Viewer //
+	ImGui::BeginChild("PreviewViewer", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders);
 
-	AssetPreviewViewerChild::ResourceContext ctx{
+	openGridTabTypeRecord.now = assetGridViewer_.GetOpenAssetTabType();
+
+	AssetPreviewViewerChild::ResourceContext previewCtx{
 		.spriteSelection = assetGridViewer_.GetSpriteSelection(),
 		.audioSelection = assetGridViewer_.GetAudioSelection(),
 		.icons = icons_,
@@ -89,7 +94,7 @@ bool AssetViewer::Draw(SceneFixture& fixture)
 		.uiTexturesConverter = uiTexturesConverter
 	};
 
-	assetPreviewViewer_.Draw(fixture, ctx);
+	assetPreviewViewer_.Draw(fixture, previewCtx, openGridTabTypeRecord);
 
 	ImGui::EndChild();
 

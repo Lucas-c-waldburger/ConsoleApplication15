@@ -296,9 +296,13 @@ Result<Void> SceneFixture::UpdateCamera()
 
 Result<Void> SceneFixture::UpdateAudio()
 {
-	assert(systems_.IsSystemRegistered<AudioSystem>());
+	//assert(systems_.IsSystemRegistered<AudioSystem>());
 
-	systems_.GetSystem<AudioSystem>().Update(GetDeltaTime());
+	//systems_.GetSystem<AudioSystem>().Update(GetDeltaTime());
+
+	assert(systems_.IsSystemRegistered<AudioSystem2>());
+
+	systems_.GetSystem<AudioSystem2>().Update(GetDeltaTime(), audioBank_);
 
 	return Void{};
 }
@@ -368,14 +372,16 @@ Camera& SceneFixture::GetCamera()
 
 AudioBank& SceneFixture::GetAudioBank()
 {
-	assert(systems_.IsSystemRegistered<AudioSystem>());
-	return systems_.GetSystem<AudioSystem>().GetAudioBank();
+	//assert(systems_.IsSystemRegistered<AudioSystem>());
+	//return systems_.GetSystem<AudioSystem>().GetAudioBank();
+	return audioBank_;
 }
 
 const AudioBank& SceneFixture::GetAudioBank() const
 {
-	assert(systems_.IsSystemRegistered<AudioSystem>());
-	return systems_.GetSystem<AudioSystem>().GetAudioBank();
+	//assert(systems_.IsSystemRegistered<AudioSystem>());
+	//return systems_.GetSystem<AudioSystem>().GetAudioBank();
+	return audioBank_;
 }
 
 MouseState SceneFixture::GetMouseState() const
@@ -400,10 +406,9 @@ Result<Void> SceneFixture::SerializeState(SerializationSystem::Filepaths fps)
 	}
 
 	assert(systems_.IsSystemRegistered<SerializationSystem>());
-	assert(systems_.IsSystemRegistered<AudioSystem>());
+	//assert(systems_.IsSystemRegistered<AudioSystem>());
 
-	systems_.GetSystem<SerializationSystem>().SerializeState(
-		fps, textureRepo_, systems_.GetSystem<AudioSystem>().GetAudioBank());
+	systems_.GetSystem<SerializationSystem>().SerializeState(fps, textureRepo_, GetAudioBank());
 
 	return kVoid;
 }
@@ -425,7 +430,7 @@ Result<std::vector<Error>> SceneFixture::DeserializeState(SerializationSystem::F
 
 	assert(systems_.IsSystemRegistered<SerializationSystem>());
 	assert(systems_.IsSystemRegistered<SDLInputSystem>());
-	assert(systems_.IsSystemRegistered<AudioSystem>());
+	//assert(systems_.IsSystemRegistered<AudioSystem>());
 
 	auto es = ECS::GetAllActiveEntities();
 	for (auto& e : es)
@@ -445,10 +450,9 @@ Result<std::vector<Error>> SceneFixture::DeserializeState(SerializationSystem::F
 void SceneFixture::SerializeStateToJson(nlohmann::json& j) const
 {
 	assert(systems_.IsSystemRegistered<SerializationSystem>());
-	assert(systems_.IsSystemRegistered<AudioSystem>());
+	//assert(systems_.IsSystemRegistered<AudioSystem>());
 
-	systems_.GetSystem<SerializationSystem>().SerializeStateToJson(
-		j, textureRepo_, systems_.GetSystem<AudioSystem>().GetAudioBank());
+	systems_.GetSystem<SerializationSystem>().SerializeStateToJson(j, textureRepo_, GetAudioBank());
 
 	SerializeSceneToJson(j);
 }
@@ -457,7 +461,7 @@ std::vector<Error> SceneFixture::DeserializeStateFromJson(const nlohmann::json& 
 {
 	assert(systems_.IsSystemRegistered<SerializationSystem>());
 	assert(systems_.IsSystemRegistered<SDLInputSystem>());
-	assert(systems_.IsSystemRegistered<AudioSystem>());
+	//assert(systems_.IsSystemRegistered<AudioSystem>());
 
 	if (auto res = DeserializeSceneFromJson(j); !res.Success())
 	{
@@ -466,7 +470,7 @@ std::vector<Error> SceneFixture::DeserializeStateFromJson(const nlohmann::json& 
 
 	auto errs = systems_.GetSystem<SerializationSystem>().DeserializeStateFromJson(
 		j, world_, textureRepo_, systems_.GetSystem<SDLInputSystem>(),
-		systems_.GetSystem<AudioSystem>().GetAudioBank(), GetRenderer()
+		GetAudioBank(), GetRenderer()
 	);
 
 	return errs;
@@ -577,10 +581,11 @@ void SceneFixture::ResetForNewScene(const SceneConfiguration& config)
 
 	textureRepo_ = {};
 
-	if (IsSystemRegistered<AudioSystem>())
-	{
-		GetSystem<AudioSystem>().SetAudioBank({});
-	}
+	//if (IsSystemRegistered<AudioSystem>())
+	//{
+	//	GetSystem<AudioSystem>().SetAudioBank({});
+	//}
+	audioBank_ = {};
 
 	if (IsSystemRegistered<CameraSystem>())
 	{
@@ -617,7 +622,8 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance(const SceneConfi
 	fixture->systems_.RegisterSystem<SDLInputSystem>();
 	fixture->systems_.RegisterSystem<TimerSystem>();
 	fixture->systems_.RegisterSystem<GameLoopSystem>();
-	fixture->systems_.RegisterSystem<AudioSystem>();
+	//fixture->systems_.RegisterSystem<AudioSystem>();
+	fixture->systems_.RegisterSystem<AudioSystem2>();
 	fixture->systems_.RegisterSystem<NewRenderSystem>();
 	fixture->systems_.RegisterSystem<SerializationSystem>();
 	fixture->systems_.RegisterSystem<SpriteAnimationSystem>();

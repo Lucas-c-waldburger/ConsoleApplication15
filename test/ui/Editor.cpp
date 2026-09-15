@@ -163,7 +163,7 @@ void Editor::DrawDebugMenu(SceneFixture& fixture)
 
 void Editor::DrawToolbar(SceneFixture& fixture)
 {
-	assert(fixture.IsSystemRegistered<AudioSystem>());
+	assert(fixture.IsSystemRegistered<AudioSystem2>());
 	assert(fixture.IsSystemRegistered<SDLInputSystem>());
 
 	if (!ImGui::BeginMainMenuBar())
