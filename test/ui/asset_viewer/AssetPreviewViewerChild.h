@@ -7,16 +7,20 @@
 
 namespace ui {
 
+struct AudioPlayerContext;
+
 class AssetPreviewViewerChild
 {
 public:
 	using SpriteAssetGridSelection = AssetGridViewerChild::SpriteAssetGridSelection;
 	using AudioAssetGridSelection = AssetGridViewerChild::AudioAssetGridSelection;
+	using FontAssetGridSelection = AssetGridViewerChild::FontAssetGridSelection;
 
 	struct ResourceContext
 	{
 		const SpriteAssetGridSelection& spriteSelection;
 		const AudioAssetGridSelection& audioSelection;
+		const FontAssetGridSelection& fontSelection;
 		const AssetViewerIcons& icons;
 		const GuiTextureConverter& loadTargetConverter;
 		const GuiTextureConverter& uiTexturesConverter;
@@ -45,7 +49,7 @@ public:
 		SpriteSeriesIndex index;
 		uint8_t state = 0;
 
-		void Reset() { *this = {}; }
+		void Reset() { *this = SpriteSeriesPlayer{}; }
 	};
 
 	struct AudioPlayer
@@ -54,44 +58,65 @@ public:
 		uint8_t state = 0;
 		MusicVisualizer musicVisualizer;
 
+		std::optional<AudioPlayerContext> MakePlayerContext(const AudioBank& audioBank);
+
 		void Update(const Handle<Audio>& handle, const AudioBank& audioBank);
 		void Reset();
-		int GetVolume() const;
-		void SetVolume(int vol);
+	};
+
+	struct FontWriterDisplay
+	{
+		std::string text = "The quick brown fox jumps over the lazy dog";
+		ImVec4 color{ 1.0f, 0.0f, 0.0f, 1.0f };
+		uint8_t state = 0;
+
+		void Reset() { *this = FontWriterDisplay{}; }
 	};
 
 	const SpriteSeriesPlayer& GetSpriteSeriesAnimator() const { return spriteSeriesAnimator_; }
 	const AudioPlayer& GetAudioPlayer() const { return audioPlayer_; }
+	const FontWriterDisplay& GetFontWriterDisplay() const { return fontWriterDisplay_; }
 
 	void Draw(SceneFixture& fixture, ResourceContext& ctx, 
 			  const DataRecord<AssetItem::Type>& assetGridTabType);
 
 	Result<Void> Init(SceneFixture& fixture);
 
+	void Reset();
+
 	void TearDown();
 
 private:
 	void DrawSpriteAssetPreview(ResourceContext& ctx,
-								const SpriteAtlas& spriteAtlas, float dt);
+								SpriteAtlas& spriteAtlas, float dt);
 	void DrawAudioAssetPreview(ResourceContext& ctx,
 							   const AudioBank& audioBank);
+	void DrawFontAssetPreview(ResourceContext& ctx);
 
 	void DrawSpriteAssetSinglePreview(const Sprite& sprite, 
 									  const GuiTextureConverter& loadTargetConverter,
 									  const SpriteAtlas& spriteAtlas);
-	void DrawSpriteSeriesAssetsPreview(const std::vector<Sprite>& sprites,
-									  const GuiTextureConverter& loadTargetConverter,
-									  const GuiTextureConverter& uiTexturesConverter,
-									  const SpriteAtlas& spriteAtlas, float dt);
+	void DrawSpriteSeriesAssetsPreview(std::vector<Sprite>& sprites,
+									   std::string_view seriesName,
+									   const GuiTextureConverter& loadTargetConverter,
+									   const GuiTextureConverter& uiTexturesConverter,
+									   SpriteAtlas& spriteAtlas, float dt);
 
 	void DrawSpriteSeriesPlayerButtons(const GuiTextureConverter& uiTexturesConverter);
-	void DrawAudioPlayerButtons(const GuiTextureConverter& uiTexturesConverter, const AudioBank& audioBank);
+	void DrawAudioPlayerButtons(const GuiTextureConverter& uiTexturesConverter, 
+								std::optional<AudioPlayerContext>& audioPlayerCtx);
+
+	void DrawSpriteSeriesReorderLayout(std::vector<Sprite>& sprites,
+									   std::string_view seriesName,
+									   const GuiTextureConverter& loadTargetConverter,
+									   SpriteAtlas& spriteAtlas);
 
 	Result<Void> LoadResources(SceneFixture& fixture);
 
 	PlayerIcons playerIcons_;
 	SpriteSeriesPlayer spriteSeriesAnimator_;
 	AudioPlayer audioPlayer_;
+	FontWriterDisplay fontWriterDisplay_{};
 	AssetItem::Type openAssetTab_ = AssetItem::Type::Unknown;
 };
 

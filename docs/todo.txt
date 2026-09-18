@@ -18,3 +18,5 @@
 9. Replace Components inheriting from BaseComponent with a specialization of ComponentTraits to be able to use PFR with them
 
 10. Ensure that erasing music/sounds from AudioBank doesn't make AudioSystem explode
+
+11. Remove atlasId from SpriteInfo & FontInfo, just retrieve it from atlas texture using XInfo::atlasIndex

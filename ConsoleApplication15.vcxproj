@@ -326,6 +326,8 @@
     <ClCompile Include="test\ui\asset_viewer\AssetTree.cpp" />
     <ClCompile Include="test\ui\asset_viewer\AssetViewer.cpp" />
     <ClCompile Include="test\ui\asset_viewer\AssetViewerCommon.cpp" />
+    <ClCompile Include="test\ui\asset_viewer\AssetViewerUtil.cpp" />
+    <ClCompile Include="test\ui\asset_viewer\AudioPlayerContext.cpp" />
     <ClCompile Include="test\ui\asset_viewer\MusicVisualizer.cpp" />
     <ClCompile Include="test\ui\asset_viewer\DirectoryViewerChild.cpp" />
     <ClCompile Include="test\ui\builder\EditorColliderBuilder.cpp" />
@@ -925,6 +927,8 @@
     <ClInclude Include="test\ui\asset_viewer\AssetViewer.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetViewerOld.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetViewerCommon.h" />
+    <ClInclude Include="test\ui\asset_viewer\AssetViewerUtil.h" />
+    <ClInclude Include="test\ui\asset_viewer\AudioPlayerContext.h" />
     <ClInclude Include="test\ui\asset_viewer\MusicVisualizer.h" />
     <ClInclude Include="test\ui\asset_viewer\DirectoryViewerChild.h" />
     <ClInclude Include="test\ui\builder\EditorColliderBuilder.h" />

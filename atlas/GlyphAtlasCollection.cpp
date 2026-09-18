@@ -429,7 +429,7 @@ bool FontAtlas::HasFont(const Handle<TextureResource>& handle) const
     return atlasTexture.IsLoaded() &&  handle.GetAtlasID() == atlasTexture.GetAtlasID();
 }
 
-GlyphTextWriter FontAtlas::GetTextWriter(std::string_view fontName) const
+Handle<TextureResource> FontAtlas::GetResourceHandle(std::string_view fontName) const
 {
     if (!HasFont(fontName))
     {
@@ -438,11 +438,14 @@ GlyphTextWriter FontAtlas::GetTextWriter(std::string_view fontName) const
 
     const auto atlasIdx = fontNameIndices_[fontName];
 
-    const auto handle = Handle<TextureResource>::Create(
+    return Handle<TextureResource>::Create(
         fontAtlasTextures_[atlasIdx].GetAtlasID(), atlasIdx
     );
+}
 
-    return GlyphTextWriter{ .resourceHandle = handle };
+GlyphTextWriter FontAtlas::GetTextWriter(std::string_view fontName) const
+{
+    return { .resourceHandle = GetResourceHandle(fontName) };
 }
 
 bool FontAtlas::IsTextWriterValid(const GlyphTextWriter& writer) const
@@ -495,26 +498,15 @@ size_t FontAtlas::GetFontCount() const
     return GetTextureCount();
 }
 
-bool FontAtlas::EraseFont(std::string_view fontName)
+bool FontAtlas::EraseFontImpl(size_t infoIdx)
 {
-    auto it = fontNameIndices_.find(fontName);
-    if (it == fontNameIndices_.end())
-    {
-        return false;
-    }
-
-    const size_t infoIdx = it->second;
-    if (infoIdx >= fontInfo_.Size())
-    {
-        return false;
-    }
+    assert(infoIdx < fontInfo_.Size());
 
     auto [name, filepath, atlasIdx] = fontInfo_.GetView<&FontInfo::fontName, 
                                                         &FontInfo::filepath,
                                                         &FontInfo::atlasIndex>(infoIdx);
 
     assert(!name.empty());
-    assert(name == fontName);
     assert(!filepath.empty());
     assert(atlasIdx < fontAtlasTextures_.size());
     assert(fontAtlasTextures_[atlasIdx].IsLoaded());
@@ -533,6 +525,67 @@ bool FontAtlas::EraseFont(std::string_view fontName)
     freeFontSlots_.emplace_back(infoIdx);
 
     return true;
+}
+
+bool FontAtlas::EraseFont(std::string_view fontName)
+{
+    auto it = fontNameIndices_.find(fontName);
+    if (it == fontNameIndices_.end())
+    {
+        return false;
+    }
+
+    const size_t infoIdx = it->second;
+    if (infoIdx >= fontInfo_.Size())
+    {
+        return false;
+    }
+
+    return EraseFontImpl(infoIdx);
+}
+
+bool FontAtlas::EraseFont(const Handle<TextureResource>& handle)
+{
+    if (!HasFont(handle))
+    {
+        return false;
+    }
+
+    return EraseFontImpl(static_cast<size_t>(handle.GetResourceIndex()));
+}
+
+Result<Void> FontAtlas::SetFontName(const Handle<TextureResource>& handle, std::string_view newName)
+{
+    if (newName.empty())
+    {
+        return MAKE_ERROR("New font name was empty");
+    }
+    if (fontNameIndices_.contains(newName))
+    {
+        return MAKE_ERROR_FMT("New font name '{}' already exists in atlas", newName);
+    }
+
+    if (!HasFont(handle))
+    {
+        return kVoid;
+    }
+
+    const auto infoIdx = static_cast<size_t>(handle.GetResourceIndex());
+
+    auto& fontName = fontInfo_.GetView<&FontInfo::fontName>(infoIdx);
+    assert(!fontName.empty());
+
+    auto it = fontNameIndices_.find(fontName);
+    assert(it != fontNameIndices_.end());
+    assert(it->second == infoIdx);
+
+    fontNameIndices_.erase(fontName);
+
+    fontName = newName;
+
+    fontNameIndices_.emplace(fontName, infoIdx);
+
+    return kVoid;
 }
 
 const FontAtlasTexture& FontAtlas::GetFontAtlasTextureFor(std::string_view fontName) const

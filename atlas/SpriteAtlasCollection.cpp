@@ -259,12 +259,13 @@ Result<Sprite> SpriteAtlas::LoadSprite(SDL_Renderer* renderer, SpriteDescriptor&
 
 Result<Void> SpriteAtlas::DefineSpriteSeries(std::string_view seriesName, std::span<const Sprite> sprites)
 {
-    if (spriteSeriesDefs_.contains(seriesName))
-    {
-        return MAKE_ERROR_FMT("Sprite series with name '{}' already exists", seriesName);
-    }
+    //if (spriteSeriesDefs_.contains(seriesName))
+    //{
+    //    return MAKE_ERROR_FMT("Sprite series with name '{}' already exists", seriesName);
+    //}
 
     auto& indices = spriteSeriesDefs_[seriesName];
+    indices.clear();
     indices.reserve(sprites.size());
 
     for (size_t i = 0; i < sprites.size(); ++i)

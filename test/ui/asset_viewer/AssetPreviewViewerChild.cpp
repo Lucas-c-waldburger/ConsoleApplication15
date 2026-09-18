@@ -2,6 +2,10 @@
 
 #if IMGUI_ENABLED
 #include "../../Fixtures.h"
+#include "AudioPlayerContext.h"
+#include "AssetViewerUtil.h"
+#include <misc/cpp/imgui_stdlib.h>
+
 
 namespace ui {
 
@@ -13,86 +17,151 @@ static constexpr float kPreviewSeriesAnimationSpeedSliderSize = 100.0f;
 static constexpr float kPlayerButtonSize = 64.0f;
 static constexpr float kPlayerButtonPadding = 15.0f;
 static constexpr float kPlayerButtonsTotalWidth = kPlayerButtonSize * 3.0f;
-static constexpr float kAudioScrubAdvancePercent = 0.001f;
 static constexpr float kPreviewMusicVisualizerProgressBarSize = 300.0f;
 static constexpr float kPreviewAudioVolumeSiderSize = 100.0f;
+static constexpr float kPreviewAudioAngleSiderSize = 100.0f;
+static constexpr float kPreviewAudioDistanceSiderSize = 100.0f;
+static constexpr float kPreviewAudioPanningSiderSize = 100.0f;
+static constexpr float kPreviewFontTextInputSize = 700.0f;
+static constexpr float kPreviewSpriteSeriesReorderLayoutThumbnailSize = 64.0f;
 
-struct AudioPlayerContext
+void DrawPlayerSliderText(std::string_view txt, float sliderWidth)
 {
-	float curTrackPos = 0.0f;
-	float maxTrackLen = 0.0f;
-	float scrubSec = 0.0f;
+	const float textWidth = ImGui::CalcTextSize(txt.data()).x;
 
-	void RewindTrack(Entity& e) const
+	const float sliderPos = std::max(
+		(ImGui::GetContentRegionAvail().x - sliderWidth) * 0.5f,
+		0.0f);
+
+	const float textStartX = sliderPos - ImGui::GetStyle().ItemSpacing.x - textWidth;
+
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + textStartX);
+
+	ImGui::TextUnformatted(txt.data());
+
+	ImGui::SameLine();
+
+	ImGui::SetNextItemWidth(sliderWidth);
+}
+
+void DrawPanningSlider(AudioPlayerContext::AudioSpatialDrawData& spatialDrawData, 
+					   std::optional<AudioPlayerContext>& ctx)
+{
+	const float textLWidth = ImGui::CalcTextSize("L").x;
+
+	const float sliderPos = std::max(
+		(ImGui::GetContentRegionAvail().x - kPreviewAudioPanningSiderSize) * 0.5f,
+		0.0f);
+
+	const float textLStartX = sliderPos - ImGui::GetStyle().ItemSpacing.x - textLWidth;
+
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + textLStartX);
+
+	ImGui::TextUnformatted("L");
+
+	ImGui::SameLine();
+
+	ImGui::SetNextItemWidth(kPreviewAudioPanningSiderSize);
+
+	if (ImGui::DragInt("##panning", &spatialDrawData.panning, 1.0f, -127, 127))
 	{
-		if (e.HasComponent<ActiveAudio>())
+		if (ctx)
 		{
-			const auto& aa = e.GetComponent<ActiveAudio>();
+			const uint8_t left = static_cast<uint8_t>(
+				std::clamp(128 - spatialDrawData.panning, 0, 255)
+			);
+			const uint8_t right = 255 - left;
 
-			auto& req = e.AddComponent<AudioUpdateRequest>();
-			req.instanceId = aa.instanceId;
-			req.settings.trackPosition = std::max(curTrackPos - scrubSec, 0.0f);
+			auto& updatePan = ctx->updateRequest.settings.spatial.panning;
+			updatePan = AudioSpatialData::Panning{ left, right };
 		}
 	}
 
-	void FastForwardTrack(Entity& e) const
-	{
-		if (e.HasComponent<ActiveAudio>())
-		{
-			const auto& aa = e.GetComponent<ActiveAudio>();
+	ImGui::SameLine();
 
-			auto& req = e.AddComponent<AudioUpdateRequest>();
-			req.instanceId = aa.instanceId;
-			req.settings.trackPosition = std::min(curTrackPos + scrubSec, maxTrackLen);
-		}
+	ImGui::TextUnformatted("R");
+}
+
+void DrawElapsedTimeText(std::optional<AudioPlayerContext>& ctx)
+{
+	const auto timeText = (ctx)
+		? ctx->MakeElapsedTimeText()
+		: "0:00 / 0:00";
+
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
+		(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(timeText.c_str()).x) * 0.5f);
+
+	ImGui::TextUnformatted(timeText.c_str());
+}
+
+void DrawVolumeSlider(std::optional<AudioPlayerContext>& ctx)
+{
+	ImGui::BeginDisabled(!ctx);
+
+	DrawPlayerSliderText("volume:", kPreviewAudioVolumeSiderSize);
+
+	int volume = (ctx) ? ctx->GetVolume() : 0;
+	if (ImGui::DragInt("##volume", &volume, 1, 0, MIX_MAX_VOLUME))
+	{
+		if (ctx) { ctx->updateRequest.settings.volume = volume; }
 	}
 
-	static AudioPlayerContext Create(Entity& e, const AudioBank& audioBank)
+	ImGui::EndDisabled();
+}
+
+void DrawSpatialDataSliders(std::optional<AudioPlayerContext>& ctx)
+{
+	ImGui::BeginDisabled(!ctx || ctx->audioType != AudioType::Sound);
+
+	auto spatial = (ctx) ? ctx->GetSpatialData() : AudioPlayerContext::AudioSpatialDrawData{};
+
+	DrawPlayerSliderText("angle:", kPreviewAudioAngleSiderSize);
+
+	if (ImGui::DragInt("##angle", &spatial.angle, 1.0f, 0, 360))
 	{
-		AudioPlayerContext ctx{};
-
-		if (!e.HasComponent<ActiveAudio>())
-		{
-			return ctx;
-		}
-
-		const auto& aa = e.GetComponent<ActiveAudio>();
-
-		ctx.curTrackPos = aa.settings.trackPosition;
-
-		if (auto lenOp = audioBank.GetAudioInfo<&AudioInfo::length>(aa.audioHandle))
-		{
-			ctx.maxTrackLen = static_cast<float>(*lenOp) / 1000.0f;
-		}
-
-		ctx.scrubSec = ctx.maxTrackLen * kAudioScrubAdvancePercent;
-		
-		return ctx;
+		if (ctx) { ctx->updateRequest.settings.spatial.angle = static_cast<int16_t>(spatial.angle); }
 	}
 
-	std::string MakeElapsedTimeText() const
+	ImGui::Dummy(ImVec2(0.0f, 12.0f));
+
+	DrawPlayerSliderText("distance:", kPreviewAudioDistanceSiderSize);
+
+	if (ImGui::DragInt("##distance", &spatial.distance, 1.0f, 0, 255))
 	{
-		int curMinutes = static_cast<int>(curTrackPos);
-		int maxMinutes = static_cast<int>(maxTrackLen);
-
-		const float curSecondsFractional = curTrackPos - static_cast<float>(curMinutes);
-		const float maxSecondsFractional = maxTrackLen - static_cast<float>(maxMinutes);
-
-		int curSeconds = static_cast<int>(std::round(curSecondsFractional * 60.0f));
-		int maxSeconds = static_cast<int>(std::round(maxSecondsFractional * 60.0f));
-
-		if (curSeconds == 60) { curMinutes += 1; curSeconds = 0; }
-		if (maxSeconds == 60) { maxMinutes += 1; maxSeconds = 0; }
-
-		return std::format("{}:{} / {}:{}", curMinutes, curSeconds, maxMinutes, maxSeconds);
+		if (ctx) { ctx->updateRequest.settings.spatial.distance = static_cast<uint8_t>(spatial.distance); }
 	}
-};
+
+	ImGui::Dummy(ImVec2(0.0f, 12.0f));
+
+	DrawPanningSlider(spatial, ctx);
+
+	ImGui::EndDisabled();
+}
 
 } // unnamed
 
-void AssetPreviewViewerChild::AudioPlayer::Update(const Handle<Audio>& handle, 
+std::optional<AudioPlayerContext> 
+AssetPreviewViewerChild::AudioPlayer::MakePlayerContext(const AudioBank& audioBank)
+{
+	auto e = ECS::GetEntityByID(entityId);
+	if (!e.IsValid())
+	{
+		return std::nullopt;
+	}
+
+	return AudioPlayerContext::Create(e, audioBank);
+}
+
+void AssetPreviewViewerChild::AudioPlayer::Update(const Handle<Audio>& handle,
 												  const AudioBank& audioBank)
 {
+	if (!audioBank.IsAudioValid(handle))
+	{
+		Reset();
+
+		return;
+	}
+
 	auto e = ECS::GetEntityByID(entityId);
 	if (!e.IsValid())
 	{
@@ -108,6 +177,9 @@ void AssetPreviewViewerChild::AudioPlayer::Update(const Handle<Audio>& handle,
 			auto& newReq = e.AddComponent<NewAudioRequest>();
 			newReq.audioHandle = handle;
 			newReq.force = AudioForcing::ForcePausedAtStart;
+			newReq.settings.spatial.distance = 0;
+			newReq.settings.spatial.angle = 0;
+			newReq.settings.spatial.panning = AudioSpatialData::Panning{ .left = 127, .right = 127 };
 
 			musicVisualizer.Reset();
 			state &= ~PlayerState::Playing;
@@ -117,7 +189,7 @@ void AssetPreviewViewerChild::AudioPlayer::Update(const Handle<Audio>& handle,
 			if (state & PlayerState::Playing)
 			{
 				if (aa.status == AudioStatus::Paused)
-				{
+				{ 
 					auto& updateReq = e.AddComponent<AudioUpdateRequest>();
 					updateReq.instanceId = aa.instanceId;
 					updateReq.command = AudioPlayCommand::Resume;
@@ -125,7 +197,7 @@ void AssetPreviewViewerChild::AudioPlayer::Update(const Handle<Audio>& handle,
 			}
 			else // if pause requested
 			{
-				if (aa.status == AudioStatus::Playing)
+				if ((aa.status == AudioStatus::Playing || aa.status == AudioStatus::Stopping))
 				{
 					auto& updateReq = e.AddComponent<AudioUpdateRequest>();
 					updateReq.instanceId = aa.instanceId;
@@ -160,24 +232,6 @@ void AssetPreviewViewerChild::AudioPlayer::Reset()
 	musicVisualizer.Reset();
 }
 
-int AssetPreviewViewerChild::AudioPlayer::GetVolume() const
-{
-	if (auto e = ECS::GetEntityByID(entityId); e.HasComponent<ActiveAudio>())
-	{
-		return e.GetComponent<ActiveAudio>().settings.volume;
-	}
-
-	return 0;
-}
-
-void AssetPreviewViewerChild::AudioPlayer::SetVolume(int vol)
-{
-	if (auto e = ECS::GetEntityByID(entityId); e.HasComponent<ActiveAudio>())
-	{
-		e.AddComponent<AudioUpdateRequest>().settings.volume = vol;
-	}
-}
-
 void AssetPreviewViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx, 
 								   const DataRecord<AssetItem::Type>& assetGridTabType)
 {
@@ -190,6 +244,8 @@ void AssetPreviewViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx,
 			break;
 		case AssetItem::Type::Audio:
 			audioPlayer_.Reset();
+			break;
+		case AssetItem::Type::Font:
 			break;
 		default:
 			break;
@@ -211,17 +267,23 @@ void AssetPreviewViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx,
 			ctx,
 			fixture.GetAudioBank());
 	}
+	else if (assetGridTabType.now == AssetItem::Type::Font &&
+			 ctx.fontSelection.HasSelection())
+	{
+		DrawFontAssetPreview(ctx);
+	}
 }
 
 
 void AssetPreviewViewerChild::DrawSpriteAssetPreview(ResourceContext& ctx,
-													 const SpriteAtlas& spriteAtlas, float dt)
+													 SpriteAtlas& spriteAtlas, float dt)
 {
 	if (ctx.spriteSelection.SpriteSeriesSelectedAtTopLevel())
 	{
 		auto sprites = spriteAtlas.GetSpriteSeries(ctx.spriteSelection.spriteSeries);
 
 		DrawSpriteSeriesAssetsPreview(sprites, 
+			ctx.spriteSelection.spriteSeries,
 			ctx.loadTargetConverter, 
 			ctx.uiTexturesConverter,
 			spriteAtlas, dt);
@@ -234,50 +296,92 @@ void AssetPreviewViewerChild::DrawSpriteAssetPreview(ResourceContext& ctx,
 
 void AssetPreviewViewerChild::DrawAudioAssetPreview(ResourceContext& ctx, const AudioBank& audioBank)
 {
-	auto e = ECS::GetEntityByID(audioPlayer_.entityId);
-
-	if (!audioBank.IsAudioValid(ctx.audioSelection.audioHandle))
-	{
-		audioPlayer_.Reset();
-
-		return;
-	}
-
 	audioPlayer_.Update(ctx.audioSelection.audioHandle, audioBank);
 
+	auto audioPlayerCtx = audioPlayer_.MakePlayerContext(audioBank);
+
 	// visualizer
+	ImGui::Dummy(ImVec2(0.0f, 12.0f));
+
 	audioPlayer_.musicVisualizer.DrawWaveform();
+
+	ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
 	ImGui::Separator();
 
 	ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
+	ImGui::BeginDisabled(!audioPlayerCtx);
+
 	// player buttons
-	DrawAudioPlayerButtons(ctx.uiTexturesConverter, audioBank);
+	DrawAudioPlayerButtons(ctx.uiTexturesConverter, audioPlayerCtx);
+
+	ImGui::Dummy(ImVec2(0.0f, 12.0f));
+
+	// elapsed time text
+	DrawElapsedTimeText(audioPlayerCtx);
 
 	ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
 	// volume slider
-	const float volumeTextWidth = ImGui::CalcTextSize("volume:").x;
+	DrawVolumeSlider(audioPlayerCtx);
 
-	const float volumeSliderPos = std::max(
-		(ImGui::GetContentRegionAvail().x - kPreviewAudioVolumeSiderSize) * 0.5f,
-		0.0f);
+	ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
-	const float volumeTextStartX = volumeSliderPos - ImGui::GetStyle().ItemSpacing.x - volumeTextWidth;
+	// spatial sliders
+	DrawSpatialDataSliders(audioPlayerCtx);
 
-	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + volumeTextStartX);
+	ImGui::EndDisabled();
 
-	ImGui::TextUnformatted("volume:");
+	if (audioPlayerCtx) { audioPlayerCtx->Commit(); }
+}
+
+void AssetPreviewViewerChild::DrawFontAssetPreview(ResourceContext& ctx)
+{
+	auto it = ctx.fontSelection.handleToGuiFont.find(ctx.fontSelection.fontHandle);
+	assert(it != ctx.fontSelection.handleToGuiFont.end());
+
+	auto* font = it->second;
+	assert(font);
+
+	ImGui::Dummy(ImVec2(0.0f, 12.0f));
+
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
+		(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(fontWriterDisplay_.text.c_str()).x) * 0.5f);
+
+	ImGui::PushFont(font);
+	ImGui::PushStyleColor(ImGuiCol_Text, fontWriterDisplay_.color);
+
+	ImGui::TextUnformatted(fontWriterDisplay_.text.c_str());
+
+	ImGui::PopFont();
+	ImGui::PopStyleColor();
+
+	ImGui::Dummy(ImVec2(0.0f, 12.0f));
+
+	ImGui::Separator();
+
+	ImGui::Dummy(ImVec2(0.0f, 12.0f));
+
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + std::max(
+		(ImGui::GetContentRegionAvail().x - kPreviewFontTextInputSize) * 0.5f,
+		0.0f));
+
+	ImGui::SetNextItemWidth(kPreviewFontTextInputSize);
+
+	ImGui::InputText("##previewText", &fontWriterDisplay_.text);
 
 	ImGui::SameLine();
 
-	ImGui::SetNextItemWidth(kPreviewAudioVolumeSiderSize);
-
-	int volume = audioPlayer_.GetVolume();
-	if (ImGui::DragInt("##volume", &volume, 1, 0, MIX_MAX_VOLUME))
+	if (ImGui::ColorButton("#textClrBtn", fontWriterDisplay_.color))
 	{
-		audioPlayer_.SetVolume(volume);
+		ImGui::OpenPopup("ColorPicker");
+	}
+	if (ImGui::BeginPopup("ColorPicker"))
+	{
+		ImGui::ColorPicker4("##textClrPicker", &fontWriterDisplay_.color.x);
+
+		ImGui::EndPopup();
 	}
 }
 
@@ -299,8 +403,16 @@ void AssetPreviewViewerChild::DrawSpriteAssetSinglePreview(const Sprite& sprite,
 
 	ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
 		(ImGui::GetContentRegionAvail().x - tx.size.x) * 0.5f);
-	
+
+	const auto checkboardPos = ImGui::GetCursorPos();
+
+	DrawCheckerboard("##spriteCheckboard", ImVec4(0.0f, 0.0f, 0.0f, 0.6f), 0, tx.size, 16.0f);
+
+	ImGui::SetCursorPos(checkboardPos);
+
 	GuiImage(tx);
+
+	ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
 	ImGui::Separator();
 
@@ -334,16 +446,21 @@ void AssetPreviewViewerChild::DrawSpriteAssetSinglePreview(const Sprite& sprite,
 	ImGui::TextUnformatted(dimensionsStr.c_str());
 }
 
-void AssetPreviewViewerChild::DrawSpriteSeriesAssetsPreview(const std::vector<Sprite>& sprites, 
+void AssetPreviewViewerChild::DrawSpriteSeriesAssetsPreview(std::vector<Sprite>& sprites, 
+															std::string_view seriesName,
 														    const GuiTextureConverter& loadTargetConverter,
 														    const GuiTextureConverter& uiTexturesConverter, 
-															const SpriteAtlas& spriteAtlas, float dt)
+															SpriteAtlas& spriteAtlas, float dt)
 {
 	if (sprites.empty())
 	{
 		return;
 	}
+	assert(!seriesName.empty());
 
+	ImGui::Dummy(ImVec2(0.0f, 12.0f));
+
+	// Update animator
 	auto& animator = spriteSeriesAnimator_;
 
 	animator.index.max = sprites.size() - 1;
@@ -361,6 +478,7 @@ void AssetPreviewViewerChild::DrawSpriteSeriesAssetsPreview(const std::vector<Sp
 
 	assert(animator.index.current < sprites.size());
 	
+	// Main display sprite
 	auto tx = loadTargetConverter.FromSprite(sprites[animator.index.current]);
 	assert(tx.textureId != 0);
 
@@ -375,13 +493,26 @@ void AssetPreviewViewerChild::DrawSpriteSeriesAssetsPreview(const std::vector<Sp
 	ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
 		(ImGui::GetContentRegionAvail().x - tx.size.x) * 0.5f);
 
+	const auto checkboardPos = ImGui::GetCursorPos();
+
+	DrawCheckerboard("##spriteCheckboard", ImVec4(0.0f, 0.0f, 0.0f, 0.6f), 0, tx.size, 16.0f);
+
+	ImGui::SetCursorPos(checkboardPos);
+
 	GuiImage(tx);
+
+	ImGui::Dummy(ImVec2(0.0f, 2.0f));
+
+	// Reorder series layout
+	DrawSpriteSeriesReorderLayout(sprites, seriesName, loadTargetConverter, spriteAtlas);
+
+	ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
 	ImGui::Separator();
 
 	ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
-	// index slider
+	// Index slider
 	float indexSliderPos = std::max(
 		(ImGui::GetContentRegionAvail().x - kPreviewSeriesAnimationIndexSliderSize) * 0.5f,
 		0.0f);
@@ -478,7 +609,7 @@ void AssetPreviewViewerChild::DrawSpriteSeriesPlayerButtons(const GuiTextureConv
 }
 
 void AssetPreviewViewerChild::DrawAudioPlayerButtons(const GuiTextureConverter& uiTexturesConverter,
-													 const AudioBank& audioBank)
+													 std::optional<AudioPlayerContext>& audioPlayerCtx)
 {
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 
@@ -494,17 +625,20 @@ void AssetPreviewViewerChild::DrawAudioPlayerButtons(const GuiTextureConverter& 
 
 	ImGui::SetCursorPosX(startX);
 
-	auto e = ECS::GetEntityByID(audioPlayer_.entityId);
-
-	const auto audioPlayerCtx = AudioPlayerContext::Create(e, audioBank);
-
+	// Rewind button
 	auto rewindTx = uiTexturesConverter.FromSprite(playerIcons_.rewindSprite);
 	assert(rewindTx.textureId != 0);
 
-	GuiImageButton("rewindBtn", rewindTx);
-	if (ImGui::IsItemActive())
+	if (GuiImageButton("rewindBtn", rewindTx))
 	{
-		audioPlayerCtx.RewindTrack(e);
+		if (audioPlayerCtx) { audioPlayerCtx->RestartTrack(); }
+	}
+	else if (ImGui::IsItemActive())
+	{
+		if (audioPlayerCtx && audioPlayerCtx->audioType == AudioType::Music) 
+		{ 
+			audioPlayerCtx->RewindTrack();
+		}
 	}
 
 	ImGui::SameLine(0.0f, spacing);
@@ -529,20 +663,97 @@ void AssetPreviewViewerChild::DrawAudioPlayerButtons(const GuiTextureConverter& 
 	GuiImageButton("fastForwardBtn", fastForwardTx);
 	if (ImGui::IsItemActive())
 	{
-		audioPlayerCtx.FastForwardTrack(e);
+		if (audioPlayerCtx) { audioPlayerCtx->FastForwardTrack(); }
 	}
 
 	ImGui::PopStyleColor();
+}
 
-	ImGui::Dummy(ImVec2(0.0f, 12.0f));
+void AssetPreviewViewerChild::DrawSpriteSeriesReorderLayout(std::vector<Sprite>& sprites,
+															std::string_view seriesName,
+															const GuiTextureConverter& loadTargetConverter, 
+															SpriteAtlas& spriteAtlas)
+{
+	assert(!sprites.empty());
 
-	// elapsed time text
-	const auto timeText = audioPlayerCtx.MakeElapsedTimeText();
+	const float totalWidth = kPreviewSpriteSeriesReorderLayoutThumbnailSize * sprites.size();
 
-	ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
-		(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(timeText.c_str()).x) * 0.5f);
+	const float startPos = std::max(
+		(ImGui::GetContentRegionAvail().x - totalWidth) * 0.5f,
+		0.0f);
 
-	ImGui::TextUnformatted(timeText.c_str());
+	ImGui::SetCursorPosX(startPos);
+
+	for (size_t i = 0; i < sprites.size(); ++i)
+	{
+		if (i > 0)
+		{
+			ImGui::SameLine(0.0f, 0.0f);
+		}
+
+		ImGui::PushID(static_cast<int>(i));
+
+		auto spriteTx = loadTargetConverter.FromSprite(sprites[i]);
+		assert(spriteTx.textureId != 0);
+
+		const float txScale = std::min(
+			kPreviewSpriteSeriesReorderLayoutThumbnailSize / spriteTx.size.x,
+			kPreviewSpriteSeriesReorderLayoutThumbnailSize / spriteTx.size.y
+		);
+
+		spriteTx.size.x *= txScale;
+		spriteTx.size.y *= txScale;
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+
+		GuiImageButton("spriteReorder", spriteTx);
+
+		ImGui::PopStyleColor();
+
+		if (spriteSeriesAnimator_.index.current == i)
+		{
+			ImGui::GetWindowDrawList()->AddRect(
+				ImGui::GetItemRectMin(),
+				ImGui::GetItemRectMax(),
+				IM_COL32(255, 255, 255, 150),
+				0.0f,
+				0,
+				1.0f
+			);
+		}
+
+		if (ImGui::BeginDragDropSource())
+		{
+			ImGui::SetDragDropPayload("ANIMATION_FRAME", &i, sizeof(i));
+
+			ImGui::Text("Frame %d", i + 1);
+
+			ImGui::EndDragDropSource();
+		}
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ANIMATION_FRAME"))
+			{
+				const size_t sourceIndex = *static_cast<const size_t*>(payload->Data);
+				const size_t targetIndex = i;
+
+				if (sourceIndex != targetIndex)
+				{
+					assert(spriteAtlas.HasSpriteSeries(seriesName));
+
+					std::swap(sprites[sourceIndex], sprites[targetIndex]);
+
+					spriteAtlas.DefineSpriteSeries(seriesName, sprites);
+				}
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+
+		ImGui::PopID();
+	}
+
 }
 
 Result<Void> AssetPreviewViewerChild::LoadResources(SceneFixture& fixture)
@@ -573,6 +784,14 @@ Result<Void> AssetPreviewViewerChild::LoadResources(SceneFixture& fixture)
 	TRY_ASSIGN(playerIcons_.fastForwardSprite, atlas.LoadSprite(
 		fixture.GetRenderer(), { .filepath = std::move(fastForwardIconPath) }));
 
+	TRY(ResourcePath::Music("futuristic_beat.mp3"), futureBeatPath);
+	TRY(ResourcePath::Music("one_more_time.ogg"), oneMoreTimePath);
+
+	auto& audioBank = fixture.GetAudioBank();
+
+	TRY(audioBank.LoadAudio({ .audioType = AudioType::Music, .filepath = std::move(futureBeatPath) }));
+	TRY(audioBank.LoadAudio({ .audioType = AudioType::Sound, .filepath = std::move(oneMoreTimePath) }));
+
 	return kVoid;
 }
 
@@ -589,6 +808,12 @@ Result<Void> AssetPreviewViewerChild::Init(SceneFixture& fixture)
 	audioPlayer_.musicVisualizer.Start();
 
 	return kVoid;
+}
+
+void AssetPreviewViewerChild::Reset()
+{
+	spriteSeriesAnimator_.Reset();
+	audioPlayer_.Reset();
 }
 
 void AssetPreviewViewerChild::TearDown()

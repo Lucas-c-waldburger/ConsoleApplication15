@@ -621,6 +621,12 @@
     <ClCompile Include="audio\AudioChannel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\ui\asset_viewer\AudioPlayerContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\asset_viewer\AssetViewerUtil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -3360,6 +3366,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="audio\AudioChannel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\asset_viewer\AudioPlayerContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\asset_viewer\AssetViewerUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

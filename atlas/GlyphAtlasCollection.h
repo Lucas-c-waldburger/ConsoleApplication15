@@ -10,7 +10,7 @@ struct FontInfo
 	TextureAtlasID atlasId;
 	std::string fontName;
 	std::string filepath;
-	int fontSize = 0;
+	int fontSize = 16;
 	int fontHeight = 0;
 	size_t atlasIndex = std::numeric_limits<size_t>::max();
 
@@ -114,6 +114,7 @@ public:
 	bool HasFont(std::string_view fontName) const; 
 	bool HasFont(const Handle<TextureResource>& handle) const;
 
+	Handle<TextureResource> GetResourceHandle(std::string_view fontName) const;
 	GlyphTextWriter GetTextWriter(std::string_view fontName) const;
 
 	bool IsTextWriterValid(const GlyphTextWriter& writer) const;
@@ -249,9 +250,12 @@ public:
 	}
 
 	bool EraseFont(std::string_view fontName);
+	bool EraseFont(const Handle<TextureResource>& handle);
+
+	Result<Void> SetFontName(const Handle<TextureResource>& handle, std::string_view newName);
 
 private:
-	//void RepopulateFontNameIndexMap(size_t newSize);
+	bool EraseFontImpl(size_t infoIdx);
 
 	const FontAtlasTexture& GetFontAtlasTextureFor(std::string_view fontName) const;
 	const FontAtlasTexture& GetFontAtlasTextureFor(const Handle<TextureResource>& handle) const;

@@ -38,6 +38,7 @@ struct AssetViewerIcons
 	Sprite imageFileSmallSprite;
 	Sprite audioFileSmallSprite;
 	Sprite fontFileSmallSprite;
+	Sprite fontFileLargeSprite;
 	Sprite scriptFileSmallSprite;
 	Sprite unknownFileSmallSprite;
 	Sprite mediaFolderLargeSprite;

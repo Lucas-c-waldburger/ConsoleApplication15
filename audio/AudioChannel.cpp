@@ -74,6 +74,7 @@ bool AudioChannel::PlayAudio(T* audioPtr, const AudioChannelSettings& settings, 
 	{
 		const auto& spatial = settings.spatial;
 
+
 		if (spatial.distance.has_value())
 		{
 			AudioController::SetDistance(GetChannelIndex(), *spatial.distance);

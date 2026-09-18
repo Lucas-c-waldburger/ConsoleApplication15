@@ -89,6 +89,7 @@ bool AssetViewer::Draw(SceneFixture& fixture)
 	AssetPreviewViewerChild::ResourceContext previewCtx{
 		.spriteSelection = assetGridViewer_.GetSpriteSelection(),
 		.audioSelection = assetGridViewer_.GetAudioSelection(),
+		.fontSelection = assetGridViewer_.GetFontSelection(),
 		.icons = icons_,
 		.loadTargetConverter = loadTargetConverter,
 		.uiTexturesConverter = uiTexturesConverter

@@ -26,15 +26,11 @@ void MusicVisualizer::Reset()
     writeIndex_.store(0, std::memory_order_relaxed);
 }
 
-//float MusicVisualizer::GetLevel() const
-//{
-//    return level_.load(std::memory_order_relaxed);
-//}
-
 void MusicVisualizer::DrawWaveform()
 {
     constexpr float width = 300.0f;
     constexpr float height = 80.0f;
+    constexpr float rounding = 6.0f;
 
     ImVec2 min = ImGui::GetCursorScreenPos();
     min.x += std::max(
@@ -48,15 +44,41 @@ void MusicVisualizer::DrawWaveform()
 
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
+    // Background
+    drawList->AddRectFilled(
+        min,
+        max,
+        IM_COL32(25, 25, 28, 255),
+        rounding);
+
+    // Border
+    drawList->AddRect(
+        min,
+        max,
+        IM_COL32(60, 60, 65, 255),
+        rounding);
+
+    // Center line
+    drawList->AddLine(
+        { min.x, min.y + height * 0.5f },
+        { max.x, min.y + height * 0.5f },
+        IM_COL32(70, 70, 75, 255),
+        1.0f);
+
     std::array<ImVec2, kSampleCount> points;
 
     for (size_t i = 0; i < points.size(); ++i)
     {
         const float sample = GetSample(i);
 
-        const float x = min.x + static_cast<float>(i) / (points.size() - 1) * width;
+        const float x =
+            min.x +
+            static_cast<float>(i) / (points.size() - 1) * width;
 
-        const float y = min.y + height * 0.5f - sample * height * 0.5f;
+        const float y =
+            min.y +
+            height * 0.5f -
+            sample * height * 0.5f;
 
         points[i] = { x, y };
     }
@@ -70,6 +92,46 @@ void MusicVisualizer::DrawWaveform()
 
     ImGui::Dummy({ width, height });
 }
+
+//void MusicVisualizer::DrawWaveform()
+//{
+//    constexpr float width = 300.0f;
+//    constexpr float height = 80.0f;
+//
+//    ImVec2 min = ImGui::GetCursorScreenPos();
+//    min.x += std::max(
+//        (ImGui::GetContentRegionAvail().x - width) * 0.5f,
+//        0.0f);
+//
+//    const ImVec2 max = {
+//        min.x + width,
+//        min.y + height
+//    };
+//
+//    ImDrawList* drawList = ImGui::GetWindowDrawList();
+//
+//    std::array<ImVec2, kSampleCount> points;
+//
+//    for (size_t i = 0; i < points.size(); ++i)
+//    {
+//        const float sample = GetSample(i);
+//
+//        const float x = min.x + static_cast<float>(i) / (points.size() - 1) * width;
+//
+//        const float y = min.y + height * 0.5f - sample * height * 0.5f;
+//
+//        points[i] = { x, y };
+//    }
+//
+//    drawList->AddPolyline(
+//        points.data(),
+//        static_cast<int>(points.size()),
+//        IM_COL32(100, 180, 255, 255),
+//        ImDrawFlags_None,
+//        2.0f);
+//
+//    ImGui::Dummy({ width, height });
+//}
 
 void SDLCALL MusicVisualizer::PostMix(void* userdata, Uint8* stream, int len)
 {

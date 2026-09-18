@@ -11,12 +11,11 @@ namespace ui {
 class MusicVisualizer
 {
 public:
-    static constexpr size_t kSampleCount = 2048;
+    static constexpr size_t kSampleCount = 1024;
 
     void Start();
     void Stop();
     void Reset();
-    //float GetLevel() const;
     void DrawWaveform();
 
 private:
@@ -25,7 +24,6 @@ private:
     void PushSamples(const Sint16* samples, size_t count);
     float GetSample(size_t idx) const;
 
-    //std::atomic<float> level_{ 0.0f };
     std::array<std::atomic<float>, kSampleCount> samples_{};
     std::atomic<size_t> writeIndex_{};
 };
