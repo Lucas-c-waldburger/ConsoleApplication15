@@ -130,7 +130,9 @@ public:
 
 		if (!pos.has_value())
 		{
-			const float winH = SDLite::Window().GetSize<float>().h;
+			//const float winH = SDLite::Window().GetSize<float>().h;
+			const float winH = fixture.GetCamera().GetViewportSize().h;
+
 			const float spriteSize = kOuterThumbstickSpriteDimensions.w *
 									 kOuterThumbstickSpriteScale;
 			const float spriteCenter = spriteSize / 2.0f;
@@ -259,7 +261,9 @@ public:
 
 		if (!pos.has_value())
 		{
-			const float winH = SDLite::Window().GetSize<float>().h;
+			//const float winH = SDLite::Window().GetSize<float>().h;
+			const float winH = fixture.GetCamera().GetViewportSize().h;
+
 			const float spriteSize = kOuterThumbstickSpriteDimensions.w *
 				kOuterThumbstickSpriteScale;
 			const float spriteCenter = spriteSize / 2.0f;

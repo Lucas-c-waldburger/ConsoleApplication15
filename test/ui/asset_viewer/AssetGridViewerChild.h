@@ -153,7 +153,7 @@ private:
 	void HandleSpriteGridCellDragDropSource(const SpriteAtlas& loadTargetAtlas);
 	bool HandleSpriteGridCellDragDropTarget(SpriteAtlas& loadTargetAtlas, std::string_view seriesName);
 
-	AssetItem::Type ResolvePendingAssetDragDropTarget(SceneFixture& fixture, AssetItem::Type lastLoadedType);
+	AssetItem::Type ResolvePendingAssetDragDropTarget(SceneFixture& fixture);
 
 	void DrawSpritePopupContextMenu(SpriteAtlas& loadTargetAtlas);
 	void DrawAudioPopupContextMenu(AudioBank& audioBank);

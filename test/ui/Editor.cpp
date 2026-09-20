@@ -11,6 +11,7 @@
 #include "ComponentEditHistory.h"
 #include "SaveSceneUtility.h"
 #include "GuiConsole.h"
+#include "../../render/AspectRatioFit.h"
 
 namespace ui {
 
@@ -46,8 +47,8 @@ void DrawSelectionState()
 
 void ClearHoverSelectionIfNeeded()
 {
-	if (Editor::GetActivePanel() != Editor::PanelType::Entities &&
-		Editor::GetActivePanel() != Editor::PanelType::Components)
+	if ((Editor::GetActiveWindows() & (Editor::WindowType::EntityWindow | 
+									   Editor::WindowType::ComponentWindow)) == 0)
 	{
 		const auto& sel = InspectorEntityPanel::GetSelection();
 		if (sel.IsHovering())
@@ -55,6 +56,63 @@ void ClearHoverSelectionIfNeeded()
 			InspectorEntityPanel::ClearSelection();
 		}
 	}	
+}
+
+void DrawGameDisplayWindow(SceneFixture& fixture)
+{
+	const auto& renderTarget = fixture.GetRenderTarget();
+	const auto& displayArea = fixture.GetGameDisplayArea();
+
+	const auto toolbarHeight = ImGui::GetFrameHeight();
+
+	ImGui::SetNextWindowSize(ImVec2(displayArea.w, displayArea.h), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(0.0f, toolbarHeight), ImGuiCond_FirstUseEver);
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+	ImGui::Begin("Game Window", nullptr, (ImGuiWindowFlags_NoTitleBar |
+										  ImGuiWindowFlags_NoBackground));
+
+	const ImVec2 pos = ImGui::GetCursorScreenPos();
+	const ImVec2 size = ImGui::GetContentRegionAvail();
+
+	const SDL_FRect contentRect{
+		pos.x,
+		pos.y,
+		size.x,
+		size.y
+	};
+
+	fixture.SetGameDisplayArea(contentRect);
+
+	auto tx = GuiTextureConverter::FromRenderTarget(renderTarget);
+
+	const ImVec2 available = ImGui::GetContentRegionAvail();
+
+	const float scale = GetAspectRatioFitScale(
+		AspectRatioFit::Letterbox,
+		available.x,
+		available.y,
+		static_cast<float>(renderTarget.width),
+		static_cast<float>(renderTarget.height)
+	);
+
+	const ImVec2 displaySize{
+		renderTarget.width * scale,
+		renderTarget.height * scale
+	};
+
+	ImGui::Image(
+		tx.textureId,
+		displaySize,
+		tx.uv0,
+		tx.uv1);
+
+	ImGui::End();
+
+	ImGui::PopStyleVar(3);
 }
 
 } // unnamed
@@ -153,14 +211,6 @@ void Editor::DrawFileMenu(SceneFixture& fixture)
 	}
 }
 
-void Editor::DrawDebugMenu(SceneFixture& fixture)
-{
-	if (ImGui::Selectable("Console", (activeWindows_ & WindowType::Console)))
-	{
-		activeWindows_ ^= WindowType::Console;
-	}
-}
-
 void Editor::DrawToolbar(SceneFixture& fixture)
 {
 	assert(fixture.IsSystemRegistered<AudioSystem2>());
@@ -171,23 +221,36 @@ void Editor::DrawToolbar(SceneFixture& fixture)
 		return;
 	}
 
+	auto displayArea = fixture.GetGameDisplayArea();
+	displayArea.y = ImGui::GetFrameHeight();
+	fixture.SetGameDisplayArea(displayArea);
+
 	if (ImGui::BeginMenu("File"))
 	{
 		DrawFileMenu(fixture);
 
 		ImGui::EndMenu();
 	}
-
-	if (ImGui::BeginMenu("Debug"))
+	if (ImGui::MenuItem("Asset", nullptr, (activeWindows_ & WindowType::AssetWindow)))
 	{
-		DrawDebugMenu(fixture);
-
-		ImGui::EndMenu();
+		activeWindows_ ^= WindowType::AssetWindow;
 	}
-
-	if (ImGui::MenuItem("Asset Viewer", nullptr, (activeWindows_ & WindowType::Assets)))
+	if (ImGui::MenuItem("Entity", nullptr, (activeWindows_ & WindowType::EntityWindow)))
 	{
-		activeWindows_ ^= WindowType::Assets;
+		activeWindows_ ^= WindowType::EntityWindow;
+	}
+	if (ImGui::MenuItem("Component", nullptr, (activeWindows_ & WindowType::ComponentWindow),
+						InspectorEntityPanel::GetSelection().IsEditing()))
+	{
+		activeWindows_ ^= WindowType::ComponentWindow;
+	}
+	if (ImGui::MenuItem("System", nullptr, (activeWindows_ & WindowType::SystemWindow)))
+	{
+		activeWindows_ ^= WindowType::SystemWindow;
+	}
+	if (ImGui::MenuItem("Console", nullptr, (activeWindows_ & WindowType::ConsoleWindow)))
+	{
+		activeWindows_ ^= WindowType::ConsoleWindow;
 	}
 
 	ImGui::EndMainMenuBar();
@@ -198,7 +261,8 @@ Result<Void> Editor::ResetForNewScene(SceneFixture& fixture)
 	entityDrag_.Reset();
 	cameraControl_.Reset();
 
-	GuiMouse::Init();
+	const auto& renderTarget = fixture.GetRenderTarget();
+	GuiMouse::Init(renderTarget.width, renderTarget.height, fixture.GetGameDisplayArea());
 
 	ComponentEditHistory::Reset();
 	TRY(InspectorComponentPanel::ResetForNewScene(fixture));
@@ -233,7 +297,151 @@ struct AtUpdateBegin
 		? InspectorEntityPanel::GetSelection().entityId
 		: kInvalidEntity;
 	const int historyCursor = ComponentEditHistory::GetCursor();
+	const uint8_t activeWindows = Editor::GetActiveWindows();
 };
+
+//void Editor::Update(SceneFixture::WeakPtr weakFixture, float dt)
+//{
+//	auto fixture = weakFixture.lock();
+//	if (!fixture)
+//	{
+//		LOG_ERROR("Could not lock scene fixture");
+//
+//		return;
+//	}
+//
+//	const auto& auxRepo = fixture->GetAuxTextureRepository();
+//	if (!auxRepo)
+//	{
+//		LOG_ERROR("Auxilliary Texture Repository was null");
+//
+//		return;
+//	}
+//
+//	ImGui::Begin("Editor", nullptr, ImGuiWindowFlags_MenuBar);
+//
+//	DrawToolbar(*fixture);
+//
+//	InspectorEntityPanel::UpdateSelectionBoxPositions(fixture->GetCamera());
+//
+//	AtUpdateBegin atUpdateBegin{};
+//	auto currentState = updateState_.Take();
+//
+//	if (UserWantsClearSelectedEntity())
+//	{
+//		InspectorEntityPanel::ClearSelection();
+//		InspectorComponentPanel::ClearState();
+//
+//		currentState.forcePanelOpen = PanelType::Entities;
+//	}
+//	else if (currentState.forceEntitySelectionForEdit != kInvalidEntity)
+//	{
+//		InspectorEntityPanel::SetSelectedEntityForEdit(currentState.forceEntitySelectionForEdit);
+//		currentState.forcePanelOpen = PanelType::Components;
+//	}
+//
+//	if (ImGui::BeginTabBar("Tabs"))
+//	{
+//		if (ImGui::BeginTabItem("Entities", nullptr, currentState.GetTabFlags(PanelType::Entities)))
+//		{
+//			activePanel_ = PanelType::Entities;
+//
+//			auto entityCtx = InspectorEntityPanel::ResourceContext{ 
+//				.camera = fixture->GetCamera(),
+//				.textureRepo = *auxRepo
+//			};
+//			InspectorEntityPanel::Update(entityCtx);
+//
+//			ImGui::EndTabItem();
+//		}
+//
+//		if (ImGui::BeginTabItem("Systems", nullptr, currentState.GetTabFlags(PanelType::Systems)))
+//		{
+//			activePanel_ = PanelType::Systems;
+//
+//			auto sysCtx = InspectorSystemPanel::ResourceContext{ 
+//				.systemManager = fixture->GetSystemManager(),
+//				.textureRepo = *auxRepo
+//			};
+//			InspectorSystemPanel::Update(sysCtx);
+//
+//			ImGui::EndTabItem();
+//		}
+//
+//		const bool entitySelected = InspectorEntityPanel::GetSelection().IsEditing();
+//
+//		if (atUpdateBegin.selectedEntity == kInvalidEntity && entitySelected)
+//		{
+//			currentState.forcePanelOpen = PanelType::Components;
+//		}
+//
+//		ImGui::BeginDisabled(!entitySelected);
+//		
+//		if (ImGui::BeginTabItem("Components", nullptr, currentState.GetTabFlags(PanelType::Components)))
+//		{
+//			activePanel_ = PanelType::Components;
+//
+//			if (entitySelected)
+//			{
+//				const auto selectedEntityId = InspectorEntityPanel::GetSelection().entityId;
+//				if (selectedEntityId != atUpdateBegin.selectedEntity)
+//				{
+//					InspectorComponentPanel::SetActiveBuilderType(kInvalidComponentBuilderType);
+//				}
+//
+//				auto e = ECS::GetEntityByID(selectedEntityId);
+//				assert(e.IsValid());
+//
+//				InspectorComponentPanel::Update(e, *fixture);
+//			}
+//
+//			ImGui::EndTabItem();
+//		}
+//
+//		ImGui::EndDisabled();
+//
+//		if (ImGui::BeginTabItem("Events", nullptr, currentState.GetTabFlags(PanelType::Events)))
+//		{
+//			activePanel_ = PanelType::Events;
+//
+//			auto evCtx = InspectorEventPanel::ResourceContext{
+//				.eventBus = fixture->GetEventBus(),
+//				.textureRepo = *auxRepo
+//			};
+//			InspectorEventPanel::Update(evCtx);
+//
+//			ImGui::EndTabItem();
+//		}
+//
+//		if (atUpdateBegin.historyCursor != ComponentEditHistory::GetCursor())
+//		{
+//			UpdateForHistoryChange();
+//		}
+//
+//		ImGui::EndTabBar();
+//	}
+//
+//	HandleEntityDrag(fixture->GetCamera(), atUpdateBegin.selectedEntity);
+//	HandleCameraControl(fixture->GetCamera(), dt);
+//	ClearHoverSelectionIfNeeded();
+//
+//	ImGui::End();
+//
+//	if (activeWindows_ & WindowType::ConsoleWindow)
+//	{
+//		if (!GuiConsole::Draw())
+//		{
+//			activeWindows_ &= ~WindowType::ConsoleWindow;
+//		}
+//	}
+//	if (activeWindows_ & WindowType::AssetWindow)
+//	{
+//		if (!assetViewer_.Draw(*fixture))
+//		{
+//			activeWindows_ &= ~WindowType::AssetWindow;
+//		}
+//	}
+//}
 
 void Editor::Update(SceneFixture::WeakPtr weakFixture, float dt)
 {
@@ -253,135 +461,114 @@ void Editor::Update(SceneFixture::WeakPtr weakFixture, float dt)
 		return;
 	}
 
-	ImGui::Begin("Editor", nullptr, ImGuiWindowFlags_MenuBar);
+	AtUpdateBegin atUpdateBegin{};
 
 	DrawToolbar(*fixture);
 
-	InspectorEntityPanel::UpdateSelectionBoxPositions(fixture->GetCamera());
+	DrawGameDisplayWindow(*fixture);
 
-	AtUpdateBegin atUpdateBegin{};
-	auto currentState = updateState_.Take();
+	//auto currentState = updateState_.Take();
 
 	if (UserWantsClearSelectedEntity())
 	{
 		InspectorEntityPanel::ClearSelection();
 		InspectorComponentPanel::ClearState();
 
-		currentState.forcePanelOpen = PanelType::Entities;
+		//currentState.forcePanelOpen = PanelType::Entities;
 	}
-	else if (currentState.forceEntitySelectionForEdit != kInvalidEntity)
+	//else if (currentState.forceEntitySelectionForEdit != kInvalidEntity)
+	//{
+	//	InspectorEntityPanel::SetSelectedEntityForEdit(currentState.forceEntitySelectionForEdit);
+	//	currentState.forcePanelOpen = PanelType::Components;
+	//}
+
+	InspectorEntityPanel::UpdateSelectionBoxPositions(fixture->GetCamera());
+
+	if (activeWindows_ & WindowType::EntityWindow)
 	{
-		InspectorEntityPanel::SetSelectedEntityForEdit(currentState.forceEntitySelectionForEdit);
-		currentState.forcePanelOpen = PanelType::Components;
+		if (((atUpdateBegin.activeWindows & WindowType::EntityWindow) == 0) &&
+			InspectorEntityPanel::GetSelection().IsEditing())
+		{
+			InspectorEntityPanel::SetSelectionBoxVisibility(true);
+		}
+
+		if (!InspectorEntityPanel::Draw(*fixture))
+		{
+			activeWindows_ &= ~WindowType::EntityWindow;
+		}
+	}
+	else if (atUpdateBegin.activeWindows & WindowType::EntityWindow)
+	{
+		InspectorEntityPanel::SetSelectionBoxVisibility(false);
 	}
 
-	if (ImGui::BeginTabBar("Tabs"))
+	if (!InspectorEntityPanel::GetSelection().IsEditing())
 	{
-		if (ImGui::BeginTabItem("Entities", nullptr, currentState.GetTabFlags(PanelType::Entities)))
+		activeWindows_ &= ~WindowType::ComponentWindow;
+	}
+	if (activeWindows_ & WindowType::ComponentWindow)
+	{
+		const auto selectedEntityId = InspectorEntityPanel::GetSelection().entityId;
+		if (selectedEntityId != atUpdateBegin.selectedEntity)
 		{
-			activePanel_ = PanelType::Entities;
-
-			auto entityCtx = InspectorEntityPanel::ResourceContext{ 
-				.camera = fixture->GetCamera(),
-				.textureRepo = *auxRepo
-			};
-			InspectorEntityPanel::Update(entityCtx);
-
-			ImGui::EndTabItem();
+			InspectorComponentPanel::SetActiveBuilderType(kInvalidComponentBuilderType);
 		}
 
-		if (ImGui::BeginTabItem("Systems", nullptr, currentState.GetTabFlags(PanelType::Systems)))
+		auto e = ECS::GetEntityByID(selectedEntityId);
+		assert(e.IsValid());
+
+		if (!InspectorComponentPanel::Draw(e, *fixture))
 		{
-			activePanel_ = PanelType::Systems;
-
-			auto sysCtx = InspectorSystemPanel::ResourceContext{ 
-				.systemManager = fixture->GetSystemManager(),
-				.textureRepo = *auxRepo
-			};
-			InspectorSystemPanel::Update(sysCtx);
-
-			ImGui::EndTabItem();
-		}
-
-		const bool entitySelected = InspectorEntityPanel::GetSelection().IsEditing();
-
-		if (atUpdateBegin.selectedEntity == kInvalidEntity && entitySelected)
-		{
-			currentState.forcePanelOpen = PanelType::Components;
-		}
-
-		ImGui::BeginDisabled(!entitySelected);
-		
-		if (ImGui::BeginTabItem("Components", nullptr, currentState.GetTabFlags(PanelType::Components)))
-		{
-			activePanel_ = PanelType::Components;
-
-			if (entitySelected)
-			{
-				const auto selectedEntityId = InspectorEntityPanel::GetSelection().entityId;
-				if (selectedEntityId != atUpdateBegin.selectedEntity)
-				{
-					InspectorComponentPanel::SetActiveBuilderType(kInvalidComponentBuilderType);
-				}
-
-				auto e = ECS::GetEntityByID(selectedEntityId);
-				assert(e.IsValid());
-
-				InspectorComponentPanel::Update(e, *fixture);
-			}
-
-			ImGui::EndTabItem();
-		}
-
-		ImGui::EndDisabled();
-
-		if (ImGui::BeginTabItem("Events", nullptr, currentState.GetTabFlags(PanelType::Events)))
-		{
-			activePanel_ = PanelType::Events;
-
-			auto evCtx = InspectorEventPanel::ResourceContext{
-				.eventBus = fixture->GetEventBus(),
-				.textureRepo = *auxRepo
-			};
-			InspectorEventPanel::Update(evCtx);
-
-			ImGui::EndTabItem();
+			activeWindows_ &= ~WindowType::ComponentWindow;
 		}
 
 		if (atUpdateBegin.historyCursor != ComponentEditHistory::GetCursor())
 		{
 			UpdateForHistoryChange();
 		}
+	}
 
-		ImGui::EndTabBar();
+	if (activeWindows_ & WindowType::SystemWindow)
+	{
+		if (!InspectorSystemPanel::Draw(*fixture))
+		{
+			activeWindows_ &= ~WindowType::SystemWindow;
+		}
+	}
+
+	if (activeWindows_ & WindowType::EventWindow)
+	{
+		if (!InspectorEventPanel::Draw(*fixture))
+		{
+			activeWindows_ &= ~WindowType::EventWindow;
+		}
+	}
+
+	if (activeWindows_ & WindowType::ConsoleWindow)
+	{
+		if (!GuiConsole::Draw())
+		{
+			activeWindows_ &= ~WindowType::ConsoleWindow;
+		}
+	}
+	if (activeWindows_ & WindowType::AssetWindow)
+	{
+		if (!assetViewer_.Draw(*fixture))
+		{
+			activeWindows_ &= ~WindowType::AssetWindow;
+		}
 	}
 
 	HandleEntityDrag(fixture->GetCamera(), atUpdateBegin.selectedEntity);
 	HandleCameraControl(fixture->GetCamera(), dt);
-	ClearHoverSelectionIfNeeded();
-
-	ImGui::End();
-
-	if (activeWindows_ & WindowType::Console)
-	{
-		if (!GuiConsole::Draw())
-		{
-			activeWindows_ &= ~WindowType::Console;
-		}
-	}
-	if (activeWindows_ & WindowType::Assets)
-	{
-		if (!assetViewer_.Draw(*fixture))
-		{
-			activeWindows_ &= ~WindowType::Assets;
-		}
-	}
 }
 
-Result<Void> Editor::InitUtilities()
+Result<Void> Editor::InitUtilities(SceneFixture& fixture)
 {
 	GuiResource::Init();
-	GuiMouse::Init();
+
+	const auto& renderTarget = fixture.GetRenderTarget();
+	GuiMouse::Init(renderTarget.width, renderTarget.height, fixture.GetGameDisplayArea());
 
 	AssignGuiStyles();
 
@@ -415,7 +602,7 @@ Result<Void> Editor::Init(SceneFixture::SharedPtr& fixture)
 	ECS::RegisterComponent<InspectorTag>();
 	ECS::RegisterComponent<CallbackInfo>();
 
-	TRY(InitUtilities());
+	TRY(InitUtilities(*fixture));
 	TRY(InitPanels(*fixture));
 	TRY(InitWindows(*fixture));
 
@@ -442,8 +629,10 @@ SceneFixture::SceneConfiguration Editor::GetSceneConfiguration()
 	};
 
 	return SceneFixture::SceneConfiguration{
-		.flags = SceneFixture::SceneConfiguration::InitAuxTextureRepo,
-		.omitEntityDestruction = omitEntityDestruction
+		.flags = SceneFixture::SceneConfiguration::InitAuxTextureRepo |
+				 SceneFixture::SceneConfiguration::OverrideRenderPresent,
+		.omitEntityDestruction = omitEntityDestruction,
+		.displayAreaFit = AspectRatioFit::Stretch
 	};
 }
 

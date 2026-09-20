@@ -69,6 +69,8 @@ public:
 
 	static Result<Void> Init(SceneFixture& fixture);
 
+	static bool Draw(SceneFixture& fixture);
+
 	static void Update(ResourceContext& resourceCtx);
 
 	static void UpdateSelectionBoxPositions(const Camera& cam);
@@ -82,6 +84,8 @@ public:
 	static Result<Void> ResetForNewScene(SceneFixture& fixture);
 
 	static void ClearSelection();
+
+	static void SetSelectionBoxVisibility(bool tf);
 
 private:
 	struct HoverStack
@@ -114,11 +118,11 @@ private:
 
 	static Entity_t MakeSelectionBox();
 
-	static void UpdateSelectionBoxes();
+	static void UpdateSelectionBoxes(bool newEditSelection);
 
-	static void DrawEntitySelections(ResourceContext& ctx);
+	static bool DrawEntitySelections(ResourceContext& ctx);
 	static bool DrawAddEntityButton(const GuiTextureConverter& converter);
-	static void DrawAddChildButton(Entity& e, const GuiTextureConverter& converter);
+	static bool DrawAddChildButton(Entity& e, const GuiTextureConverter& converter);
 	static void ClearSelectionBoxes();
 
 	static void AssignEntityName(Entity& e);

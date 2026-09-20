@@ -33,6 +33,8 @@ public:
 
 	static void Update(ResourceContext& resourceCtx);
 
+	static bool Draw(SceneFixture& fixture);
+
 	static Result<Void> Init(SceneFixture& fixture);
 
 	static Buttons& GetButtons() { return buttons_; }

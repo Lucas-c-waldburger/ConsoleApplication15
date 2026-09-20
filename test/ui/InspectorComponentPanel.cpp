@@ -691,50 +691,25 @@ auto InspectorComponentPanel::Update(Entity& e, SceneFixture& fixture) -> Update
 		ImGui::EndChild();
 	}
 
-	//if (activeBuilderType_ != ComponentBuilderType::None)
-	//{
-	//	ImGui::BeginChild("ComponentBuilder", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY);
-
-	//	bool built = false;
-
-	//	switch (activeBuilderType_)
-	//	{
-	//	case ComponentBuilderType::RigidBody:
-	//	{
-	//		built = GuiEditComponentBuilder<RigidBody>::Draw(ctx.entity, ctx.world);
-	//		break;
-	//	}
-	//	case ComponentBuilderType::Collider:
-	//	{
-	//		if (!ctx.entity.HasComponent<RigidBody>(&RigidBodyValid))
-	//		{
-	//			activeBuilderType_ = ComponentBuilderType::None;
-	//		}
-
-	//		auto& body = ctx.entity.GetComponent<RigidBody>().body;
-
-	//		//built = GuiEditComponentBuilder<Collider>::Draw(ctx.entity, body, ctx.camera);
-	//		built = GuiEditComponentBuilder<Collider>::DrawInteractive(ctx.entity, body, ctx.camera);
-	//		break;
-	//	}
-	//	case ComponentBuilderType::EventCallback:
-	//	{
-	//		built = GuiEditComponentBuilder<CallbackInfo>::Draw(ctx.entity, ctx.scriptSys, ctx.eventBus);
-	//		break;
-	//	}
-	//	default:
-	//		break;
-	//	}
-
-	//	if (built)
-	//	{
-	//		activeBuilderType_ = ComponentBuilderType::None;
-	//	}
-
-	//	ImGui::EndChild();
-	//}
-
 	return report;
+}
+
+bool InspectorComponentPanel::Draw(Entity& e, SceneFixture& fixture)
+{
+	bool isOpen = true;
+
+	if (!ImGui::Begin("Components", &isOpen))
+	{
+		ImGui::End();
+
+		return isOpen;
+	}
+
+	Update(e, fixture);
+
+	ImGui::End();
+
+	return isOpen;
 }
 
 void InspectorComponentPanel::ClearState()

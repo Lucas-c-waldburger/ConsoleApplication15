@@ -13,6 +13,8 @@
 #include "../systems/SystemManager.h"
 #include "../atlas/NewTextureRepository.h"
 #include "../events/EventBus2.h"
+#include "../render/RenderTarget.h"
+#include "../render/AspectRatioFit.h"
 
 class SceneFixture
 {
@@ -34,13 +36,17 @@ public:
 	{
 		enum Flag : uint8_t
 		{
-			InitAuxTextureRepo = 1 << 0
+			InitAuxTextureRepo = 1 << 0,
+			OverrideRenderPresent = 1 << 1
 		};
 
 		SDL_Color screenColor = SDLite::kColorBlack;
 		SDL_FPoint worldGravity = { 0, 9.8f };
 		uint8_t flags = 0;
 		bool (*omitEntityDestruction)(const Entity&) = nullptr;
+		Dimensions<int> renderTargetDimensions = { 0, 0 };
+		SDL_FRect displayArea = { 0.0f, 0.0f, 0.0f, 0.0f };
+		AspectRatioFit displayAreaFit = AspectRatioFit::Letterbox;
 	};
 
 	//struct PersistenceData
@@ -104,7 +110,7 @@ public:
 	//private:
 	//	nlohmann::json frameJson_;
 	//};
-	   
+
 	SceneFixture() = default;
 	~SceneFixture();
 
@@ -212,9 +218,22 @@ public:
 
 	void ResetForNewScene(const SceneConfiguration& config);
 
+	const RenderTarget& GetRenderTarget() const { return renderTarget_; }
+
+	void SetRenderTarget(int w, int h);
+
+	SDL_FRect GetGameDisplayArea() const { return gameDisplayArea_; }
+
+	void SetGameDisplayArea(SDL_FRect area);
+
+	void RenderPresent();
+
 private:
 	void UpdateTimers();
 	Result<Void> RenderScene();
+
+	template <Phase ph>
+	void RunSystemUpdates();
 
 	Result<bool> RunGameLoopImpl();
 
@@ -239,6 +258,8 @@ private:
 	SceneConfiguration config_;
 	GameLoopController gameLoopController_;
 	SystemManager systems_;
+	RenderTarget renderTarget_;
+	SDL_FRect gameDisplayArea_;
 };
 
 template<typename Fn> requires std::is_invocable_r_v<bool, Fn>
@@ -303,4 +324,15 @@ inline void SceneFixture::SetTestScriptFile(std::string_view scriptFileName, std
 		});
 	
 	assert(testScript_.hookAttachmentHandle.IsValid());
+}
+
+template <Phase ph>
+void SceneFixture::RunSystemUpdates()
+{
+	if (IsSystemRegistered<ScriptSystem>())
+	{
+		GetSystem<ScriptSystem>().Update<ph>(GetDeltaTime());
+	}
+
+	systems_.RunSystemUpdates(ph, GetDeltaTime());
 }

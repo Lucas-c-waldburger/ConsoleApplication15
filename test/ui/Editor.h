@@ -30,9 +30,13 @@ public:
 
 	enum WindowType : uint8_t
 	{
-		Main = 1 << 0,
-		Console = 1 << 1,
-		Assets = 1 << 2
+		MainWindow = 1 << 0,
+		ConsoleWindow = 1 << 1,
+		AssetWindow = 1 << 2,
+		EntityWindow = 1 << 3,
+		ComponentWindow = 1 << 4,
+		SystemWindow = 1 << 5,
+		EventWindow = 1 << 6
 	};
 
 	struct UpdateState
@@ -72,6 +76,8 @@ public:
 
 	static PanelType GetActivePanel() { return activePanel_; }
 
+	static uint8_t GetActiveWindows() { return activeWindows_; }
+
 	static void SetActivePanel(PanelType panelType) { activePanel_ = panelType; }
 
 	static const UpdateState& GetUpdateState() { return updateState_; }
@@ -96,12 +102,12 @@ private:
 
 	static void UpdateForHistoryChange();
 
-	static Result<Void> InitUtilities();
+	static Result<Void> InitUtilities(SceneFixture& fixture);
 	static Result<Void> InitWindows(SceneFixture& fixture);
 	static Result<Void> InitPanels(SceneFixture& fixture);
 	
 	static inline PanelType activePanel_ = PanelType::Entities;
-	static inline uint8_t activeWindows_ = WindowType::Main;
+	static inline uint8_t activeWindows_ = WindowType::MainWindow;
 	static inline EntityDragUtility entityDrag_{};
 	static inline CameraControlUtility cameraControl_{};
 	static inline AssetViewer assetViewer_;

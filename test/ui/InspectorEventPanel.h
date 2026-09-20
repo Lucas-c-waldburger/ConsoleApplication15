@@ -36,6 +36,8 @@ public:
 
 	static Result<Void> Init(SceneFixture& fixture);
 
+	static bool Draw(SceneFixture& fixture);
+
 	static void Update(ResourceContext& ctx);
 
 	static Result<Void> ResetForNewScene(SceneFixture& fixture);

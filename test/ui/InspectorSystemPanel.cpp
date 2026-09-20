@@ -348,6 +348,32 @@ void InspectorSystemPanel::Update(ResourceContext& ctx)
 	DrawSystems(ctx.systemManager, ctx.textureRepo);
 }
 
+bool InspectorSystemPanel::Draw(SceneFixture& fixture)
+{
+	bool isOpen = true;
+
+	if (!ImGui::Begin("Systems", &isOpen))
+	{
+		ImGui::End();
+
+		return isOpen;
+	}
+
+	auto& auxRepo = fixture.GetAuxTextureRepository();
+	assert(auxRepo);
+
+	auto ctx = ResourceContext{
+		.systemManager = fixture.GetSystemManager(),
+		.textureRepo = *auxRepo
+	};
+
+	Update(ctx);
+
+	ImGui::End();
+
+	return isOpen;
+}
+
 Result<Void> InspectorSystemPanel::ResetForNewScene(SceneFixture& fixture)
 {
 	draw_system<ScriptSystem>::tableIdToFormattedFunctionStrings_.clear();

@@ -717,11 +717,6 @@ void ColliderEditUtility::TransformRectToPolygonShape(Shape& shape, ShapeData& d
 
 void ColliderEditUtility::UpdateFocusedPoint(SDL_FPoint mousePos)
 {
-	if (GuiMouse::IsLeftClicked())
-	{
-		int i = 0;
-	}
-
 	if (state_.editMode == EditMode::DraggingPoints)
 	{
 		assert(focusedPointIndex_ < shape_.pointEntities.size());

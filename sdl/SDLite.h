@@ -219,6 +219,11 @@ namespace SDLite
 			SDL_SetRenderDrawColor(*this, clr.r, clr.g, clr.b, clr.a);
 		}
 
+		void SetRenderTarget(SDL_Texture* tx)
+		{
+			SDL_SetRenderTarget(*this, tx);
+		}
+
 	private:
 		AppRenderer() : AppObject() {}
 	};

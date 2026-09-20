@@ -14,8 +14,19 @@ bool GuiMouse::CheckState(MouseInputSource src, InputState st)
 	return entity_.GetComponent<MouseState>().inputs[src].state == st;
 }
 
-void GuiMouse::Init() 
+SDL_FPoint GuiMouse::ToRenderTarget(SDL_FPoint p)
 {
+	return {
+		(p.x - displayArea_.x) * (renderTargetDimensions_.w / displayArea_.w),
+		(p.y - displayArea_.y) * (renderTargetDimensions_.h / displayArea_.h)
+	};
+}
+
+void GuiMouse::Init(int renderW, int renderH, SDL_FRect displayArea) 
+{
+	assert(renderW > 0 && renderW > 0);
+	assert(displayArea.w > 0 && displayArea.h > 0);
+
 	if (entity_.IsValid())
 	{
 		assert(entity_.HasComponent<InspectorTag>());
@@ -32,18 +43,21 @@ void GuiMouse::Init()
 	entity_.AddComponent<InspectorTag>();
 	entity_.AddComponent<MouseState>();
 	entity_.AddComponent<Name>().value = "GuiMouse";
+
+	displayArea_ = displayArea;
+	renderTargetDimensions_ = { renderW, renderH };
 }
 
 SDL_FPoint GuiMouse::GetPosition()
 {
 	assert(entity_.IsValid());
-	return entity_.GetComponent<MouseState>().values.cursor.absolutePos;
+	return ToRenderTarget(entity_.GetComponent<MouseState>().values.cursor.absolutePos);
 }
 
 SDL_FPoint GuiMouse::GetRelativePosition()
 {
 	assert(entity_.IsValid());
-	return entity_.GetComponent<MouseState>().values.cursor.relativePos;
+	return ToRenderTarget(entity_.GetComponent<MouseState>().values.cursor.relativePos);
 }
 
 bool GuiMouse::IsLeftClicked()
@@ -99,6 +113,11 @@ bool GuiMouse::IsWheelScrolled()
 bool GuiMouse::InsideEditorWindow()
 {
 	return ImGui::GetIO().WantCaptureMouse;
+}
+
+void GuiMouse::SetDisplayArea(SDL_FRect displayArea)
+{
+	displayArea_ = displayArea;
 }
 
 float GuiMouse::GetScrollY()

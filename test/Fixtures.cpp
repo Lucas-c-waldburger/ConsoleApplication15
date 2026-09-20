@@ -50,6 +50,25 @@ GetFilteredEntitiesToRender(const SceneFixture& fx, const std::vector<Entity>& e
 	);
 }
 
+constexpr SDL_FRect FitAspectRatio(AspectRatioFit fit, SDL_FRect area, int srcW, int srcH)
+{
+	assert(area.w > 0 && area.h > 0 && srcW > 0 && srcH > 0);
+
+	const float scale = GetAspectRatioFitScale(
+		fit, area.w, area.h, static_cast<float>(srcW), static_cast<float>(srcH)
+	);
+
+	const float w = srcW * scale;
+	const float h = srcH * scale;
+
+	return {
+		area.x + (area.w - w) * 0.5f,
+		area.y + (area.h - h) * 0.5f,
+		w,
+		h
+	};
+}
+
 } // unnamed
 
 SceneFixture::~SceneFixture()
@@ -296,10 +315,6 @@ Result<Void> SceneFixture::UpdateCamera()
 
 Result<Void> SceneFixture::UpdateAudio()
 {
-	//assert(systems_.IsSystemRegistered<AudioSystem>());
-
-	//systems_.GetSystem<AudioSystem>().Update(GetDeltaTime());
-
 	assert(systems_.IsSystemRegistered<AudioSystem2>());
 
 	systems_.GetSystem<AudioSystem2>().Update(GetDeltaTime(), audioBank_);
@@ -337,6 +352,28 @@ Result<Void> SceneFixture::UpdateRender()
 	return Void{};
 }
 
+void SceneFixture::SetRenderTarget(int w, int h)
+{
+	if (w >= 0 || h >= 0)
+	{
+		return;
+	}
+
+	renderTarget_ = RenderTarget::Create(GetRenderer(), w, h);
+
+	GetCamera().SetViewportSize({ static_cast<float>(w), static_cast<float>(h) });
+}
+
+void SceneFixture::SetGameDisplayArea(SDL_FRect area)
+{
+	if (area.w >= 0 || area.h >= 0)
+	{
+		return;
+	}
+
+	gameDisplayArea_ = area;
+}
+
 void SceneFixture::UpdateTimers()
 {
 	assert(systems_.IsSystemRegistered<TimerSystem>());
@@ -344,6 +381,21 @@ void SceneFixture::UpdateTimers()
 	float delta = systems_.GetSystem<GameLoopSystem>().GetDeltaTime();
 
 	systems_.GetSystem<TimerSystem>().Update(delta, eventBus_);
+}
+
+void SceneFixture::RenderPresent()
+{
+	const SDL_FRect destination = FitAspectRatio(
+		config_.displayAreaFit,
+		gameDisplayArea_,
+		renderTarget_.width,
+		renderTarget_.height
+	);
+
+	SDL_RenderCopyF(GetRenderer(),
+					renderTarget_,
+					nullptr,
+					&destination);
 }
 
 Result<Void> SceneFixture::UpdateUi()
@@ -372,15 +424,11 @@ Camera& SceneFixture::GetCamera()
 
 AudioBank& SceneFixture::GetAudioBank()
 {
-	//assert(systems_.IsSystemRegistered<AudioSystem>());
-	//return systems_.GetSystem<AudioSystem>().GetAudioBank();
 	return audioBank_;
 }
 
 const AudioBank& SceneFixture::GetAudioBank() const
 {
-	//assert(systems_.IsSystemRegistered<AudioSystem>());
-	//return systems_.GetSystem<AudioSystem>().GetAudioBank();
 	return audioBank_;
 }
 
@@ -406,7 +454,6 @@ Result<Void> SceneFixture::SerializeState(SerializationSystem::Filepaths fps)
 	}
 
 	assert(systems_.IsSystemRegistered<SerializationSystem>());
-	//assert(systems_.IsSystemRegistered<AudioSystem>());
 
 	systems_.GetSystem<SerializationSystem>().SerializeState(fps, textureRepo_, GetAudioBank());
 
@@ -430,7 +477,6 @@ Result<std::vector<Error>> SceneFixture::DeserializeState(SerializationSystem::F
 
 	assert(systems_.IsSystemRegistered<SerializationSystem>());
 	assert(systems_.IsSystemRegistered<SDLInputSystem>());
-	//assert(systems_.IsSystemRegistered<AudioSystem>());
 
 	auto es = ECS::GetAllActiveEntities();
 	for (auto& e : es)
@@ -450,7 +496,6 @@ Result<std::vector<Error>> SceneFixture::DeserializeState(SerializationSystem::F
 void SceneFixture::SerializeStateToJson(nlohmann::json& j) const
 {
 	assert(systems_.IsSystemRegistered<SerializationSystem>());
-	//assert(systems_.IsSystemRegistered<AudioSystem>());
 
 	systems_.GetSystem<SerializationSystem>().SerializeStateToJson(j, textureRepo_, GetAudioBank());
 
@@ -461,7 +506,6 @@ std::vector<Error> SceneFixture::DeserializeStateFromJson(const nlohmann::json& 
 {
 	assert(systems_.IsSystemRegistered<SerializationSystem>());
 	assert(systems_.IsSystemRegistered<SDLInputSystem>());
-	//assert(systems_.IsSystemRegistered<AudioSystem>());
 
 	if (auto res = DeserializeSceneFromJson(j); !res.Success())
 	{
@@ -511,11 +555,15 @@ Result<Void> SceneFixture::RenderScene()
 #if IMGUI_ENABLED
 	assert(systems_.IsSystemRegistered<GuiSystem>());
 
-	systems_.GetSystem<GuiSystem>().NewFrame();
-	systems_.GetSystem<GuiSystem>().Update(GetDeltaTime());
-	systems_.GetSystem<GuiSystem>().RenderPrepare();
+	auto& guiSys = GetSystem<GuiSystem>();
+	guiSys.NewFrame();
+	guiSys.Update(GetDeltaTime());
+	guiSys.RenderPrepare();
 #endif
 
+	SDLite::Renderer().Clear(config_.screenColor);
+
+	SDLite::Renderer().SetRenderTarget(renderTarget_);
 	SDLite::Renderer().Clear(config_.screenColor);
 
 	TRY(UpdateRender());
@@ -526,6 +574,13 @@ Result<Void> SceneFixture::RenderScene()
 	}
 
 	systems_.RunSystemUpdates(Phase::Presentation, GetDeltaTime());
+
+	SDLite::Renderer().SetRenderTarget(nullptr);
+
+	if ((config_.flags & SceneConfiguration::OverrideRenderPresent) == 0)
+	{
+		RenderPresent();
+	}
 
 #if IMGUI_ENABLED
 	assert(systems_.IsSystemRegistered<GuiSystem>());
@@ -618,16 +673,43 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance(const SceneConfi
 	fixture->systems_.RegisterSystem<GuiSystem>();
 #endif 
 
+	auto [rendTargetW, rendTargetH] = fixture->config_.renderTargetDimensions;
+	if (rendTargetW <= 0 || rendTargetH <= 0)
+	{
+		auto [winW, winH] = SDLite::Window().GetSize<int>();
+
+		rendTargetW = winW;
+		rendTargetH = winH;
+	}
+
+	fixture->renderTarget_ = RenderTarget::Create(fixture->GetRenderer(), rendTargetW, rendTargetH);
+
+	auto displayArea = fixture->config_.displayArea;
+	if (displayArea.w <= 0.0f || displayArea.h <= 0.0f)
+	{
+		displayArea.w = static_cast<float>(rendTargetW);
+		displayArea.h = static_cast<float>(rendTargetH);
+	}
+	if (displayArea.w > static_cast<float>(rendTargetW))
+	{
+		displayArea.w = static_cast<float>(rendTargetW);
+	}
+	if (displayArea.h > static_cast<float>(rendTargetH))
+	{
+		displayArea.h = static_cast<float>(rendTargetH);
+	}
+
+	fixture->gameDisplayArea_ = displayArea;
+
 	fixture->systems_.RegisterSystem<PhysicsSystem>();
 	fixture->systems_.RegisterSystem<SDLInputSystem>();
 	fixture->systems_.RegisterSystem<TimerSystem>();
 	fixture->systems_.RegisterSystem<GameLoopSystem>();
-	//fixture->systems_.RegisterSystem<AudioSystem>();
 	fixture->systems_.RegisterSystem<AudioSystem2>();
 	fixture->systems_.RegisterSystem<NewRenderSystem>();
 	fixture->systems_.RegisterSystem<SerializationSystem>();
 	fixture->systems_.RegisterSystem<SpriteAnimationSystem>();
-	fixture->systems_.RegisterSystem<CameraSystem>(SDLite::Window().GetSize<float>());
+	fixture->systems_.RegisterSystem<CameraSystem>(rendTargetW, rendTargetH);
 	fixture->systems_.RegisterSystem<ScriptSystem>();
 
 	if (fixture->config_.flags & SceneConfiguration::InitAuxTextureRepo)
@@ -637,7 +719,7 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance(const SceneConfi
 
 	SetUpFixtureLuaState(*fixture);
 	
-	fixture->GetCamera().SetPosition(SDLite::Window().GetLocalCenter<SDL_FPoint>());
+	fixture->GetCamera().SetPosition({ rendTargetW / 2.0f, rendTargetH / 2.0f });
 	 
 	return Result<std::shared_ptr<SceneFixture>>{ std::move(fixture) };
 }

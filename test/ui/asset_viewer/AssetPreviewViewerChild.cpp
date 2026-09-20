@@ -684,6 +684,8 @@ void AssetPreviewViewerChild::DrawSpriteSeriesReorderLayout(std::vector<Sprite>&
 
 	ImGui::SetCursorPosX(startPos);
 
+	size_t removeIdx = std::numeric_limits<size_t>::max();
+
 	for (size_t i = 0; i < sprites.size(); ++i)
 	{
 		if (i > 0)
@@ -706,7 +708,10 @@ void AssetPreviewViewerChild::DrawSpriteSeriesReorderLayout(std::vector<Sprite>&
 
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 
-		GuiImageButton("spriteReorder", spriteTx);
+		if (GuiImageButton("spriteReorder", spriteTx))
+		{
+			spriteSeriesAnimator_.index.current = i;
+		}
 
 		ImGui::PopStyleColor();
 
@@ -720,6 +725,16 @@ void AssetPreviewViewerChild::DrawSpriteSeriesReorderLayout(std::vector<Sprite>&
 				0,
 				1.0f
 			);
+		}
+
+		if (ImGui::BeginPopupContextItem("spriteReorderPopupContext"))
+		{
+			if (ImGui::MenuItem("Remove"))
+			{
+				removeIdx = i;
+			}
+
+			ImGui::EndPopup();
 		}
 
 		if (ImGui::BeginDragDropSource())
@@ -754,6 +769,16 @@ void AssetPreviewViewerChild::DrawSpriteSeriesReorderLayout(std::vector<Sprite>&
 		ImGui::PopID();
 	}
 
+	if (removeIdx < sprites.size())
+	{
+		core::Erase(sprites, sprites[removeIdx]);
+
+		spriteSeriesAnimator_.index.max = sprites.size();
+		spriteSeriesAnimator_.index.current = spriteSeriesAnimator_.index.current &
+											  spriteSeriesAnimator_.index.max;
+
+		spriteAtlas.DefineSpriteSeries(seriesName, sprites);
+	}
 }
 
 Result<Void> AssetPreviewViewerChild::LoadResources(SceneFixture& fixture)

@@ -345,6 +345,7 @@
     <ClCompile Include="test\ui\GuiConsole.cpp" />
     <ClCompile Include="test\ui\GuiMouse.cpp" />
     <ClCompile Include="test\ui\GuiResource.cpp" />
+    <ClCompile Include="test\ui\GuiTexture.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditAudio.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditBasicComponents.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditComponentBuilders.cpp" />
@@ -388,6 +389,7 @@
     <ClCompile Include="test\Fixtures.cpp" />
     <ClCompile Include="test\Premades.cpp" />
     <ClCompile Include="test\ui\SaveSceneUtility.cpp" />
+    <ClCompile Include="test\ui\tilemap_editor\TileGridRenderer.cpp" />
     <ClCompile Include="user\UserComponentBridge.cpp" />
     <ClCompile Include="user\UserSystemScheduler.cpp" />
   </ItemGroup>
@@ -869,6 +871,8 @@
     <ClInclude Include="core\SizedEnumMap.h" />
     <ClInclude Include="file\FilePathUtility.h" />
     <ClInclude Include="games\bullet_heaven\Terrain.h" />
+    <ClInclude Include="render\AspectRatioFit.h" />
+    <ClInclude Include="render\RenderTarget.h" />
     <ClInclude Include="render\TextFormatExpressionParser.h" />
     <ClInclude Include="scripting\LuaFunctionCallHandler.h" />
     <ClInclude Include="scripting\LuaFunctionTableParser.h" />
@@ -1299,6 +1303,8 @@
     <ClInclude Include="test\OnControllerInput.h" />
     <ClInclude Include="test\Premades.h" />
     <ClInclude Include="test\Resources.h" />
+    <ClInclude Include="test\ui\tilemap_editor\TileGridRenderer.h" />
+    <ClInclude Include="test\ui\WindowDocker.h" />
     <ClInclude Include="user\UserComponentDispatchTable.h" />
     <ClInclude Include="user\UserComponentBridge.h" />
     <ClInclude Include="user\UserComponentTypeId.h" />

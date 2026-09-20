@@ -77,6 +77,8 @@ public:
 
 	static UpdateReport Update(Entity& e, SceneFixture& fixture);
 
+	static bool Draw(Entity& e, SceneFixture& fixture);
+
 	static void ClearState();
 
 	static Buttons& GetButtons() { return buttons_; }

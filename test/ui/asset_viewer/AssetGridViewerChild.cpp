@@ -124,6 +124,13 @@ const AssetItem& GetPayloadAssetItem(const AssetTree& assetTree, const std::stri
 	return Null<AssetItem>();
 }
 
+bool IsDragDropActive(std::string_view payloadName)
+{
+	auto* payload = ImGui::GetDragDropPayload();
+
+	return payload && payload->IsDataType(payloadName.data());
+}
+
 std::string_view GetAudioConvertPopupText(const Handle<Audio>& handle, const AudioBank& bank)
 {
 	static constexpr std::string_view kToMusic = "Convert to Music";
@@ -165,6 +172,34 @@ bool ReadyToPerformAudioRequest(const AssetGridViewerChild::AudioAssetGridSelect
 		(audioReqFlag | GameLoopPassedSinceRequest);
 }
 
+void ScrollWithMouse()
+{
+	const ImVec2 mouse = ImGui::GetMousePos();
+
+	const float top = ImGui::GetWindowPos().y;
+	const float bottom = top + ImGui::GetWindowHeight();
+
+	static constexpr float edgeSize = 50.0f;
+	static constexpr float maxSpeed = 600.0f;
+
+	if (mouse.y < top + edgeSize)
+	{
+		const float t = 1.0f - (mouse.y - top) / edgeSize;
+
+		ImGui::SetScrollY(
+			ImGui::GetScrollY() -
+			maxSpeed * t * t * ImGui::GetIO().DeltaTime);
+	}
+	else if (mouse.y > bottom - edgeSize)
+	{
+		const float t = 1.0f - (bottom - mouse.y) / edgeSize;
+
+		ImGui::SetScrollY(
+			ImGui::GetScrollY() +
+			maxSpeed * t * t * ImGui::GetIO().DeltaTime);
+	}
+}
+
 } // unnamed
 
 void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
@@ -191,6 +226,11 @@ void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
 		DrawSpriteAssetGrid(fixture.GetTextureRepository(), ctx);
 
 		ResolveSpritePopupContextActions(fixture.GetTextureRepository().GetSpriteAtlas());
+
+		if (IsDragDropActive(kSpriteGridCellPayloadName))
+		{
+			ScrollWithMouse();
+		}
 
 		currentAssetTab_ = AssetItem::Type::Image;
 
@@ -230,52 +270,50 @@ void AssetGridViewerChild::HandleAssetDragDropTarget(SceneFixture& fixture, Reso
 {
 	AssetItem::Type lastLoadedAssetType = AssetItem::Type::Unknown;
 
-	if (!ImGui::BeginDragDropTarget())
+	if (ImGui::BeginDragDropTarget())
 	{
-		return;
-	}
-
-	if (const auto& item = GetPayloadAssetItem(ctx.assetTree, kDirectoryPayloadName))
-	{
-		assert(item.type == AssetItem::Type::Directory);
-
-		lastLoadedAssetType = HandleDirectoryAssetDragDropTarget(item, ctx.assetTree, fixture);
-	}
-	else if (const auto& item = GetPayloadAssetItem(ctx.assetTree, kImagePayloadName))
-	{
-		assert(item.type == AssetItem::Type::Image);
-
-		lastLoadedAssetType = HandleSpriteAssetDragDropTarget(
-			item, 
-			fixture.GetTextureRepository().GetSpriteAtlas(),
-			fixture.GetRenderer());
-	}
-	else if (const auto& item = GetPayloadAssetItem(ctx.assetTree, kAudioPayloadName))
-	{
-		assert(item.type == AssetItem::Type::Audio);
-
-		if (!pendingDragDropTargetItem_)
+		if (const auto& item = GetPayloadAssetItem(ctx.assetTree, kDirectoryPayloadName))
 		{
-			pendingDragDropTargetItem_ = item;
+			assert(item.type == AssetItem::Type::Directory);
 
-			ImGui::OpenPopup("loadAsMusOrSound");
+			lastLoadedAssetType = HandleDirectoryAssetDragDropTarget(item, ctx.assetTree, fixture);
 		}
-	}
-	else if (const auto& item = GetPayloadAssetItem(ctx.assetTree, kFontPayloadName))
-	{
-		assert(item.type == AssetItem::Type::Font);
+		else if (const auto& item = GetPayloadAssetItem(ctx.assetTree, kImagePayloadName))
+		{
+			assert(item.type == AssetItem::Type::Image);
 
-		lastLoadedAssetType = HandleFontAssetDragDropTarget(
-			item,
-			fixture.GetTextureRepository().GetFontAtlas(),
-			fixture.GetRenderer());
-	}
+			lastLoadedAssetType = HandleSpriteAssetDragDropTarget(
+				item,
+				fixture.GetTextureRepository().GetSpriteAtlas(),
+				fixture.GetRenderer());
+		}
+		else if (const auto& item = GetPayloadAssetItem(ctx.assetTree, kAudioPayloadName))
+		{
+			assert(item.type == AssetItem::Type::Audio);
 
-	ImGui::EndDragDropTarget();
+			if (!pendingDragDropTargetItem_)
+			{
+				pendingDragDropTargetItem_ = item;
+
+				ImGui::OpenPopup("loadAsMusOrSound");
+			}
+		}
+		else if (const auto& item = GetPayloadAssetItem(ctx.assetTree, kFontPayloadName))
+		{
+			assert(item.type == AssetItem::Type::Font);
+
+			lastLoadedAssetType = HandleFontAssetDragDropTarget(
+				item,
+				fixture.GetTextureRepository().GetFontAtlas(),
+				fixture.GetRenderer());
+		}
+
+		ImGui::EndDragDropTarget();
+	}
 
 	if (pendingDragDropTargetItem_)
 	{
-		lastLoadedAssetType = ResolvePendingAssetDragDropTarget(fixture, lastLoadedAssetType);
+		lastLoadedAssetType = ResolvePendingAssetDragDropTarget(fixture);
 	}
 
 	if (IsAssetItemTypeFile(lastLoadedAssetType))
@@ -284,11 +322,11 @@ void AssetGridViewerChild::HandleAssetDragDropTarget(SceneFixture& fixture, Reso
 	}
 }
 
-AssetItem::Type AssetGridViewerChild::ResolvePendingAssetDragDropTarget(SceneFixture& fixture, 
-																		AssetItem::Type lastLoadedType)
+AssetItem::Type AssetGridViewerChild::ResolvePendingAssetDragDropTarget(SceneFixture& fixture)
 {
 	assert(pendingDragDropTargetItem_);
 
+	AssetItem::Type loadedType = AssetItem::Type::Unknown;
 	uint8_t outcome = 0;
 
 	switch (pendingDragDropTargetItem_->type)
@@ -297,7 +335,7 @@ AssetItem::Type AssetGridViewerChild::ResolvePendingAssetDragDropTarget(SceneFix
 		outcome = ResolveAudioAssetDragDropTarget(fixture.GetAudioBank());
 		if (outcome & ResolveAssetDragDropOutcome::LoadSuccessful)
 		{
-			lastLoadedType = AssetItem::Type::Audio;
+			loadedType = AssetItem::Type::Audio;
 		}
 		break;
 
@@ -310,7 +348,7 @@ AssetItem::Type AssetGridViewerChild::ResolvePendingAssetDragDropTarget(SceneFix
 		pendingDragDropTargetItem_.reset();
 	}
 
-	return lastLoadedType;
+	return loadedType;
 }
 
 void AssetGridViewerChild::DrawSpriteAssetGrid(TextureRepository& loadTargetRepo, ResourceContext& ctx)
@@ -773,40 +811,19 @@ AssetItem::Type AssetGridViewerChild::HandleSpriteAssetDragDropTarget(const Asse
 AssetItem::Type AssetGridViewerChild::HandleAudioAssetDragDropTarget(const AssetItem& item, 
 																	 AudioBank& audioBank)
 {
-	ImGui::OpenPopup("loadAsMusOrSound");
-
-	if (ImGui::BeginPopup("loadAsMusOrSound"))
+	auto audioResult = audioBank.LoadAudio({
+		.audioType = AudioType::Music,
+		.filepath = item.path.string()
+	});
+	if (!audioResult.Success())
 	{
-		AudioType reqAudioType = AudioType::Unknown;
-
-		if (ImGui::MenuItem("As Music"))
-		{
-			reqAudioType = AudioType::Music;
-		}
-		if (ImGui::MenuItem("As Sound"))
-		{
-			reqAudioType = AudioType::Sound;
-		}
-
-		if (reqAudioType != AudioType::Unknown)
-		{
-			auto audioResult = audioBank.LoadAudio({
-				.audioType = reqAudioType,
-				.filepath = item.path.string()
-			});
-			if (!audioResult.Success())
-			{
-				LOG_ERROR(audioResult.GetError().GetMessage());
-			}
-			else
-			{
-				audioSelection_.Reset();
-				audioSelection_.audioHandle = audioResult.GetValue();
-				audioSelection_.state |= GridSelectionState::JustDragDroppedIntoGrid;
-			}
-		}
-
-		ImGui::EndPopup();
+		LOG_ERROR(audioResult.GetError().GetMessage());
+	}
+	else
+	{
+		audioSelection_.Reset();
+		audioSelection_.audioHandle = audioResult.GetValue();
+		audioSelection_.state |= GridSelectionState::JustDragDroppedIntoGrid;
 	}
 
 	return AssetItem::Type::Audio;
@@ -814,7 +831,7 @@ AssetItem::Type AssetGridViewerChild::HandleAudioAssetDragDropTarget(const Asset
 
 uint8_t AssetGridViewerChild::ResolveAudioAssetDragDropTarget(AudioBank& audioBank)
 {
-	assert(pendingDragDropTargetItem_); 
+	assert(pendingDragDropTargetItem_);
 
 	if (ImGui::BeginPopup("loadAsMusOrSound"))
 	{
@@ -835,31 +852,34 @@ uint8_t AssetGridViewerChild::ResolveAudioAssetDragDropTarget(AudioBank& audioBa
 				.audioType = reqAudioType,
 				.filepath = pendingDragDropTargetItem_->path.string()
 			});
+
 			if (!audioResult.Success())
 			{
 				LOG_ERROR(audioResult.GetError().GetMessage());
 
+				ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
+
 				return ResolveAssetDragDropOutcome::Completed;
 			}
-			else
-			{
-				audioSelection_.Reset();
-				audioSelection_.audioHandle = audioResult.GetValue();
-				audioSelection_.state |= GridSelectionState::JustDragDroppedIntoGrid;
 
-				return (ResolveAssetDragDropOutcome::Completed |
-					    ResolveAssetDragDropOutcome::LoadSuccessful);
-			}
+			audioSelection_.Reset();
+			audioSelection_.audioHandle = audioResult.GetValue();
+			audioSelection_.state |= GridSelectionState::JustDragDroppedIntoGrid;
+
+			ImGui::CloseCurrentPopup();
+			ImGui::EndPopup();
+
+			return (ResolveAssetDragDropOutcome::Completed |
+					ResolveAssetDragDropOutcome::LoadSuccessful);
 		}
 
 		ImGui::EndPopup();
 
 		return 0;
 	}
-	else
-	{
-		return ResolveAssetDragDropOutcome::Completed;
-	}
+
+	return 0;
 }
 
 AssetItem::Type AssetGridViewerChild::HandleFontAssetDragDropTarget(const AssetItem& item, 

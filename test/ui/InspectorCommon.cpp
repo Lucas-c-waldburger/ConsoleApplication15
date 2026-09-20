@@ -289,7 +289,6 @@ CollisionDataShapeInfo GetCollisionDataShapeInfo(Entity& e, const CollisionData&
 	return info;
 }
 
-
 } // ui
 
 #endif

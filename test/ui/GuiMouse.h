@@ -11,7 +11,7 @@ namespace ui {
 class GuiMouse
 {
 public:
-	static void Init();
+	static void Init(int renderW, int renderH, SDL_FRect displayArea);
 
 	static SDL_FPoint GetPosition();
 	static SDL_FPoint GetRelativePosition();
@@ -32,12 +32,19 @@ public:
 	static float GetScrollY();
 
 	static bool InsideEditorWindow();
+
+	static void SetDisplayArea(SDL_FRect displayArea);
+
 private:
 	GuiMouse() = default;
 
 	static bool CheckState(MouseInputSource src, InputState st);
+
+	static SDL_FPoint ToRenderTarget(SDL_FPoint p);
 	 
 	static inline Entity entity_;
+	static inline Dimensions<int> renderTargetDimensions_;
+	static inline SDL_FRect displayArea_;
 };
 
 } // ui

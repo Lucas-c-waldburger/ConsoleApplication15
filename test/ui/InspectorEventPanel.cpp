@@ -573,6 +573,32 @@ void InspectorEventPanel::Update(ResourceContext& ctx)
 	DrawEventList(editedEvents_, eventFiredList_, ctx);
 }
 
+bool InspectorEventPanel::Draw(SceneFixture& fixture)
+{
+	bool isOpen = true;
+
+	if (!ImGui::Begin("Events", &isOpen))
+	{
+		ImGui::End();
+
+		return isOpen;
+	}
+
+	auto& auxRepo = fixture.GetAuxTextureRepository();
+	assert(auxRepo);
+
+	auto ctx = ResourceContext{
+		.eventBus = fixture.GetEventBus(),
+		.textureRepo = *auxRepo
+	};
+
+	Update(ctx);
+
+	ImGui::End();
+
+	return isOpen;
+}
+
 void InspectorEventPanel::TearDown()
 {
 	eventFiredTokens_.signalTokens.clear();

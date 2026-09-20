@@ -8,6 +8,8 @@
 #include "../../deps/function2/function2.hpp"
 #include "../../ecs/Ecs.h"
 #include "../../atlas/NewTextureRepository.h"
+#include "../../render/RenderTarget.h"
+
 
 namespace ui {
 
@@ -82,6 +84,8 @@ public:
         
         return MakeGuiTexture(fnt.GetSourceTexture(), glyph.plot);
     }
+
+    static GuiTexture FromRenderTarget(const RenderTarget& renderTarget);
 
 private:
     static Dimensions<float> GetTextureSize(SDL_Texture* tx) 
@@ -166,8 +170,8 @@ inline void GuiImage(const GuiTexture& tx)
 }
 
 inline bool GuiImageButton(std::string_view id, const GuiTexture& tx, 
-    const ImVec4& bgClr = ImVec4(0, 0, 0, 0),
-    const ImVec4& tintClr = ImVec4(1, 1, 1, 1))
+                           const ImVec4& bgClr = ImVec4(0, 0, 0, 0),
+                           const ImVec4& tintClr = ImVec4(1, 1, 1, 1))
 {
     if (tx.textureId == 0)
     {

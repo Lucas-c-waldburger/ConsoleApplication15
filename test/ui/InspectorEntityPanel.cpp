@@ -168,7 +168,7 @@ bool InspectorEntityPanel::DrawAddEntityButton(const GuiTextureConverter& conver
 //	return added;
 //}
 
-void InspectorEntityPanel::DrawAddChildButton(Entity& e, const GuiTextureConverter& converter)
+bool InspectorEntityPanel::DrawAddChildButton(Entity& e, const GuiTextureConverter& converter)
 {
 	auto& button = buttons_.addChild;
 
@@ -210,6 +210,8 @@ void InspectorEntityPanel::DrawAddChildButton(Entity& e, const GuiTextureConvert
 
 	ImGui::Indent();
 
+	bool newEditSelection = false;
+
 	auto rels = e.GetRelations();
 	if (rels.HasChildren())
 	{
@@ -228,8 +230,9 @@ void InspectorEntityPanel::DrawAddChildButton(Entity& e, const GuiTextureConvert
 			{
 				selection_.entityId = ch.GetID();
 				selection_.selectionType = SelectionType::Edit;
+				newEditSelection = true;
 			}
-			else if (ImGui::IsItemHovered())
+			else if (ImGui::IsItemHovered() && !selection_.IsEditing())
 			{
 				selection_.entityId = ch.GetID();
 				selection_.selectionType = SelectionType::Hover;
@@ -240,6 +243,8 @@ void InspectorEntityPanel::DrawAddChildButton(Entity& e, const GuiTextureConvert
 	}
 
 	ImGui::Unindent();
+
+	return newEditSelection;
 }
 
 void InspectorEntityPanel::ClearSelectionBoxes()
@@ -274,10 +279,29 @@ void InspectorEntityPanel::ClearSelection()
 	selection_.Clear();
 }
 
+void InspectorEntityPanel::SetSelectionBoxVisibility(bool tf)
+{
+	if (selection_.entityId == kInvalidEntity)
+	{
+		return;
+	}
 
-void InspectorEntityPanel::DrawEntitySelections(ResourceContext& ctx)
+	auto it = selectionBoxes_.find(selection_.entityId);
+	if (it != selectionBoxes_.end())
+	{
+		if (auto boxE = ECS::GetEntityByID(it->second); boxE.IsValid())
+		{
+			boxE.SetComponentVisibility<SelectionBox>(tf);
+		}
+	}
+}
+
+
+bool InspectorEntityPanel::DrawEntitySelections(ResourceContext& ctx)
 {
 	GuiTextureConverter converter{ ctx.textureRepo };
+
+	bool newEditSelection = false;
 
 	auto es = ECS::GetAllEntitiesWith<Exclude<InspectorTag, Parent>>();
 
@@ -297,21 +321,24 @@ void InspectorEntityPanel::DrawEntitySelections(ResourceContext& ctx)
 		{
 			selection_.entityId = e.GetID();
 			selection_.selectionType = SelectionType::Edit;
+			newEditSelection = true;
 		}
-		else if (ImGui::IsItemHovered())
+		else if (ImGui::IsItemHovered() && !selection_.IsEditing())
 		{
 			selection_.entityId = e.GetID();
 			selection_.selectionType = SelectionType::Hover;
 		}
 
-		DrawAddChildButton(e, converter);
+		newEditSelection |= DrawAddChildButton(e, converter);
 
 		ImGui::PopID();
 	}
 
 	ImGui::Separator();
 
-	DrawAddEntityButton(converter);
+	newEditSelection |= DrawAddEntityButton(converter);
+
+	return newEditSelection;
 }
 
 Entity_t InspectorEntityPanel::MakeSelectionBox()
@@ -338,10 +365,15 @@ void InspectorEntityPanel::UpdateSelectionBoxPositions(const Camera& cam)
 	{
 		if (!selectionBoxes_.contains(e.GetID()))
 		{
-			auto [_, inserted] = selectionBoxes_.try_emplace(e.GetID(), MakeSelectionBox());
+			auto [it, inserted] = selectionBoxes_.try_emplace(e.GetID(), MakeSelectionBox());
 			assert(inserted);
 
 			AssignEntityName(e);
+
+			auto boxE = ECS::GetEntityByID(it->second);
+			assert(boxE.IsValid());
+
+			boxE.SetComponentVisibility<SelectionBox>(false);
 		}
 		if (!buttons_.viewChildren.isHovered.contains(e.GetID()))
 		{
@@ -355,7 +387,7 @@ void InspectorEntityPanel::UpdateSelectionBoxPositions(const Camera& cam)
 
 		assert(boxE.HasComponent<SelectionBox>());
 
-		boxE.GetComponent<SelectionBox>().rect = GetScreenRectForEntity(e, cam);	
+		boxE.GetComponent<SelectionBox>().rect = GetScreenRectForEntity(e, cam);
 	}
 }
 
@@ -399,7 +431,7 @@ bool InspectorEntityPanel::SetSelectedEntityForEdit(Entity_t id)
 	return true;
 }
 
-void InspectorEntityPanel::UpdateSelectionBoxes()
+void InspectorEntityPanel::UpdateSelectionBoxes(bool newEditSelection)
 {
 	using Src = MouseInputSource;
 
@@ -409,7 +441,9 @@ void InspectorEntityPanel::UpdateSelectionBoxes()
 	const bool mouseRightClicked = GuiMouse::IsRightClicked();
 	const bool mouseWheelScrolled = GuiMouse::IsWheelScrolled();
 
-	const bool noSelectionChange = selection_.IsEditing() && (!mouseLeftClicked || mouseInGuiWindow);
+	const bool noSelectionChange = !newEditSelection &&
+								   selection_.IsEditing() && 
+								   (!mouseLeftClicked || mouseInGuiWindow);
 	if (noSelectionChange)
 	{
 		return;
@@ -455,7 +489,8 @@ void InspectorEntityPanel::UpdateSelectionBoxes()
 	{
 		if (mouseLeftClicked)
 		{
-			if (selection_.IsEditing() || hoverStack_.entityIds.empty())
+			if (hoverStack_.entityIds.empty() || 
+				(selection_.IsEditing() && hoverStack_.GetCurrent() != selection_.entityId))
 			{
 				selection_.Clear();
 			}
@@ -473,18 +508,6 @@ void InspectorEntityPanel::UpdateSelectionBoxes()
 			{
 				++hoverStack_;
 			}
-			//if (mouseWheelScrolled)
-			//{
-			//	if (GuiMouse::GetScrollY() > 0.0f)
-			//	{
-			//		++hoverStack_;
-			//	}
-			//	else
-			//	{
-			//		--hoverStack_;
-			//	}
-
-			//}
 
 			selection_.entityId = hoverStack_.GetCurrent();
 			selection_.selectionType = SelectionType::Hover;
@@ -504,9 +527,9 @@ void InspectorEntityPanel::Update(ResourceContext& resourceCtx)
 {
 	Entity_t selectedEntityAtStart = selection_.IsEditing() ? selection_.entityId : kInvalidEntity;
 
-	DrawEntitySelections(resourceCtx);
+	const bool newEditSelection = DrawEntitySelections(resourceCtx);
 
-	UpdateSelectionBoxes();
+	UpdateSelectionBoxes(newEditSelection);
 
 	if (selection_.IsEditing())
 	{
@@ -516,6 +539,32 @@ void InspectorEntityPanel::Update(ResourceContext& resourceCtx)
 			RemoveStaleEntity(e);
 		}
 	}
+}
+
+bool InspectorEntityPanel::Draw(SceneFixture& fixture)
+{
+	bool isOpen = true;
+
+	if (!ImGui::Begin("Entities", &isOpen))
+	{
+		ImGui::End();
+
+		return isOpen;
+	}
+
+	auto& auxRepo = fixture.GetAuxTextureRepository();
+	assert(auxRepo);
+
+	auto ctx = InspectorEntityPanel::ResourceContext{
+		.camera = fixture.GetCamera(),
+		.textureRepo = *auxRepo
+	};
+
+	Update(ctx);
+
+	ImGui::End();
+
+	return isOpen;
 }
 
 Result<Void> InspectorEntityPanel::ResetForNewScene(SceneFixture& fixture)

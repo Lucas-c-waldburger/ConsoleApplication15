@@ -302,8 +302,10 @@ static Result<Void> SetUpEnvironment(SceneFixture& fixture)
 	auto tilesSprite = atlas.GetSprite("tiles");
 	assert(tilesSprite.resourceHandle.IsValid());
 
-	auto winCenter = SDLite::Window().GetLocalCenter<SDL_FPoint>();
-	auto [winW, winH] = SDLite::Window().GetSize();
+	//auto winCenter = SDLite::Window().GetLocalCenter<SDL_FPoint>();
+	auto winCenter = fixture.GetCamera().GetViewport().GetCenter();
+	//auto [winW, winH] = SDLite::Window().GetSize();
+	auto [winW, winH] = fixture.GetCamera().GetViewportSize();
 
 	// background
 	auto backgroundSpriteW = backgroundSprite.plot.rect.w;

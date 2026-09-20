@@ -627,6 +627,12 @@
     <ClCompile Include="test\ui\asset_viewer\AssetViewerUtil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\ui\tilemap_editor\TileGridRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\GuiTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -3372,6 +3378,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\ui\asset_viewer\AssetViewerUtil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\tilemap_editor\TileGridRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\WindowDocker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="render\RenderTarget.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="render\AspectRatioFit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

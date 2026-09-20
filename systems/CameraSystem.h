@@ -16,6 +16,9 @@ public:
 	CameraSystem() = default;
 	explicit CameraSystem(Camera cam) : camera_(std::move(cam)) {}
 	explicit CameraSystem(Dimensions<float> vpSize) : camera_(vpSize) {}
+	CameraSystem(float w, float h) : camera_(Dimensions<float>{ w, h }) {}
+	CameraSystem(int w, int h) : camera_(Dimensions<float>{ static_cast<float>(w),
+															static_cast<float>(h) }) {}
 	~CameraSystem() = default;
 
 	void Update(float deltaTime);
