@@ -26,7 +26,8 @@ void CameraControlUtility::UpdateScroll(Camera& cam, float dt)
 			HandleFreeScroll(cam, dt);
 		}
 	}
-	else if (GuiMouse::IsMiddleClicked() && !GuiMouse::InsideEditorWindow())
+	else if (GuiMouse::IsMiddleClicked() && 
+		     GuiMouse::GetInsideWindowType() == EditorWindowType::GameWindow)
 	{
 		SDL_SetCursor(scrollCursor_.get());
 		scrollOffset_.emplace(0.0f, 0.0f);
@@ -35,7 +36,8 @@ void CameraControlUtility::UpdateScroll(Camera& cam, float dt)
 
 void CameraControlUtility::UpdateZoom(Camera& cam)
 {
-	if (GuiMouse::IsWheelScrolled() && !GuiMouse::InsideEditorWindow())
+	if (GuiMouse::IsWheelScrolled() && 
+		GuiMouse::GetInsideWindowType() == EditorWindowType::GameWindow)
 	{
 		float newScale = cam.GetZoomScale() + (GuiMouse::GetScrollY() > 0.0f 
 			? kZoomIncrement : -kZoomIncrement);

@@ -67,6 +67,7 @@ public:
 	void NewFrame() { GuiContext::NewFrame(); }
 	void RenderPrepare() { GuiContext::RenderPrepare(); }
 	void RenderPresent(SDL_Renderer* renderer) { GuiContext::RenderPresent(renderer); }
+	void DockspaceOverViewport() { GuiContext::DockspaceOverViewport(); }
 
 private:
 	UnorderedDictionary<bool> widgetStates_;

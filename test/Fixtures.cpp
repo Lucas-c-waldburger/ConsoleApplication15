@@ -263,7 +263,7 @@ Result<bool> SceneFixture::UpdateSDLInputs()
 	assert(systems_.IsSystemRegistered<SDLInputSystem>());
 	auto& inputSys = systems_.GetSystem<SDLInputSystem>();
 
-	bool cont = inputSys.Update(GetDeltaTime(), eventBus_, textureRepo_, GetRenderer());
+	bool cont = inputSys.Update(GetDeltaTime(), eventBus_, GetRenderTargetState());
 	if (!cont)
 	{
 		return false;
@@ -361,17 +361,49 @@ void SceneFixture::SetRenderTarget(int w, int h)
 
 	renderTarget_ = RenderTarget::Create(GetRenderer(), w, h);
 
-	GetCamera().SetViewportSize({ static_cast<float>(w), static_cast<float>(h) });
+	const auto fW = static_cast<float>(w);
+	const auto fH = static_cast<float>(h);
+
+	if (gameDisplayArea_.w > fW)
+	{
+		gameDisplayArea_.w = fW;
+	}
+	if (gameDisplayArea_.h > fH)
+	{
+		gameDisplayArea_.h = fH;
+	}
+
+	GetCamera().SetViewportSize({ fW, fH });
 }
 
 void SceneFixture::SetGameDisplayArea(SDL_FRect area)
 {
-	if (area.w >= 0 || area.h >= 0)
+	if (area.w <= 0 || area.h <= 0)
 	{
 		return;
 	}
 
+	const auto targetW = static_cast<float>(renderTarget_.width);
+	const auto targetH = static_cast<float>(renderTarget_.height);
+
+	if (area.w > targetW)
+	{
+		area.w = targetW;
+	}
+	if (area.h > targetH)
+	{
+		area.h = targetH;
+	}
+
 	gameDisplayArea_ = area;
+}
+
+RenderTargetState SceneFixture::GetRenderTargetState() const
+{
+	return {
+		.targetDimensions = { renderTarget_.width, renderTarget_.height },
+		.displayArea = gameDisplayArea_
+	};
 }
 
 void SceneFixture::UpdateTimers()

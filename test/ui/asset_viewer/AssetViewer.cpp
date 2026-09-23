@@ -1,6 +1,7 @@
 #include "AssetViewer.h"
 
 #if IMGUI_ENABLED
+#include "../GuiMouse.h"
 #include "../../Fixtures.h"
 #include "../../../file/FilePathUtility.h"
 #include <imgui_internal.h>
@@ -19,19 +20,16 @@ bool AssetViewer::Draw(SceneFixture& fixture)
 	GuiTextureConverter loadTargetConverter{ primaryRepo };
 	GuiTextureConverter uiTexturesConverter{ *auxRepo };
 
-	ImGui::SetNextWindowPos(
-		ImGui::GetMainViewport()->WorkPos,
-		ImGuiCond_FirstUseEver
-	);
-
 	bool isOpen = true;
 
-	if (!ImGui::Begin("Assets", &isOpen))
+	if (!ImGui::Begin(GetEditorWindowName(EditorWindowType::AssetWindow).data(), &isOpen))
 	{
 		ImGui::End();
 
 		return isOpen;
 	}
+
+	GuiMouse::EvaluateInsideWindow(EditorWindowType::AssetWindow);
 
 	const ImVec2 available = ImGui::GetContentRegionAvail();
 
@@ -51,10 +49,14 @@ bool AssetViewer::Draw(SceneFixture& fixture)
 
 	ImGui::BeginChild("AssetBrowser", ImVec2(available.x, topHeight),
 		ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeY);
+
+	GuiMouse::EvaluateInsideWindow(EditorWindowType::AssetWindow);
 	
 	// Directories //
 	ImGui::BeginChild("Directories", ImVec2(leftWidth, 0.0f),
 		(ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX));
+
+	GuiMouse::EvaluateInsideWindow(EditorWindowType::AssetWindow);
 
 	directoryViewer_.Draw(icons_, uiTexturesConverter);
 
@@ -64,6 +66,8 @@ bool AssetViewer::Draw(SceneFixture& fixture)
 
 	// Asset Grid //
 	ImGui::BeginChild("AssetGrid", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders);
+
+	GuiMouse::EvaluateInsideWindow(EditorWindowType::AssetWindow);
 
 	AssetGridViewerChild::ResourceContext gridCtx{
 		.assetTree = directoryViewer_.GetAssetTree(),
@@ -83,6 +87,8 @@ bool AssetViewer::Draw(SceneFixture& fixture)
 
 	// Asset Preview Viewer //
 	ImGui::BeginChild("PreviewViewer", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders);
+
+	GuiMouse::EvaluateInsideWindow(EditorWindowType::AssetWindow);
 
 	openGridTabTypeRecord.now = assetGridViewer_.GetOpenAssetTabType();
 

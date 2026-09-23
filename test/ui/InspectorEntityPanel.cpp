@@ -436,14 +436,14 @@ void InspectorEntityPanel::UpdateSelectionBoxes(bool newEditSelection)
 	using Src = MouseInputSource;
 
 	const auto mousePos = GuiMouse::GetPosition();
-	const bool mouseInGuiWindow = GuiMouse::InsideEditorWindow();
+	const bool mouseInGameWindow = GuiMouse::GetInsideWindowType() == EditorWindowType::GameWindow;
 	const bool mouseLeftClicked = GuiMouse::IsLeftClicked();
 	const bool mouseRightClicked = GuiMouse::IsRightClicked();
 	const bool mouseWheelScrolled = GuiMouse::IsWheelScrolled();
 
 	const bool noSelectionChange = !newEditSelection &&
 								   selection_.IsEditing() && 
-								   (!mouseLeftClicked || mouseInGuiWindow);
+								   (!mouseLeftClicked || !mouseInGameWindow);
 	if (noSelectionChange)
 	{
 		return;
@@ -464,7 +464,7 @@ void InspectorEntityPanel::UpdateSelectionBoxes(bool newEditSelection)
 
 		auto& boxRect = boxE.GetComponent<SelectionBox>().rect;
 
-		if (!mouseInGuiWindow)
+		if (mouseInGameWindow)
 		{
 			if (!PointInsideRect(boxRect, mousePos))
 			{
@@ -485,7 +485,7 @@ void InspectorEntityPanel::UpdateSelectionBoxes(bool newEditSelection)
 		hoverStack_.currentIndex = 0;
 	}
 
-	if (!mouseInGuiWindow)
+	if (mouseInGameWindow)
 	{
 		if (mouseLeftClicked)
 		{
@@ -545,12 +545,14 @@ bool InspectorEntityPanel::Draw(SceneFixture& fixture)
 {
 	bool isOpen = true;
 
-	if (!ImGui::Begin("Entities", &isOpen))
+	if (!ImGui::Begin(GetEditorWindowName(EditorWindowType::EntityWindow).data(), &isOpen))
 	{
 		ImGui::End();
 
 		return isOpen;
 	}
+
+	GuiMouse::EvaluateInsideWindow(EditorWindowType::EntityWindow);
 
 	auto& auxRepo = fixture.GetAuxTextureRepository();
 	assert(auxRepo);

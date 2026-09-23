@@ -7,8 +7,7 @@
 #include "../gui/GuiContext.h"
 #endif
 
-bool SDLInputSystem::Update(float dt, EventBus& bus, 
-							TextureRepository& repo, SDL_Renderer* renderer)
+bool SDLInputSystem::Update(float dt, EventBus& bus, const RenderTargetState& renderTargetState)
 {
 	while (SDL_PollEvent(&sdlEvent_))
 	{
@@ -43,7 +42,7 @@ bool SDLInputSystem::Update(float dt, EventBus& bus,
 		case SDL_MOUSEWHEEL:
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:
-			mouseHandler_.HandleMouseEvent(sdlEvent_);
+			mouseHandler_.HandleMouseEvent(sdlEvent_, renderTargetState);
 			break;
 
 		case SDL_KEYUP:

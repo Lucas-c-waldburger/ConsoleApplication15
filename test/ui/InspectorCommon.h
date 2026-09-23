@@ -29,6 +29,39 @@ struct CallbackInfo
 };
 /** @} */
 
+/** @defgroup Enums @{ */
+enum EditorWindowType : uint8_t
+{
+	GameWindow = 1 << 0,
+	ConsoleWindow = 1 << 1,
+	AssetWindow = 1 << 2,
+	EntityWindow = 1 << 3,
+	ComponentWindow = 1 << 4,
+	SystemWindow = 1 << 5,
+	EventWindow = 1 << 6
+};
+
+inline constexpr std::string_view GetEditorWindowName(EditorWindowType type)
+{
+	using enum EditorWindowType;
+
+	switch (type)
+	{
+	case GameWindow: 	  return "Game";
+	case ConsoleWindow:	  return "Console";
+	case AssetWindow:	  return "Asset";
+	case EntityWindow:	  return "Entity";
+	case ComponentWindow: return "Component";
+	case SystemWindow:	  return "System";
+	case EventWindow:	  return "Event";
+	}
+
+	return "";
+}
+
+/** @} */
+
+/** @defgroup Buttons @{ */
 struct SimpleButton
 {
 	Sprite sprite;
@@ -91,6 +124,7 @@ bool DrawButton(Button<TList>& button, const GuiTexture& texture,
 
 	return pressed;
 }
+/** @} */
 
 void AssignGuiStyles();
 

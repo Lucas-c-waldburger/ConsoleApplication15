@@ -7,6 +7,7 @@
 #include "EntityDragUtility.h"
 #include "CameraControlUtility.h"
 #include "asset_viewer/AssetViewer.h"
+#include "WindowDocker.h"
 
 class Camera;
 class TextureRepository;
@@ -15,6 +16,8 @@ class B2World;
 class EventBus;
 
 namespace ui {
+
+struct AtUpdateBegin;
 
 class Editor
 {
@@ -28,16 +31,7 @@ public:
 		Events
 	};
 
-	enum WindowType : uint8_t
-	{
-		MainWindow = 1 << 0,
-		ConsoleWindow = 1 << 1,
-		AssetWindow = 1 << 2,
-		EntityWindow = 1 << 3,
-		ComponentWindow = 1 << 4,
-		SystemWindow = 1 << 5,
-		EventWindow = 1 << 6
-	};
+	using WindowType = EditorWindowType;
 
 	struct UpdateState
 	{
@@ -89,6 +83,13 @@ public:
 private:
 	Editor() = default;
 
+	static void DrawEntityWindow(SceneFixture& fixture, const AtUpdateBegin& atUpdateBegin);
+	static void DrawComponentWindow(SceneFixture& fixture, const AtUpdateBegin& atUpdateBegin);
+	static void DrawSystemWindow(SceneFixture& fixture);
+	static void DrawEventWindow(SceneFixture& fixture);
+	static void DrawConsoleWindow();
+	static void DrawAssetWindow(SceneFixture& fixture);
+
 	static void DestroyEditorEntities();
 
 	static Result<Void> ResetForNewScene(SceneFixture& scene);
@@ -102,16 +103,20 @@ private:
 
 	static void UpdateForHistoryChange();
 
+	static constexpr bool IsWindowOpen(EditorWindowType windowType) noexcept;
+
 	static Result<Void> InitUtilities(SceneFixture& fixture);
 	static Result<Void> InitWindows(SceneFixture& fixture);
 	static Result<Void> InitPanels(SceneFixture& fixture);
 	
 	static inline PanelType activePanel_ = PanelType::Entities;
-	static inline uint8_t activeWindows_ = WindowType::MainWindow;
+	static inline uint8_t activeWindows_ = WindowType::GameWindow;
 	static inline EntityDragUtility entityDrag_{};
 	static inline CameraControlUtility cameraControl_{};
 	static inline AssetViewer assetViewer_;
 	static inline UpdateState updateState_{};
+	static inline WindowDocker2 windowDocker_{};
+	static inline bool needLayoutDockspace_ = true;
 };
 
 } // ui

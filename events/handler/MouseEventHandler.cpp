@@ -2,10 +2,11 @@
 #include "../../inputs/InputState.h"
 #include "../../ecs/Ecs.h"
 #include "../EventBus2.h"
+#include "../../render/RenderTarget.h"
 
-void MouseEventHandler::HandleMouseEvent(const SDL_Event& ev)
+void MouseEventHandler::HandleMouseEvent(const SDL_Event& ev, const RenderTargetState& renderTargetState)
 {
-	inputUpdater_.Update(ev);
+	inputUpdater_.Update(ev, renderTargetState);
 }
 
 void MouseEventHandler::Finalize(float delta, EventBus& bus)

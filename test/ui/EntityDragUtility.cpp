@@ -46,7 +46,7 @@ void EntityDragUtility::Update(Entity& e, const Camera& cam)
 		return;
 	}
 
-	if (GuiMouse::InsideEditorWindow())
+	if (GuiMouse::GetInsideWindowType() != EditorWindowType::GameWindow)
 	{
 		if (isDragging_)
 		{

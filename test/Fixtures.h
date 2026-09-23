@@ -226,6 +226,8 @@ public:
 
 	void SetGameDisplayArea(SDL_FRect area);
 
+	RenderTargetState GetRenderTargetState() const;
+
 	void RenderPresent();
 
 private:

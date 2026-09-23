@@ -68,6 +68,7 @@ void DrawCheckerboard(const char* desc_id, const ImVec4& col, ImGuiColorEditFlag
 				ImVec2(bb_inner.Min.x + grid_step, bb_inner.Min.y),
 				bb_inner.Max,
 				ImGui::GetColorU32(col_rgb),
+				col_rgb.w,
 				grid_step,
 				ImVec2(-grid_step + off, off),
 				rounding,
@@ -103,6 +104,7 @@ void DrawCheckerboard(const char* desc_id, const ImVec4& col, ImGuiColorEditFlag
 				bb_inner.Min,
 				bb_inner.Max,
 				ImGui::GetColorU32(col_source),
+				col_source.w,
 				grid_step,
 				ImVec2(off, off),
 				rounding);
@@ -120,10 +122,17 @@ void DrawCheckerboard(const char* desc_id, const ImVec4& col, ImGuiColorEditFlag
 	if ((flags & ImGuiColorEditFlags_NoBorder) == 0)
 	{
 		if (g.Style.FrameBorderSize > 0.0f)
+		{
 			ImGui::RenderFrameBorder(bb.Min, bb.Max, rounding);
+		}
 		else
-			window->DrawList->AddRect(bb.Min, bb.Max,
-				ImGui::GetColorU32(ImGuiCol_FrameBg), rounding);
+		{
+			window->DrawList->AddRect(
+				bb.Min, 
+				bb.Max,
+				ImGui::GetColorU32(ImGuiCol_FrameBg), 
+				rounding);
+		}
 	}
 }
 

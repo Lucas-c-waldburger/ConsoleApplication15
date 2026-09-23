@@ -1,6 +1,7 @@
 #include "GuiConsole.h"
 
 #if IMGUI_ENABLED
+#include "GuiMouse.h"
 
 namespace ui {
 
@@ -14,16 +15,18 @@ void GuiConsole::Init()
 
 bool GuiConsole::Draw()
 {
-    ImGui::SetNextWindowSize(ImVec2(800, 400), ImGuiCond_FirstUseEver);
+    //ImGui::SetNextWindowSize(ImVec2(800, 400), ImGuiCond_FirstUseEver);
 
     bool isOpen = true;
 
-    if (!ImGui::Begin("Console", &isOpen))
+    if (!ImGui::Begin(GetEditorWindowName(EditorWindowType::ConsoleWindow).data(), &isOpen))
     {
         ImGui::End();
 
         return isOpen;
     }
+
+    GuiMouse::EvaluateInsideWindow(EditorWindowType::ConsoleWindow);
 
     if (!sink_ || !Logger::Get())
     {
@@ -47,10 +50,14 @@ bool GuiConsole::Draw()
         ImGuiWindowFlags_HorizontalScrollbar
     );
 
+    GuiMouse::EvaluateInsideWindow(EditorWindowType::ConsoleWindow);
+
     auto messages = sink_->GetMessages();
 
     ImGuiListClipper clipper;
     clipper.Begin(static_cast<int>(messages.size()));
+
+    const bool wasAtBottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f;
 
     while (clipper.Step())
     {
@@ -64,6 +71,11 @@ bool GuiConsole::Draw()
 
             ImGui::PopStyleColor();
         }
+    }
+
+    if (wasAtBottom)
+    {
+        ImGui::SetScrollHereY(1.0f);
     }
 
     ImGui::EndChild();

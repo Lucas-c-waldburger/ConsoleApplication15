@@ -26,3 +26,26 @@ struct RenderTarget
 		};
 	}
 };
+
+struct RenderTargetState
+{
+	Dimensions<int> targetDimensions = { 0, 0 };
+	SDL_FRect displayArea = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	constexpr bool Valid() const
+	{
+		return targetDimensions.w > 0 && targetDimensions.h > 0 &&
+			   displayArea.w > 0 && displayArea.w <= targetDimensions.w &&
+			   displayArea.h > 0 && displayArea.h <= targetDimensions.h;
+	}
+
+	constexpr float GetAspectRatio() const
+	{
+		if (targetDimensions.h == 0)
+		{
+			return 0;
+		}
+
+		return static_cast<float>(targetDimensions.w) / static_cast<float>(targetDimensions.h);
+	}
+};

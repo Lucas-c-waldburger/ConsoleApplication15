@@ -977,7 +977,7 @@ void ColliderEditUtility::Reset()
 
 void ColliderEditUtility::UpdateState(const Camera& cam)
 {
-	if (GuiMouse::InsideEditorWindow())
+	if (GuiMouse::GetInsideWindowType() != EditorWindowType::GameWindow)
 	{
 		state_.drawTempPointAs = State::DrawTempPointAs::Connect;
 		if (state_.committed)

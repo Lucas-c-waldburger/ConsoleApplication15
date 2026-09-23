@@ -27,6 +27,7 @@ public:
 	static void NewFrame();
 	static void RenderPrepare();
 	static void RenderPresent(SDL_Renderer* renderer);
+	static void DockspaceOverViewport();
 
 	static bool IsInitialized() { return isInitialized_; }
 

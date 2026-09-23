@@ -55,6 +55,13 @@ void GuiContext::RenderPresent(SDL_Renderer* renderer)
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
 }
 
+void GuiContext::DockspaceOverViewport()
+{
+    if (!isInitialized_) { return; }
+
+    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+}
+
 void GuiContext::NewFrame()
 {
     ImGui_ImplSDLRenderer2_NewFrame();

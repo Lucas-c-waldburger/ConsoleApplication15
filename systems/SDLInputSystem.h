@@ -4,16 +4,21 @@
 #include "../events/handler/MouseEventHandler.h"
 #include "../events/handler/KeyboardEventHandler.h"
 #include "../events/EventBus2.h"
-
-class TextureRepository;
+#include "../render/RenderTarget.h"
 
 class SDLInputSystem : public System
 {
 public:
+	struct ResourceContext
+	{
+		EventBus& bus;
+		Dimensions<int> renderTargetDimensions = { 0, 0 };
+		SDL_FRect displayArea = { 0.0f, 0.0f, 0.0f, 0.0f };
+	};
+
 	SDLInputSystem() { SDL_zero(sdlEvent_); }
 
-	bool Update(float dt, EventBus& bus, TextureRepository& repo, 
-				SDL_Renderer* renderer);
+	bool Update(float dt, EventBus& bus, const RenderTargetState& renderTargetState);
 
 	const GameControllerEventHandler& 
 	GetGameControllerEventHandler() const { return gameControllerHandler_; }

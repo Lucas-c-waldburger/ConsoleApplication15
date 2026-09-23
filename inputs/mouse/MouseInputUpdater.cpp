@@ -1,5 +1,7 @@
 #include "MouseInputUpdater.h"
 #include "../../sdl/SDLUtils.h"
+#include "../../events/EventBus2.h"
+#include "../../render/RenderTarget.h"
 
 namespace {
 
@@ -31,18 +33,33 @@ GetNextCursorOrWheelState(InputState lastState, SDL_FPoint newCursorOrWheelValue
 	}
 }
 
+SDL_FPoint ToRenderTarget(int px, int py, const RenderTargetState& state)
+{
+	if (!state.Valid())
+	{
+		return { static_cast<float>(px), static_cast<float>(py) };
+	}
+
+	return {
+		(static_cast<float>(px) - state.displayArea.x) * (state.targetDimensions.w / state.displayArea.w),
+		(static_cast<float>(py) - state.displayArea.y) * (state.targetDimensions.h / state.displayArea.h)
+	};
 }
 
-void MouseInputUpdater::Update(const SDL_Event& ev)
+} // unnamed
+
+void MouseInputUpdater::Update(const SDL_Event& ev, const RenderTargetState& renderTargetState)
 {
 	using Source = MouseInputSource;
 
 	if (ev.type == SDL_MOUSEMOTION)
 	{
-		values_.cursor.absolutePos = {
-			static_cast<float>(ev.motion.x),
-			static_cast<float>(ev.motion.y)
-		};
+		values_.cursor.absolutePos = ToRenderTarget(ev.motion.x, ev.motion.y, renderTargetState);
+
+		//values_.cursor.absolutePos = {
+		//	static_cast<float>(ev.motion.x),
+		//	static_cast<float>(ev.motion.y)
+		//};
 		values_.cursor.relativePos = {
 			static_cast<float>(ev.motion.xrel),
 			static_cast<float>(ev.motion.yrel)

@@ -2,17 +2,17 @@
 #include <bitset>
 #include "MouseInputMap.h"
 #include "../../components/MouseStateComponent.h"
-#include "../../events/EventBus2.h"
+
+class EventBus;
+struct RenderTargetState;
 
 class MouseInputUpdater
 {
 public:
-	//MouseInputUpdater() : 
-	//	inputs_(MakeMouseInputMap()), cursorValue_(), wheelValue_(), tracker_() {}
 	MouseInputUpdater() : inputs_(MakeInputMap<MouseInputMap>()) {}
 	~MouseInputUpdater() = default;
 
-	void Update(const SDL_Event& ev);
+	void Update(const SDL_Event& ev, const RenderTargetState& renderTargetState);
 	void FinalizeAndPushEvents(float dt, EventBus& bus);
 
 	MouseInputMap& GetInputMap() { return inputs_; }

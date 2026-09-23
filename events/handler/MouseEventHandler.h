@@ -4,6 +4,7 @@
 #include <bitset>
 
 class EventBus;
+struct RenderTargetState;
 
 class MouseEventHandler
 {
@@ -11,7 +12,7 @@ public:
 	MouseEventHandler() = default;
 	~MouseEventHandler() = default;
 
-	void HandleMouseEvent(const SDL_Event& ev);
+	void HandleMouseEvent(const SDL_Event& ev, const RenderTargetState& renderTargetState);
 	void Finalize(float delta, EventBus& bus);
 
 	MouseState GetMouseState() const;

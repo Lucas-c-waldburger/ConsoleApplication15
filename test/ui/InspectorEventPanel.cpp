@@ -6,6 +6,7 @@
 #include <format>
 #include "../../events/EventBus2.h"
 #include "GuiTexture.h"
+#include "GuiMouse.h"
 #include "gui_edit/GuiEditPropertyTable.h"
 #include "../../components/util/ComponentValidPreds.h"
 #include "../../core/Algorithms.h"
@@ -541,7 +542,6 @@ Result<Void> InspectorEventPanel::LoadResources(SceneFixture& fixture)
 	TRY(ResourcePath::Sprite("ui/editor/bolt_icon.png"), boltIconPath);
 	TRY(ResourcePath::Sprite("ui/editor/bolt_icon_fill.png"), boltIconFillPath);
 
-	//auto& spriteAtlas = fixture.GetTextureRepository().GetSpriteAtlas();
 	auto& auxRepo = fixture.GetAuxTextureRepository();
 	if (!auxRepo)
 	{
@@ -577,12 +577,14 @@ bool InspectorEventPanel::Draw(SceneFixture& fixture)
 {
 	bool isOpen = true;
 
-	if (!ImGui::Begin("Events", &isOpen))
+	if (!ImGui::Begin(GetEditorWindowName(EditorWindowType::EventWindow).data(), &isOpen))
 	{
 		ImGui::End();
 
 		return isOpen;
 	}
+
+	GuiMouse::EvaluateInsideWindow(EditorWindowType::EventWindow);
 
 	auto& auxRepo = fixture.GetAuxTextureRepository();
 	assert(auxRepo);

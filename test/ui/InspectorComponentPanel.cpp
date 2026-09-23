@@ -698,12 +698,14 @@ bool InspectorComponentPanel::Draw(Entity& e, SceneFixture& fixture)
 {
 	bool isOpen = true;
 
-	if (!ImGui::Begin("Components", &isOpen))
+	if (!ImGui::Begin(GetEditorWindowName(EditorWindowType::ComponentWindow).data(), &isOpen))
 	{
 		ImGui::End();
 
 		return isOpen;
 	}
+
+	GuiMouse::EvaluateInsideWindow(EditorWindowType::ComponentWindow);
 
 	Update(e, fixture);
 

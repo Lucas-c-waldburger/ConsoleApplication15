@@ -4,6 +4,7 @@
 #include "../../file/FilePathUtility.h"
 #include "GuiResource.h"
 #include "GuiTexture.h"
+#include "GuiMouse.h"
 #include "InspectorComponentPanel.h"
 #include "ScriptLoaderUtility.h"
 #include "../../systems/NewRenderSystem.h"
@@ -352,12 +353,14 @@ bool InspectorSystemPanel::Draw(SceneFixture& fixture)
 {
 	bool isOpen = true;
 
-	if (!ImGui::Begin("Systems", &isOpen))
+	if (!ImGui::Begin(GetEditorWindowName(EditorWindowType::SystemWindow).data(), &isOpen))
 	{
 		ImGui::End();
 
 		return isOpen;
 	}
+
+	GuiMouse::EvaluateInsideWindow(EditorWindowType::SystemWindow);
 
 	auto& auxRepo = fixture.GetAuxTextureRepository();
 	assert(auxRepo);
