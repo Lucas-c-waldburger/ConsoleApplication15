@@ -3,7 +3,10 @@
 #include "../core/commonObjects.h"
 #include "../core/Dictionary.h"
 
-struct NeedsAnimationUpdate : BaseComponent<NeedsAnimationUpdate> {};
+struct NeedsAnimationUpdate 
+{
+    bool operator==(const NeedsAnimationUpdate&) const = default;
+};
 
 struct SpriteSeriesIndex
 {
@@ -24,8 +27,7 @@ struct SpriteSeriesIndex
     constexpr bool operator==(const SpriteSeriesIndex&) const = default;
 };
 
-struct SpriteAnimationComponent : BaseComponent<SpriteAnimationComponent>,
-                                  TriggersUpdate<NeedsAnimationUpdate>
+struct SpriteAnimationComponent : TriggersUpdate<NeedsAnimationUpdate>
 {
     std::string spriteSeriesName;
     SpriteSeriesIndex index;

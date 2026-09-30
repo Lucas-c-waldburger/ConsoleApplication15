@@ -81,6 +81,17 @@ bool EditorColliderBuilder::Draw(Entity& e, SceneFixture& fixture)
 
 	if (ImGui::Button("Done"))
 	{
+		if (!e.HasComponent<Collider>(&ColliderValid) &&
+			e.HasComponent<SpriteRenderableComponent>() ||
+			e.HasComponent<TextRenderableComponent>())
+		{
+			auto& profile = (e.HasComponent<SpriteRenderableComponent>()
+				? e.GetComponent<SpriteRenderableComponent>().profile
+				: e.GetComponent<TextRenderableComponent>().profile);
+
+			profile.debugDraw.collider.on = true;
+		}
+
 		e.RemoveComponent<Collider>();
 
 		auto& col = e.AddComponent(ComponentBuilder<Collider>{}

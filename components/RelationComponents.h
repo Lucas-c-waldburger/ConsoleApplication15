@@ -1,27 +1,21 @@
 #pragma once
-#include "BaseComponent.h"
+#include "ComponentConcepts.h"
 #include "../ecs/EntityT.h"
 #include <set>
 #include <unordered_set>
 
-struct Parent : BaseComponent<Parent>
+struct Parent
 {
     Entity_t entityId = kInvalidEntity;
 
-    friend constexpr bool operator==(const Parent& lhs, const Parent& rhs) noexcept
-    {
-        return lhs.entityId == rhs.entityId;
-    }
+    constexpr bool operator==(const Parent&) const = default;
 };
 
-struct Children : BaseComponent<Children>
+struct Children
 {
     std::set<Entity_t> childEntityIds;
 
-    friend bool operator==(const Children& lhs, const Children& rhs)
-    {
-        return lhs.childEntityIds == rhs.childEntityIds;
-    }
+    bool operator==(const Children&) const = default;
 };
 
 template <typename T>

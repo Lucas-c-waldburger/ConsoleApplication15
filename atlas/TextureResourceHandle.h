@@ -110,7 +110,7 @@ private:
         assert(IndexInTextureResourceRange(resourceIndex));
     }
 
-    uint32_t atlasId_ = std::numeric_limits<size_t>::max();
-    uint32_t resourceIndex_ = std::numeric_limits<size_t>::max();
+    uint32_t atlasId_ = std::numeric_limits<uint32_t>::max();
+    uint32_t resourceIndex_ = std::numeric_limits<uint32_t>::max();
     uint32_t generation_ = 0;
 };

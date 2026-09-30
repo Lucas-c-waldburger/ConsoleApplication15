@@ -1,29 +1,26 @@
 #pragma once
-#include "BaseComponent.h"
+#include "ComponentConcepts.h"
 #include "../core/InlineStorage.h"
 #include "../user/UserComponentTypeList.h"
 
 static constexpr size_t kUserComponentStorageSize = 64;
 
-template <typename Derived>
-struct UserComponentBase : BaseComponent<Derived>
-{ 
-	static constexpr size_t userComponentId =
-		index_of_v<Derived, UserComponentTypeList>;
+template <typename T>
+concept SomeUserComponent = SomeTypeInList<std::remove_cvref_t<T>, UserComponentTypeList>;
 
-	InlineStorage<kUserComponentStorageSize> data; 
+template <SomeUserComponent T>
+struct user_component_traits
+{
+	static constexpr size_t index = index_of_v<T, UserComponentTypeList>;
 };
 
-template <typename T>
-concept SomeUserComponent = std::derived_from<T, UserComponentBase<T>>;
-
-struct UserComponent0 : UserComponentBase<UserComponent0> {};
-struct UserComponent1 : UserComponentBase<UserComponent1> {};
-struct UserComponent2 : UserComponentBase<UserComponent2> {};
-struct UserComponent3 : UserComponentBase<UserComponent3> {};
-struct UserComponent4 : UserComponentBase<UserComponent4> {};
-struct UserComponent5 : UserComponentBase<UserComponent5> {};
-struct UserComponent6 : UserComponentBase<UserComponent6> {};
-struct UserComponent7 : UserComponentBase<UserComponent7> {};
-struct UserComponent8 : UserComponentBase<UserComponent8> {};
-struct UserComponent9 : UserComponentBase<UserComponent9> {};
+struct UserComponent0 { InlineStorage<kUserComponentStorageSize> data; };
+struct UserComponent1 { InlineStorage<kUserComponentStorageSize> data; };
+struct UserComponent2 { InlineStorage<kUserComponentStorageSize> data; };
+struct UserComponent3 { InlineStorage<kUserComponentStorageSize> data; };
+struct UserComponent4 { InlineStorage<kUserComponentStorageSize> data; };
+struct UserComponent5 { InlineStorage<kUserComponentStorageSize> data; };
+struct UserComponent6 { InlineStorage<kUserComponentStorageSize> data; };
+struct UserComponent7 { InlineStorage<kUserComponentStorageSize> data; };
+struct UserComponent8 { InlineStorage<kUserComponentStorageSize> data; };
+struct UserComponent9 { InlineStorage<kUserComponentStorageSize> data; };

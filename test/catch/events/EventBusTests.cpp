@@ -11,7 +11,7 @@ struct EventTestFixture
 	template <SomeEventData T>
 	auto MakeEventCallCountLambda()
 	{
-		return [this](const T&) { ++eventCallCounts[T::eventType]; };
+		return [this](const T&) { ++eventCallCounts[event_traits<T>::index]; };
 	}
 };
 
@@ -65,7 +65,7 @@ TEST_CASE("EventBus correctly interacts with signals", "[events]")
 
 	bus.DispatchEvents();
 
-	CHECK(fixture.eventCallCounts[ev::HitCollision::eventType] == 1);
+	CHECK(fixture.eventCallCounts[event_traits<ev::HitCollision>::index] == 1);
 
 	// manually disconnect, should not get called
 	tk.Disconnect();
@@ -73,7 +73,7 @@ TEST_CASE("EventBus correctly interacts with signals", "[events]")
 	bus.PushEvent(ev::HitCollision{});
 	bus.DispatchEvents();
 
-	CHECK(fixture.eventCallCounts[ev::HitCollision::eventType] == 1);
+	CHECK(fixture.eventCallCounts[event_traits<ev::HitCollision>::index] == 1);
 
 	// test signal token disconnect on destruction
 	fixture.signalTokens.clear();
@@ -85,13 +85,13 @@ TEST_CASE("EventBus correctly interacts with signals", "[events]")
 	bus.PushEvent(events::TimerFired{});
 	bus.DispatchEvents();
 
-	CHECK(fixture.eventCallCounts[ev::TimerFired::eventType] == 1);
+	CHECK(fixture.eventCallCounts[event_traits<ev::TimerFired>::index] == 1);
 	}
 
 	bus.PushEvent(events::TimerFired{});
 	bus.DispatchEvents();
 
-	CHECK(fixture.eventCallCounts[ev::TimerFired::eventType] == 1);
+	CHECK(fixture.eventCallCounts[event_traits<ev::TimerFired>::index] == 1);
 }
 
 TEST_CASE("EventBus correctly dispatches events to signals", "[events]")
@@ -123,9 +123,9 @@ TEST_CASE("EventBus correctly dispatches events to signals", "[events]")
 	bus.PushEvent(ev::ContactCollisionBegin{});
 	bus.DispatchEvents();
 
-	CHECK(fixture.eventCallCounts[ev::GameControllerDisconnected::eventType] == 1);
-	CHECK(fixture.eventCallCounts[ev::GameControllerConnected::eventType] == 2);
-	CHECK(fixture.eventCallCounts[ev::ContactCollisionBegin::eventType] == 3);
+	CHECK(fixture.eventCallCounts[event_traits<ev::GameControllerDisconnected>::index] == 1);
+	CHECK(fixture.eventCallCounts[event_traits<ev::GameControllerConnected>::index] == 2);
+	CHECK(fixture.eventCallCounts[event_traits<ev::ContactCollisionBegin>::index] == 3);
 }
 
 TEST_CASE("EventBus allows connections to different input sources", "[events]")
@@ -172,6 +172,6 @@ TEST_CASE("EventBus allows connections to different input sources", "[events]")
 
 	bus.DispatchEvents();
 
-	CHECK(fixture.eventCallCounts[ev::GameControllerInput::eventType] == 2);
-	CHECK(fixture.eventCallCounts[ev::MouseInput::eventType] == 1);
+	CHECK(fixture.eventCallCounts[event_traits<ev::GameControllerInput>::index] == 2);
+	CHECK(fixture.eventCallCounts[event_traits<ev::MouseInput>::index] == 1);
 }

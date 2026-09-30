@@ -5,7 +5,6 @@
 #include "B2Chain.h"
 #include "../sdl/SDLUtils.h"
 #include "../core/Result.h"
-#include "../core/HandleFactory.h"
 #include "../core/ReadOnly.h"
 
 struct BodyParameters;

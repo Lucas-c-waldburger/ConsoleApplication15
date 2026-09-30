@@ -3,6 +3,7 @@
 
 enum class Phase
 {
+	Invalid = -1,
 	Setup = 0,
 	Input,
 	Intent,

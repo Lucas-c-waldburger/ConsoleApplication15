@@ -5,6 +5,7 @@
 #include "../../core/Handle.h"
 #include "../../core/Anchor.h"
 #include "../../core/Dictionary.h"
+#include "../../systems/Phase.h"
 
 template <typename BasicJson, typename T>
 inline void to_json(BasicJson& j, const HandedPair<T>& p)
@@ -112,3 +113,17 @@ void from_json(const BasicJson& j, DictionaryTemplate<MapType, Value, Ts...>& di
 		dict[it.key()] = it.value().template get<Value>();
 	}
 }
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+	Phase,
+	{
+		{Phase::Invalid,        "Invalid"},
+		{Phase::Setup,			"Setup"},
+		{Phase::Input,			"Input"},
+		{Phase::Intent,			"Intent"},
+		{Phase::Simulation,		"Simulation"},
+		{Phase::SimResponse,	"SimResponse"},
+		{Phase::Presentation,	"Presentation"},
+		{Phase::Cleanup,	    "Cleanup"}
+	}
+)

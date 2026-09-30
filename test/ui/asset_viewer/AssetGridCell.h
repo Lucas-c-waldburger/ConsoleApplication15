@@ -34,8 +34,9 @@ struct AssetGridCell
 	static AssetGridCell Place();
 
 	static constexpr float kThumbnailTextureSize = 64.0f;
+	static constexpr float kWidth = 80.0f;
 
-	static constexpr float width = 80.0f;
+	static constexpr float width = kWidth;
 	float height = 0.0f;
 	ImVec2 min;
 	ImVec2 max;

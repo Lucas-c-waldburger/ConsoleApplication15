@@ -2,8 +2,6 @@
 #include <functional>
 #include "../deps/function2/function2.hpp"
 #include "TypeUtils.h"
-#include "../scripting/TypedLuaFunction.h"
-// TRY TO REMOVE LUA INCLUDE AND FWD DECLARE
 
 // lambda / functor
 template <typename T>
@@ -44,10 +42,6 @@ struct func_traits<fu2::unique_function<Ret(Args...)>> : func_traits<Ret(*)(Args
 // fu2::function_view
 template <typename Ret, typename... Args>
 struct func_traits<fu2::function_view<Ret(Args...)>> : func_traits<Ret(*)(Args...)> {};
-
-template <typename Ret, typename... Args>
-struct func_traits<TypedLuaFunction<Ret(Args...)>> : func_traits<Ret(*)(Args...)> {};
-
 
 // CONCEPT REQUIRE
 template <typename T>

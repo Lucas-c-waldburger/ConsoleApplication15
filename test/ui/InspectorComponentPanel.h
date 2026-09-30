@@ -85,6 +85,7 @@ public:
 	static SpritePicker& GetSpritePicker() { return spritePicker_; }
 	static ComponentBuilderType GetActiveBuilderType() { return componentBuilders_.GetActiveBuilderType(); }
 	static void SetActiveBuilderType(ComponentBuilderType type) { componentBuilders_.SetActiveBuilder(type); }
+	static void ClearActiveBuilder() { componentBuilders_.ClearActiveBuilder(); }
 	static EditableComponentBitSet& GetComponentHeaderOpen() { return componentHeaderOpen_; }
 
 	static Result<Void> ResetForNewScene(SceneFixture& scene);

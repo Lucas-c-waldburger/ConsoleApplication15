@@ -3,6 +3,7 @@
 #include "../core/Signal.h"
 #include "../core/SizedEnum.h"
 #include "../inputs/controller/GameControllerInputSource.h"
+#include "../core/Logger.h"
 
 using ControllerInputSignal = Signal<const events::GameControllerInput&>;
 

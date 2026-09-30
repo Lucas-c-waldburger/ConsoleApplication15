@@ -189,6 +189,7 @@
     <ClCompile Include="components\builder\RigidBodyComponentBuilder.cpp" />
     <ClCompile Include="core\Counter.cpp" />
     <ClCompile Include="deps\catch\catch_amalgamated.cpp" />
+    <ClCompile Include="deps\ImGuiColorTextEdit\TextEditor.cpp" />
     <ClCompile Include="deps\imgui\backends\imgui_impl_sdl2.cpp" />
     <ClCompile Include="deps\imgui\backends\imgui_impl_sdlrenderer2.cpp" />
     <ClCompile Include="deps\imgui\imgui.cpp" />
@@ -216,10 +217,8 @@
     <ClCompile Include="scripting\LuaFunctionCallHandler.cpp" />
     <ClCompile Include="scripting\LuaFunctionTableParser.cpp" />
     <ClCompile Include="scripting\LuaStateManager.cpp" />
-    <ClCompile Include="scripting\ScriptHandle.cpp" />
     <ClCompile Include="scripting\ScriptTable.cpp" />
     <ClCompile Include="scripting\ScriptTableManager.cpp" />
-    <ClCompile Include="scripting\ScriptTableObserverSignal.cpp" />
     <ClCompile Include="serial\AudioBankSerializer.cpp" />
     <ClCompile Include="serial\EntityDeserializer.cpp" />
     <ClCompile Include="serial\EntitySerializer.cpp" />
@@ -255,15 +254,10 @@
     <ClCompile Include="systems\CameraSystem.cpp" />
     <ClCompile Include="inputs\controller\GameController.cpp" />
     <ClCompile Include="events\handler\GameControllerEventHandler.cpp" />
-    <ClCompile Include="Scene.cpp" />
-    <ClCompile Include="scripting\Lua.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ecs\Ecs.cpp" />
     <ClCompile Include="ecs\EntityRelationsHelper.cpp" />
     <ClCompile Include="core\Monitoring.cpp" />
-    <ClCompile Include="core\Hooks.cpp" />
-    <ClCompile Include="scripting\LuaTypesRegistry.cpp" />
-    <ClCompile Include="scripting\ScriptManager.cpp" />
     <ClCompile Include="sdl\SDLite.cpp" />
     <ClCompile Include="sdl\SDLUtils.cpp" />
     <ClCompile Include="systems\CollisionSystem.cpp" />
@@ -304,6 +298,7 @@
     <ClCompile Include="test\demo\collider_maker\ColliderMakerCommon.cpp" />
     <ClCompile Include="test\demo\gallery\Gallery.cpp" />
     <ClCompile Include="test\demo\grapple\Grapple.cpp" />
+    <ClCompile Include="test\demo\GuiLuaPlayground.cpp" />
     <ClCompile Include="test\demo\platformer\Common.cpp" />
     <ClCompile Include="test\demo\platformer\GirlPhysicsEditor.cpp" />
     <ClCompile Include="test\demo\platformer\GirlStateCoordinator.cpp" />
@@ -355,11 +350,14 @@
     <ClCompile Include="test\ui\gui_edit\GuiEditPhysics.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditRenderable.cpp" />
     <ClCompile Include="test\ui\gui_edit\GuiEditScripts.cpp" />
+    <ClCompile Include="test\ui\gui_lua_api\GuiLuaApiCommon.cpp" />
+    <ClCompile Include="test\ui\gui_lua_api\GuiLuaApiRegistration.cpp" />
     <ClCompile Include="test\ui\InspectorCommon.cpp" />
     <ClCompile Include="test\ui\InspectorComponentPanel.cpp" />
     <ClCompile Include="test\ui\InspectorEntityPanel.cpp" />
     <ClCompile Include="test\ui\InspectorEventPanel.cpp" />
     <ClCompile Include="test\ui\InspectorSystemPanel.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\LuaTextEditor.cpp" />
     <ClCompile Include="test\ui\MouseWorldNavigator.cpp" />
     <ClCompile Include="test\ui\panel\EditorComponentPanel.cpp" />
     <ClCompile Include="test\ui\panel\EditorEntityPanel.cpp" />
@@ -478,6 +476,7 @@
     <ClInclude Include="core\DirtyValue.h" />
     <ClInclude Include="core\FixedString.h" />
     <ClInclude Include="core\formatters.h" />
+    <ClInclude Include="core\PassKey.h" />
     <ClInclude Include="core\Reflection.h" />
     <ClInclude Include="core\TypeInfo.h" />
     <ClInclude Include="core\InlineStorage.h" />
@@ -558,6 +557,7 @@
     <ClInclude Include="deps\imgui-master\examples\libs\glfw\include\GLFW\glfw3.h" />
     <ClInclude Include="deps\imgui-master\examples\libs\glfw\include\GLFW\glfw3native.h" />
     <ClInclude Include="deps\imgui-master\examples\libs\usynergy\uSynergy.h" />
+    <ClInclude Include="deps\ImGuiColorTextEdit\TextEditor.h" />
     <ClInclude Include="deps\imgui\backends\imgui_impl_sdl2.h" />
     <ClInclude Include="deps\imgui\backends\imgui_impl_sdlrenderer2.h" />
     <ClInclude Include="deps\imgui\imgui.h" />
@@ -878,11 +878,9 @@
     <ClInclude Include="scripting\LuaFunctionTableParser.h" />
     <ClInclude Include="scripting\LuaNativeTypeIdUtils.h" />
     <ClInclude Include="scripting\LuaStateManager.h" />
-    <ClInclude Include="scripting\ScriptHandle.h" />
-    <ClInclude Include="scripting\ScriptSignature.h" />
     <ClInclude Include="scripting\ScriptTable.h" />
+    <ClInclude Include="scripting\ScriptTableHandle.h" />
     <ClInclude Include="scripting\ScriptTableManager.h" />
-    <ClInclude Include="scripting\ScriptTableObserverSignal.h" />
     <ClInclude Include="scripting\user_types\AudioBankLuaUserType.h" />
     <ClInclude Include="scripting\user_types\CameraLuaUserType.h" />
     <ClInclude Include="scripting\user_types\CameraTargetUserType.h" />
@@ -920,6 +918,7 @@
     <ClInclude Include="inputs\keyboard\KeyboardInputSource.h" />
     <ClInclude Include="inputs\keyboard\KeyboardInputUpdater.h" />
     <ClInclude Include="test\demo\collider_maker\ColliderMakerCommon.h" />
+    <ClInclude Include="test\demo\GuiLuaPlayground.h" />
     <ClInclude Include="test\FixtureLua.h" />
     <ClInclude Include="test\SceneRegistry.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetGridViewerChild.h" />
@@ -929,7 +928,6 @@
     <ClInclude Include="test\ui\asset_viewer\AssetPreviewViewerChild.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetTree.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetViewer.h" />
-    <ClInclude Include="test\ui\asset_viewer\AssetViewerOld.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetViewerCommon.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetViewerUtil.h" />
     <ClInclude Include="test\ui\asset_viewer\AudioPlayerContext.h" />
@@ -958,8 +956,12 @@
     <ClInclude Include="test\ui\gui_edit\GuiEventNames.h" />
     <ClInclude Include="test\ui\gui_edit\GuiSystemNames.h" />
     <ClInclude Include="test\ui\EditorInputConsumer.h" />
+    <ClInclude Include="test\ui\gui_lua_api\GuiLuaApiCommon.h" />
+    <ClInclude Include="test\ui\gui_lua_api\GuiLuaApiRegistration.h" />
     <ClInclude Include="test\ui\InspectorCommon.h" />
     <ClInclude Include="test\ui\InspectorComponentPanel.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaTextEditor.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaTextEditorSyntaxParser.h" />
     <ClInclude Include="test\ui\panel\EditorComponentPanel.h" />
     <ClInclude Include="test\ui\panel\EditorEntityPanel.h" />
     <ClInclude Include="test\ui\panel\EditorEventPanel.h" />
@@ -1003,8 +1005,6 @@
     <ClInclude Include="render\GlyphCacheHandler.h" />
     <ClInclude Include="render\RenderBatchHandler.h" />
     <ClInclude Include="render\RGBA.h" />
-    <ClInclude Include="scripting\LuaFunction.h" />
-    <ClInclude Include="scripting\LuaScript.h" />
     <ClInclude Include="scripting\LuaUserType.h" />
     <ClInclude Include="scripting\user_types\AudioUserType.h" />
     <ClInclude Include="scripting\user_types\EntityUserType.h" />
@@ -1054,7 +1054,6 @@
     <ClInclude Include="inputs\controller\GameControllerInputUpdater.h" />
     <ClInclude Include="inputs\controller\GameControllerInputMap.h" />
     <ClInclude Include="inputs\controller\GameControllerInputSource.h" />
-    <ClInclude Include="scripting\TypedLuaFunction.h" />
     <ClInclude Include="scripting\user_types\GameControllerLuaUserTypes.h" />
     <ClInclude Include="scripting\user_types\RenderableLuaUserTypes.h" />
     <ClInclude Include="scripting\user_types\SpriteAnimationLuaUserTypes.h" />
@@ -1096,7 +1095,6 @@
     <ClInclude Include="ecs\ComponentManager.h" />
     <ClInclude Include="core\commonObjects.h" />
     <ClInclude Include="core\Error.h" />
-    <ClInclude Include="core\TypeDomain.h" />
     <ClInclude Include="ecs\EntityT.h" />
     <ClInclude Include="events\data\EntityCollision.h" />
     <ClInclude Include="events\data\GameControllerEvents.h" />
@@ -1226,19 +1224,12 @@
     <ClInclude Include="ecs\EntityRelationsHelper.h" />
     <ClInclude Include="render\TextureMods.h" />
     <ClInclude Include="systems\CameraSystem.h" />
-    <ClInclude Include="core\HandleFactory.h" />
     <ClInclude Include="inputs\controller\GameController.h" />
     <ClInclude Include="events\handler\GameControllerEventHandler.h" />
     <ClInclude Include="core\ScopedInvoker.h" />
     <ClInclude Include="physics\B2Handle.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="Scene.h" />
-    <ClInclude Include="scripting\Lua.h" />
     <ClInclude Include="core\Monitoring.h" />
-    <ClInclude Include="core\Hooks.h" />
-    <ClInclude Include="scripting\ScriptInfo.h" />
-    <ClInclude Include="scripting\LuaTypesRegistry.h" />
-    <ClInclude Include="scripting\ScriptManager.h" />
     <ClInclude Include="sdl\SDLite.h" />
     <ClInclude Include="sdl\SDLUtils.h" />
     <ClInclude Include="systems\CollisionSystem.h" />
@@ -1315,14 +1306,6 @@
     <ClInclude Include="user\UserSystemScheduler.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim224.png" />
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim225.png" />
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim226.png" />
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim227.png" />
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim228.png" />
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim229.png" />
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim230.png" />
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim231.png" />
     <Image Include="resources\sprites\cd_spin\cd_spin_001.png" />
     <Image Include="resources\sprites\cd_spin\cd_spin_002.png" />
     <Image Include="resources\sprites\cd_spin\cd_spin_003.png" />
@@ -1627,11 +1610,13 @@
     <None Include="resources\json\persistence\audio.json" />
     <None Include="resources\json\persistence\entities.json" />
     <None Include="resources\json\persistence\textures.json" />
+    <None Include="resources\scripts\fn_table.lua" />
     <None Include="resources\scripts\game_controller_test.lua" />
     <None Include="resources\scripts\sprite_render_test.lua" />
     <None Include="resources\scripts\test_physics.lua" />
     <None Include="resources\scripts\textbox_test.lua" />
     <None Include="resources\scripts\text_render_test.lua" />
+    <None Include="resources\scripts\ui_edit_test.lua" />
     <None Include="resources\sprites\particles\2d_lights_and_shadows_neutral_point_light.webp" />
     <None Include="test\catch\test_json\audio.json" />
     <None Include="test\catch\test_json\entities.json" />

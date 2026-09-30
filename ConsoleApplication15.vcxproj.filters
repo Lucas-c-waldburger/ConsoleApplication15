@@ -33,12 +33,6 @@
     <ClCompile Include="core\Error.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="core\Hooks.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scripting\LuaTypesRegistry.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="core\Monitoring.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -51,13 +45,7 @@
     <ClCompile Include="core\Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scripting\ScriptManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="systems\PhysicsSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scripting\Lua.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="camera\Camera.cpp">
@@ -82,9 +70,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="physics\B2Shape.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="inputs\mouse\Mouse.cpp">
@@ -522,9 +507,6 @@
     <ClCompile Include="test\ui\gui_edit\GuiEditScripts.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scripting\ScriptHandle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="scripting\LuaFunctionCallHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -535,9 +517,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\ui\GuiConsole.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scripting\ScriptTableObserverSignal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="scripting\ScriptTableManager.cpp">
@@ -631,6 +610,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\ui\GuiTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\gui_lua_api\GuiLuaApiRegistration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\gui_lua_api\GuiLuaApiCommon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\demo\GuiLuaPlayground.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\ImGuiColorTextEdit\TextEditor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\LuaTextEditor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1016,16 +1010,7 @@
     <ClInclude Include="core\Error.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="core\HandleFactory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="core\Handle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="core\Hooks.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scripting\LuaTypesRegistry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\Monitoring.h">
@@ -1046,16 +1031,7 @@
     <ClInclude Include="core\TerminalUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scripting\ScriptManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="core\TypeDomain.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="systems\PhysicsSystem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scripting\ScriptInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ecs\EntityT.h">
@@ -1086,9 +1062,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\ComponentConcepts.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scripting\Lua.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="components\ActiveStateComponent.h">
@@ -1134,9 +1107,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="physics\B2Shape.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="systems\SystemManager.h">
@@ -1251,9 +1221,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\FuncTraits.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scripting\TypedLuaFunction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="systems\SpriteAnimationSystem.h">
@@ -1466,16 +1433,10 @@
     <ClInclude Include="events\EventSignalConcepts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scripting\LuaFunction.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="scripting\user_types\EntityUserType.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scripting\user_types\AudioUserType.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scripting\LuaScript.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scripting\user_types\SDLUsertypes.h">
@@ -2306,13 +2267,7 @@
     <ClInclude Include="core\DirtyValue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scripting\ScriptHandle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="components\util\ComponentValidPreds.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scripting\ScriptSignature.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scripting\ScriptTable.h">
@@ -3020,9 +2975,6 @@
     <ClInclude Include="systems\ScriptableUserSubsystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scripting\ScriptTableObserverSignal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="scripting\ScriptTableManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -3326,9 +3278,6 @@
     <ClInclude Include="test\ui\TextureLoaderUtility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\ui\asset_viewer\AssetViewerOld.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="test\ui\asset_viewer\AssetTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -3390,6 +3339,30 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="render\AspectRatioFit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_lua_api\GuiLuaApiCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\gui_lua_api\GuiLuaApiRegistration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\demo\GuiLuaPlayground.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\LuaTextEditor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\ImGuiColorTextEdit\TextEditor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\PassKey.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\ScriptTableHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\LuaTextEditorSyntaxParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -3455,30 +3428,6 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="resources\sprites\knight\fall_anim\knight_fall_3.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim231.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim224.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim225.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim226.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim227.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim228.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim229.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\..\Downloads\ezgif-split\knight_anim230.png">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="resources\sprites\knight\airborne\0.png">
@@ -4315,6 +4264,8 @@
     <None Include="test\catch\test_scripts\fn_table.lua" />
     <None Include="test\catch\test_scripts\sys_table.lua" />
     <None Include="test\catch\test_scripts\sys_table_2.lua" />
+    <None Include="resources\scripts\ui_edit_test.lua" />
+    <None Include="resources\scripts\fn_table.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

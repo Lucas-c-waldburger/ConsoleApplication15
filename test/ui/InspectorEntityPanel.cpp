@@ -439,7 +439,6 @@ void InspectorEntityPanel::UpdateSelectionBoxes(bool newEditSelection)
 	const bool mouseInGameWindow = GuiMouse::GetInsideWindowType() == EditorWindowType::GameWindow;
 	const bool mouseLeftClicked = GuiMouse::IsLeftClicked();
 	const bool mouseRightClicked = GuiMouse::IsRightClicked();
-	const bool mouseWheelScrolled = GuiMouse::IsWheelScrolled();
 
 	const bool noSelectionChange = !newEditSelection &&
 								   selection_.IsEditing() && 
@@ -489,12 +488,12 @@ void InspectorEntityPanel::UpdateSelectionBoxes(bool newEditSelection)
 	{
 		if (mouseLeftClicked)
 		{
-			if (hoverStack_.entityIds.empty() || 
-				(selection_.IsEditing() && hoverStack_.GetCurrent() != selection_.entityId))
-			{
-				selection_.Clear();
-			}
-			else
+			//if (hoverStack_.entityIds.empty() || 
+			//	(selection_.IsEditing() && hoverStack_.GetCurrent() != selection_.entityId))
+			//{
+			//	selection_.Clear();
+			//}
+			if (!hoverStack_.entityIds.empty() && !selection_.IsEditing())
 			{
 				assert(hoverStack_.currentIndex < hoverStack_.entityIds.size());
 
@@ -502,7 +501,7 @@ void InspectorEntityPanel::UpdateSelectionBoxes(bool newEditSelection)
 				selection_.selectionType = SelectionType::Edit;
 			}
 		}
-		else if (!hoverStack_.entityIds.empty())
+		else if (!hoverStack_.entityIds.empty() && !selection_.IsEditing())
 		{
 			if (mouseRightClicked)
 			{

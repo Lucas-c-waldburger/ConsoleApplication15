@@ -20,8 +20,10 @@ namespace {
 
 bool UserWantsClearSelectedEntity()
 {
-	return Editor::GetActivePanel() == Editor::PanelType::Components &&
-		   ImGui::IsKeyPressed(ImGuiKey_Escape);
+	return InspectorEntityPanel::GetSelection().IsEditing() &&
+		   GuiMouse::IsRightClicked() &&
+		   GuiMouse::GetInsideWindowType() == EditorWindowType::GameWindow &&
+		   InspectorComponentPanel::GetActiveBuilderType() != ComponentBuilderType::Collider;
 }
 
 void DrawSelectionState()
@@ -59,56 +61,10 @@ void ClearHoverSelectionIfNeeded()
 	}	
 }
 
-void DrawGameDisplayWindow(SceneFixture& fixture)
+bool UserDoubleClickedSelectedEntity()
 {
-	ImGui::Begin(GetEditorWindowName(EditorWindowType::GameWindow).data());
-
-	GuiMouse::EvaluateInsideWindow(EditorWindowType::GameWindow);
-
-	const auto& renderTarget = fixture.GetRenderTarget();
-	float aspectRatio = fixture.GetRenderTargetState().GetAspectRatio();
-
-	//const ImVec2 viewportAvailable = ImGui::GetMainViewport()->WorkSize;
-	const ImVec2 viewportAvailable = ImGui::GetContentRegionAvail();
-
-	float maxWidth = viewportAvailable.x;
-	float maxHeight = maxWidth / aspectRatio;
-
-	if (maxHeight > viewportAvailable.y)
-	{
-		maxHeight = viewportAvailable.y;
-		maxWidth = maxHeight * aspectRatio;
-	}
-
-	const ImVec2 imageSize{ maxWidth, maxHeight };
-
-	const ImVec2 cursor = ImGui::GetCursorPos();
-	const ImVec2 newCursorPos{
-		cursor.x + (viewportAvailable.x - imageSize.x) * 0.5f,
-		cursor.y + (viewportAvailable.y - imageSize.y) * 0.5f
-	};
-
-	ImGui::SetCursorPos(newCursorPos);
-
-	const ImVec2 displayScreenPos = ImGui::GetCursorScreenPos();
-
-	fixture.SetGameDisplayArea({
-		displayScreenPos.x,
-		displayScreenPos.y,
-		imageSize.x,
-		imageSize.y
-	});
-
-	auto tx = GuiTextureConverter::FromRenderTarget(renderTarget);
-
-	ImGui::Image(
-		tx.textureId,
-		imageSize,
-		ImVec2(0, 0),
-		ImVec2(1, 1)
-	);
-
-	ImGui::End();
+	return InspectorEntityPanel::GetSelection().IsEditing() &&
+		   ImGui::IsMouseDoubleClicked(0);
 }
 
 } // unnamed
@@ -122,6 +78,19 @@ void Editor::DestroyEditorEntities()
 		{
 			e.Destroy();
 		}
+	}
+}
+
+void Editor::HandleGameWindowUserInteractions()
+{
+	if (UserWantsClearSelectedEntity())
+	{
+		InspectorEntityPanel::ClearSelection();
+		InspectorComponentPanel::ClearState();
+	}
+	else if (UserDoubleClickedSelectedEntity())
+	{
+		activeWindows_ |= WindowType::ComponentWindow;
 	}
 }
 
@@ -244,6 +213,10 @@ void Editor::DrawToolbar(SceneFixture& fixture)
 	{
 		activeWindows_ ^= WindowType::SystemWindow;
 	}
+	if (ImGui::MenuItem("Event", nullptr, (activeWindows_ & WindowType::EventWindow)))
+	{
+		activeWindows_ ^= WindowType::EventWindow;
+	}
 	if (ImGui::MenuItem("Console", nullptr, (activeWindows_ & WindowType::ConsoleWindow)))
 	{
 		activeWindows_ ^= WindowType::ConsoleWindow;
@@ -257,8 +230,6 @@ Result<Void> Editor::ResetForNewScene(SceneFixture& fixture)
 	entityDrag_.Reset();
 	cameraControl_.Reset();
 
-	//const auto& renderTarget = fixture.GetRenderTarget();
-	//GuiMouse::Init(renderTarget.width, renderTarget.height, fixture.GetGameDisplayArea());
 	GuiMouse::Init();
 
 	ComponentEditHistory::Reset();
@@ -267,8 +238,7 @@ Result<Void> Editor::ResetForNewScene(SceneFixture& fixture)
 	TRY(InspectorSystemPanel::ResetForNewScene(fixture));
 	TRY(InspectorEventPanel::ResetForNewScene(fixture));
 
-	updateState_.forceEntitySelectionForEdit = kInvalidEntity;
-	updateState_.forcePanelOpen = PanelType::Entities;
+	forcing_ = {};
 
 	return kVoid;
 }
@@ -282,8 +252,8 @@ void Editor::UpdateForHistoryChange()
 		if (selection.entityId != entityAtCurrentRecord ||
 			selection.selectionType != InspectorEntityPanel::SelectionType::Edit)
 		{
-			updateState_.forceEntitySelectionForEdit = entityAtCurrentRecord;
-			updateState_.forcePanelOpen = PanelType::Components;
+			forcing_.forceEntitySelectionForEdit = entityAtCurrentRecord;
+			forcing_.forceWindowOpen = EditorWindowType::ComponentWindow;
 		}
 	}
 }
@@ -291,6 +261,22 @@ void Editor::UpdateForHistoryChange()
 constexpr bool Editor::IsWindowOpen(EditorWindowType windowType) noexcept
 {
 	return (activeWindows_ & windowType) != 0;
+}
+
+void Editor::DockspaceOverViewport()
+{
+	if (needLayoutDockspace_)
+	{
+		windowDocker_.Init();
+		needLayoutDockspace_ = false;
+	}
+
+	ImGui::DockSpaceOverViewport(windowDocker_.GetDockspaceID(), ImGui::GetMainViewport());
+}
+
+bool Editor::ShouldForceEntitySelection()
+{
+	return forcing_.forceEntitySelectionForEdit != kInvalidEntity;
 }
 
 struct AtUpdateBegin
@@ -325,13 +311,7 @@ void Editor::Update(SceneFixture::WeakPtr weakFixture, float dt)
 		return;
 	}
 
-	if (needLayoutDockspace_)
-	{
-		windowDocker_.Init();
-		needLayoutDockspace_ = false;
-	}
-
-	ImGui::DockSpaceOverViewport(windowDocker_.GetDockspaceID(), ImGui::GetMainViewport());
+	DockspaceOverViewport();
 
 	GuiMouse::Reset();
 
@@ -339,22 +319,17 @@ void Editor::Update(SceneFixture::WeakPtr weakFixture, float dt)
 
 	DrawToolbar(*fixture);
 
-	DrawGameDisplayWindow(*fixture);
+	DrawGameWindow(*fixture);
 
-	//auto currentState = updateState_.Take();
+	HandleGameWindowUserInteractions();
 
-	if (UserWantsClearSelectedEntity())
+	if (ShouldForceEntitySelection())
 	{
-		InspectorEntityPanel::ClearSelection();
-		InspectorComponentPanel::ClearState();
-
-		//currentState.forcePanelOpen = PanelType::Entities;
+		if (InspectorEntityPanel::SetSelectedEntityForEdit(forcing_.forceEntitySelectionForEdit))
+		{
+			activeWindows_ |= WindowType::ComponentWindow;
+		}
 	}
-	//else if (currentState.forceEntitySelectionForEdit != kInvalidEntity)
-	//{
-	//	InspectorEntityPanel::SetSelectedEntityForEdit(currentState.forceEntitySelectionForEdit);
-	//	currentState.forcePanelOpen = PanelType::Components;
-	//}
 
 	InspectorEntityPanel::UpdateSelectionBoxPositions(fixture->GetCamera());
 
@@ -367,10 +342,6 @@ void Editor::Update(SceneFixture::WeakPtr weakFixture, float dt)
 		InspectorEntityPanel::SetSelectionBoxVisibility(false);
 	}
 
-	if (!InspectorEntityPanel::GetSelection().IsEditing())
-	{
-		activeWindows_ &= ~WindowType::ComponentWindow;
-	}
 	if (IsWindowOpen(WindowType::ComponentWindow))
 	{
 		DrawComponentWindow(*fixture, atUpdateBegin);
@@ -400,6 +371,63 @@ void Editor::Update(SceneFixture::WeakPtr weakFixture, float dt)
 	HandleCameraControl(fixture->GetCamera(), dt);
 }
 
+void Editor::DrawGameWindow(SceneFixture& fixture)
+{
+	//ImGui::Begin("TestLuaTextEditor");
+
+	//luaTextEditor_.Render("##LuaTextEditor");
+
+	//ImGui::End();
+
+	ImGui::Begin(GetEditorWindowName(EditorWindowType::GameWindow).data());
+
+	GuiMouse::EvaluateInsideWindow(EditorWindowType::GameWindow);
+
+	const auto& renderTarget = fixture.GetRenderTarget();
+	float aspectRatio = fixture.GetRenderTargetState().GetAspectRatio();
+
+	const ImVec2 viewportAvailable = ImGui::GetContentRegionAvail();
+
+	float maxWidth = viewportAvailable.x;
+	float maxHeight = maxWidth / aspectRatio;
+
+	if (maxHeight > viewportAvailable.y)
+	{
+		maxHeight = viewportAvailable.y;
+		maxWidth = maxHeight * aspectRatio;
+	}
+
+	const ImVec2 imageSize{ maxWidth, maxHeight };
+
+	const ImVec2 cursor = ImGui::GetCursorPos();
+	const ImVec2 newCursorPos{
+		cursor.x + (viewportAvailable.x - imageSize.x) * 0.5f,
+		cursor.y + (viewportAvailable.y - imageSize.y) * 0.5f
+	};
+
+	ImGui::SetCursorPos(newCursorPos);
+
+	const ImVec2 displayScreenPos = ImGui::GetCursorScreenPos();
+
+	fixture.SetGameDisplayArea({
+		displayScreenPos.x,
+		displayScreenPos.y,
+		imageSize.x,
+		imageSize.y
+	});
+
+	auto tx = GuiTextureConverter::FromRenderTarget(renderTarget);
+
+	ImGui::Image(
+		tx.textureId,
+		imageSize,
+		ImVec2(0, 0),
+		ImVec2(1, 1)
+	);
+
+	ImGui::End();
+}
+
 void Editor::DrawEntityWindow(SceneFixture& fixture, const AtUpdateBegin& atUpdateBegin)
 {
 	windowDocker_.DockWindow(WindowType::EntityWindow);
@@ -426,14 +454,13 @@ void Editor::DrawComponentWindow(SceneFixture& fixture, const AtUpdateBegin& atU
 {
 	windowDocker_.DockWindow(WindowType::ComponentWindow);
 
-	const auto selectedEntityId = InspectorEntityPanel::GetSelection().entityId;
-	if (selectedEntityId != atUpdateBegin.selectedEntity)
+	const auto& selection = InspectorEntityPanel::GetSelection();
+	if (selection.entityId != atUpdateBegin.selectedEntity)
 	{
-		InspectorComponentPanel::SetActiveBuilderType(kInvalidComponentBuilderType);
+		InspectorComponentPanel::ClearActiveBuilder();
 	}
 
-	auto e = ECS::GetEntityByID(selectedEntityId);
-	assert(e.IsValid());
+	auto e = (selection.IsEditing()) ? ECS::GetEntityByID(selection.entityId) : Entity{};
 
 	if (!InspectorComponentPanel::Draw(e, fixture))
 	{
@@ -504,6 +531,9 @@ Result<Void> Editor::InitWindows(SceneFixture& fixture)
 {
 	GuiConsole::Init();
 	TRY(assetViewer_.Init(fixture));
+
+	TRY(ResourcePath::Script("fn_table.lua"), luaPath);
+	TRY(luaTextEditor_.LoadScriptFile(std::move(luaPath)));
 
 	return kVoid;
 }

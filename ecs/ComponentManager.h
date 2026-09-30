@@ -144,7 +144,7 @@ public:
         assert(entityIndex < kMaxEntities);
 
         indexWithEntityIdxToGetComponentSignature_[entityIndex] 
-            |= cmp_type_t::componentBit;
+            |= component_traits<cmp_type_t>::bit;
 
         auto& entry = GetEntry<cmp_type_t>();
 
@@ -158,7 +158,7 @@ public:
 
         assert(entityIndex < kMaxEntities);
 
-        indexWithEntityIdxToGetComponentSignature_[entityIndex] |= T::componentBit;
+        indexWithEntityIdxToGetComponentSignature_[entityIndex] |= component_traits<T>::bit;
 
         auto& entry = GetEntry<T>();
 
@@ -172,7 +172,7 @@ public:
 
         assert(entityIndex < kMaxEntities);
 
-        indexWithEntityIdxToGetComponentSignature_[entityIndex] &= ~(T::componentBit);
+        indexWithEntityIdxToGetComponentSignature_[entityIndex] &= ~(component_traits<T>::bit);
 
         auto& entry = GetEntry<T>();
 
@@ -185,7 +185,7 @@ public:
         const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntities);
-        assert(indexWithEntityIdxToGetComponentSignature_[entityIndex] & T::componentBit);
+        assert(indexWithEntityIdxToGetComponentSignature_[entityIndex] & component_traits<T>::bit);
 
         auto& entry = GetEntry<T>();
 
@@ -198,7 +198,7 @@ public:
         const auto entityIndex = GetEntity_tIndex(entity);
 
         assert(entityIndex < kMaxEntities);
-        assert(indexWithEntityIdxToGetComponentSignature_[entityIndex] & T::componentBit);
+        assert(indexWithEntityIdxToGetComponentSignature_[entityIndex] & component_traits<T>::bit);
 
         const auto& entry = GetEntry<T>();
 
@@ -212,7 +212,7 @@ public:
 
         assert(entityIndex < kMaxEntities);
 
-        return indexWithEntityIdxToGetComponentSignature_[entityIndex] & T::componentBit;
+        return indexWithEntityIdxToGetComponentSignature_[entityIndex] & component_traits<T>::bit;
     }
 
     void EntityCreated(Entity_t entity)
@@ -222,7 +222,7 @@ public:
         assert(entityIndex < kMaxEntities);
 
         indexWithEntityIdxToGetComponentSignature_[entityIndex] = 
-            ActiveState::componentBit;
+            component_traits<ActiveState>::bit;
     }
 
     void EntityDestroyed(Entity_t entity)

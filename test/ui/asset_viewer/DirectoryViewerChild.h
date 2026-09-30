@@ -12,7 +12,7 @@ class DirectoryViewerChild
 public:
 	static Result<DirectoryViewerChild> Create(const std::filesystem::path& rootPath);
 
-	void Draw(const AssetViewerIcons& icons, const GuiTextureConverter& converter);
+	bool Draw(const AssetViewerIcons& icons, const GuiTextureConverter& converter);
 
 	const AssetTree& GetAssetTree() const { return assetTree_; }
 

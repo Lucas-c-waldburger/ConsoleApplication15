@@ -1,10 +1,10 @@
 #pragma once
-#include "BaseComponent.h"
+#include "ComponentConcepts.h"
 #include "../inputs/mouse/MouseCursor.h"
 #include "../inputs/mouse/MouseInputMap.h"
 #include <array>
 
-struct MouseState : BaseComponent<MouseState>
+struct MouseState
 {
     MouseInputMap inputs = MakeInputMap<MouseInputMap>();
     MouseInputValues values;

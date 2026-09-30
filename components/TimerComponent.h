@@ -1,8 +1,8 @@
 #pragma once
-#include "BaseComponent.h"
+#include "ComponentConcepts.h"
 #include "../core/Handle.h"
 
-struct Timer : BaseComponent<Timer>
+struct Timer
 {
 	enum Flag : uint8_t
 	{
@@ -15,9 +15,5 @@ struct Timer : BaseComponent<Timer>
 	int numRepeats = 0;
 	uint8_t flags = 0;
 
-	friend constexpr bool operator==(const Timer& lhs, const Timer& rhs)
-	{
-		return lhs.elapsed == rhs.elapsed && lhs.duration == rhs.duration &&
-			   lhs.numRepeats == rhs.numRepeats && lhs.flags == rhs.flags;
-	}
+	constexpr bool operator==(const Timer&) const = default;
 };

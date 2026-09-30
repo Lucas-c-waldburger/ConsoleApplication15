@@ -12,6 +12,7 @@
 #include "test/demo/collider_maker/ColliderMakerApp.h"
 #include "test/demo/gallery/GalleryApp.h"
 #include "test/demo/audio_lounge/AudioLoungeApp.h"
+#include "test/demo/GuiLuaPlayground.h"
 
 int main(int argc, char* argv[]) 
 {
@@ -220,9 +221,14 @@ SceneFixture::SceneConfiguration config{};
 
     auto& fixture = fixtureResult.GetValue();
 
+    test::GuiLuaPlayground playground{};
+
 #if IMGUI_ENABLED
     if (fixture->IsSystemRegistered<GuiSystem>())
     {
+        //auto playgroundResult = playground.Init("ui_edit_test.lua", *fixture);
+        //ASSERT_RESULT(playgroundResult);
+
         auto editorResult = ui::Editor::Init(fixture);
         ASSERT_RESULT(editorResult);
     }
@@ -234,8 +240,6 @@ SceneFixture::SceneConfiguration config{};
     //auto runResult = test::RunGalleryDemo(fixtureResult.GetValue());
     //auto runResult = test::RunAudioLoungeApp(fixtureResult.GetValue());
     //ASSERT_RESULT(runResult);
-
-    //fixtureResult.GetValue().reset();
 
     auto setupResult = test::SetUpPlatformerDemo(fixture);
     ASSERT_RESULT(setupResult);

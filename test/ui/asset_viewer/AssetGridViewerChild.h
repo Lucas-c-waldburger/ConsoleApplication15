@@ -7,6 +7,7 @@
 
 class SceneFixture;
 class AudioBank;
+class ScriptSystem;
 
 namespace ui {
 
@@ -20,7 +21,8 @@ public:
 		ViewingInsideSeries = 1 << 2,
 		RequestConvertAudioType = 1 << 3,
 		GameLoopPassedSinceRequest = 1 << 4,
-		JustDragDroppedIntoGrid = 1 << 5
+		JustDragDroppedIntoGrid = 1 << 5,
+		RequestEdit = 1 << 6
 	};
 
 	struct GridSelection
@@ -113,6 +115,22 @@ public:
 		}
 	};
 
+	struct ScriptAssetGridSelection : GridSelection
+	{
+		ScriptTable::TableId tableId;
+
+		void Reset()
+		{
+			tableId = ScriptTable::kInvalidTableId;
+			ClearRename();
+		}
+
+		bool HasSelection() const
+		{
+			return tableId != ScriptTable::kInvalidTableId;
+		}
+	};
+
 	struct ResourceContext
 	{
 		const AssetTree& assetTree;
@@ -127,6 +145,9 @@ public:
 	const SpriteAssetGridSelection GetSpriteSelection() const { return spriteSelection_; }
 	const AudioAssetGridSelection GetAudioSelection() const { return audioSelection_; }
 	const FontAssetGridSelection GetFontSelection() const { return fontSelection_; }
+	const ScriptAssetGridSelection GetScriptSelection() const { return scriptSelection_; }
+
+	bool HasAnySelection() const;
 
 	AssetItem::Type GetOpenAssetTabType() const noexcept { return currentAssetTab_; }
 
@@ -140,6 +161,7 @@ private:
 	void DrawSpriteAssetGrid(TextureRepository& loadTargetRepo, ResourceContext& ctx);
 	void DrawAudioAssetGrid(AudioBank& audioBank, ResourceContext& ctx);
 	void DrawFontAssetGrid(FontAtlas& fontAtlas, ResourceContext& ctx);
+	void DrawScriptAssetGrid(ScriptSystem& scriptSys, ResourceContext& ctx);
 
 	AssetItem::Type HandleDirectoryAssetDragDropTarget(const AssetItem& item, const AssetTree& assetTree,
 													   SceneFixture& fixture);
@@ -149,6 +171,7 @@ private:
 	uint8_t ResolveAudioAssetDragDropTarget(AudioBank& audioBank);
 	AssetItem::Type HandleFontAssetDragDropTarget(const AssetItem& item, FontAtlas& fontAtlas, 
 												  SDL_Renderer* renderer);
+	AssetItem::Type HandleScriptAssetDragDropTarget(const AssetItem& item, ScriptSystem& scriptSys);
 
 	void HandleSpriteGridCellDragDropSource(const SpriteAtlas& loadTargetAtlas);
 	bool HandleSpriteGridCellDragDropTarget(SpriteAtlas& loadTargetAtlas, std::string_view seriesName);
@@ -158,12 +181,14 @@ private:
 	void DrawSpritePopupContextMenu(SpriteAtlas& loadTargetAtlas);
 	void DrawAudioPopupContextMenu(AudioBank& audioBank);
 	void DrawFontPopupContextMenu(FontAtlas& fontAtlas);
+	void DrawScriptPopupContextMenu(ScriptSystem& scriptSys);
 
 	void DrawSpriteTabItemMenu(SpriteAtlas& loadTargetAtlas);
 
 	void ResolveSpritePopupContextActions(SpriteAtlas& loadTargetAtlas);
 	void ResolveAudioPopupContextActions(AudioBank& audioBank);
 	void ResolveFontPopupContextActions(FontAtlas& fontAtlas);
+	void ResolveScriptPopupContextActions(ScriptSystem& scriptSys);
 
 	void HandleSpriteSelectionRename(const AssetGridCell& gridCell, SpriteAtlas& loadTargetAtlas,
 									 bool renameStartedThisFrame);
@@ -171,11 +196,14 @@ private:
 									 bool renameStartedThisFrame);
 	void HandleFontSelectionRename(const AssetGridCell& gridCell, FontAtlas& fontAtlas,
 								   bool renameStartedThisFrame);
+	void HandleScriptSelectionRename(const AssetGridCell& gridCell, ScriptSystem& scriptSys,
+									 bool renameStartedThisFrame);
 
 	std::optional<AssetItem::Type> forceAssetTabOpen_;
 	SpriteAssetGridSelection spriteSelection_;
 	AudioAssetGridSelection audioSelection_;
 	FontAssetGridSelection fontSelection_;
+	ScriptAssetGridSelection scriptSelection_;
 	AssetItem::Type currentAssetTab_ = AssetItem::Type::Image;
 	std::optional<AssetItem> pendingDragDropTargetItem_;
 };

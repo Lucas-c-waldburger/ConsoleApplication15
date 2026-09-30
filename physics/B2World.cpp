@@ -1,5 +1,4 @@
 #include "B2World.h"
-#include "../core/HandleFactory.h"
 #include <cassert>
 
 B2World B2World::Create(float gravX, float gravY)

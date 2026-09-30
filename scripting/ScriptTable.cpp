@@ -2,8 +2,29 @@
 
 /** @defgroup ScriptTable @{ */
 
+ScriptTable ScriptTable::Create(sol::table&& tbl, ParsedLuaFunctionTableSignatures&& fns)
+{
+	const auto id = tableIdCounter_++;
+
+	return ScriptTable{ std::move(tbl), std::move(fns), id };
+}
+
+std::pair<ScriptTable::TableId, ScriptTableIndexPair> 
+ScriptTable::CreateTableIndexPair(sol::table&& tbl, ParsedLuaFunctionTableSignatures&& fns, 
+								  size_t resourceIdx)
+{
+	const auto id = tableIdCounter_++;
+
+	return std::pair<TableId, ScriptTableIndexPair>{
+		std::piecewise_construct,
+			std::forward_as_tuple(id),
+			std::forward_as_tuple(
+				ScriptTable{ std::move(tbl), std::move(fns), id }, resourceIdx)
+	};
+}
+
 std::pair<ScriptTable::TableId, ScriptTableEntry>
-ScriptTable::CreateTableEntry(const std::string& path, sol::table&& tbl,
+ScriptTable::CreateTableEntry(std::string name, std::string path, sol::table&& tbl,
 							  ParsedLuaFunctionTableSignatures&& fns, TableType type)
 {
 	const auto id = tableIdCounter_++;
@@ -11,7 +32,8 @@ ScriptTable::CreateTableEntry(const std::string& path, sol::table&& tbl,
 	return std::pair<TableId, ScriptTableEntry>{
 		std::piecewise_construct,
 			std::forward_as_tuple(id),
-			std::forward_as_tuple(path, ScriptTable{ std::move(tbl), std::move(fns), id }, type)
+			std::forward_as_tuple(std::move(name), std::move(path), 
+				ScriptTable{ std::move(tbl), std::move(fns), id }, type)
 	};
 }
 
@@ -56,6 +78,13 @@ void ScriptTable::ReassignTableData(sol::table&& tbl, ParsedLuaFunctionTableSign
 {
 	table_ = std::move(tbl);
 	functions_ = std::move(fns);
+}
+
+void ScriptTable::Clear()
+{
+	table_ = {};
+	functions_.clear();
+	id_ = kInvalidTableId;
 }
 
 /** @} */

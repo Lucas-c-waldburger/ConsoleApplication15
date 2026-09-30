@@ -347,7 +347,7 @@ bool ECS::IsEntityActive(Entity_t entity) const
 
 	const auto& sig = componentManager_.GetSignature(entity);
 
-	bool activeAccordingToComponentManager = (sig & ActiveState::componentBit);
+	bool activeAccordingToComponentManager = (sig & component_traits<ActiveState>::bit);
 	bool activeAccordingToEntityManager = entityManager_.IsEntityActive(entity);
 
 	//assert(activeAccordingToComponentManager == activeAccordingToEntityManager);

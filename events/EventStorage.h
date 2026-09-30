@@ -25,7 +25,7 @@ public:
 		auto& storageVec = std::get<std::vector<T>>(self.storage_);
 		if (storageVec.empty())
 		{
-			self.heldEventIndices_[self.heldEventHead_++] = T::eventType;
+			self.heldEventIndices_[self.heldEventHead_++] = event_traits<T>::index;
 		}
 
 		return storageVec.emplace_back().data;
@@ -65,7 +65,7 @@ public:
 			if (storageVec.empty())
 			{
 				// need to mark that this event type has at least 1 event to be dispatched
-				heldEventIndices_[heldEventHead_++] = event_data_t::eventType;
+				heldEventIndices_[heldEventHead_++] = event_traits<event_data_t>::index;
 			}
 
 			storageVec.emplace_back(std::forward<T>(event));
@@ -83,7 +83,7 @@ public:
 		auto& storageVec = std::get<std::vector<T>>(storage_);
 		if (storageVec.empty())
 		{
-			heldEventIndices_[heldEventHead_++] = T::eventType;
+			heldEventIndices_[heldEventHead_++] = event_traits<T>::index;
 		}
 
 		const size_t eventsSize = events.size();

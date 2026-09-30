@@ -1,40 +1,31 @@
 #pragma once
 #include <optional>
-#include "BaseComponent.h"
-//#include "../audio/AudioHandle.h"
+#include "ComponentConcepts.h"
 #include "../core/ResourceHandle.h"
 #include "../audio/AudioSettings.h"
 #include "../audio/AudioInstance.h"
 
-struct NewAudioRequest : BaseComponent<NewAudioRequest>
+struct NewAudioRequest
 {
 	Handle<Audio> audioHandle;
 	AudioChannelSettings settings;
 	uint8_t force = 0;
 	float timeInQueue = 0.0f;
 
-	friend bool operator==(const NewAudioRequest& lhs, const NewAudioRequest& rhs)
-	{
-		return lhs.audioHandle == rhs.audioHandle && lhs.settings == rhs.settings &&
-			   lhs.force == rhs.force && lhs.timeInQueue == rhs.timeInQueue;
-	}
+	bool operator==(const NewAudioRequest&) const = default;
 };
 
-struct AudioUpdateRequest : BaseComponent<AudioUpdateRequest>
+struct AudioUpdateRequest
 {
 	AudioInstanceID instanceId;
 	AudioPlayCommand command = AudioPlayCommand::None;
 	AudioUpdateSettings settings;
 	AudioSpatialData spatialData;
 
-	friend bool operator==(const AudioUpdateRequest& lhs, const AudioUpdateRequest& rhs)
-	{
-		return lhs.instanceId == rhs.instanceId && lhs.command == rhs.command &&
-			   lhs.settings == rhs.settings && lhs.spatialData == rhs.spatialData;
-	}
+	bool operator==(const AudioUpdateRequest&) const = default;
 };
 
-struct ActiveAudio : BaseComponent<ActiveAudio>
+struct ActiveAudio
 {
 	Handle<Audio> audioHandle;
 	AudioInstanceID instanceId;
@@ -42,10 +33,5 @@ struct ActiveAudio : BaseComponent<ActiveAudio>
 	size_t onChannel = std::numeric_limits<size_t>::max();
 	AudioChannelSettings settings;
 
-	friend bool operator==(const ActiveAudio& lhs, const ActiveAudio& rhs)
-	{
-		return lhs.audioHandle == rhs.audioHandle && lhs.instanceId == rhs.instanceId &&
-			   lhs.status == rhs.status && lhs.onChannel == rhs.onChannel &&
-			   lhs.settings == rhs.settings;
-	}
+	bool operator==(const ActiveAudio&) const = default;
 };

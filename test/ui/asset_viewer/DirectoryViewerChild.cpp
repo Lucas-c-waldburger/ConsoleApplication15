@@ -28,17 +28,60 @@ GuiTexture GetNodeIconTexture(const AssetViewerIcons& icons, const GuiTextureCon
 	return converter.FromSprite(icons.unknownFileSmallSprite);
 }
 
+bool DrawDirectoryIconButton(const Sprite& dirIconSprite, const GuiTextureConverter& converter)
+{
+	const auto height = ImGui::GetFrameHeight();
+
+	// asset icon
+	auto tx = converter.FromSprite(dirIconSprite);
+	assert(tx.textureId != 0);
+
+	const float scale = std::min(
+		height / tx.size.x,
+		height / tx.size.y
+	);
+
+	const ImVec2 iconSize{
+		tx.size.x * scale * 0.9f,
+		tx.size.y * scale * 0.9f
+	};
+
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+
+	const bool pressed = ImGui::ImageButton(
+		"DirOnlyButton",
+		tx.textureId,
+		iconSize,
+		tx.uv0,
+		tx.uv1
+	);
+
+	ImGui::PopStyleColor();
+
+	return pressed;
+}
+
 } // unnamed
 
-void DirectoryViewerChild::Draw(const AssetViewerIcons& icons, const GuiTextureConverter& converter)
+bool DirectoryViewerChild::Draw(const AssetViewerIcons& icons, const GuiTextureConverter& converter)
 {
 	if (assetTree_.rootReferenceNode.id >= assetTree_.assets.size() ||
 		!std::filesystem::exists(assetTree_.assets[assetTree_.rootReferenceNode.id].path))
 	{
-		return;
+		return false;
 	}
 
-	DrawImpl(assetTree_.rootReferenceNode, icons, converter, false);
+	if (!assetTree_.rootReferenceNode.isOpen)
+	{
+		assetTree_.rootReferenceNode.isOpen = 
+			DrawDirectoryIconButton(icons.folderClosedSmallSprite, converter);
+	}
+	else
+	{
+		DrawImpl(assetTree_.rootReferenceNode, icons, converter, false);
+	}
+
+	return assetTree_.rootReferenceNode.isOpen;
 }
 
 void DirectoryViewerChild::DrawImpl(AssetReferenceNode& node, const AssetViewerIcons& icons,

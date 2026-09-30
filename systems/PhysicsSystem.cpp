@@ -186,13 +186,13 @@ void PhysicsSystem::OnEntityDestroyed(Entity e)
 
 void PhysicsSystem::OnComponentRemoved(Entity e, ComponentSignature sig)
 {
-	if ((sig & RigidBody::componentBit) && e.HasComponent<RigidBody>(&ValidBody))
+	if ((sig & component_traits<RigidBody>::bit) && e.HasComponent<RigidBody>(&ValidBody))
 	{
 		auto& body = GetWriteAccess(e.GetComponent<RigidBody>().body);
 
 		body.Destroy();
 	}
-	else if ((sig & Collider::componentBit) && e.HasComponent<Collider>(&ValidShape))
+	else if ((sig & component_traits<Collider>::bit) && e.HasComponent<Collider>(&ValidShape))
 	{
 		auto& shape = GetWriteAccess(e.GetComponent<Collider>().shape);
 

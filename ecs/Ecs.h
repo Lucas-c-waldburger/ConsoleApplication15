@@ -278,7 +278,7 @@ public:
     {
         auto& ecs = ECS::Get();
 
-        uint64_t exactMask = (ActiveState::componentBit | EntityFlags::componentBit);
+        uint64_t exactMask = (component_traits<ActiveState>::bit | component_traits<EntityFlags>::bit);
         exactMask |= (... | ecs.GetComponentBit<Ts>());
 
         return ecs.GetAllEntitiesWithInternal(exactMask, 
@@ -361,7 +361,7 @@ private:
 
         if constexpr (SomeComponent<T>)
         {
-            return T::componentBit;
+            return component_traits<T>::bit;
         }
         else
         {
@@ -509,7 +509,7 @@ private:
     {
         if constexpr (SomeComponent<T>)
         {
-            return componentManager_.GetSignature(entity) & T::componentBit;
+            return componentManager_.GetSignature(entity) & component_traits<T>::bit;
         }
         else
         {
@@ -589,7 +589,7 @@ private:
 
             // unless the Get() call explicitly asks to include MarkDestroyed component, omit entity
             if (componentManager_.HasComponent<MarkedDestroyed>(entity) &&
-                ((componentMasks.includeMask & MarkedDestroyed::componentBit) == 0))
+                ((componentMasks.includeMask & component_traits<MarkedDestroyed>::bit) == 0))
             {
                 continue;
             }
@@ -627,7 +627,7 @@ private:
 
             // unless the Get() call explicitly asks to include MarkDestroyed component, omit entity
             if (componentManager_.HasComponent<MarkedDestroyed>(entity) &&
-                ((componentMasks.includeMask & MarkedDestroyed::componentBit) == 0))
+                ((componentMasks.includeMask & component_traits<MarkedDestroyed>::bit) == 0))
             {
                 continue;
             }
@@ -684,7 +684,7 @@ private:
 
             // unless the Get() call explicitly asks to include MarkDestroyed component, omit entity
             if (componentManager_.HasComponent<MarkedDestroyed>(entity) &&
-                ((componentMasks.includeMask & MarkedDestroyed::componentBit) == 0))
+                ((componentMasks.includeMask & component_traits<MarkedDestroyed>::bit) == 0))
             {
                 continue;
             }
@@ -791,7 +791,7 @@ void ECS::EmitComponentRemovedSignal(Entity&& e)
     ComponentSignature sig = 0;
     if constexpr (SomeComponent<T>)
     {
-        sig = T::componentBit;
+        sig = component_traits<T>::bit;
     }
     else
     {

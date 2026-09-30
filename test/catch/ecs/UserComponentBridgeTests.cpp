@@ -23,21 +23,21 @@ TEST_CASE("UserComponentBridge Unit Tests", "[ecs]")
 	CHECK(bridge.IsComponentDataRegistered<UserCmpA>());
 	CHECK(bridge.GetAvailableComponentCount() == availableCount - 1);
 	CHECK(bridge.GetComponentDataSignature<UserCmpA>() == 
-		UserComponent0::componentBit);
+		component_traits<UserComponent0>::bit);
 
 	bool registeredB = bridge.RegisterComponentData<UserCmpB>();
 	CHECK(registeredB);
 	CHECK(bridge.IsComponentDataRegistered<UserCmpB>());
 	CHECK(bridge.GetAvailableComponentCount() == availableCount - 2);
 	CHECK(bridge.GetComponentDataSignature<UserCmpB>() == 
-		UserComponent1::componentBit);
+		component_traits<UserComponent1>::bit);
 
 	bool registeredC = bridge.RegisterComponentData<UserCmpC>();
 	CHECK(registeredC);
 	CHECK(bridge.IsComponentDataRegistered<UserCmpC>());
 	CHECK(bridge.GetAvailableComponentCount() == availableCount - 3);
 	CHECK(bridge.GetComponentDataSignature<UserCmpC>() == 
-		UserComponent2::componentBit);
+		component_traits<UserComponent2>::bit);
 }
 
 TEST_CASE("UserComponentBridge Integration Tests", "[ecs]")

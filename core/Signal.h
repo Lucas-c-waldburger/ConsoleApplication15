@@ -160,6 +160,8 @@ public:
 
 	size_t GetRefCount() const { return slots_.size(); }
 
+	void ClearSlots() { slots_.clear(); }
+
 private:
 	auto GetDisconnectLambda()
 	{

@@ -60,7 +60,7 @@ class UserComponentDispatchTableImpl<UserCmpList<Ts...>>
 	template <typename T>
 	static ComponentSignature GetUserComponentBitImpl()
 	{
-		return T::componentBit;
+		return component_traits<T>::bit;
 	}
 
 	using GetUserComponentBitSig = ComponentSignature(*)(void);

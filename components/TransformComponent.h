@@ -1,19 +1,19 @@
 #pragma once
-#include "BaseComponent.h"
+#include "ComponentConcepts.h"
 #include <SDL.h>
 
-struct Transform : BaseComponent<Transform>
+struct Transform
 {
     SDL_FPoint position = { 0.0f, 0.0f };
     float rotation = 0.0f;
     SDL_FPoint scale = { 1.0f, 1.0f };
 
-    friend constexpr bool operator==(const Transform& lhs, const Transform& rhs)
+    constexpr bool operator==(const Transform& rhs) const
     {
-        return lhs.position.x == rhs.position.x && 
-               lhs.position.y == rhs.position.y &&
-               lhs.rotation == rhs.rotation && 
-               lhs.scale.x == rhs.scale.x && 
-               lhs.scale.y == rhs.scale.y;
+        return position.x == rhs.position.x && 
+               position.y == rhs.position.y &&
+               rotation == rhs.rotation && 
+               scale.x == rhs.scale.x && 
+               scale.y == rhs.scale.y;
     }
 };

@@ -174,7 +174,9 @@ bool EditorEventCallbackBuilder::Draw(Entity& e, SceneFixture& fixture)
 		return PropertyEditState::None;
 	});
 
-	if (selectedTableId_ != std::numeric_limits<ScriptTable::TableId>::max() &&
+	//// TODO: Fix this!!!
+
+	/*if (selectedTableId_ != std::numeric_limits<ScriptTable::TableId>::max() &&
 		!scriptSys.ContainsTable(selectedTableId_))
 	{
 		selectedTableId_ = std::numeric_limits<ScriptTable::TableId>::max();
@@ -198,7 +200,7 @@ bool EditorEventCallbackBuilder::Draw(Entity& e, SceneFixture& fixture)
 
 	Property("function", [&funcNamesCtx] {
 		return GuiEditProperty(funcNamesCtx);
-	});
+	});*/
 
 	Property("relevant entity", [&e, this] {
 		DrawRelevantEntityList(e, selectedRelevantEntity_);
@@ -272,7 +274,11 @@ void EditorEventCallbackBuilder::UpdateEntityCallbackInfo(Entity& e, const Scrip
 	callbackInfo.eventNames.emplace_back(selectedEventName_);
 	callbackInfo.tableFunctionNames.emplace_back(selectedTableFunction_);
 
-	const auto& selectedScriptFile = scriptSys.GetTableFilepath(selectedTableId_);
+	auto selectedScriptFileOp = 
+		scriptSys.GetTableManager().GetTableInfo<&ScriptTableInfo::filepath>(selectedTableId_);
+	assert(selectedScriptFileOp.has_value());
+
+	const auto& selectedScriptFile = *selectedScriptFileOp;
 	assert(!selectedScriptFile.empty());
 
 	auto path = fs::path(selectedScriptFile);

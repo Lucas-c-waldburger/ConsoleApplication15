@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include "../core/Signal.h"
-#include "BaseComponent.h"
+#include "ComponentConcepts.h"
 
 struct EntityCallbackToken
 {
@@ -20,11 +20,15 @@ struct EntityCallbackToken
 	EntityCallbackToken(EntityCallbackToken&&) noexcept = default;
 	EntityCallbackToken& operator=(EntityCallbackToken&&) noexcept = default;
 
+	bool operator==(const EntityCallbackToken&) const = default;
+
 	Type type = Type::Event;
 	SignalToken token;
 };
  
-struct SignalTokenStorage : BaseComponent<SignalTokenStorage>
+struct SignalTokenStorage
 {
 	std::vector<EntityCallbackToken> signalTokens;
+
+	bool operator==(const SignalTokenStorage&) const = default;
 };

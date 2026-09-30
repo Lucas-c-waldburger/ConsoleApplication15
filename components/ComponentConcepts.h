@@ -1,10 +1,12 @@
 #pragma once
-#include "BaseComponent.h"
+#include "ComponentTypeList.h"
+
+static constexpr size_t kMaxComponents = 64;
+
+using ComponentSignature = uint64_t;
 
 template <typename T>
-concept SomeComponent = 
-    SomeTypeInList<T, ComponentTypeList> &&
-    std::derived_from<T, BaseComponent<T>>;
+concept SomeComponent = SomeTypeInList<std::remove_cvref_t<T>, ComponentTypeList>;
 
 template <SomeComponent T>
 struct component_traits {

@@ -52,7 +52,7 @@ private:
 	static Result<Void> LoadResources(SceneFixture& fixture);
 
 	static inline Buttons buttons_{};
-	static inline TypeIndexedBitset<GuiEventTypeList> eventFiredList_{};
+	static inline TypeIndexedBitMap<GuiEventTypeList, float> eventFiredList_{};
 	static inline SignalTokenStorage eventFiredTokens_{};
 	static inline GuiEventTypeList::AsTuple<std::type_identity_t> editedEvents_{};
 };

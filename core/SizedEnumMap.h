@@ -3,6 +3,7 @@
 #include "Literals.h"
 #include <array>
 #include <cassert>
+#include <magic_enum/magic_enum.hpp>
 
 
 //// TODO: Reimplement using magic_enum
@@ -169,4 +170,72 @@ public:
 
 private:
 	MapType map_;
+};
+
+template <typename E, typename V> requires std::is_enum_v<E>
+class SizedEnumMap2
+{
+public:
+	constexpr V& operator[](E e)
+	{
+		const auto idx = magic_enum::enum_index(e);
+		assert(idx.has_value());
+		assert(*idx < map_.size());
+
+		return map_[*idx];
+	}
+
+	constexpr const V& operator[](E e) const
+	{
+		const auto idx = magic_enum::enum_index(e);
+		assert(idx.has_value());
+		assert(*idx < map_.size());
+
+		return map_[*idx];
+	}
+
+	constexpr V& operator[](size_t idx)
+	{
+		assert(idx < map_.size());
+
+		return map_[idx];
+	}
+
+	constexpr const V& operator[](size_t idx) const
+	{
+		assert(idx < map_.size());
+
+		return map_[idx];
+	}
+
+	constexpr size_t size() const noexcept
+	{
+		return map_.size();
+	}
+
+	template <typename Fn> requires std::invocable<Fn, E, V&>
+	void for_each(Fn&& fn)
+	{
+		for (size_t i = 0; i < map_.size(); ++i)
+		{
+			std::invoke(magic_enum::enum_value(i), map_[i]);
+		}
+	}
+
+	template <typename Fn> requires std::invocable<Fn, E, const V&>
+	void for_each(Fn&& fn) const
+	{
+		for (size_t i = 0; i < map_.size(); ++i)
+		{
+			std::invoke(magic_enum::enum_value(i), map_[i]);
+		}
+	}
+
+	constexpr E enum_at(size_t idx) const
+	{
+		return magic_enum::enum_value(idx);
+	}
+
+private:
+	std::array<V, magic_enum::enum_count<E>()> map_;
 };

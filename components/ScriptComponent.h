@@ -1,8 +1,8 @@
 #pragma once
-#include "BaseComponent.h"
+#include "ComponentConcepts.h"
 #include "../scripting/ScriptTable.h"
 
-struct Script : BaseComponent<Script>
+struct Script
 {
 	ScriptTableView table;
 

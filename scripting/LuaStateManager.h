@@ -29,20 +29,13 @@ public:
 
 	bool IsRegistered(std::string_view name) const;
 
-	//template <typename T> requires std::same_as<raw_type_t<T>, T>
-	//bool IsRegistered() const;
-
 	uint32_t GetRegisteredTypeId(std::string_view name) const;
-
-	//template <typename T> requires std::same_as<raw_type_t<T>, T>
-	//const std::string& GetRegisteredName() const;
 
 	sol::state_view Data() { return state_; }
 
 private:
 	sol::state state_;
 	UnorderedDictionary<uint32_t> registeredNameToTypeId_;
-	//std::unordered_map<uint32_t, std::string> registeredTypeIdToName_;
 };
 
 namespace detail {
@@ -89,7 +82,6 @@ inline bool LuaStateManager::NewUserType(std::string_view name, Args && ...args)
 	state_.new_usertype<T>(name, std::forward<Args>(args)...);
 
 	registeredNameToTypeId_.try_emplace(name, TypeInfo<T>::hash32);
-	//registeredTypeIdToName_.try_emplace(TypeInfo<T>::hash32, name);
 
 	return true;
 }
@@ -106,24 +98,9 @@ inline bool LuaStateManager::NewEnum(std::string_view name, Args && ...args)
 	state_.new_enum(name, std::forward<Args>(args)...);
 
 	registeredNameToTypeId_.try_emplace(name, TypeInfo<T>::hash32);
-	//registeredTypeIdToName_.try_emplace(TypeInfo<T>::hash32, name);
 
 	return true;
 }
-
-//template <typename T> requires std::same_as<raw_type_t<T>, T>
-//bool LuaStateManager::IsRegistered() const
-//{
-//	return registeredTypeIdToName_.contains(TypeInfo<T>::hash32);
-//}
-//
-//template <typename T> requires std::same_as<raw_type_t<T>, T>
-//const std::string& LuaStateManager::GetRegisteredName() const
-//{
-//	auto it = registeredTypeIdToName_.find(TypeInfo<T>::hash32);
-//
-//	return (it != registeredTypeIdToName_.end()) ? it->second : Null<std::string>();
-//}
 
 template <typename T>
 	requires (std::same_as<raw_type_t<T>, T> &&
@@ -145,7 +122,6 @@ bool LuaStateManager::AutoRegister(std::string_view name)
 	}
 
 	registeredNameToTypeId_.try_emplace(name, TypeInfo<T>::hash32);
-	//registeredTypeIdToName_.try_emplace(TypeInfo<T>::hash32, name);
 
 	return true;
 }

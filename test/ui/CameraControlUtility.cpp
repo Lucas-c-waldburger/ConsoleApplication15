@@ -36,11 +36,10 @@ void CameraControlUtility::UpdateScroll(Camera& cam, float dt)
 
 void CameraControlUtility::UpdateZoom(Camera& cam)
 {
-	if (GuiMouse::IsWheelScrolled() && 
-		GuiMouse::GetInsideWindowType() == EditorWindowType::GameWindow)
+	if (GuiMouse::GetInsideWindowType() == EditorWindowType::GameWindow)
 	{
-		float newScale = cam.GetZoomScale() + (GuiMouse::GetScrollY() > 0.0f 
-			? kZoomIncrement : -kZoomIncrement);
+		float newScale = cam.GetZoomScale() + (GuiMouse::GetScrollY() * kZoomIncrement);
+
 		if (newScale < 0.1f)
 		{
 			newScale = 0.1f;

@@ -1,5 +1,4 @@
 #include "B2Body.h"
-#include "../core/HandleFactory.h"
 #include "../core/TypeUtils.h"
 #include "B2Common.h"
 #include <cassert>

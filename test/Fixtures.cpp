@@ -246,8 +246,6 @@ void SceneFixture::LoopStart()
 	assert(systems_.IsSystemRegistered<GameLoopSystem>());
 	systems_.GetSystem<GameLoopSystem>().UpdateLoopStepStart(eventBus_);
 
-	hooks_.SetHookPoint<HookPoint::LoopStart>();
-
 	UpdateTimers();
 
 	if (IsSystemRegistered<ScriptSystem>())
@@ -428,11 +426,6 @@ void SceneFixture::RenderPresent()
 					renderTarget_,
 					nullptr,
 					&destination);
-}
-
-Result<Void> SceneFixture::UpdateUi()
-{
-	return Void{};
 }
 
 void SceneFixture::LoopEnd()
@@ -667,11 +660,6 @@ void SceneFixture::ResetForNewScene(const SceneConfiguration& config)
 	world_ = B2World::Create(config.worldGravity.x, config.worldGravity.y);
 
 	textureRepo_ = {};
-
-	//if (IsSystemRegistered<AudioSystem>())
-	//{
-	//	GetSystem<AudioSystem>().SetAudioBank({});
-	//}
 	audioBank_ = {};
 
 	if (IsSystemRegistered<CameraSystem>())
@@ -755,42 +743,3 @@ Result<std::shared_ptr<SceneFixture>> SceneFixture::GetInstance(const SceneConfi
 	 
 	return Result<std::shared_ptr<SceneFixture>>{ std::move(fixture) };
 }
-
-
-//void SceneFixture::FrameCapture::Capture(const SceneFixture& fixture)
-//{
-//	assert(fixture.IsSystemRegistered<SerializationSystem>());
-//	assert(fixture.IsSystemRegistered<AudioSystem>());
-//
-//	fixture.GetSystem<SerializationSystem>().SerializeStateToJson(
-//		frameJson_, 
-//		fixture.GetTextureRepository(), 
-//		fixture.GetAudioBank()
-//	);
-//}
-//
-//void SceneFixture::FrameCapture::Restore(SceneFixture& fixture)
-//{
-//	assert(fixture.IsSystemRegistered<SerializationSystem>());
-//	assert(fixture.IsSystemRegistered<SDLInputSystem>());
-//	assert(fixture.IsSystemRegistered<AudioSystem>());
-//
-//	auto errs = fixture.GetSystem<SerializationSystem>().DeserializeStateFromJson(
-//		frameJson_, 
-//		fixture.GetWorld(), 
-//		fixture.GetTextureRepository(), 
-//		fixture.GetSystem<SDLInputSystem>(),
-//		fixture.GetAudioBank(), 
-//		fixture.GetRenderer()
-//	);
-//
-//	for (const auto& err : errs)
-//	{
-//		LOG_ERROR(err.GetMessage());
-//	}
-//}
-//
-//void SceneFixture::FrameCapture::Clear()
-//{
-//	frameJson_.clear();
-//}

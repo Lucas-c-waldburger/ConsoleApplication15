@@ -8,6 +8,7 @@
 #include "CameraControlUtility.h"
 #include "asset_viewer/AssetViewer.h"
 #include "WindowDocker.h"
+#include "lua_text_editor/LuaTextEditor.h"
 
 class Camera;
 class TextureRepository;
@@ -33,29 +34,12 @@ public:
 
 	using WindowType = EditorWindowType;
 
-	struct UpdateState
+	struct Forcing
 	{
-		PanelType forcePanelOpen = PanelType::None;
+		EditorWindowType forceWindowOpen = static_cast<EditorWindowType>(0);
 		Entity_t forceEntitySelectionForEdit = kInvalidEntity;
 
-		int GetTabFlags(PanelType test) const
-		{
-			int flags = 0;
-			if (forcePanelOpen == test)
-			{
-				flags |= ImGuiTabItemFlags_SetSelected;
-			}
-			return flags;
-		}
-
-		UpdateState Take()
-		{
-			UpdateState old = *this;
-			forcePanelOpen = PanelType::None;
-			forceEntitySelectionForEdit = kInvalidEntity;
-			
-			return old;
-		}
+		void Clear() { *this = Forcing{}; }
 	};
 
 	enum class ToolbarResponse
@@ -74,8 +58,6 @@ public:
 
 	static void SetActivePanel(PanelType panelType) { activePanel_ = panelType; }
 
-	static const UpdateState& GetUpdateState() { return updateState_; }
-
 	static void TearDown();
 
 	static SceneFixture::SceneConfiguration GetSceneConfiguration();
@@ -83,6 +65,7 @@ public:
 private:
 	Editor() = default;
 
+	static void DrawGameWindow(SceneFixture& fixture);
 	static void DrawEntityWindow(SceneFixture& fixture, const AtUpdateBegin& atUpdateBegin);
 	static void DrawComponentWindow(SceneFixture& fixture, const AtUpdateBegin& atUpdateBegin);
 	static void DrawSystemWindow(SceneFixture& fixture);
@@ -94,6 +77,7 @@ private:
 
 	static Result<Void> ResetForNewScene(SceneFixture& scene);
 
+	static void HandleGameWindowUserInteractions();
 	static void HandleEntityDrag(const Camera& cam, Entity_t selectedEntityAtUpdateStart);
 	static void HandleCameraControl(Camera& cam, float dt);
 
@@ -104,6 +88,9 @@ private:
 	static void UpdateForHistoryChange();
 
 	static constexpr bool IsWindowOpen(EditorWindowType windowType) noexcept;
+	static void DockspaceOverViewport();
+
+	static bool ShouldForceEntitySelection();
 
 	static Result<Void> InitUtilities(SceneFixture& fixture);
 	static Result<Void> InitWindows(SceneFixture& fixture);
@@ -114,9 +101,10 @@ private:
 	static inline EntityDragUtility entityDrag_{};
 	static inline CameraControlUtility cameraControl_{};
 	static inline AssetViewer assetViewer_;
-	static inline UpdateState updateState_{};
+	static inline Forcing forcing_;
 	static inline WindowDocker2 windowDocker_{};
 	static inline bool needLayoutDockspace_ = true;
+	static inline LuaTextEditor luaTextEditor_{};
 };
 
 } // ui

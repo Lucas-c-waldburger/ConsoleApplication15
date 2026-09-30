@@ -6,14 +6,14 @@
 template <typename...Ts>
 struct Any {
 	static constexpr ComponentSignature GetMask() {
-		return (ComponentSignature(0) | ... | Ts::componentBit);
+		return (ComponentSignature(0) | ... | component_traits<Ts>::bit);
 	}
 	static ComponentSignature GetMask(const UserComponentBridge& bridge) 
 	{
 		auto getBit = [&bridge]<typename T> {
 			if constexpr (SomeComponent<T>)
 			{
-				return T::componentBit;
+				return component_traits<T>::bit;
 			}
 			else
 			{
@@ -29,14 +29,14 @@ struct Any {
 template <typename...Ts>
 struct Exclude {
 	static constexpr ComponentSignature GetMask() {
-		return (ComponentSignature(0) | ... | Ts::componentBit);
+		return (ComponentSignature(0) | ... | component_traits<Ts>::bit);
 	}
 	static ComponentSignature GetMask(const UserComponentBridge& bridge)
 	{
 		auto getBit = [&bridge]<typename T> {
 			if constexpr (SomeComponent<T>)
 			{
-				return T::componentBit;
+				return component_traits<T>::bit;
 			}
 			else
 			{
@@ -108,7 +108,7 @@ struct ComponentMasks
 	{
 		if constexpr (SomeComponent<T>)
 		{
-			includeMask |= T::componentBit;
+			includeMask |= component_traits<T>::bit;
 		}
 		else if constexpr (is_any_masker_v<T>)
 		{
@@ -129,7 +129,7 @@ struct ComponentMasks
 	{
 		if constexpr (SomeComponent<T>)
 		{
-			includeMask |= T::componentBit;
+			includeMask |= component_traits<T>::bit;
 		}
 		else if constexpr (is_any_masker_v<T>)
 		{

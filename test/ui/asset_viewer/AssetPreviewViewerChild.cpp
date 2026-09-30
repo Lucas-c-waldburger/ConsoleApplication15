@@ -247,6 +247,9 @@ void AssetPreviewViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx,
 			break;
 		case AssetItem::Type::Font:
 			break;
+		case AssetItem::Type::Script:
+			scriptEditorDisplay_.Reset();
+			break;
 		default:
 			break;
 		}
@@ -271,6 +274,12 @@ void AssetPreviewViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx,
 			 ctx.fontSelection.HasSelection())
 	{
 		DrawFontAssetPreview(ctx);
+	}
+	else if (assetGridTabType.now == AssetItem::Type::Script &&
+		ctx.scriptSelection.HasSelection())
+	{
+		DrawScriptAssetPreview(ctx,
+			fixture.GetSystem<ScriptSystem>());
 	}
 }
 
@@ -346,16 +355,21 @@ void AssetPreviewViewerChild::DrawFontAssetPreview(ResourceContext& ctx)
 
 	ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
-	ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
-		(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(fontWriterDisplay_.text.c_str()).x) * 0.5f);
-
+	// preview text
 	ImGui::PushFont(font);
 	ImGui::PushStyleColor(ImGuiCol_Text, fontWriterDisplay_.color);
+	ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
 
-	ImGui::TextUnformatted(fontWriterDisplay_.text.c_str());
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
+		(ImGui::GetContentRegionAvail().x - 
+		 ImGui::CalcTextSize(fontWriterDisplay_.text.c_str(), nullptr, false,
+		 ImGui::GetContentRegionAvail ().x).x) * 0.5f);
 
-	ImGui::PopFont();
+	ImGui::TextWrapped("%s", fontWriterDisplay_.text.c_str());
+
+	ImGui::PopTextWrapPos();
 	ImGui::PopStyleColor();
+	ImGui::PopFont();
 
 	ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
@@ -363,16 +377,20 @@ void AssetPreviewViewerChild::DrawFontAssetPreview(ResourceContext& ctx)
 
 	ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
+	// text input field
+	const float textInputSize = ImGui::GetContentRegionAvail().x * 0.7f;
+
 	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + std::max(
-		(ImGui::GetContentRegionAvail().x - kPreviewFontTextInputSize) * 0.5f,
+		(ImGui::GetContentRegionAvail().x - textInputSize) * 0.5f,
 		0.0f));
 
-	ImGui::SetNextItemWidth(kPreviewFontTextInputSize);
+	ImGui::SetNextItemWidth(textInputSize);
 
 	ImGui::InputText("##previewText", &fontWriterDisplay_.text);
 
 	ImGui::SameLine();
 
+	// color picker
 	if (ImGui::ColorButton("#textClrBtn", fontWriterDisplay_.color))
 	{
 		ImGui::OpenPopup("ColorPicker");
@@ -383,6 +401,60 @@ void AssetPreviewViewerChild::DrawFontAssetPreview(ResourceContext& ctx)
 
 		ImGui::EndPopup();
 	}
+}
+
+void AssetPreviewViewerChild::DrawScriptAssetPreview(ResourceContext& ctx, ScriptSystem& scriptSys)
+{
+	if (ctx.scriptSelection.tableId != scriptEditorDisplay_.sourceTableId)
+	{
+		scriptEditorDisplay_.Reset();
+
+		scriptEditorDisplay_.sourceTableId = ctx.scriptSelection.tableId;
+
+		auto fpOp = scriptSys.GetTableManager().GetTableInfo<
+			&ScriptTableInfo::filepath>(scriptEditorDisplay_.sourceTableId);
+		if (!fpOp.has_value())
+		{
+			return;
+		}
+
+		auto loadResult = scriptEditorDisplay_.textEditor.LoadScriptFile(*fpOp);
+		if (!loadResult.Success())
+		{
+			LOG_ERROR(loadResult.GetError());
+
+			return;
+		}
+	}
+
+	const bool isEditing = !scriptEditorDisplay_.textEditor.IsReadOnly();
+
+	if (ImGui::Button((isEditing ? "Save" : "Edit")))
+	{
+		if (isEditing)
+		{
+			auto reloadResult = scriptSys.ReloadTable(scriptEditorDisplay_.sourceTableId);
+			if (!reloadResult.Success())
+			{
+				LOG_ERROR(reloadResult.GetError());
+			}
+			else
+			{
+				scriptEditorDisplay_.textEditor.SaveScriptFile();
+			}
+
+			scriptEditorDisplay_.textEditor.SetReadOnly(true);
+		}
+		else
+		{
+			scriptEditorDisplay_.textEditor.SetReadOnly(false);
+		}
+	}
+
+	auto nmOp = scriptSys.GetTableManager().GetTableInfo<
+		&ScriptTableInfo::name>(scriptEditorDisplay_.sourceTableId);
+
+	scriptEditorDisplay_.textEditor.Render((nmOp.has_value() ? *nmOp : std::string_view{}));
 }
 
 

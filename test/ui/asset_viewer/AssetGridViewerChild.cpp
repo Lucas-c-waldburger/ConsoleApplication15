@@ -8,17 +8,15 @@ namespace ui {
 
 namespace {
 
-constexpr float kThumbnailTextureSize = 64.0f;
-constexpr float kGridCellWidth = 80.0f;
-
 static inline constexpr std::string_view kSpriteGridCellPayloadName = "GRID_CELL_SPRITE";
 
 int GetGridColumnCount()
 {
-	const float cellHeight = kThumbnailTextureSize + 4.0f + ImGui::GetTextLineHeightWithSpacing();
+	const float cellHeight = AssetGridCell::kThumbnailTextureSize + 4.0f + 
+							 ImGui::GetTextLineHeightWithSpacing();
 	const float panelWidth = ImGui::GetContentRegionAvail().x;
 
-	return std::max(1, static_cast<int>(panelWidth / kGridCellWidth));
+	return std::max(1, static_cast<int>(panelWidth / AssetGridCell::kWidth));
 }
 
 Result<Sprite> RenameSpriteAndUpdateEntities(std::string_view oldName, std::string_view newName,
@@ -249,7 +247,7 @@ void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
 		ImGui::EndTabItem();
 	}
 
-	//Fonts
+	// Fonts
 	if (ImGui::BeginTabItem("Fonts", nullptr, getTabFlags(AssetItem::Type::Font)))
 	{
 		DrawFontAssetGrid(fixture.GetTextureRepository().GetFontAtlas(), ctx);
@@ -257,6 +255,20 @@ void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
 		ResolveFontPopupContextActions(fixture.GetTextureRepository().GetFontAtlas());
 
 		currentAssetTab_ = AssetItem::Type::Font;
+
+		ImGui::EndTabItem();
+	}
+
+	// Scripts
+	if (ImGui::BeginTabItem("Scripts", nullptr, getTabFlags(AssetItem::Type::Script)))
+	{
+		auto& scriptSys = fixture.GetSystem<ScriptSystem>();
+
+		DrawScriptAssetGrid(scriptSys, ctx);
+
+		ResolveScriptPopupContextActions(scriptSys);
+
+		currentAssetTab_ = AssetItem::Type::Script;
 
 		ImGui::EndTabItem();
 	}
@@ -307,6 +319,15 @@ void AssetGridViewerChild::HandleAssetDragDropTarget(SceneFixture& fixture, Reso
 				fixture.GetTextureRepository().GetFontAtlas(),
 				fixture.GetRenderer());
 		}
+		else if (const auto& item = GetPayloadAssetItem(ctx.assetTree, kScriptPayloadName))
+		{
+			assert(item.type == AssetItem::Type::Script);
+
+			lastLoadedAssetType = HandleScriptAssetDragDropTarget(
+				item,
+				fixture.GetSystem<ScriptSystem>()
+			);
+		}
 
 		ImGui::EndDragDropTarget();
 	}
@@ -320,6 +341,14 @@ void AssetGridViewerChild::HandleAssetDragDropTarget(SceneFixture& fixture, Reso
 	{
 		forceAssetTabOpen_ = lastLoadedAssetType;
 	}
+}
+
+bool AssetGridViewerChild::HasAnySelection() const
+{
+	return spriteSelection_.HasSelection() ||
+		   audioSelection_.HasSelection() ||
+		   fontSelection_.HasSelection() ||
+		   scriptSelection_.HasSelection();
 }
 
 AssetItem::Type AssetGridViewerChild::ResolvePendingAssetDragDropTarget(SceneFixture& fixture)
@@ -744,6 +773,85 @@ void AssetGridViewerChild::DrawFontAssetGrid(FontAtlas& fontAtlas, ResourceConte
 	ImGui::EndTable();
 }
 
+void AssetGridViewerChild::DrawScriptAssetGrid(ScriptSystem& scriptSys, ResourceContext& ctx)
+{
+	if (!ImGui::BeginTable("Script Asset Grid", GetGridColumnCount()))
+	{
+		return;
+	}
+
+	auto it = scriptSys.GetTableManager().IterTableInfo<&ScriptTableInfo::name, 
+														&ScriptTableInfo::filepath,
+														&ScriptTableInfo::tableType,
+														&ScriptTableInfo::tableId>();
+	int counter = 0;
+
+	for (auto [name, filepath, tableType, tableId] : it)
+	{
+		if (filepath.empty())
+		{
+			assert(tableId == ScriptTable::kInvalidTableId);
+
+			++counter;
+			continue;
+		}
+
+		ImGui::TableNextColumn();
+		ImGui::PushID(counter);
+
+		auto gridCell = AssetGridCell::Place();
+
+		if (gridCell.Clicked())
+		{
+			if (scriptSelection_.tableId != tableId)
+			{
+				scriptSelection_.Reset();
+				scriptSelection_.tableId = tableId;
+			}
+		}
+
+		bool alreadyRenaming = scriptSelection_.IsRenaming();
+
+		DrawScriptPopupContextMenu(scriptSys);
+
+		const bool currentCellSelected = scriptSelection_.tableId == tableId;
+		if (currentCellSelected)
+		{
+			gridCell.DrawSelectedHighlight();
+
+			if (scriptSelection_.state & GridSelectionState::JustDragDroppedIntoGrid)
+			{
+				ImGui::SetScrollHereY();
+				scriptSelection_.state &= ~GridSelectionState::JustDragDroppedIntoGrid;
+			}
+		}
+
+		const auto& sprite = (tableType == ScriptTable::TableType::SystemTable)
+			? ctx.icons.systemScriptFileLargeSprite
+			: ctx.icons.eventScriptFileLargeSprite;
+
+		auto tx = ctx.uiTexturesConverter.FromSprite(sprite);
+		assert(tx.textureId != 0);
+
+		gridCell.DrawThumbnailTexture(tx);
+
+		if (currentCellSelected && scriptSelection_.IsRenaming())
+		{
+			HandleScriptSelectionRename(gridCell, scriptSys, !alreadyRenaming);
+		}
+		else
+		{
+			gridCell.DrawDisplayText(name);
+		}
+
+		ImGui::PopID();
+
+		++counter;
+	}
+
+	ImGui::EndTable();
+}
+
 AssetItem::Type AssetGridViewerChild::HandleDirectoryAssetDragDropTarget(const AssetItem& item, 
 																		 const AssetTree& assetTree,
 																		 SceneFixture& fixture)
@@ -780,6 +888,13 @@ AssetItem::Type AssetGridViewerChild::HandleDirectoryAssetDragDropTarget(const A
 				fixture.GetTextureRepository().GetFontAtlas(),
 				fixture.GetRenderer());
 
+			break;
+		case AssetItem::Type::Script:
+			lastLoadedAssetType = HandleScriptAssetDragDropTarget(
+				childItem,
+				fixture.GetSystem<ScriptSystem>()
+			);
+			
 			break;
 		}
 	}
@@ -926,6 +1041,24 @@ AssetItem::Type AssetGridViewerChild::HandleFontAssetDragDropTarget(const AssetI
 	}
 
 	return AssetItem::Type::Font;
+}
+
+AssetItem::Type AssetGridViewerChild::HandleScriptAssetDragDropTarget(const AssetItem& item, 
+																	  ScriptSystem& scriptSys)
+{
+	auto tableResult = scriptSys.AddTable({ .filepath = item.path.string() });
+	if (!tableResult.Success())
+	{
+		LOG_ERROR(tableResult.GetError().GetMessage());
+	}
+	else
+	{
+		scriptSelection_.Reset();
+		scriptSelection_.tableId = tableResult.GetValue();
+		scriptSelection_.state |= GridSelectionState::JustDragDroppedIntoGrid;
+	}
+
+	return AssetItem::Type::Script;
 }
 
 void AssetGridViewerChild::HandleSpriteGridCellDragDropSource(const SpriteAtlas& loadTargetAtlas)
@@ -1088,12 +1221,48 @@ void AssetGridViewerChild::DrawFontPopupContextMenu(FontAtlas& fontAtlas)
 				fontSelection_.currentRename = *fontName;
 			}
 
-			spriteSelection_.state |= GridSelectionState::Renaming;
+			fontSelection_.state |= GridSelectionState::Renaming;
 		}
 
 		if (ImGui::MenuItem("Erase"))
 		{
 			fontSelection_.state |= GridSelectionState::RequestErase;
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
+void AssetGridViewerChild::DrawScriptPopupContextMenu(ScriptSystem& scriptSys)
+{
+	if (!scriptSelection_.HasSelection())
+	{
+		return;
+	}
+
+	if (ImGui::BeginPopupContextItem("ScriptThumbnailContextMenu"))
+	{
+		if (ImGui::MenuItem("Edit"))
+		{
+			scriptSelection_.state |= GridSelectionState::RequestEdit;
+		}
+
+		if (ImGui::MenuItem("Rename"))
+		{
+			scriptSelection_.currentRename.clear();
+
+			auto scriptName = scriptSys.GetTableManager().GetTableInfo<
+				&ScriptTableInfo::name>(scriptSelection_.tableId);
+			assert(scriptName.has_value());
+
+			scriptSelection_.currentRename = *scriptName;
+
+			scriptSelection_.state |= GridSelectionState::Renaming;
+		}
+
+		if (ImGui::MenuItem("Erase"))
+		{
+			scriptSelection_.state |= GridSelectionState::RequestErase;
 		}
 
 		ImGui::EndPopup();
@@ -1249,6 +1418,29 @@ void AssetGridViewerChild::ResolveFontPopupContextActions(FontAtlas& fontAtlas)
 	}
 }
 
+void AssetGridViewerChild::ResolveScriptPopupContextActions(ScriptSystem& scriptSys)
+{
+	if (scriptSelection_.state & GridSelectionState::RequestErase)
+	{
+		if (scriptSys.ContainsTable(scriptSelection_.tableId))
+		{
+			const bool erased = scriptSys.RemoveTable(scriptSelection_.tableId);
+			if (!erased)
+			{
+				LOG_ERROR("Failed to remove script table");
+			}
+			else
+			{
+				scriptSelection_.tableId = ScriptTable::kInvalidTableId;
+			}
+		}
+
+		scriptSelection_.currentRename.clear();
+		scriptSelection_.state &= ~(GridSelectionState::RequestErase |
+								    GridSelectionState::Renaming);
+	}
+}
+
 void AssetGridViewerChild::HandleSpriteSelectionRename(const AssetGridCell& gridCell, 
 													   SpriteAtlas& loadTargetAtlas,
 													   bool renameStartedThisFrame)
@@ -1333,6 +1525,32 @@ void AssetGridViewerChild::HandleFontSelectionRename(const AssetGridCell& gridCe
 
 	fontSelection_.currentRename.clear();
 	fontSelection_.state &= ~GridSelectionState::Renaming;
+}
+
+void AssetGridViewerChild::HandleScriptSelectionRename(const AssetGridCell& gridCell, 
+													   ScriptSystem& scriptSys, bool renameStartedThisFrame)
+{
+	assert(scriptSelection_.IsRenaming());
+
+	const auto outcome = gridCell.DrawDisplayTextRenaming(scriptSelection_.currentRename,
+		renameStartedThisFrame);
+
+	if (outcome == AssetGridCell::RenameOutcome::Continue)
+	{
+		return;
+	}
+
+	if (outcome == AssetGridCell::RenameOutcome::Complete)
+	{
+		if (scriptSys.ContainsTable(scriptSelection_.tableId))
+		{
+			LOG_IF_ERROR(scriptSys.SetTableName(scriptSelection_.tableId,
+				scriptSelection_.currentRename));
+		}
+	}
+
+	scriptSelection_.currentRename.clear();
+	scriptSelection_.state &= ~GridSelectionState::Renaming;
 }
 
 } // ui

@@ -6,9 +6,7 @@
 #include <deque>
 #include "SceneRegistry.h"
 #include "../physics/B2World.h"
-#include "../scripting/ScriptManager.h"
 #include "../core/Monitoring.h"
-#include "../core/Hooks.h"
 #include "../core/Counter.h"
 #include "../systems/SystemManager.h"
 #include "../atlas/NewTextureRepository.h"
@@ -21,16 +19,6 @@ class SceneFixture
 public:
 	using SharedPtr = std::shared_ptr<SceneFixture>;
 	using WeakPtr = std::weak_ptr<SceneFixture>;
-
-	static constexpr std::string_view kScriptResourcesPathFmt = 
-		R"(C:\Users\Lucas\source\repos\ConsoleApplication15\resources\scripts\{})";
-
-	struct TestScript
-	{
-		Lua lua;
-		FileChangeMonitor fileMonitor;
-		Handle<HookAttachment> hookAttachmentHandle;
-	};
 
 	struct SceneConfiguration
 	{
@@ -48,17 +36,6 @@ public:
 		SDL_FRect displayArea = { 0.0f, 0.0f, 0.0f, 0.0f };
 		AspectRatioFit displayAreaFit = AspectRatioFit::Letterbox;
 	};
-
-	//struct PersistenceData
-	//{
-	//	enum Flag : uint8_t
-	//	{
-	//		UseAuxTextureRepo = 1 << 0
-	//	};
-
-	//	uint8_t flags = 0;
-	//	bool (*omitEntityDestruction)(const Entity&) = nullptr;
-	//};
 
 	class GameLoopController
 	{
@@ -100,17 +77,6 @@ public:
 		State tempState_ = kNoNewStateRequested;
 	};
 
-	//class FrameCapture
-	//{
-	//public:
-	//	void Capture(const SceneFixture& fixture);
-	//	void Restore(SceneFixture& fixture);
-	//	void Clear();
-
-	//private:
-	//	nlohmann::json frameJson_;
-	//};
-
 	SceneFixture() = default;
 	~SceneFixture();
 
@@ -132,7 +98,6 @@ public:
 	Result<Void> UpdateCamera();	
 	Result<Void> UpdateAudio();
 	Result<Void> UpdateRender();
-	Result<Void> UpdateUi();
 	void LoopEnd();
 
 	// systems
@@ -152,11 +117,6 @@ public:
 	{
 		return systems_.RegisterSystem<T>(std::forward<Args>(args)...);
 	}
-
-	// component
-	//template <typename T> 
-	//	requires (!SomeComponent<T> && std::same_as<raw_type_t<T>, T> && std::is_class_v<T>)
-	//Result<ComponentId> RegisterUserComponent()
 
 	// scenes
 	template <typename Fn> requires std::convertible_to<Fn, SceneInitializer>
@@ -184,13 +144,11 @@ public:
 
 	const std::string& GetActiveScene() const { return sceneRegistry_.GetActiveScene(); }
 
-	HookManager& GetHooks() { return hooks_; }
 	TextureRepository& GetTextureRepository() { return textureRepo_; }
 	const TextureRepository& GetTextureRepository() const { return textureRepo_; }
 	std::unique_ptr<TextureRepository>& GetAuxTextureRepository() { return auxTextureRepo_; }
 	const std::unique_ptr<TextureRepository>& GetAuxTextureRepository() const { return auxTextureRepo_; }
 	B2World& GetWorld() { return world_; }
-	ScriptManager& GetScripts() { return scripts_; }
 	SDL_Renderer* GetRenderer() { return SDLite::Renderer(); }
 	SDL_Window* GetWindow() { return SDLite::Window(); }
 	SceneConfiguration& GetConfiguration() { return config_; }
@@ -207,9 +165,6 @@ public:
 	std::vector<Error> DeserializeStateFromJson(const nlohmann::json& j);
 
 	float GetDeltaTime() const { return systems_.GetSystem<GameLoopSystem>().GetDeltaTime(); }
-	
-	template <typename...Ts>
-	void SetTestScriptFile(std::string_view scriptFileName, std::function<void(Lua&)>&& setupFn);
 
 	// create/destroy
 	static Result<std::shared_ptr<SceneFixture>> GetInstance(const SceneConfiguration& config = {});
@@ -251,10 +206,7 @@ private:
 	TextureRepository textureRepo_;
 	std::unique_ptr<TextureRepository> auxTextureRepo_;
 	AudioBank audioBank_;
-	HookManager hooks_;
 	B2World world_;
-	ScriptManager scripts_;
-	TestScript testScript_;
 	EventBus eventBus_;
 	SceneRegistry sceneRegistry_;
 	SceneConfiguration config_;
@@ -289,43 +241,6 @@ inline Result<Void> SceneFixture::RunGameLoopCondition(Fn&& fn)
 	}
 
 	return Void{};
-}
-
-template<typename...Ts>
-inline void SceneFixture::SetTestScriptFile(std::string_view scriptFileName, std::function<void(Lua&)>&& setupFn)
-{
-	if (testScript_.hookAttachmentHandle.IsValid())
-	{
-		hooks_.Detach(testScript_.hookAttachmentHandle);
-	}
-
-	std::string scriptPath = std::format(kScriptResourcesPathFmt, scriptFileName);
-
-	testScript_.fileMonitor.SetFilePath(scriptPath);
-
-	testScript_.lua = Lua::GetInstance<Ts...>();
-	testScript_.lua.SetScriptInfo({
-		.scriptType = ScriptType::File,
-		.path = std::move(scriptPath)
-	});
-
-	if (setupFn)
-	{
-		setupFn(testScript_.lua);
-	}
-
-	testScript_.hookAttachmentHandle = hooks_.Attach(
-		HookPoint::LoopStart, [this]() 
-		{
-			if (testScript_.fileMonitor.FileDidChange())
-			{
-				LOG_IF_ERROR(testScript_.lua.Run());
-			}
-
-			return ReturnSignal::KeepObserving;
-		});
-	
-	assert(testScript_.hookAttachmentHandle.IsValid());
 }
 
 template <Phase ph>

@@ -1,5 +1,8 @@
 #pragma once
-#include "BaseComponent.h"
+#include "ComponentConcepts.h"
 
 
-struct MarkedDestroyed : BaseComponent<MarkedDestroyed> {};
+struct MarkedDestroyed 
+{
+	constexpr bool operator==(const MarkedDestroyed&) const = default;
+};

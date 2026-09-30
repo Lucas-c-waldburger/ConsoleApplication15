@@ -707,7 +707,14 @@ bool InspectorComponentPanel::Draw(Entity& e, SceneFixture& fixture)
 
 	GuiMouse::EvaluateInsideWindow(EditorWindowType::ComponentWindow);
 
-	Update(e, fixture);
+	if (e.IsValid())
+	{
+		Update(e, fixture);
+	}
+	else
+	{
+		componentBuilders_.ClearActiveBuilder();
+	}
 
 	ImGui::End();
 

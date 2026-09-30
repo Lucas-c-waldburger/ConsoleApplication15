@@ -15,11 +15,11 @@ Result<Void> ScriptSystemSerializer::Serialize(const std::string& jsonFilepath,
 
 	auto& scriptJ = j["scripts"] = nlohmann::json::array();
 
-	//auto descriptors = scriptSys.ExportTableDescriptors();
-	//for (const auto& path : descriptors.filepaths)
-	//{
-	//	scriptJ.push_back(path);
-	//}
+	auto descriptors = scriptSys.GetTableManager().Serialize();
+	for (const auto& descriptor : descriptors)
+	{
+		scriptJ.push_back(descriptor);
+	}
 
 	file << j.dump(4);
 
@@ -48,11 +48,11 @@ std::vector<Error> ScriptSystemSerializer::Deserialize(const std::string& jsonFi
 	}
 
 	ScriptTableDescriptors descriptors;
-	descriptors.filepaths.reserve(scriptsJ.size());
+	descriptors.reserve(scriptsJ.size());
 
 	try
 	{
-		from_json(scriptsJ, descriptors.filepaths);
+		from_json(scriptsJ, descriptors);
 	}
 	catch (const nlohmann::json::exception& err)
 	{
@@ -61,9 +61,9 @@ std::vector<Error> ScriptSystemSerializer::Deserialize(const std::string& jsonFi
 
 	std::vector<Error> errors{};
 
-	for (auto&& path : descriptors.filepaths)
+	for (auto&& descriptor : descriptors)
 	{
-		auto addResult = scriptSys.AddFunctionTable(path);
+		auto addResult = scriptSys.AddTable(std::move(descriptor));
 		if (!addResult.Success())
 		{
 			errors.emplace_back(std::move(addResult.GetError()));
@@ -81,11 +81,11 @@ void ScriptSystemSerializer::SerializeToJson(nlohmann::json& masterJ,
 
 	auto& scriptJ = masterJ["scripts"] = nlohmann::json::array();
 
-	//auto descriptors = scriptSys.ExportTableDescriptors();
-	//for (const auto& path : descriptors.filepaths)
-	//{
-	//	scriptJ.push_back(path);
-	//}
+	auto descriptors = scriptSys.GetTableManager().Serialize();
+	for (const auto& descriptor : descriptors)
+	{
+		scriptJ.push_back(descriptor);
+	}
 }
 
 std::vector<Error> ScriptSystemSerializer::DeserializeFromJson(const nlohmann::json& masterJ, 
@@ -103,11 +103,11 @@ std::vector<Error> ScriptSystemSerializer::DeserializeFromJson(const nlohmann::j
 	}
 
 	ScriptTableDescriptors descriptors;
-	descriptors.filepaths.reserve(scriptsJ.size());
+	descriptors.reserve(scriptsJ.size());
 
 	try
 	{
-		from_json(scriptsJ, descriptors.filepaths);
+		from_json(scriptsJ, descriptors);
 	}
 	catch (const nlohmann::json::exception& err)
 	{
@@ -116,9 +116,9 @@ std::vector<Error> ScriptSystemSerializer::DeserializeFromJson(const nlohmann::j
 
 	std::vector<Error> errors{};
 
-	for (auto&& path : descriptors.filepaths)
+	for (auto&& descriptor : descriptors)
 	{
-		auto addResult = scriptSys.AddFunctionTable(path);
+		auto addResult = scriptSys.AddTable(std::move(descriptor));
 		if (!addResult.Success())
 		{
 			errors.emplace_back(std::move(addResult.GetError()));

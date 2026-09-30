@@ -42,45 +42,60 @@ ScriptSystem::~ScriptSystem()
 	}
 }
 
-Result<ScriptTable::TableId> ScriptSystem::AddFunctionTable(const std::string& path)
+Result<ScriptTable::TableId> ScriptSystem::AddTable(ScriptTableDescriptor&& descriptor)
 {
-	TRY(tables_.AddTable(path, state_, ScriptTable::TableType::FunctionTable), table);
-
-	assert(table);
-
-	LOG_DEBUG_FMT("Function table script '{}' loaded successfully", 
-		std::filesystem::path(path).stem().string());
-
-	return table->GetTableId();
-}
-
-Result<ScriptTable::TableId> ScriptSystem::AddSystemTable(const std::string& path, Phase phase)
-{
-	TRY(tables_.AddTable(path, state_, ScriptTable::TableType::SystemTable), table);
-
-	assert(table);
-
-	auto result = scriptableUserSubsystem_.AddSystemScript(*table, phase);
-	if (!result.Success())
+	if (descriptor.tableType != ScriptTable::TableType::SystemTable)
 	{
-		tables_.RemoveTable(table->GetTableId());
-
-		return result.GetError();
+		descriptor.tableType = ScriptTable::TableType::FunctionTable;
 	}
 
-	LOG_DEBUG_FMT("System table script '{}' loaded successfully", 
-		std::filesystem::path(path).stem().string());
+	TRY(tables_.AddTable(std::move(descriptor), state_), tableId);
 
-	return table->GetTableId();
+	auto infoOp = tables_.GetTableInfo<&ScriptTableInfo::tableType, 
+									   &ScriptTableInfo::systemPhase>(tableId);
+
+	assert(infoOp.has_value());
+
+	auto [tableType, sysPhase] = *infoOp;
+
+	if (tableType == ScriptTable::TableType::SystemTable)
+	{
+		if (sysPhase == Phase::Invalid)
+		{
+			return MAKE_ERROR("Script table registered as a system script, but "
+				"Phase was invalid");
+		}
+
+		auto* table = tables_.GetTable(tableId);
+		assert(table);
+
+		auto result = scriptableUserSubsystem_.AddSystemScript(*table, sysPhase);
+		if (!result.Success())
+		{
+			tables_.RemoveTable(tableId);
+
+			return result.GetError();
+		}
+	}
+
+	return tableId;
 }
 
 Result<Void> ScriptSystem::ReloadTable(ScriptTable::TableId tableId)
 {
 	TRY(tables_.ReloadTable(tableId, state_));
 
-	LOG_DEBUG_FMT("Script table with ID '{}' reloaded", tableId);
+	const auto tableName = tables_.GetTableInfo<&ScriptTableInfo::name>(tableId);
+	assert(tableName.has_value());
+
+	LOG_DEBUG_FMT("Script table '{}' reloaded", *tableName);
 
 	return kVoid;
+}
+
+ScriptTableView ScriptSystem::GetTableView(ScriptTable::TableId tableId) const
+{
+	return tables_.GetTableView(tableId);
 }
 
 void ScriptSystem::Reset()
@@ -96,21 +111,6 @@ void ScriptSystem::Reset()
 	state_ = {};
 }
 
-ScriptTableView ScriptSystem::GetTableView(ScriptTable::TableId tableId) const
-{
-	return tables_.GetTableView(tableId);
-}
-
-const std::string& ScriptSystem::GetTableFilepath(ScriptTable::TableId tableId) const
-{
-	return tables_.GetTableFilepath(tableId);
-}
-
-const ScriptTableDataMap& ScriptSystem::GetScriptTableMap() const
-{
-	return tables_.GetTableDataMap();
-}
-
 bool ScriptSystem::RemoveTable(ScriptTable::TableId tableId)
 {
 	if (!tables_.ContainsTable(tableId))
@@ -118,7 +118,10 @@ bool ScriptSystem::RemoveTable(ScriptTable::TableId tableId)
 		return false;
 	}
 
-	switch (tables_.GetTableType(tableId))
+	const auto tableType = tables_.GetTableInfo<&ScriptTableInfo::tableType>(tableId);
+	assert(tableType.has_value());
+
+	switch (*tableType)
 	{
 	case ScriptTable::TableType::FunctionTable:
 		InvalidateEntityScriptTables(tableId);
@@ -141,6 +144,11 @@ bool ScriptSystem::RemoveTable(ScriptTable::TableId tableId)
 bool ScriptSystem::ContainsTable(ScriptTable::TableId tableId) const
 {
 	return tables_.ContainsTable(tableId);
+}
+
+Result<Void> ScriptSystem::SetTableName(ScriptTable::TableId tableId, std::string_view newName)
+{
+	return tables_.SetTableName(tableId, newName);
 }
 
 //ScriptTableDescriptors ScriptSystem::ExportTableDescriptors() const

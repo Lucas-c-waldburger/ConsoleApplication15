@@ -44,6 +44,9 @@ struct AssetViewerIcons
 	Sprite mediaFolderLargeSprite;
 	Sprite musicFileLargeSprite;
 	Sprite soundFileLargeSprite;
+	Sprite eventScriptFileLargeSprite;
+	Sprite systemScriptFileLargeSprite;
+	Sprite luaFileLargeSprite;
 };
 
 } // ui

@@ -29,7 +29,7 @@ public:
 			return false;
 		}
 
-		TRY(scriptSys.AddFunctionTable(selectedFile));
+		TRY(scriptSys.AddTable({ .filepath = std::string{selectedFile} }));
 
 		return true;
 	}

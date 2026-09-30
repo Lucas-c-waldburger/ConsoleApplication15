@@ -4,6 +4,9 @@
 #if IMGUI_ENABLED
 #include "../InspectorCommon.h"
 #include "MusicVisualizer.h"
+#include "../lua_text_editor/LuaTextEditor.h"
+
+class ScriptSystem;
 
 namespace ui {
 
@@ -15,12 +18,14 @@ public:
 	using SpriteAssetGridSelection = AssetGridViewerChild::SpriteAssetGridSelection;
 	using AudioAssetGridSelection = AssetGridViewerChild::AudioAssetGridSelection;
 	using FontAssetGridSelection = AssetGridViewerChild::FontAssetGridSelection;
+	using ScriptAssetGridSelection = AssetGridViewerChild::ScriptAssetGridSelection;
 
 	struct ResourceContext
 	{
 		const SpriteAssetGridSelection& spriteSelection;
 		const AudioAssetGridSelection& audioSelection;
 		const FontAssetGridSelection& fontSelection;
+		const ScriptAssetGridSelection& scriptSelection;
 		const AssetViewerIcons& icons;
 		const GuiTextureConverter& loadTargetConverter;
 		const GuiTextureConverter& uiTexturesConverter;
@@ -73,9 +78,22 @@ public:
 		void Reset() { *this = FontWriterDisplay{}; }
 	};
 
+	struct ScriptEditorDisplay
+	{
+		LuaTextEditor textEditor;
+		ScriptTable::TableId sourceTableId = ScriptTable::kInvalidTableId;
+
+		void Reset() 
+		{ 
+			textEditor.Clear();
+			textEditor.SetReadOnly(true); 
+		}
+	};
+
 	const SpriteSeriesPlayer& GetSpriteSeriesAnimator() const { return spriteSeriesAnimator_; }
 	const AudioPlayer& GetAudioPlayer() const { return audioPlayer_; }
 	const FontWriterDisplay& GetFontWriterDisplay() const { return fontWriterDisplay_; }
+	const ScriptEditorDisplay& GetScriptEditorDisplay() const { return scriptEditorDisplay_; }
 
 	void Draw(SceneFixture& fixture, ResourceContext& ctx, 
 			  const DataRecord<AssetItem::Type>& assetGridTabType);
@@ -92,6 +110,8 @@ private:
 	void DrawAudioAssetPreview(ResourceContext& ctx,
 							   const AudioBank& audioBank);
 	void DrawFontAssetPreview(ResourceContext& ctx);
+
+	void DrawScriptAssetPreview(ResourceContext& ctx, ScriptSystem& scriptSys);
 
 	void DrawSpriteAssetSinglePreview(const Sprite& sprite, 
 									  const GuiTextureConverter& loadTargetConverter,
@@ -117,6 +137,7 @@ private:
 	SpriteSeriesPlayer spriteSeriesAnimator_;
 	AudioPlayer audioPlayer_;
 	FontWriterDisplay fontWriterDisplay_{};
+	ScriptEditorDisplay scriptEditorDisplay_{};
 	AssetItem::Type openAssetTab_ = AssetItem::Type::Unknown;
 };
 

@@ -14,10 +14,46 @@
 
 namespace ui {
 
-constexpr ImVec4 kFiredHeaderColor = ImVec4(0.90f, 0.60f, 0.10f, 1.0f);
+constexpr ImVec4 kFiredHeaderColor = ImVec4(0.90f, 0.60f, 0.10f, 0.5f);
 
-using FiredList = TypeIndexedBitset<InspectorEventPanel::GuiEventTypeList>;
+constexpr float kFiredHighlightExpirationTime = 0.6f;
+
+//struct FiredInfo
+//{
+//	
+//	TypeIndexedBitMap<InspectorEventPanel::GuiEventTypeList, float> fired;
+//
+//	void Update(float dt)
+//	{
+//		fired.ForEach([dt](bool& didFire, float& time) {
+//			if (didFire)
+//			{
+//				time = 0.0f;
+//				didFire = false;
+//			}
+//			else
+//			{
+//				time += dt;
+//			}
+//		});
+//	}
+//};
+
+//using FiredList = TypeIndexedBitset<InspectorEventPanel::GuiEventTypeList>;
+using FiredList = TypeIndexedBitMap<InspectorEventPanel::GuiEventTypeList, float>;
 using EventList = InspectorEventPanel::GuiEventTypeList::AsTuple<std::type_identity_t>;
+
+ImVec4 FadeColor(ImVec4 start, ImVec4 end, float t) 
+{
+	t = std::clamp(t, 0.0f, 1.0f);
+
+	return ImVec4(
+		std::lerp(start.x, end.x, t),
+		std::lerp(start.y, end.y, t),
+		std::lerp(start.z, end.z, t),
+		std::lerp(start.w, end.w, t)
+	);
+}
 
 bool BeginEventTable()
 {
@@ -124,51 +160,6 @@ std::string_view GetEntityName(Entity_t entityId)
 	return e.GetComponent<Name>().value;
 }
 
-//struct CollisionDataShapeInfo
-//{
-//	struct Elem
-//	{
-//		std::string label;
-//		Entity_t entityId = kInvalidEntity;
-//		Handle<B2Shape> handle;
-//	};
-//
-//	Elem current;
-//	std::vector<Elem> all;
-//};
-
-//std::vector<Entity> GetAllColliderEntities(Entity& e)
-//{
-//	const auto& body = e.GetComponent<RigidBody>().body.GetData();
-//	std::vector<Entity> colliderEs;
-//
-//	if (e.HasComponent<Collider>(&ColliderValid))
-//	{
-//		colliderEs.emplace_back(e);
-//	}
-//
-//	auto rels = e.GetRelations();
-//	if (rels.HasChildren())
-//	{
-//		auto chs = rels.GetAllChildrenWith<Collider>();
-//		for (const auto& ch : chs)
-//		{
-//			if (ch.HasComponent<Collider>() &&
-//				ch.GetComponent<Collider>().shape.GetData().GetParentBodyHandle() ==
-//				body.GetHandle())
-//			{
-//				colliderEs.emplace_back(ch);
-//			}
-//		}
-//	}
-//
-//	//std::sort(colliderEs.begin(), colliderEs.end(), [](const auto& a, const auto& b) {
-//	//	return a.GetID() < b.GetID();
-//	//});
-//
-//	return colliderEs;
-//}
-
 std::vector<Entity> GetRigidBodyEntities()
 {
 	return ECS::GetAllEntitiesWith<Name, RigidBody, Exclude<InspectorTag>>()
@@ -176,205 +167,6 @@ std::vector<Entity> GetRigidBodyEntities()
 		return e.GetComponent<RigidBody>().body.GetData().IsValid();
 	}) | std::ranges::to<std::vector>();
 }
-
-//bool IsValidCollisionParticipant(const Entity& e)
-//{
-//	return e.IsValid() && e.HasComponent<Name>() && e.HasComponent<RigidBody>(&RigidBodyValid);
-//}
-
-//CollisionDataShapeInfo GetCollisionDataShapeInfo(Entity& e, const CollisionData& data)
-//{
-//	if (!IsValidCollisionParticipant(e))
-//	{
-//		return {};
-//	}
-//
-//	auto colEs = GetAllColliderEntities(e);
-//
-//	std::sort(colEs.begin(), colEs.end(), [](const Entity& a, const Entity& b) {
-//		const auto shA = a.GetComponent<Collider>().shape.GetData();
-//		const auto shB = b.GetComponent<Collider>().shape.GetData();
-//		if (shA.GetShapeType() == shB.GetShapeType())
-//		{
-//			return shA.GetHandle() < shB.GetHandle();
-//		}
-//		return shA.GetShapeType() < shB.GetShapeType();
-//	});
-//
-//	CollisionDataShapeInfo info{};
-//	info.all.reserve(colEs.size());
-//	
-//	size_t counter = 0;
-//	B2Shape::Type lastType = B2Shape::Type::Invalid;
-//	for (const auto& colE : colEs)
-//	{
-//		const auto& sh = colE.GetComponent<Collider>().shape.GetData();
-//
-//		if (sh.GetShapeType() != lastType)
-//		{
-//			counter = 0;
-//		}
-//	
-//		auto& elem = info.all.emplace_back(
-//			std::format("{} {}", ToString(sh.GetShapeType()), counter), 
-//			colE.GetID(),
-//			sh.GetHandle()
-//		);
-//	
-//		if (data.shapeHandle == elem.handle)
-//		{
-//			assert(data.entity == elem.entityId);
-//			info.current = elem;
-//		}
-//	
-//		++counter;
-//	}
-//	
-//	return info;
-//}
-
-//template <typename Ev>
-//PropertyEditState DrawCollisionEvent(Ev& ev)
-//{
-//	static constexpr FixedString kParticipantALabel = "participant A";
-//	static constexpr FixedString kParticipantBLabel = "participant B";
-//	static constexpr FixedString kShapeALabel = "shape##A";
-//	static constexpr FixedString kShapeBLabel = "shape##B";
-//
-//	const float participantALabelWidth = GetFieldValueWidth<kParticipantALabel, kShapeALabel>();
-//	const float participantBLabelWidth = GetFieldValueWidth<kParticipantBLabel, kShapeBLabel>();
-//
-//	Entity participantA = ECS::GetEntityByID(ev.entity<0>());
-//	Entity participantB = ECS::GetEntityByID(ev.entity<1>());
-//
-//	std::string curNameA;
-//	std::string curNameB;
-//
-//	if (IsValidCollisionParticipant(participantA))
-//	{
-//		curNameA = participantA.GetComponent<Name>();
-//	}
-//	if (IsValidCollisionParticipant(participantB))
-//	{
-//		curNameB = participantB.GetComponent<Name>();
-//	}
-//
-//	auto es = GetRigidBodyEntities();
-//
-//	ImGui::TextUnformatted(kParticipantALabel);
-//	ImGui::SameLine();
-//	ImGui::SetNextItemWidth(participantALabelWidth);
-//
-//	// PARTICIPANT A
-//	if (ImGui::BeginCombo("participant A", curNameA.c_str()))
-//	{
-//		for (const auto& e : es)
-//		{
-//			assert(e.HasComponent<Name>());
-//			const auto& name = e.GetComponent<Name>().value;
-//
-//			if (name == curNameB)
-//			{
-//				continue;
-//			}
-//
-//			const bool selected = (name == curNameA);
-//			if (ImGui::Selectable(name.c_str(), &selected))
-//			{
-//				ev.entity<0>() = e.GetID();
-//				participantA = e;
-//				curNameA = name;
-//			}
-//		}
-//
-//		ImGui::EndCombo();
-//	}
-//
-//	ImGui::TableNextColumn();
-//	//ImGui::SetNextItemWidth(-FLT_MIN);
-//
-//	auto aInfo = GetCollisionDataShapeInfo(participantA, ev.a);
-//
-//	if (ImGui::BeginCombo("shape##a", aInfo.current.label.c_str()))
-//	{
-//		if (!IsValidCollisionParticipant(participantA))
-//		{
-//			ev.entity<0>() = kInvalidEntity;
-//		}
-//		else
-//		{
-//			for (const auto& infoElem : aInfo.all)
-//			{
-//				bool selected = (infoElem.handle == aInfo.current.handle);
-//
-//				if (ImGui::Selectable(infoElem.label.c_str(), &selected))
-//				{
-//					ev.a.entity = infoElem.entityId;
-//					ev.a.shapeHandle = infoElem.handle;
-//				}
-//			}
-//		}
-//
-//		ImGui::EndCombo();
-//	}
-//
-//	ImGui::TableNextRow();
-//	ImGui::TableNextColumn();
-//
-//	// PARTICIPANT B
-//	if (ImGui::BeginCombo("participant B", curNameB.c_str()))
-//	{
-//		for (const auto& e : es)
-//		{
-//			assert(e.HasComponent<Name>());
-//			const auto& name = e.GetComponent<Name>().value;
-//
-//			if (name == curNameA)
-//			{
-//				continue;
-//			}
-//
-//			const bool selected = (name == curNameB);
-//			if (ImGui::Selectable(name.c_str(), &selected))
-//			{
-//				ev.entity<1>() = e.GetID();
-//				participantB = e;
-//			}
-//		}
-//
-//		ImGui::EndCombo();
-//	}
-//
-//	ImGui::TableNextColumn();
-//	ImGui::SetNextItemWidth(-FLT_MIN);
-//
-//	auto bInfo = GetCollisionDataShapeInfo(participantB, ev.b);
-//
-//	if (ImGui::BeginCombo("shape##b", bInfo.current.label.c_str()))
-//	{
-//		if (!IsValidCollisionParticipant(participantB))
-//		{
-//			ev.entity<1>() = kInvalidEntity;
-//		}
-//		else
-//		{
-//			for (const auto& infoElem : bInfo.all)
-//			{
-//				bool selected = (infoElem.handle == bInfo.current.handle);
-//
-//				if (ImGui::Selectable(infoElem.label.c_str(), &selected))
-//				{
-//					ev.b.entity = infoElem.entityId;
-//					ev.b.shapeHandle = infoElem.handle;
-//				}
-//			}
-//		}
-//
-//		ImGui::EndCombo();
-//	}
-//
-//	return PropertyEditState::None;
-//}
 
 template <typename Ev>
 PropertyEditState DrawCollisionEvent(Ev& ev)
@@ -472,7 +264,28 @@ struct draw_event_list<TList<Ts...>>
 													const GuiTextureConverter& converter, EventBus& bus)
 		{
 			const bool fired = firedList.Test<T>();
-			firedList.Set<T>(false);
+			if (fired)
+			{
+				firedList.GetValue<T>() = 0.0f;
+				firedList.Set<T>(false);
+			}
+			else
+			{
+				firedList.GetValue<T>() += ImGui::GetIO().DeltaTime;
+			}
+
+			const bool drawHighlight = firedList.GetValue<T>() < kFiredHighlightExpirationTime;
+			if (drawHighlight)
+			{
+				const float t = firedList.GetValue<T>() / kFiredHighlightExpirationTime;
+
+				const auto origHeaderCol = ImGui::GetStyleColorVec4(ImGuiCol_Header);
+				const auto curHeaderCol = FadeColor(kFiredHeaderColor, origHeaderCol, t);
+
+				ImGui::PushStyleColor(ImGuiCol_Header, curHeaderCol);
+				ImGui::PushStyleColor(ImGuiCol_HeaderHovered, curHeaderCol);
+				ImGui::PushStyleColor(ImGuiCol_HeaderActive, curHeaderCol);
+			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,
 				ImVec2(ImGui::GetStyle().FramePadding.x, 6));
@@ -481,6 +294,11 @@ struct draw_event_list<TList<Ts...>>
 				ImGuiTreeNodeFlags_AllowOverlap | ImGuiTreeNodeFlags_DrawLinesFull);
 
 			ImGui::PopStyleVar();
+
+			if (drawHighlight)
+			{
+				ImGui::PopStyleColor(3);
+			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, ImGui::GetStyle().FramePadding.y));
 

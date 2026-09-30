@@ -2,7 +2,7 @@
 #include <vector>
 #include <SDL.h>
 #include <optional>
-#include "BaseComponent.h"
+#include "ComponentConcepts.h"
 #include "../physics/B2Body.h"
 #include "../core/ReadOnly.h"
 
@@ -54,15 +54,11 @@ struct BodyLimits
     }  
 };
 
-struct RigidBody : BaseComponent<RigidBody>
+struct RigidBody
 {
     ReadOnly<B2Body> body;
     BodyLimits limits;
     ForceRequests forceRequests; 
 
-    friend bool operator==(const RigidBody& lhs, const RigidBody& rhs)
-    {
-        return lhs.body == rhs.body && lhs.limits == rhs.limits && 
-               lhs.forceRequests == rhs.forceRequests;
-    }
+    bool operator==(const RigidBody&) const = default;
 };

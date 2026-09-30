@@ -3,12 +3,15 @@
 #include "../core/Dictionary.h"
 
 struct ScriptTableEntry;
+struct ScriptTableIndexPair;
 class ScriptTableView;
 
 class ScriptTable
 {
 public:
 	using TableId = uint32_t;
+
+	static constexpr TableId kInvalidTableId = std::numeric_limits<uint32_t>::max();
 
 	enum class TableType : uint8_t
 	{
@@ -52,8 +55,13 @@ public:
 	ScriptTable(ScriptTable&&) noexcept = default;
 	ScriptTable& operator=(ScriptTable&&) noexcept = default;
 
+	static ScriptTable Create(sol::table&& tbl, ParsedLuaFunctionTableSignatures&& fns);
+
+	static std::pair<ScriptTable::TableId, ScriptTableIndexPair>
+	CreateTableIndexPair(sol::table&& tbl, ParsedLuaFunctionTableSignatures&& fns, size_t resourceIdx);
+
 	static std::pair<ScriptTable::TableId, ScriptTableEntry>
-	CreateTableEntry(const std::string& path, sol::table&& tbl, 
+	CreateTableEntry(std::string name, std::string path, sol::table&& tbl, 
 		ParsedLuaFunctionTableSignatures&& fns, TableType type);
 
 	bool IsValid() const noexcept
@@ -75,6 +83,8 @@ public:
 
 	const sol::table& Data() const { return table_; }
 
+	void Clear();
+
 private:
 	static inline TableId tableIdCounter_ = 0;
 
@@ -88,12 +98,19 @@ private:
 
 struct ScriptTableEntry
 {
+	std::string name;
 	std::string filepath;
 	ScriptTable table;
 	ScriptTable::TableType type = ScriptTable::TableType::Invalid;
 };
 
 using ScriptTableDataMap = std::unordered_map<ScriptTable::TableId, ScriptTableEntry>;
+
+struct ScriptTableIndexPair
+{
+	ScriptTable table;
+	size_t resourceIndex = std::numeric_limits<size_t>::max();
+};
 
 class ScriptTableView
 {

@@ -2,16 +2,9 @@
 #include "ScriptableUserSubsystem.h"
 #include "../scripting/LuaStateManager.h"
 #include "../scripting/ScriptTable.h"
-#include "../scripting/ScriptTableObserverSignal.h"
 #include "../scripting/ScriptTableManager.h"
 #include <unordered_map>
 #include <filesystem>
-
-struct ScriptTableDescriptors
-{
-	std::vector<std::string> filepaths;
-	std::vector<std::vector<std::string>> functionNames;
-};
 
 class ScriptSystem : public System
 {
@@ -25,17 +18,14 @@ public:
 	ScriptSystem(ScriptSystem&&) noexcept = delete;
 	ScriptSystem& operator=(ScriptSystem&&) noexcept = delete;
 
-	Result<ScriptTable::TableId> AddFunctionTable(const std::string& path);
-	Result<ScriptTable::TableId> AddSystemTable(const std::string& path, Phase phase);
-
+	Result<ScriptTable::TableId> AddTable(ScriptTableDescriptor&& descriptor);
 	Result<Void> ReloadTable(ScriptTable::TableId tableId);
 	bool RemoveTable(ScriptTable::TableId tableId);
 	bool ContainsTable(ScriptTable::TableId tableId) const;
 	ScriptTableView GetTableView(ScriptTable::TableId tableId) const;
-	const std::string& GetTableFilepath(ScriptTable::TableId tableId) const;
-	const ScriptTableDataMap& GetScriptTableMap() const;
+	Result<Void> SetTableName(ScriptTable::TableId tableId, std::string_view newName);
 
-	//ScriptTableDescriptors ExportTableDescriptors() const;
+	const ScriptTableManager& GetTableManager() const { return tables_; }
 
 	LuaStateManager& GetState() { return state_; }
 	const LuaStateManager& GetState() const { return state_; }

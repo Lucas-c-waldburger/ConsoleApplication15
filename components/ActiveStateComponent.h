@@ -1,4 +1,7 @@
 #pragma once
-#include "BaseComponent.h"
+#include "ComponentConcepts.h"
 
-struct ActiveState : BaseComponent<ActiveState> {};
+struct ActiveState 
+{
+	constexpr bool operator==(const ActiveState&) const = default;
+};

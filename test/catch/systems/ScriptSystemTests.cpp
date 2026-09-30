@@ -36,20 +36,23 @@ TEST_CASE("ScriptSystem Tests", "[sys][script]")
 	auto entityTestFilepath = MakeScriptTestPath("entity_test.lua");
 	REQUIRE(std::filesystem::exists(entityTestFilepath));
 
-	auto addTableResult = scriptSystem.AddFunctionTable(entityTestFilepath.string());
+	auto addTableResult = scriptSystem.AddTable({
+		.filepath = entityTestFilepath.string()});
 	REQUIRE_RESULT(addTableResult);
 
 	auto tableId = addTableResult.GetValue();
 	CHECK(tableId != std::numeric_limits<ScriptTable::TableId>::max());
 
-	CHECK(scriptSystem.GetTableFilepath(tableId) == entityTestFilepath.string());
+	auto fpOp = scriptSystem.GetTableManager().GetTableInfo<&ScriptTableInfo::filepath>(tableId);
+	REQUIRE(fpOp.has_value());
+	CHECK(*fpOp == entityTestFilepath.string());
 
 	auto e = ECS::CreateEntity();
 	REQUIRE(e.IsValid());
 	e.AddComponent(Name{});
 	e.AddComponent(Transform{});
 
-	auto tableView = scriptSystem.GetTableView(tableId);
+	auto tableView = scriptSystem.GetTableManager().GetTableView(tableId);
 	CHECK(tableView.IsValid());
 
 	auto& script = e.AddComponent(Script{ .table = tableView });
@@ -88,17 +91,17 @@ TEST_CASE("ScriptSystem::RemoveTable", "[sys][script]")
 	auto testFilepath2 = MakeScriptTestPath("empty.lua");
 	REQUIRE(std::filesystem::exists(testFilepath2));
 
-	auto addTable1Result = scriptSystem.AddFunctionTable(testFilepath1.string());
+	auto addTable1Result = scriptSystem.AddTable({ .filepath = testFilepath1.string() });
 	REQUIRE_RESULT(addTable1Result);
-	auto addTable2Result = scriptSystem.AddFunctionTable(testFilepath2.string());
+	auto addTable2Result = scriptSystem.AddTable({ .filepath = testFilepath2.string() });
 	REQUIRE_RESULT(addTable2Result);
 
 	const auto table1Id = addTable1Result.GetValue();
 	const auto table2Id = addTable2Result.GetValue();
 
-	auto tableView1 = scriptSystem.GetTableView(table1Id);
+	auto tableView1 = scriptSystem.GetTableManager().GetTableView(table1Id);
 	CHECK(tableView1.IsValid());
-	auto tableView2 = scriptSystem.GetTableView(table2Id);
+	auto tableView2 = scriptSystem.GetTableManager().GetTableView(table2Id);
 	CHECK(tableView2.IsValid());
 
 	auto e1 = ECS::CreateEntity();
@@ -1081,7 +1084,7 @@ TEST_CASE("ScriptSystem Integration Test", "[script][sys]")
 		e3.AddComponent(Transform{});
 		auto e4 = ECS::CreateEntity();
 
-		auto es = ECS::GetAllEntitiesWithSignature(Transform::componentBit);
+		auto es = ECS::GetAllEntitiesWithSignature(component_traits<Transform>::bit);
 		REQUIRE(es.size() == 3);
 
 		REQUIRE(fixture->IsSystemRegistered<ScriptSystem>());
@@ -1091,7 +1094,11 @@ TEST_CASE("ScriptSystem Integration Test", "[script][sys]")
 		auto sysTablePath = MakeScriptTestPath("sys_table.lua");
 		REQUIRE(fs::exists(sysTablePath));
 
-		auto addSysTableResult = scriptSys.AddSystemTable(sysTablePath.string(), Phase::Input);
+		auto addSysTableResult = scriptSys.AddTable({
+			.filepath = sysTablePath.string(),
+			.tableType = ScriptTable::TableType::SystemTable,
+			.systemPhase = Phase::Input
+		});
 		REQUIRE(addSysTableResult.Success());
 
 		auto sysTableId = addSysTableResult.GetValue();
@@ -1143,7 +1150,11 @@ TEST_CASE("ScriptSystem Integration Test", "[script][sys]")
 		auto sysTablePath = MakeScriptTestPath("sys_table_2.lua");
 		REQUIRE(fs::exists(sysTablePath));
 
-		auto addSysTableResult = scriptSys.AddSystemTable(sysTablePath.string(), Phase::Input);
+		auto addSysTableResult = scriptSys.AddTable({
+			.filepath = sysTablePath.string(),
+			.tableType = ScriptTable::TableType::SystemTable,
+			.systemPhase = Phase::Input
+		});
 		REQUIRE(addSysTableResult.Success());
 
 		auto sysTableId = addSysTableResult.GetValue();

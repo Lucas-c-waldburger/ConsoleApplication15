@@ -130,7 +130,9 @@ struct draw_system<ScriptSystem>
 {
 	static void call(ScriptSystem& sys, const GuiTextureConverter& converter)
 	{
-		ImGui::Indent(12.0f);
+		//// TODO: Fix this!!!
+
+		/*ImGui::Indent(12.0f);
 
 		auto& reloadButtons = InspectorSystemPanel::GetButtons().scriptReload;
 		auto& deleteButtons = InspectorSystemPanel::GetButtons().scriptDelete;
@@ -231,7 +233,7 @@ struct draw_system<ScriptSystem>
 			LOG_IF_ERROR(ScriptLoaderUtility::HandleScriptSelection(sys));
 		}
 
-		ImGui::Unindent(12.0f);
+		ImGui::Unindent(12.0f);*/
 	}
 
 	static void ParseFunctionStrings(const ScriptTable& table, const LuaStateManager& state)
@@ -412,7 +414,7 @@ Result<Void> InspectorSystemPanel::LoadResources(SceneFixture& fixture)
 	assert(fixture.IsSystemRegistered<ScriptSystem>());
 	auto& scriptSys = fixture.GetSystem<ScriptSystem>();
 	
-	TRY(scriptSys.AddFunctionTable(fnTableScriptPath));
+	TRY(scriptSys.AddTable({ .filepath = fnTableScriptPath }));
 
 	return kVoid;
 }

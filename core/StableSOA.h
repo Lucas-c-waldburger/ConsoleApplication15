@@ -80,6 +80,14 @@ public:
         return newIdx;
     }
 
+    void Clear()
+    {
+        [&]<std::size_t...Is>(std::index_sequence<Is...>)
+        {
+            ((std::get<Is>(memberValues_).clear()), ...);
+        }(std::make_index_sequence<MemberCount>{});
+    }
+
     Class MakeSlice(size_t index) const
     {
         if (index >= Size())

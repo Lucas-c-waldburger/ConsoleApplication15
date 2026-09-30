@@ -182,18 +182,6 @@ inline bool GuiImageButton(std::string_view id, const GuiTexture& tx,
                               bgClr, tintClr);
 }
 
-//inline bool GuiImageButton(std::string_view id, const GuiTexture& tx, const SDL_Color& bgClr = {0, 0, 0, 0}, 
-//                           const SDL_Color& tintClr = { 255, 255, 255, 255 })
-//{
-//    if (tx.textureId == 0)
-//    {
-//        return false;
-//    }
-//
-//    return ImGui::ImageButton(id.data(), tx.textureId, tx.size, tx.uv0, tx.uv1,
-//                              SDLToGuiColor(bgClr), SDLToGuiColor(tintClr));
-//}
-
 } // ui
 
 

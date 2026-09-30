@@ -1,5 +1,5 @@
 #pragma once
-#include "BaseComponent.h"
+#include "ComponentConcepts.h"
 #include "../core/Handle.h"
 #include "../core/Hash.h"
 #include "../atlas/SpriteAtlasCollection.h"
@@ -100,7 +100,7 @@ struct TextFormatting
     }
 };
 
-struct TextRenderableGlyphCache : BaseComponent<TextRenderableGlyphCache>
+struct TextRenderableGlyphCache
 {
     struct CacheContext
     {
@@ -110,21 +110,13 @@ struct TextRenderableGlyphCache : BaseComponent<TextRenderableGlyphCache>
         Handle<TextureResource> resourceHandle;
         HashType textHash = 0;
 
-        friend constexpr bool operator==(const CacheContext& lhs, const CacheContext& rhs)
-        {
-            return lhs.transform == rhs.transform && lhs.formatting == rhs.formatting &&
-                   lhs.offset == rhs.offset && lhs.resourceHandle == rhs.resourceHandle &&
-                   lhs.textHash == rhs.textHash;
-        }
+        constexpr bool operator==(const CacheContext&) const = default;
     };
 
     std::vector<GlyphCacheData> cache;
     CacheContext context;
 
-    friend bool operator==(const TextRenderableGlyphCache& lhs, const TextRenderableGlyphCache& rhs)
-    {
-        return lhs.cache == rhs.cache && lhs.context == rhs.context;
-    }
+    bool operator==(const TextRenderableGlyphCache&) const = default;
 };
 
 inline constexpr RenderProfile kDefaultTextRenderProfile{
@@ -132,7 +124,7 @@ inline constexpr RenderProfile kDefaultTextRenderProfile{
     .isOverlay = true,
 };
 
-struct TextRenderableComponent : BaseComponent<TextRenderableComponent>
+struct TextRenderableComponent
 {
     GlyphTextWriter writer;
     TextFormatting formatting;
@@ -141,7 +133,7 @@ struct TextRenderableComponent : BaseComponent<TextRenderableComponent>
     bool operator==(const TextRenderableComponent&) const = default;
 };
 
-struct SpriteRenderableComponent : BaseComponent<SpriteRenderableComponent>
+struct SpriteRenderableComponent
 {
     Sprite sprite;
     RenderProfile profile;

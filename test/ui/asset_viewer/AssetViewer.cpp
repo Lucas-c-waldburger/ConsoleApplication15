@@ -53,12 +53,33 @@ bool AssetViewer::Draw(SceneFixture& fixture)
 	GuiMouse::EvaluateInsideWindow(EditorWindowType::AssetWindow);
 	
 	// Directories //
-	ImGui::BeginChild("Directories", ImVec2(leftWidth, 0.0f),
-		(ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX));
+	const bool wasExpanded = dirChildInfo_.expanded;
+
+	ImGui::BeginChild("Directories",ImVec2(
+		wasExpanded ? dirChildInfo_.expandWidth : 
+					  DirectoryViewerChildInfo::kCollapsedWidth,
+		0.0f),
+		ImGuiChildFlags_Borders |
+		(wasExpanded ? ImGuiChildFlags_ResizeX : 0));
 
 	GuiMouse::EvaluateInsideWindow(EditorWindowType::AssetWindow);
 
-	directoryViewer_.Draw(icons_, uiTexturesConverter);
+	const bool isExpanded = directoryViewer_.Draw(icons_, uiTexturesConverter);
+	if (wasExpanded)
+	{
+		dirChildInfo_.expandWidth = ImGui::GetWindowWidth();
+	}
+
+	if (isExpanded != wasExpanded)
+	{
+		ImGui::SetWindowSize(ImVec2(
+			isExpanded ? dirChildInfo_.expandWidth : 
+						 DirectoryViewerChildInfo::kCollapsedWidth,
+			ImGui::GetWindowHeight()),
+			ImGuiCond_Always);
+	}
+
+	dirChildInfo_.expanded = isExpanded;
 
 	ImGui::EndChild();
 
@@ -86,7 +107,35 @@ bool AssetViewer::Draw(SceneFixture& fixture)
 	g->WindowsBorderHoverPadding = resizeHitbox;
 
 	// Asset Preview Viewer //
-	ImGui::BeginChild("PreviewViewer", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders);
+	ImGui::BeginChild("PreviewViewerDockArea", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders);
+
+	ImGuiID dockspaceId = ImGui::GetID("PreviewViewerDockSpace");
+
+	if (!ImGui::DockBuilderGetNode(dockspaceId))
+	{
+		ImGui::DockBuilderAddNode(
+			dockspaceId,
+			ImGuiDockNodeFlags_DockSpace);
+
+		ImGui::DockBuilderSetNodeSize(
+			dockspaceId,
+			ImGui::GetContentRegionAvail());
+
+		ImGui::DockBuilderDockWindow(
+			"PreviewViewer",
+			dockspaceId);
+
+		ImGui::DockBuilderFinish(dockspaceId);
+	}
+
+	ImGui::DockSpace(dockspaceId, ImGui::GetContentRegionAvail(),
+		(ImGuiDockNodeFlags_AutoHideTabBar | ImGuiDockNodeFlags_NoDockingSplit));
+
+	ImGui::EndChild(); 
+
+	ImGui::End();
+
+	ImGui::Begin("PreviewViewer", nullptr);
 
 	GuiMouse::EvaluateInsideWindow(EditorWindowType::AssetWindow);
 
@@ -96,14 +145,13 @@ bool AssetViewer::Draw(SceneFixture& fixture)
 		.spriteSelection = assetGridViewer_.GetSpriteSelection(),
 		.audioSelection = assetGridViewer_.GetAudioSelection(),
 		.fontSelection = assetGridViewer_.GetFontSelection(),
+		.scriptSelection = assetGridViewer_.GetScriptSelection(),
 		.icons = icons_,
 		.loadTargetConverter = loadTargetConverter,
 		.uiTexturesConverter = uiTexturesConverter
 	};
 
 	assetPreviewViewer_.Draw(fixture, previewCtx, openGridTabTypeRecord);
-
-	ImGui::EndChild();
 
 	ImGui::End();
 

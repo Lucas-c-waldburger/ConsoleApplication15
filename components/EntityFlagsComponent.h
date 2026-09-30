@@ -1,9 +1,9 @@
 #pragma once
-#include "BaseComponent.h"
+#include "ComponentConcepts.h"
 #include "../core/Bitset.h"
 
 
-struct EntityFlags : BaseComponent<EntityFlags>
+struct EntityFlags
 {
 	ComponentBitset componentVisibilityFlags{ true };
 	EventDataBitset eventProductionFlags{ true };

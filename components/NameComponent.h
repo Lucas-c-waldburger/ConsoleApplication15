@@ -1,31 +1,15 @@
 #pragma once
-#include "BaseComponent.h"
+#include "ComponentConcepts.h"
 #include <string>
 
-struct Name : BaseComponent<Name>
+struct Name
 {
 	std::string value;
 
+	bool operator==(const Name&) const = default;
+	auto operator<=>(const Name&) const = default;
+	bool operator==(const char* ch) const { return value == ch; }
+	auto operator<=>(const char* ch) const { return value <=> ch; }
 
-	friend bool operator==(const Name& lhs, const Name& rhs)
-	{
-		return lhs.value == rhs.value;
-	}
-	friend auto operator<=>(const Name& lhs, const Name& rhs)
-	{
-		return lhs.value <=> rhs.value;
-	}
-	friend bool operator==(const Name& lhs, const char* ch)
-	{
-		return lhs.value == ch;
-	}
-	friend auto operator<=>(const Name& lhs, const char* ch)
-	{
-		return lhs.value <=> ch;
-	}
-
-	operator std::string_view() const noexcept
-	{
-		return value;
-	}
+	operator std::string_view() const noexcept { return value; }
 };
