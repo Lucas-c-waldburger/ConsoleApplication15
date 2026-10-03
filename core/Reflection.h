@@ -6,6 +6,7 @@
 //#include "../deps/nlohmann/json.hpp"
 #include "TypeInfo.h"
 #include "TypeUtils.h"
+#include "../scripting/ParsedLuaUserTypeInfo.h"
 
 template <typename T>
 concept PfrReflectable = requires {
@@ -34,11 +35,36 @@ inline void AutoRegisterEnum(sol::state_view state, std::string_view enumName)
 	AutoRegisterEnumImpl(state, enumName, enumEntries, std::make_index_sequence<enumEntries.size()>{});
 }
 
-//template <typename E> requires std::is_enum_v<E>
-//inline bool AutoRegisterEnum(sol::state& state)
-//{
-//	return AutoRegisterEnum<E>(state, TypeInfo<E>::name);
-//}
+template <typename E, size_t...Is>
+inline void AutoRegisterEnumImpl(
+	sol::state_view state, 
+	ParsedLuaUserTypeInfo& userTypeInfo,
+	std::string_view enumName,
+	const std::array<std::pair<E, std::string_view>, sizeof...(Is)>& enumEntries,
+	std::index_sequence<Is...>)
+{
+	auto args = std::tuple_cat(
+		std::forward_as_tuple(enumEntries[Is].second, enumEntries[Is].first)...
+	);
+
+	std::apply([&](auto&&...args) {
+		userTypeInfo.ParseUserTypeArgs<E>(enumName, args...);
+	}, args);
+
+	std::apply([&](auto&&...args) {
+		state.new_enum(enumName, std::forward<decltype(args)>(args)...);
+	}, args);
+}
+
+template <typename E> requires std::is_enum_v<E>
+inline void AutoRegisterEnum(sol::state_view state, ParsedLuaUserTypeInfo& userTypeInfo,
+							 std::string_view enumName)
+{
+	static constexpr auto enumEntries = magic_enum::enum_entries<E>();
+
+	AutoRegisterEnumImpl(state, userTypeInfo, enumName, enumEntries, 
+		std::make_index_sequence<enumEntries.size()>{});
+}
 
 template <size_t I, typename T>
 inline auto AutoMakeSolProperty()
@@ -79,6 +105,37 @@ template <typename T> requires PfrReflectable<T>
 inline void AutoRegisterUserType(sol::state_view state, std::string_view typeName)
 {
 	AutoRegisterUserTypeImpl<T>(state, typeName, std::make_index_sequence<boost::pfr::tuple_size_v<T>>{});
+}
+
+template <typename T, size_t...Is>
+inline void AutoRegisterUserTypeImpl(
+	sol::state_view state, 
+	ParsedLuaUserTypeInfo& userTypeInfo,
+	std::string_view typeName,
+	std::index_sequence<Is...>)
+{
+	auto args = std::tuple_cat(
+		std::make_tuple(
+			boost::pfr::get_name<Is, T>(),
+			AutoMakeSolProperty<Is, T>()
+		)...
+	);
+
+	std::apply([&](auto&&...args) {
+		userTypeInfo.ParseUserTypeArgs<T>(typeName, args...);
+	}, args);
+
+	std::apply([&](auto&&...args) {
+		state.new_usertype<T>(typeName, std::forward<decltype(args)>(args)...);
+	}, std::move(args));
+}
+
+template <typename T> requires PfrReflectable<T>
+inline void AutoRegisterUserType(sol::state_view state, ParsedLuaUserTypeInfo& userTypeInfo,
+								 std::string_view typeName)
+{
+	AutoRegisterUserTypeImpl<T>(state, userTypeInfo,
+		typeName, std::make_index_sequence<boost::pfr::tuple_size_v<T>>{});
 }
 
 //template <typename BasicJson, typename T>

@@ -3,7 +3,7 @@ local table = {}
 function table.init()
 	local es = ecs.getEntitiesWith(ComponentId.Transform)
 	for _, e in ipairs(es) do
-		local tf = e:getTransform()
+		local tf = e:getComponent(ComponentId.Transform)
 		local p = tf.position
 
 		p.x = 67.0
@@ -15,7 +15,7 @@ end
 function table.update(dt)
 	local es = ecs.getEntitiesWith(ComponentId.Transform)
 	for _, e in ipairs(es) do
-		local tf = e:getTransform()
+		local tf = e:getComponent(ComponentId.Transform)
 		local p = tf.position
 
 		p.x = p.x - 1.0

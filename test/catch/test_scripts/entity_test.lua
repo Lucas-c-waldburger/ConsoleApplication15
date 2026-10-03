@@ -1,14 +1,14 @@
 local table = {}
 
 function table.changeName(e)
-    if e:hasName() then
-        e:getName().value = "changed"
+    if e:hasComponent(ComponentId.Name) then
+        e:getComponent(ComponentId.Name).value = "changed"
     end
 end
 
 function table.changePos(e)
-    if e:hasTransform() then
-        local t = e:getTransform()
+    if e:hasComponent(ComponentId.Transform) then
+        local t = e:getComponent(ComponentId.Transform)
         local p = t.position
 
         p.x = 500.0

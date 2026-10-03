@@ -10,28 +10,6 @@
 #include <span>
 #include <bitset>
 
-//template <typename T>
-//using lua_arg_t = std::remove_reference_t<T>;
-//
-//template <typename T>
-//using lua_raw_t = std::remove_cv_t<std::remove_pointer_t<lua_arg_t<T>>>;
-
-//template <typename T>
-//concept AcceptedLuaTypeQualified = 
-//	std::same_as<T, raw_type_t<T>> ||
-//	std::same_as<T, const raw_type_t<T>> ||
-//	std::same_as<T, raw_type_t<T>*> ||
-//	std::same_as<T, raw_type_t<T>&> ||
-//	std::same_as<T, const raw_type_t<T>*> ||
-//	std::same_as<T, const raw_type_t<T>&>;
-
-//template <typename T>
-//concept AcceptedLuaTypeQualified =
-//std::same_as<std::remove_reference_t<T>, raw_type_t<T>> ||
-//std::same_as<std::remove_reference_t<T>, const raw_type_t<T>> ||
-//std::same_as<std::remove_reference_t<T>, raw_type_t<T>*> ||
-//std::same_as<std::remove_reference_t<T>, const raw_type_t<T>*>;
-
 template <typename T>
 concept AcceptedLuaTypeQualified = 
 	!std::is_pointer_v<std::remove_pointer_t<std::remove_reference_t<T>>> &&
@@ -43,14 +21,14 @@ public:
 	template <AcceptedLuaTypeQualified T>
 	static sol::object TryMakeArgumentLuaObject(sol::state_view state, T&& value, uint64_t parsedType);
 
-	template <AcceptedLuaTypeQualified...Args>
-	static Result<std::vector<sol::object>>
-	MakeArgumentLuaObjects(sol::state_view state, std::span<const uint64_t> parsedArgTypes, 
-						   Args&&...args);
+	//template <AcceptedLuaTypeQualified...Args>
+	//static Result<std::vector<sol::object>>
+	//MakeArgumentLuaObjects(sol::state_view state, std::span<const uint64_t> parsedArgTypes, 
+	//					   Args&&...args);
 
 	template <AcceptedLuaTypeQualified...Args>
 	static Result<std::vector<sol::object>>
-	MakeArgumentLuaObjects2(sol::state_view state, std::span<const uint64_t> parsedArgTypes,
+	MakeArgumentLuaObjects(sol::state_view state, std::span<const uint64_t> parsedArgTypes,
 							Args&&...args);
 
 	template <AcceptedLuaTypeQualified...Args>
@@ -70,9 +48,6 @@ private:
 		return ((parsedArg >> 32) & static_cast<uint64_t>(LuaTypeQualifiers::Ptr)) != 0;
 	}
 
-	//template <AcceptedLuaTypeQualified T>
-	//static int GetArugmentSimScore(uint64_t parsedType);
-
 	template <AcceptedLuaTypeQualified T>
 	static int GetArgSimScore(uint64_t parsedType, T&& val);
 
@@ -80,14 +55,14 @@ private:
 	static size_t GetArgBestFitIndexImpl(uint64_t parsedType,
 		const std::bitset<N>& claimed, Tup&& tup, int simScore, size_t bestIdx);
 
-	template <size_t I, size_t N, typename Tup>
-	static void MakeArgumentLuaObjectsImpl(sol::state_view state,
-		std::span<const uint64_t> parsedArgTypes,
-		std::bitset<N>& claimed, size_t parsedArgsCurrentIdx,
-		std::vector<sol::object>& results, Tup&& tup, size_t& failedAtIdx);
+	//template <size_t I, size_t N, typename Tup>
+	//static void MakeArgumentLuaObjectsImpl(sol::state_view state,
+	//	std::span<const uint64_t> parsedArgTypes,
+	//	std::bitset<N>& claimed, size_t parsedArgsCurrentIdx,
+	//	std::vector<sol::object>& results, Tup&& tup, size_t& failedAtIdx);
 
 	template <size_t N, typename Tup>
-	static Result<Void> MakeArgumentLuaObjectsImpl2(sol::state_view state,
+	static Result<Void> MakeArgumentLuaObjectsImpl(sol::state_view state,
 		std::span<const uint64_t> parsedArgTypes,
 		std::bitset<N>& claimed,
 		std::vector<sol::object>& results, Tup&& tup);
@@ -99,55 +74,6 @@ private:
 
 	LuaFunctionCallHandler() = default;
 };
-
-//namespace detail {
-//
-//template <typename> struct get_type_name_at_tuple_pos;
-//template <typename...Ts> 
-//struct get_type_name_at_tuple_pos<std::tuple<Ts...>> {
-//
-//};
-//
-//} // detail
-
-//template <AcceptedLuaTypeQualified T>
-//inline constexpr uint32_t ParseStrongTypeQualifiers()
-//{
-//	uint32_t qualifiers = 0;
-//
-//	if constexpr (IsNativeLuaType<raw_type_t<T>>())
-//	{
-//		return qualifiers;
-//	}
-//	else if constexpr (std::is_pointer_v<std::remove_reference_t<T>>)
-//	{
-//		qualifiers |= LuaTypeQualifiers::Ptr;
-//
-//		if constexpr (std::is_const_v<std::remove_pointer_t<std::remove_reference_t<T>>>)
-//		{
-//			qualifiers |= LuaTypeQualifiers::Const;
-//		}
-//
-//		return qualifiers;
-//	}
-//	else if constexpr (std::is_lvalue_reference_v<T>)
-//	{
-//		qualifiers |= LuaTypeQualifiers::Ref;
-//
-//		if constexpr (std::is_const_v<std::remove_reference_t<T>>)
-//		{
-//			qualifiers |= LuaTypeQualifiers::Const;
-//		}
-//
-//		return qualifiers;
-//	}
-//	else
-//	{
-//		return qualifiers;
-//	}
-//}
-
-
 
 template <AcceptedLuaTypeQualified T>
 inline sol::object LuaFunctionCallHandler::TryMakeArgumentLuaObject(sol::state_view state, 
@@ -503,41 +429,6 @@ inline int LuaFunctionCallHandler::GetArgSimScore(uint64_t parsedType, T&& val)
 	return -1;
 }
 
-//template <AcceptedLuaTypeQualified T>
-//int LuaFunctionCallHandler::GetArugmentSimScore(uint64_t parsedType)
-//{
-//	if (!RawTypesMatch<T>(parsedType))
-//	{
-//		return -1;
-//	}
-//
-//	constexpr uint32_t strongTypeQuals = ParseStrongTypeQualifiers<T>();
-//	const uint32_t parsedQuals = static_cast<uint32_t>(parsedType >> 32);
-//
-//	if (strongTypeQuals == parsedQuals)
-//	{
-//		return std::numeric_limits<int>::max();
-//	}
-//
-//	uint8_t simScore = 0;
-//
-//	if ((parsedQuals & LuaTypeQualifiers::Ptr) == (strongTypeQuals & LuaTypeQualifiers::Ptr))
-//	{
-//		++simScore;
-//	}
-//	else if ((parsedQuals & LuaTypeQualifiers::Ref) == (strongTypeQuals & LuaTypeQualifiers::Ref))
-//	{
-//		++simScore;
-//	}
-//
-//	if ((parsedQuals & LuaTypeQualifiers::Const) == (strongTypeQuals & LuaTypeQualifiers::Const))
-//	{
-//		++simScore;
-//	}
-//
-//	return simScore;
-//}
-
 template <size_t I, size_t N, typename Tup>
 inline size_t LuaFunctionCallHandler::GetArgBestFitIndexImpl(uint64_t parsedType,
 	const std::bitset<N>& claimed, Tup&& tup, int simScore, size_t bestIdx)
@@ -571,31 +462,31 @@ inline size_t LuaFunctionCallHandler::GetArgBestFitIndex(uint64_t parsedType,
 		std::numeric_limits<size_t>::max());
 }
 
-template <AcceptedLuaTypeQualified...Args>
-inline Result<std::vector<sol::object>> 
-LuaFunctionCallHandler::MakeArgumentLuaObjects(sol::state_view state, 
-											   std::span<const uint64_t> parsedArgTypes, Args&& ...args)
-{
-	std::vector<sol::object> results;
-	results.reserve(parsedArgTypes.size());
-
-	std::bitset<sizeof...(Args)> claimed;
-	size_t failedAtIdx = std::numeric_limits<size_t>::max();
-
-	MakeArgumentLuaObjectsImpl<0>(state, parsedArgTypes, claimed, 0, results, 
-		std::forward_as_tuple(std::forward<Args>(args)...), failedAtIdx);
-
-	if (failedAtIdx < parsedArgTypes.size())
-	{
-		return MAKE_ERROR_FMT("Could not match argument at position '{}'", failedAtIdx);
-	}
-
-	return results;
-}
+//template <AcceptedLuaTypeQualified...Args>
+//inline Result<std::vector<sol::object>> 
+//LuaFunctionCallHandler::MakeArgumentLuaObjects(sol::state_view state, 
+//											   std::span<const uint64_t> parsedArgTypes, Args&& ...args)
+//{
+//	std::vector<sol::object> results;
+//	results.reserve(parsedArgTypes.size());
+//
+//	std::bitset<sizeof...(Args)> claimed;
+//	size_t failedAtIdx = std::numeric_limits<size_t>::max();
+//
+//	MakeArgumentLuaObjectsImpl<0>(state, parsedArgTypes, claimed, 0, results, 
+//		std::forward_as_tuple(std::forward<Args>(args)...), failedAtIdx);
+//
+//	if (failedAtIdx < parsedArgTypes.size())
+//	{
+//		return MAKE_ERROR_FMT("Could not match argument at position '{}'", failedAtIdx);
+//	}
+//
+//	return results;
+//}
 
 template<AcceptedLuaTypeQualified...Args>
 inline Result<std::vector<sol::object>> 
-LuaFunctionCallHandler::MakeArgumentLuaObjects2(sol::state_view state, 
+LuaFunctionCallHandler::MakeArgumentLuaObjects(sol::state_view state, 
 	std::span<const uint64_t> parsedArgTypes, Args&& ...args)
 {
 	std::vector<sol::object> results;
@@ -603,7 +494,7 @@ LuaFunctionCallHandler::MakeArgumentLuaObjects2(sol::state_view state,
 
 	std::bitset<sizeof...(Args)> claimed;
 
-	TRY(MakeArgumentLuaObjectsImpl2(state, parsedArgTypes, claimed, results,
+	TRY(MakeArgumentLuaObjectsImpl(state, parsedArgTypes, claimed, results,
 		std::forward_as_tuple(std::forward<Args>(args)...)));
 
 	return results;
@@ -628,7 +519,7 @@ inline Result<Void> LuaFunctionCallHandler::CallLuaFunctionQualified(sol::functi
 			parsedArgTypes.size(), argCount);
 	}
 
-	TRY(MakeArgumentLuaObjects2(fn.lua_state(), parsedArgTypes,
+	TRY(MakeArgumentLuaObjects(fn.lua_state(), parsedArgTypes,
 		std::forward<Args>(args)...), argObjects);
 
 	sol::protected_function_result result = fn(sol::as_args(argObjects));
@@ -641,74 +532,74 @@ inline Result<Void> LuaFunctionCallHandler::CallLuaFunctionQualified(sol::functi
 	return kVoid;
 }
 
-template <size_t I, size_t N, typename Tup>
-inline void LuaFunctionCallHandler::MakeArgumentLuaObjectsImpl(sol::state_view state, 
-	std::span<const uint64_t> parsedArgTypes, 
-	std::bitset<N>& claimed, size_t parsedArgsCurrentIdx, 
-	std::vector<sol::object>& results, Tup&& tup, size_t& failedAtIdx)
-{
-	if (failedAtIdx < parsedArgTypes.size() || parsedArgsCurrentIdx >= parsedArgTypes.size())
-	{
-		return;
-	}
-
-	const uint64_t parsedArgType = parsedArgTypes[parsedArgsCurrentIdx];
-
-	if constexpr (I >= N)
-	{
-		// couldn't match arg, check if its a pointer that we can pass 'nil' to
-		if (IsParsedArgPointer(parsedArgType))
-		{
-			LOG_WARNING_FMT("Could not match argument at position '{}', passed nil instead",
-				parsedArgsCurrentIdx);
-
-			results.emplace_back();
-		}
-		else
-		{
-			failedAtIdx = parsedArgsCurrentIdx;
-
-			return;
-		}
-
-		if (parsedArgsCurrentIdx + 1 < parsedArgTypes.size())
-		{
-			MakeArgumentLuaObjectsImpl<0>(state, parsedArgTypes, claimed,
-				parsedArgsCurrentIdx + 1, results, std::forward<Tup>(tup), failedAtIdx);
-		}
-
-		return;
-	}
-	else
-	{
-		using TypeAtI = std::tuple_element_t<I, std::remove_cvref_t<Tup>>;
-
-		if (!claimed.test(I) && RawTypesMatch<TypeAtI>(parsedArgType))
-		{
-			// argument not already consumed && matches type
-
-			auto obj = TryMakeArgumentLuaObject(state, 
-				std::get<I>(std::forward<Tup>(tup)), parsedArgType);
-			if (obj.valid())
-			{
-				results.emplace_back(obj);
-
-				claimed.set(I);
-
-				MakeArgumentLuaObjectsImpl<0>(state, parsedArgTypes, claimed,
-					parsedArgsCurrentIdx + 1, results, std::forward<Tup>(tup), failedAtIdx);
-
-				return;
-			}
-		}
-
-		MakeArgumentLuaObjectsImpl<I + 1>(state, parsedArgTypes, claimed,
-			parsedArgsCurrentIdx, results, std::forward<Tup>(tup), failedAtIdx);
-	}
-}
+//template <size_t I, size_t N, typename Tup>
+//inline void LuaFunctionCallHandler::MakeArgumentLuaObjectsImpl(sol::state_view state, 
+//	std::span<const uint64_t> parsedArgTypes, 
+//	std::bitset<N>& claimed, size_t parsedArgsCurrentIdx, 
+//	std::vector<sol::object>& results, Tup&& tup, size_t& failedAtIdx)
+//{
+//	if (failedAtIdx < parsedArgTypes.size() || parsedArgsCurrentIdx >= parsedArgTypes.size())
+//	{
+//		return;
+//	}
+//
+//	const uint64_t parsedArgType = parsedArgTypes[parsedArgsCurrentIdx];
+//
+//	if constexpr (I >= N)
+//	{
+//		// couldn't match arg, check if its a pointer that we can pass 'nil' to
+//		if (IsParsedArgPointer(parsedArgType))
+//		{
+//			LOG_WARNING_FMT("Could not match argument at position '{}', passed nil instead",
+//				parsedArgsCurrentIdx);
+//
+//			results.emplace_back();
+//		}
+//		else
+//		{
+//			failedAtIdx = parsedArgsCurrentIdx;
+//
+//			return;
+//		}
+//
+//		if (parsedArgsCurrentIdx + 1 < parsedArgTypes.size())
+//		{
+//			MakeArgumentLuaObjectsImpl<0>(state, parsedArgTypes, claimed,
+//				parsedArgsCurrentIdx + 1, results, std::forward<Tup>(tup), failedAtIdx);
+//		}
+//
+//		return;
+//	}
+//	else
+//	{
+//		using TypeAtI = std::tuple_element_t<I, std::remove_cvref_t<Tup>>;
+//
+//		if (!claimed.test(I) && RawTypesMatch<TypeAtI>(parsedArgType))
+//		{
+//			// argument not already consumed && matches type
+//
+//			auto obj = TryMakeArgumentLuaObject(state, 
+//				std::get<I>(std::forward<Tup>(tup)), parsedArgType);
+//			if (obj.valid())
+//			{
+//				results.emplace_back(obj);
+//
+//				claimed.set(I);
+//
+//				MakeArgumentLuaObjectsImpl<0>(state, parsedArgTypes, claimed,
+//					parsedArgsCurrentIdx + 1, results, std::forward<Tup>(tup), failedAtIdx);
+//
+//				return;
+//			}
+//		}
+//
+//		MakeArgumentLuaObjectsImpl<I + 1>(state, parsedArgTypes, claimed,
+//			parsedArgsCurrentIdx, results, std::forward<Tup>(tup), failedAtIdx);
+//	}
+//}
 
 template <size_t N, typename Tup>
-inline Result<Void> LuaFunctionCallHandler::MakeArgumentLuaObjectsImpl2(sol::state_view state, 
+inline Result<Void> LuaFunctionCallHandler::MakeArgumentLuaObjectsImpl(sol::state_view state, 
 	std::span<const uint64_t> parsedArgTypes, std::bitset<N>& claimed,
 	std::vector<sol::object>& results, Tup&& tup)
 {

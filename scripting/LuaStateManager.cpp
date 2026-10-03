@@ -1,5 +1,12 @@
 #include "LuaStateManager.h"
 
+void LuaStateManager::InitWithEngineTypes()
+{
+	state_.open_libraries(sol::lib::base);
+
+	RegisterLuaUserTypes(*this);
+}
+
 sol::protected_function_result LuaStateManager::LoadScriptFile(const std::string& path)
 {
 	return state_.script_file(path);
@@ -17,7 +24,12 @@ bool LuaStateManager::IsRegistered(std::string_view name) const
 		return true;
 	}
 
-	return state_[name] != sol::type::nil && registeredNameToTypeId_.contains(name);
+	if (GetLuaUserTypeInfo().GetDataIndex(name).IsValid())
+	{
+		return state_[name] != sol::lua_nil;
+	}
+
+	return false;
 }
 
 uint32_t LuaStateManager::GetRegisteredTypeId(std::string_view name) const
@@ -27,7 +39,20 @@ uint32_t LuaStateManager::GetRegisteredTypeId(std::string_view name) const
 		return GetNativeLuaTypeId(name);
 	}
 
-	auto it = registeredNameToTypeId_.find(name);
+	if (auto idx = GetLuaUserTypeInfo().GetDataIndex(name); idx.IsValid())
+	{
+		return userTypeInfo_.GetUserTypeIds()[idx];
+	}
 
-	return (it != registeredNameToTypeId_.end()) ? it->second : kInvalidLuaTypeId;
+	return kInvalidLuaTypeId;
+}
+
+const ParsedLuaUserTypeInfo& LuaStateManager::GetLuaUserTypeInfo() const
+{
+	if (!userTypeInfo_.IsCommitted())
+	{
+		userTypeInfo_.Commit();
+	}
+
+	return userTypeInfo_;
 }

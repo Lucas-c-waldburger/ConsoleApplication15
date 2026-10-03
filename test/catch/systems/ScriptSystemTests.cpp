@@ -27,11 +27,11 @@ constexpr std::pair<uint32_t, uint32_t> DecomposeArgType(uint64_t argType)
 
 } // unnamed
 
-TEST_CASE("ScriptSystem Tests", "[sys][script]")
+TEST_CASE("ScriptSystem Tests", "[sys][script][b]")
 {
 	ScriptSystem scriptSystem{};
 
-	scriptSystem.GetState().InitWithEngineTypes<Entity>();
+	scriptSystem.GetState().InitWithEngineTypes();
 
 	auto entityTestFilepath = MakeScriptTestPath("entity_test.lua");
 	REQUIRE(std::filesystem::exists(entityTestFilepath));
@@ -80,11 +80,11 @@ TEST_CASE("ScriptSystem Tests", "[sys][script]")
 	CHECK(e.GetComponent<Transform>().position.y == 500.0f);
 }
 
-TEST_CASE("ScriptSystem::RemoveTable", "[sys][script]")
+TEST_CASE("ScriptSystem::RemoveTable", "[sys][script][b]")
 {
 	ScriptSystem scriptSystem{};
 
-	scriptSystem.GetState().InitWithEngineTypes<Entity>();
+	scriptSystem.GetState().InitWithEngineTypes();
 
 	auto testFilepath1 = MakeScriptTestPath("entity_test.lua");
 	REQUIRE(std::filesystem::exists(testFilepath1));
@@ -134,11 +134,11 @@ TEST_CASE("ScriptSystem::RemoveTable", "[sys][script]")
 	CHECK_FALSE(e3.GetComponent<Script>().table.IsValid());
 }
 
-TEST_CASE("LuaFunctionTableParser Tests", "[script]")
+TEST_CASE("LuaFunctionTableParser Tests", "[script][b]")
 {
 	Logger::StartSession();
 	LuaStateManager state{};
-	state.InitWithEngineTypes<Entity>();
+	state.InitWithEngineTypes();
 
 	struct TestUserStructA {};
 	struct TestUserStructB {};
@@ -382,11 +382,11 @@ TEST_CASE("LuaFunctionTableParser Tests", "[script]")
 	}
 }
 
-TEST_CASE("LuaFunctionCallHandler Tests", "[script]")
+TEST_CASE("LuaFunctionCallHandler Tests", "[script][b]")
 {
 	Logger::StartSession();
 	LuaStateManager state{};
-	state.InitWithEngineTypes<Entity>();
+	state.InitWithEngineTypes();
 
 	struct TestUserStructA {};
 	struct TestUserStructB {};
@@ -802,7 +802,7 @@ TEST_CASE("LuaFunctionCallHandler Tests", "[script]")
 	}
 }
 
-TEST_CASE("Native Lua Type identification", "[script]")
+TEST_CASE("Native Lua Type identification", "[script][b]")
 {
 	SECTION("Number")
 	{
@@ -856,11 +856,11 @@ TEST_CASE("Native Lua Type identification", "[script]")
 	}
 }
 
-TEST_CASE("Lua function parsing/call with Native lua types", "[script]")
+TEST_CASE("Lua function parsing/call with Native lua types", "[script][b]")
 {
 	Logger::StartSession();
 	LuaStateManager state{};
-	state.InitWithEngineTypes<>();
+	state.InitWithEngineTypes();
 
 	struct TestUserStructA {};
 	enum class TestUserEnum { A = 1, B = 2 };
@@ -1056,7 +1056,7 @@ TEST_CASE("Lua function parsing/call with Native lua types", "[script]")
 	}
 }
 
-TEST_CASE("ScriptSystem Integration Test", "[script][sys]")
+TEST_CASE("ScriptSystem Integration Test", "[script][sys][b]")
 {
 	static constexpr auto destroyAllEntities = [] {
 		auto es = ECS::GetAllActiveEntities();
@@ -1076,6 +1076,8 @@ TEST_CASE("ScriptSystem Integration Test", "[script][sys]")
 
 	SECTION("System script that iterates entities")
 	{
+		destroyAllEntities();
+
 		auto e1 = ECS::CreateEntity();
 		e1.AddComponent(Transform{});
 		auto e2 = ECS::CreateEntity();
@@ -1203,7 +1205,7 @@ TEST_CASE("LuaStateManager::AutoRegister", "[script][b]")
 {
 	Logger::StartSession();
 	LuaStateManager state{};
-	state.InitWithEngineTypes<>();
+	state.InitWithEngineTypes();
 
 	STATIC_CHECK(PfrReflectable<TestPfrStructA>);
 	STATIC_CHECK(PfrReflectable<TestPfrStructB>); 
@@ -1223,16 +1225,6 @@ TEST_CASE("LuaStateManager::AutoRegister", "[script][b]")
 	CHECK(state.AutoRegister<TestMagicEnumB>("TestMagicEnumB"));
 	CHECK(state.IsRegistered("TestMagicEnumB"));
 	CHECK(state.Data()["TestMagicEnumB"] == sol::type::table);
-
-	//static constexpr auto checkTableField = [](const sol::table& tbl, std::string_view fieldName, 
-	//										   sol::type solType, const auto& expectedVal) {
-	//	sol::object tableVal = tbl[fieldName];
-
-	//	REQUIRE(tableVal.valid());
-	//	REQUIRE(tableVal.get_type() == solType);
-
-	//	CHECK(tableVal.as<std::remove_cvref_t<decltype(expectedVal)>>() == expectedVal);
-	//};
 	 
 	static constexpr auto getCheckTableFieldLambda = [](sol::table tbl) {
 		return [tbl](std::string_view fieldName, sol::type solType, const auto& expectedVal) {

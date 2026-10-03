@@ -1,6 +1,6 @@
 #include "FixtureLua.h"
 #include "Fixtures.h"
-#include "../scripting/user_types/LuaUserTypeIncludes.h"
+#include "../scripting/register/UserTypeIncludes.h"
 
 namespace {
 
@@ -10,6 +10,21 @@ static constexpr std::string_view kFixtureObjectName = "fixture";
 static constexpr std::string_view kCameraObjectName = "camera";
 static constexpr std::string_view kTextureRepositoryObjectName = "textures";
 static constexpr std::string_view kAudioBankObjectName = "audio";
+
+template <typename T>
+concept HasLuaUserTypeRegistration = requires(LuaStateManager & m) {
+	{ register_lua_usertype<T>::call(m) } -> std::same_as<void>;
+	std::same_as<
+		std::remove_cvref_t<decltype(register_lua_usertype<T>::name)>, 
+		std::string_view
+	>;
+};
+
+//template <typename T> struct ComponentLuaUserTypePred :
+//	std::bool_constant<(HasLuaUserTypeRegistration<T> && public_mutable_component_v<T>)> {
+//};
+//
+//using ComponentLuaUserTypeList = filter_types_t<ComponentTypeList, ComponentLuaUserTypePred>;
 
 struct GetUserTypeWrapper
 {
@@ -22,34 +37,35 @@ struct GetUserTypeWrapper
 
 struct StateWrapper
 {
-	template <SomeLuaUserType T>
+	template <HasLuaUserTypeRegistration T>
 	GetUserTypeWrapper GetUserType() 
 	{ 
-		return { .userTypeTable = state[lua_user_type_name<T>::value] };
+		return { .userTypeTable = state[register_lua_usertype<T>::name] };
 	}
 
 	sol::state_view state;
 };
 
-namespace detail {
-
-template <typename> struct register_component_ids_on_table;
-template <template <typename...> class TList, typename...Ts>
-struct register_component_ids_on_table<TList<Ts...>> {
-	static void call(sol::table& cmpIdTable) {
-		static constexpr auto impl = []<typename T>(sol::table & cmpIdTable) {
-			cmpIdTable[lua_user_type_name<T>::value] = MakeComponentId<T, LuaComponentTypeList>();
-		};
-		((impl.template operator()<Ts>(cmpIdTable)), ...);
-	}
-};
-
-} // detail
-
-void RegisterComponentIdsOnTable(sol::table& cmpIdTable)
-{
-	detail::register_component_ids_on_table<LuaComponentTypeList>::call(cmpIdTable);
-}
+//namespace detail {
+//
+//template <typename> struct register_component_ids_on_table;
+//
+//template <template <typename...> class TList, typename...Ts>
+//struct register_component_ids_on_table<TList<Ts...>> {
+//	static void call(sol::table& cmpIdTable) {
+//		static constexpr auto impl = []<typename T>(sol::table & cmpIdTable) {
+//			cmpIdTable[register_lua_usertype<T>::name] = MakeComponentId<T, ComponentLuaUserTypeList>();
+//		};
+//		((impl.template operator()<Ts>(cmpIdTable)), ...);
+//	}
+//};
+//
+//} // detail
+//
+//void RegisterComponentIdsOnTable(sol::table& cmpIdTable)
+//{
+//	detail::register_component_ids_on_table<ComponentLuaUserTypeList>::call(cmpIdTable);
+//}
 
 } // unnamed
 
@@ -98,12 +114,12 @@ void ExtendAudioRequest(StateWrapper& state, AudioBank& bank)
 	}
 }
 
-void AddComponentIdTable(sol::state_view state)
-{
-	sol::table cmpIdLua = state.create_named_table(kComponentIdObjectName);
-
-	RegisterComponentIdsOnTable(cmpIdLua);
-}
+//void AddComponentIdTable(sol::state_view state)
+//{
+//	sol::table cmpIdLua = state.create_named_table(kComponentIdObjectName);
+//
+//	RegisterComponentIdsOnTable(cmpIdLua);
+//}
 
 void AddEcsTable(sol::state_view state)
 {
@@ -138,17 +154,11 @@ void SetUpFixtureLuaState(SceneFixture& fx)
 	}
 
 	auto& scriptSys = fx.GetSystem<ScriptSystem>();
-	scriptSys.GetState().InitWithEngineTypes<
-		Entity, 
-		TextureRepository, 
-		Camera, 
-		AudioBank,
-		EventLuaUserTypeList
-	>();
+	scriptSys.GetState().InitWithEngineTypes();
 
 	auto& state = scriptSys.GetState();
 
-	AddComponentIdTable(state.Data());
+	//AddComponentIdTable(state.Data());
 	AddEcsTable(state.Data());
 
 	auto wrap = StateWrapper{ .state = state.Data()};

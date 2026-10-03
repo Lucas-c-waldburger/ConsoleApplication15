@@ -217,6 +217,12 @@
     <ClCompile Include="scripting\LuaFunctionCallHandler.cpp" />
     <ClCompile Include="scripting\LuaFunctionTableParser.cpp" />
     <ClCompile Include="scripting\LuaStateManager.cpp" />
+    <ClCompile Include="scripting\register\RegisterLuaUserTypes.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="scripting\ScriptTable.cpp" />
     <ClCompile Include="scripting\ScriptTableManager.cpp" />
     <ClCompile Include="serial\AudioBankSerializer.cpp" />
@@ -281,6 +287,7 @@
     <ClCompile Include="test\catch\ecs\EntitySignalingTests.cpp" />
     <ClCompile Include="test\catch\ecs\UserComponentBridgeTests.cpp" />
     <ClCompile Include="test\catch\events\InputEventTests.cpp" />
+    <ClCompile Include="test\catch\scripting\ParsedLuaUserTypeInfoTests.cpp" />
     <ClCompile Include="test\catch\scripting\ScriptTableTests.cpp" />
     <ClCompile Include="test\catch\serial\SerializationTests.cpp" />
     <ClCompile Include="test\catch\systems\ScriptSystemTests.cpp">
@@ -878,6 +885,26 @@
     <ClInclude Include="scripting\LuaFunctionTableParser.h" />
     <ClInclude Include="scripting\LuaNativeTypeIdUtils.h" />
     <ClInclude Include="scripting\LuaStateManager.h" />
+    <ClInclude Include="scripting\ParsedLuaUserTypeInfo.h" />
+    <ClInclude Include="scripting\register\AudioUserTypes.h" />
+    <ClInclude Include="scripting\register\CameraTargetUserType.h" />
+    <ClInclude Include="scripting\register\CameraUserType.h" />
+    <ClInclude Include="scripting\register\CoreUserTypes.h" />
+    <ClInclude Include="scripting\register\EntityUserType.h" />
+    <ClInclude Include="scripting\register\EventUserTypes.h" />
+    <ClInclude Include="scripting\register\GameControllerUserTypes.h" />
+    <ClInclude Include="scripting\register\NameUserType.h" />
+    <ClInclude Include="scripting\register\PhysicsUserTypes.h" />
+    <ClInclude Include="scripting\register\RegisterLuaUserTypes.h" />
+    <ClInclude Include="scripting\register\UserTypeIncludesInternal.h" />
+    <ClInclude Include="scripting\register\UserTypesCommon.h" />
+    <ClInclude Include="scripting\register\RenderableUserTypes.h" />
+    <ClInclude Include="scripting\register\SDLUserTypes.h" />
+    <ClInclude Include="scripting\register\SpriteAnimationLuaUserTypes.h" />
+    <ClInclude Include="scripting\register\TextureRepositoryLuaUserTypes.h" />
+    <ClInclude Include="scripting\register\TimerUserType.h" />
+    <ClInclude Include="scripting\register\TransformUserType.h" />
+    <ClInclude Include="scripting\register\UserTypeIncludes.h" />
     <ClInclude Include="scripting\ScriptTable.h" />
     <ClInclude Include="scripting\ScriptTableHandle.h" />
     <ClInclude Include="scripting\ScriptTableManager.h" />
@@ -961,7 +988,7 @@
     <ClInclude Include="test\ui\InspectorCommon.h" />
     <ClInclude Include="test\ui\InspectorComponentPanel.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaTextEditor.h" />
-    <ClInclude Include="test\ui\lua_text_editor\LuaTextEditorSyntaxParser.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaTextEditorCommon.h" />
     <ClInclude Include="test\ui\panel\EditorComponentPanel.h" />
     <ClInclude Include="test\ui\panel\EditorEntityPanel.h" />
     <ClInclude Include="test\ui\panel\EditorEventPanel.h" />

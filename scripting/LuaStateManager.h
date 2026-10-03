@@ -1,13 +1,19 @@
 #pragma once
-#include "LuaUserType.h"
+#include "register/RegisterLuaUserTypes.h"
 #include "LuaNativeTypeIdUtils.h"
-#include "../core/Dictionary.h"
+#include "ParsedLuaUserTypeInfo.h"
 #include "../core/Reflection.h"
 
 class LuaStateManager
 {
 public:
-	template <typename...Ts>
+	LuaStateManager() = default;
+	~LuaStateManager() = default;
+	LuaStateManager(const LuaStateManager&) = delete;
+	LuaStateManager& operator=(const LuaStateManager&) = delete;
+	LuaStateManager(LuaStateManager&&) noexcept = default;
+	LuaStateManager& operator=(LuaStateManager&&) noexcept = default;
+
 	void InitWithEngineTypes();
 
 	template <typename T, typename...Args>
@@ -29,75 +35,55 @@ public:
 
 	bool IsRegistered(std::string_view name) const;
 
+	template <typename T>
+		requires (std::same_as<raw_type_t<T>, T> &&
+				 (std::is_class_v<T> || std::is_enum_v<T>))
+	bool IsRegistered() const;
+
 	uint32_t GetRegisteredTypeId(std::string_view name) const;
+
+	template <typename T>
+		requires (std::same_as<raw_type_t<T>, T> &&
+				 (std::is_class_v<T> || std::is_enum_v<T>))
+	std::string_view GetRegisteredName() const;
 
 	sol::state_view Data() { return state_; }
 
+	const ParsedLuaUserTypeInfo& GetLuaUserTypeInfo() const;
+
 private:
+	mutable ParsedLuaUserTypeInfo userTypeInfo_;
 	sol::state state_;
-	UnorderedDictionary<uint32_t> registeredNameToTypeId_;
 };
 
-namespace detail {
-template <typename T>
-struct register_lua_user_types_impl;
-
-template <template <typename> class TList, SomeLuaUserType...Ts>
-struct register_lua_user_types_impl<TList<Ts...>>
-{
-	static void call(sol::state_view state, UnorderedDictionary<uint32_t>& nameToTypeId)
-	{
-		((LuaUserType<Ts>::Register(state, nameToTypeId)), ...);
-	}
-};
-
-template <SomeLuaUserType T>
-struct register_lua_user_types_impl<T>
-{
-	static void call(sol::state_view state, UnorderedDictionary<uint32_t>& nameToTypeId)
-	{
-		LuaUserType<T>::Register(state, nameToTypeId);
-	}
-};
-
-}
-
-template <typename...Ts>
-inline void LuaStateManager::InitWithEngineTypes()
-{
-	state_.open_libraries(sol::lib::base);
-
-	((detail::register_lua_user_types_impl<Ts>::call(state_, registeredNameToTypeId_)), ...);
-}
-
-template <typename T, typename ...Args>
+template <typename T, typename...Args>
 	requires (std::same_as<raw_type_t<T>, T>&& std::is_class_v<T>)
-inline bool LuaStateManager::NewUserType(std::string_view name, Args && ...args)
+inline bool LuaStateManager::NewUserType(std::string_view name, Args&&...args)
 {
 	if (IsRegistered(name))
 	{
 		return false;
 	}
 
-	state_.new_usertype<T>(name, std::forward<Args>(args)...);
+	userTypeInfo_.ParseUserTypeArgs<T>(name, args...);
 
-	registeredNameToTypeId_.try_emplace(name, TypeInfo<T>::hash32);
+	state_.new_usertype<T>(name, std::forward<Args>(args)...);
 
 	return true;
 }
 
 template <typename T, typename ...Args>
 	requires (std::same_as<raw_type_t<T>, T> && std::is_enum_v<T>)
-inline bool LuaStateManager::NewEnum(std::string_view name, Args && ...args)
+inline bool LuaStateManager::NewEnum(std::string_view name, Args&& ...args)
 {
 	if (IsRegistered(name))
 	{
 		return false;
 	}
 
-	state_.new_enum(name, std::forward<Args>(args)...);
+	userTypeInfo_.ParseUserTypeArgs<T>(name, args...);
 
-	registeredNameToTypeId_.try_emplace(name, TypeInfo<T>::hash32);
+	state_.new_enum(name, std::forward<Args>(args)...);
 
 	return true;
 }
@@ -114,14 +100,48 @@ bool LuaStateManager::AutoRegister(std::string_view name)
 
 	if constexpr (std::is_enum_v<T>)
 	{
-		AutoRegisterEnum<T>(state_, name);
+		AutoRegisterEnum<T>(state_, userTypeInfo_, name);
 	}
 	else
 	{
-		AutoRegisterUserType<T>(state_, name);
+		AutoRegisterUserType<T>(state_, userTypeInfo_, name);
 	}
 
-	registeredNameToTypeId_.try_emplace(name, TypeInfo<T>::hash32);
-
 	return true;
+}
+
+template <typename T>
+	requires (std::same_as<raw_type_t<T>, T> &&
+			 (std::is_class_v<T> || std::is_enum_v<T>))
+bool LuaStateManager::IsRegistered() const
+{
+	if (IsNativeLuaType<T>())
+	{
+		return true;
+	}
+
+	if (auto idx = GetLuaUserTypeInfo().GetDataIndex<T>(); idx.IsValid())
+	{
+		return state_[userTypeInfo_.GetUserTypeNames()[idx]] != sol::lua_nil;
+	}
+
+	return false;
+}
+
+template <typename T>
+	requires (std::same_as<raw_type_t<T>, T> &&
+			 (std::is_class_v<T> || std::is_enum_v<T>))
+std::string_view LuaStateManager::GetRegisteredName() const
+{
+	if (IsNativeLuaType<T>())
+	{
+		return GetNativeLuaTypeName<T>();
+	}
+
+	if (auto idx = GetLuaUserTypeInfo().GetDataIndex<T>(); idx.IsValid())
+	{
+		return userTypeInfo_.GetUserTypeNames()[idx];
+	}
+
+	return {};
 }
