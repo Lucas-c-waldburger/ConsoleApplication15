@@ -532,8 +532,8 @@ Result<Void> Editor::InitWindows(SceneFixture& fixture)
 	GuiConsole::Init();
 	TRY(assetViewer_.Init(fixture));
 
-	TRY(ResourcePath::Script("fn_table.lua"), luaPath);
-	TRY(luaTextEditor_.LoadScriptFile(std::move(luaPath)));
+	//TRY(ResourcePath::Script("fn_table.lua"), luaPath);
+	//TRY(luaTextEditor_.LoadScriptFile(std::move(luaPath)));
 
 	return kVoid;
 }

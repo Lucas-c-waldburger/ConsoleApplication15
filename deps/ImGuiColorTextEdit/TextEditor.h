@@ -8,11 +8,35 @@
 #include <unordered_map>
 #include <map>
 #include <regex>
+#include <string_view>
 #include "imgui.h"
 
 class TextEditor
 {
 public:
+	enum class HandledKeys : uint32_t
+	{
+		Z = 1 << 0,
+		Backspace = 1 << 1,
+		Y = 1 << 2,
+		UpArrow = 1 << 3,
+		DownArrow = 1 << 4,
+		LeftArrow = 1 << 5,
+		RightArrow = 1 << 6,
+		PageUp = 1 << 7,
+		PageDown = 1 << 8,
+		Home = 1 << 9,
+		End = 1 << 10,
+		Delete = 1 << 11,
+		Insert = 1 << 12,
+		C = 1 << 13, 
+		V = 1 << 14,
+		X = 1 << 15,
+		A = 1 << 16,
+		Enter = 1 << 17,
+		Tab = 1 << 18
+	};
+
 	enum class PaletteIndex
 	{
 		Default,
@@ -266,8 +290,27 @@ public:
 	static const Palette& GetLightPalette();
 	static const Palette& GetRetroBluePalette();
 
-	// exposed :
+	// exposed
 	std::string GetWordUnderCursor() const;
+	Coordinates ScreenPosToCoordinates(const ImVec2& aPosition) const;
+	void DeleteRange(const Coordinates& aStart, const Coordinates& aEnd);
+
+	// extensions
+	ImVec2 CoordinatesToScreenPos(const Coordinates& aCoordinates) const;
+	Coordinates InsertText(std::string_view aValue, PaletteIndex aColor);
+	Coordinates InsertText(const char* aValue, PaletteIndex aColor);
+	std::pair<Coordinates, Coordinates> InsertGhostText(const std::string& aValue, PaletteIndex aColor);
+	std::pair<Coordinates, Coordinates> InsertGhostText(const char* aValue, PaletteIndex aColor);
+	void SetKeyHandled(HandledKeys key, bool doHandle);
+	void SetAllKeysHandled(bool doHandle);
+	bool IsKeyHandled(HandledKeys key) const;
+	void SetIsTextChanged(bool aValue) { mTextChanged = aValue; }
+	void SetIsCursorPositionChanged(bool aValue) { mCursorPositionChanged = aValue; }
+	void SetColorRange(Coordinates aStart, Coordinates aEnd, PaletteIndex aColor);
+
+	void RenderBegin(const char* aTitle, const ImVec2& aSize = ImVec2(), bool aBorder = false);
+	void HandleInputs();
+	void RenderEnd();
 
 private:
 	typedef std::vector<std::pair<std::regex, PaletteIndex>> RegexList;
@@ -325,10 +368,8 @@ private:
 	Coordinates GetActualCursorCoordinates() const;
 	Coordinates SanitizeCoordinates(const Coordinates& aValue) const;
 	void Advance(Coordinates& aCoordinates) const;
-	void DeleteRange(const Coordinates& aStart, const Coordinates& aEnd);
-	int InsertTextAt(Coordinates& aWhere, const char* aValue);
+	int InsertTextAt(Coordinates& aWhere, const char* aValue, PaletteIndex aColor = PaletteIndex::Default);
 	void AddUndo(UndoRecord& aValue);
-	Coordinates ScreenPosToCoordinates(const ImVec2& aPosition) const;
 	Coordinates FindWordStart(const Coordinates& aFrom) const;
 	Coordinates FindWordEnd(const Coordinates& aFrom) const;
 	Coordinates FindNextWord(const Coordinates& aFrom) const;
@@ -345,6 +386,11 @@ private:
 	void DeleteSelection();
 	std::string GetWordAt(const Coordinates& aCoords) const;
 	ImU32 GetGlyphColor(const Glyph& aGlyph) const;
+
+	// extensions
+	std::pair<Coordinates, Coordinates> CalculateNormalSelectionCoordinates(const Coordinates& aStart,
+																			const Coordinates& aEnd) const;
+	uint32_t mHandledKeys = 0xFFFFFFFF;
 
 	void HandleKeyboardInputs();
 	void HandleMouseInputs();

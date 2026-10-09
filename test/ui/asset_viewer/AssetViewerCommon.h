@@ -47,6 +47,7 @@ struct AssetViewerIcons
 	Sprite eventScriptFileLargeSprite;
 	Sprite systemScriptFileLargeSprite;
 	Sprite luaFileLargeSprite;
+	Sprite newFileLargeSprite;
 };
 
 } // ui

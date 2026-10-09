@@ -1116,8 +1116,6 @@ bool AssetGridViewerChild::HandleSpriteGridCellDragDropTarget(SpriteAtlas& loadT
 	return complete;
 }
 
-
-
 void AssetGridViewerChild::DrawSpritePopupContextMenu(SpriteAtlas& loadTargetAtlas)
 {
 	if (!spriteSelection_.HasSelection())

@@ -636,6 +636,11 @@ void SceneFixture::TearDown()
 	GuiContext::Exit();
 #endif
 
+	textureRepo_ = {};
+	auxTextureRepo_.reset();
+	audioBank_ = {};
+	renderTarget_ = {};
+
 	SDLite::Exit();
 	Logger::EndSession();
 }

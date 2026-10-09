@@ -3,6 +3,7 @@
 
 #if IMGUI_ENABLED
 #include <string_view>
+#include "../../deps/ImGuiColorTextEdit/TextEditor.h"
 
 namespace ui {
 
@@ -46,8 +47,6 @@ static constexpr std::string_view kSystemTableScriptTemplateText = R"(
 			
 	return table
 )";
-
-
 
 } // ui
 

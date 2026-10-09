@@ -81,13 +81,14 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui\misc\cpp;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui\misc\cpp;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\ctre;$(ProjectDir)deps\magic_enum;$(ProjectDir)deps\tree-sitter-master\lib\include;$(ProjectDir)deps\tree-sitter-lua-main\src</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8  /external:I"C:\Libraries\spdlog-1.x\include" %(AdditionalOptions)</AdditionalOptions>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -105,13 +106,14 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui\misc\cpp;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui\misc\cpp;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\ctre;$(ProjectDir)deps\magic_enum;$(ProjectDir)deps\tree-sitter-master\lib\include;$(ProjectDir)deps\tree-sitter-lua-main\src</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8  /external:I"C:\Libraries\spdlog-1.x\include" %(AdditionalOptions)</AdditionalOptions>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,18 +131,19 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui\misc\cpp;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui\misc\cpp;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\ctre;$(ProjectDir)deps\magic_enum;$(ProjectDir)deps\tree-sitter-master\lib\include;$(ProjectDir)deps\tree-sitter-lua-main\src</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8  /external:I"C:\Libraries\spdlog-1.x\include" %(AdditionalOptions)</AdditionalOptions>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86;C:\Libraries\spdlog-1.x\build32\Debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build\src\Debug;C:\Libraries\SDL2\lib\x64;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x64;C:\Dev\SDL2_image-2.6.3\lib\x64;C:\Dev\SDL2_mixer-2.6.3\lib\x64;C:\Libraries\spdlog-1.x\build64\Debug</AdditionalLibraryDirectories>
       <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;spdlogd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -153,20 +156,21 @@
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;CATCH_AMALGAMATED_CUSTOM_MAIN</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui\misc\cpp;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\magic_enum</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Libraries\imgui\backends;C:\Libraries\imgui\misc\cpp;C:\Libraries\imgui;C:\Libraries\box2d\box2d\include;C:\Libraries\SDL2\include;C:\Program Files (x86)\Lua\5.1\include;C:\Libraries\sol2-develop\include;C:\Dev\SDL2_ttf-2.20.2\include;C:\Dev\SDL2_image-2.6.3\include;C:\Dev\SDL2_mixer-2.6.3\include;C:\Libraries\spdlog-1.x\include;$(ProjectDir)deps\pfr;$(ProjectDir)deps\describe;$(ProjectDir)deps\ctre;$(ProjectDir)deps\magic_enum;$(ProjectDir)deps\tree-sitter-master\lib\include;$(ProjectDir)deps\tree-sitter-lua-main\src</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <ShowIncludes>false</ShowIncludes>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8  /external:I"C:\Libraries\spdlog-1.x\include" %(AdditionalOptions)</AdditionalOptions>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build_x86\src\Debug;C:\Libraries\SDL2\lib\x86;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x86;C:\Dev\SDL2_image-2.6.3\lib\x86;C:\Dev\SDL2_mixer-2.6.3\lib\x86;C:\Libraries\spdlog-1.x\build32\Debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Libraries\box2d\box2d\build\src\Debug;C:\Libraries\SDL2\lib\x64;C:\Program Files (x86)\Lua\5.1\lib;C:\Dev\SDL2_ttf-2.20.2\lib\x64;C:\Dev\SDL2_image-2.6.3\lib\x64;C:\Dev\SDL2_mixer-2.6.3\lib\x64;C:\Libraries\spdlog-1.x\build64\Debug</AdditionalLibraryDirectories>
       <AdditionalDependencies>lua51.lib;SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;box2dd.lib;spdlogd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -197,6 +201,9 @@
     <ClCompile Include="deps\imgui\imgui_tables.cpp" />
     <ClCompile Include="deps\imgui\imgui_widgets.cpp" />
     <ClCompile Include="deps\tinyfiledialogs\tinyfiledialogs.c" />
+    <ClCompile Include="deps\tree-sitter-lua-main\src\parser.c" />
+    <ClCompile Include="deps\tree-sitter-lua-main\src\scanner.c" />
+    <ClCompile Include="deps\tree-sitter-master\lib\src\lib.c" />
     <ClCompile Include="ecs\ComponentCleanup.cpp" />
     <ClCompile Include="ecs\EntityAccess.cpp" />
     <ClCompile Include="ecs\EntityManager.cpp" />
@@ -364,7 +371,11 @@
     <ClCompile Include="test\ui\InspectorEntityPanel.cpp" />
     <ClCompile Include="test\ui\InspectorEventPanel.cpp" />
     <ClCompile Include="test\ui\InspectorSystemPanel.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\AutoCompleteUtility.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceParser.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaTextEditor.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\LuaTextEditorCommon.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\TSEditorBridge.cpp" />
     <ClCompile Include="test\ui\MouseWorldNavigator.cpp" />
     <ClCompile Include="test\ui\panel\EditorComponentPanel.cpp" />
     <ClCompile Include="test\ui\panel\EditorEntityPanel.cpp" />
@@ -537,6 +548,9 @@
     <ClInclude Include="deps\boost\pfr\tuple_size.hpp" />
     <ClInclude Include="deps\ctre\ctre-unicode.hpp" />
     <ClInclude Include="deps\ctre\ctre.hpp" />
+    <ClInclude Include="deps\ctre\ctre\ctre-unicode.hpp" />
+    <ClInclude Include="deps\ctre\ctre\ctre.hpp" />
+    <ClInclude Include="deps\ctre\ctre\unicode-db.hpp" />
     <ClInclude Include="deps\ctre\unicode-db.hpp" />
     <ClInclude Include="deps\describe\boost\describe.hpp" />
     <ClInclude Include="deps\describe\boost\describe\bases.hpp" />
@@ -987,8 +1001,11 @@
     <ClInclude Include="test\ui\gui_lua_api\GuiLuaApiRegistration.h" />
     <ClInclude Include="test\ui\InspectorCommon.h" />
     <ClInclude Include="test\ui\InspectorComponentPanel.h" />
+    <ClInclude Include="test\ui\lua_text_editor\AutoCompleteUtility.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceParser.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaTextEditor.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaTextEditorCommon.h" />
+    <ClInclude Include="test\ui\lua_text_editor\TSEditorBridge.h" />
     <ClInclude Include="test\ui\panel\EditorComponentPanel.h" />
     <ClInclude Include="test\ui\panel\EditorEntityPanel.h" />
     <ClInclude Include="test\ui\panel\EditorEventPanel.h" />
@@ -1639,6 +1656,7 @@
     <None Include="resources\json\persistence\textures.json" />
     <None Include="resources\scripts\fn_table.lua" />
     <None Include="resources\scripts\game_controller_test.lua" />
+    <None Include="resources\scripts\incomplete_fn_table_test.lua" />
     <None Include="resources\scripts\sprite_render_test.lua" />
     <None Include="resources\scripts\test_physics.lua" />
     <None Include="resources\scripts\textbox_test.lua" />

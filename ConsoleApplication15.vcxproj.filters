@@ -633,6 +633,27 @@
     <ClCompile Include="scripting\register\RegisterLuaUserTypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="deps\tree-sitter-master\lib\src\lib.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\tree-sitter-lua-main\src\parser.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\tree-sitter-lua-main\src\scanner.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\LuaTextEditorCommon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\TSEditorBridge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\AutoCompleteUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -3431,6 +3452,24 @@
     <ClInclude Include="scripting\register\UserTypeIncludesInternal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\ctre\ctre\ctre.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\ctre\ctre\ctre-unicode.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\ctre\ctre\unicode-db.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\TSEditorBridge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\AutoCompleteUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -4332,6 +4371,7 @@
     <None Include="test\catch\test_scripts\sys_table_2.lua" />
     <None Include="resources\scripts\ui_edit_test.lua" />
     <None Include="resources\scripts\fn_table.lua" />
+    <None Include="resources\scripts\incomplete_fn_table_test.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

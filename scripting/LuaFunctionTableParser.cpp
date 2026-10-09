@@ -1,6 +1,6 @@
 #include "LuaFunctionTableParser.h"
 #include "LuaStateManager.h"
-#include "../deps/ctre/ctre.hpp"
+#include <ctre/ctre.hpp>
 
 template <typename T>
 Result<T>

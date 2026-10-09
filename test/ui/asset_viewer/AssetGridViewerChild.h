@@ -22,7 +22,8 @@ public:
 		RequestConvertAudioType = 1 << 3,
 		GameLoopPassedSinceRequest = 1 << 4,
 		JustDragDroppedIntoGrid = 1 << 5,
-		RequestEdit = 1 << 6
+		RequestEdit = 1 << 6,
+		RequestNew = 1 << 7
 	};
 
 	struct GridSelection

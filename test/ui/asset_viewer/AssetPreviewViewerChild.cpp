@@ -405,6 +405,8 @@ void AssetPreviewViewerChild::DrawFontAssetPreview(ResourceContext& ctx)
 
 void AssetPreviewViewerChild::DrawScriptAssetPreview(ResourceContext& ctx, ScriptSystem& scriptSys)
 {
+	const auto& userTypeInfo = scriptSys.GetState().GetLuaUserTypeInfo();
+
 	if (ctx.scriptSelection.tableId != scriptEditorDisplay_.sourceTableId)
 	{
 		scriptEditorDisplay_.Reset();
@@ -418,7 +420,8 @@ void AssetPreviewViewerChild::DrawScriptAssetPreview(ResourceContext& ctx, Scrip
 			return;
 		}
 
-		auto loadResult = scriptEditorDisplay_.textEditor.LoadScriptFile(*fpOp);
+		auto loadResult = scriptEditorDisplay_.textEditor.LoadScriptFile(
+			*fpOp, userTypeInfo);
 		if (!loadResult.Success())
 		{
 			LOG_ERROR(loadResult.GetError());
@@ -454,7 +457,7 @@ void AssetPreviewViewerChild::DrawScriptAssetPreview(ResourceContext& ctx, Scrip
 	auto nmOp = scriptSys.GetTableManager().GetTableInfo<
 		&ScriptTableInfo::name>(scriptEditorDisplay_.sourceTableId);
 
-	scriptEditorDisplay_.textEditor.Render((nmOp.has_value() ? *nmOp : std::string_view{}));
+	scriptEditorDisplay_.textEditor.Update(userTypeInfo, nmOp.value_or(""));
 }
 
 

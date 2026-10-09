@@ -256,7 +256,7 @@ void TextEditor::DeleteRange(const Coordinates & aStart, const Coordinates & aEn
 	mTextChanged = true;
 }
 
-int TextEditor::InsertTextAt(Coordinates& /* inout */ aWhere, const char * aValue)
+int TextEditor::InsertTextAt(Coordinates& /* inout */ aWhere, const char * aValue, PaletteIndex paletteIdx)
 {
 	assert(!mReadOnly);
 
@@ -295,7 +295,7 @@ int TextEditor::InsertTextAt(Coordinates& /* inout */ aWhere, const char * aValu
 			auto& line = mLines[aWhere.mLine];
 			auto d = UTF8CharLength(*aValue);
 			while (d-- > 0 && *aValue != '\0')
-				line.insert(line.begin() + cindex++, Glyph(*aValue++, PaletteIndex::Default));
+				line.insert(line.begin() + cindex++, Glyph(*aValue++, paletteIdx));
 			++aWhere.mColumn;
 		}
 
@@ -694,6 +694,20 @@ ImU32 TextEditor::GetGlyphColor(const Glyph & aGlyph) const
 	return color;
 }
 
+std::pair<TextEditor::Coordinates, TextEditor::Coordinates> 
+TextEditor::CalculateNormalSelectionCoordinates(const Coordinates& aStart, const Coordinates& aEnd) const
+{
+	auto selectionCoords = std::make_pair(
+		SanitizeCoordinates(aStart), 
+		SanitizeCoordinates(aEnd)
+	);
+
+	if (selectionCoords.first > selectionCoords.second)
+		std::swap(selectionCoords.first, selectionCoords.second);
+
+	return selectionCoords;
+}
+
 void TextEditor::HandleKeyboardInputs()
 {
 	ImGuiIO& io = ImGui::GetIO();
@@ -710,55 +724,69 @@ void TextEditor::HandleKeyboardInputs()
 		io.WantCaptureKeyboard = true;
 		io.WantTextInput = true;
 
-		if (!IsReadOnly() && ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_Z))
+		if (!IsReadOnly() && ctrl && !shift && !alt && IsKeyHandled(HandledKeys::Z) && 
+													   ImGui::IsKeyPressed(ImGuiKey_Z))
 			Undo();
-		else if (!IsReadOnly() && !ctrl && !shift && alt && ImGui::IsKeyPressed(ImGuiKey_Backspace))
+		else if (!IsReadOnly() && !ctrl && !shift && alt && IsKeyHandled(HandledKeys::Backspace) &&
+															ImGui::IsKeyPressed(ImGuiKey_Backspace))
 			Undo();
-		else if (!IsReadOnly() && ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_Y))
+		else if (!IsReadOnly() && ctrl && !shift && !alt && IsKeyHandled(HandledKeys::Y) &&
+															ImGui::IsKeyPressed(ImGuiKey_Y))
 			Redo();
-		else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGuiKey_UpArrow))
+		else if (!ctrl && !alt && IsKeyHandled(HandledKeys::UpArrow) && ImGui::IsKeyPressed(ImGuiKey_UpArrow))
 			MoveUp(1, shift);
-		else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGuiKey_DownArrow))
+		else if (!ctrl && !alt && IsKeyHandled(HandledKeys::DownArrow) && ImGui::IsKeyPressed(ImGuiKey_DownArrow))
 			MoveDown(1, shift);
-		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_LeftArrow))
+		else if (!alt && IsKeyHandled(HandledKeys::LeftArrow) && ImGui::IsKeyPressed(ImGuiKey_LeftArrow))
 			MoveLeft(1, shift, ctrl);
-		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_RightArrow))
+		else if (!alt && IsKeyHandled(HandledKeys::RightArrow) && ImGui::IsKeyPressed(ImGuiKey_RightArrow))
 			MoveRight(1, shift, ctrl);
-		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_PageUp))
+		else if (!alt && IsKeyHandled(HandledKeys::PageUp) && ImGui::IsKeyPressed(ImGuiKey_PageUp))
 			MoveUp(GetPageSize() - 4, shift);
-		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_PageDown))
+		else if (!alt && IsKeyHandled(HandledKeys::PageDown) && ImGui::IsKeyPressed(ImGuiKey_PageDown))
 			MoveDown(GetPageSize() - 4, shift);
-		else if (!alt && ctrl && ImGui::IsKeyPressed(ImGuiKey_Home))
+		else if (!alt && ctrl && IsKeyHandled(HandledKeys::Home) && ImGui::IsKeyPressed(ImGuiKey_Home))
 			MoveTop(shift);
-		else if (ctrl && !alt && ImGui::IsKeyPressed(ImGuiKey_End))
+		else if (ctrl && !alt && IsKeyHandled(HandledKeys::End) && ImGui::IsKeyPressed(ImGuiKey_End))
 			MoveBottom(shift);
-		else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGuiKey_Home))
+		else if (!ctrl && !alt && IsKeyHandled(HandledKeys::Home) && ImGui::IsKeyPressed(ImGuiKey_Home))
 			MoveHome(shift);
-		else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGuiKey_End))
+		else if (!ctrl && !alt && IsKeyHandled(HandledKeys::End) && ImGui::IsKeyPressed(ImGuiKey_End))
 			MoveEnd(shift);
-		else if (!IsReadOnly() && !ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_Delete))
+		else if (!IsReadOnly() && !ctrl && !shift && !alt && IsKeyHandled(HandledKeys::Delete) && 
+															 ImGui::IsKeyPressed(ImGuiKey_Delete))
 			Delete();
-		else if (!IsReadOnly() && !ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_Backspace))
+		else if (!IsReadOnly() && !ctrl && !shift && !alt && IsKeyHandled(HandledKeys::Backspace) && 
+															 ImGui::IsKeyPressed(ImGuiKey_Backspace))
 			Backspace();
-		else if (!ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_Insert))
+		else if (!ctrl && !shift && !alt && IsKeyHandled(HandledKeys::Insert) && 
+											ImGui::IsKeyPressed(ImGuiKey_Insert))
 			mOverwrite ^= true;
-		else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_Insert))
+		else if (ctrl && !shift && !alt && IsKeyHandled(HandledKeys::Insert) && 
+										   ImGui::IsKeyPressed(ImGuiKey_Insert))
 			Copy();
-		else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_C))
+		else if (ctrl && !shift && !alt && IsKeyHandled(HandledKeys::C) && ImGui::IsKeyPressed(ImGuiKey_C))
 			Copy();
-		else if (!IsReadOnly() && !ctrl && shift && !alt && ImGui::IsKeyPressed(ImGuiKey_Insert))
+		else if (!IsReadOnly() && !ctrl && shift && !alt && IsKeyHandled(HandledKeys::Insert) && 
+															ImGui::IsKeyPressed(ImGuiKey_Insert))
 			Paste();
-		else if (!IsReadOnly() && ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_V))
+		else if (!IsReadOnly() && ctrl && !shift && !alt && IsKeyHandled(HandledKeys::V) && 
+															ImGui::IsKeyPressed(ImGuiKey_V))
 			Paste();
-		else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_X))
+		else if (ctrl && !shift && !alt && IsKeyHandled(HandledKeys::X) && 
+										   ImGui::IsKeyPressed(ImGuiKey_X))
 			Cut();
-		else if (!ctrl && shift && !alt && ImGui::IsKeyPressed(ImGuiKey_Delete))
+		else if (!ctrl && shift && !alt && IsKeyHandled(HandledKeys::Delete) && 
+										   ImGui::IsKeyPressed(ImGuiKey_Delete))
 			Cut();
-		else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_A))
+		else if (ctrl && !shift && !alt && IsKeyHandled(HandledKeys::A) && 
+										   ImGui::IsKeyPressed(ImGuiKey_A))
 			SelectAll();
-		else if (!IsReadOnly() && !ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_Enter))
+		else if (!IsReadOnly() && !ctrl && !shift && !alt && IsKeyHandled(HandledKeys::Enter) && 
+															 ImGui::IsKeyPressed(ImGuiKey_Enter))
 			EnterCharacter('\n', false);
-		else if (!IsReadOnly() && !ctrl && !alt && ImGui::IsKeyPressed(ImGuiKey_Tab))
+		else if (!IsReadOnly() && !ctrl && !alt && IsKeyHandled(HandledKeys::Tab) && 
+												   ImGui::IsKeyPressed(ImGuiKey_Tab))
 			EnterCharacter('\t', shift);
 
 		if (!IsReadOnly() && !io.InputQueueCharacters.empty())
@@ -1479,6 +1507,227 @@ void TextEditor::InsertText(const char * aValue)
 	SetSelection(pos, pos);
 	SetCursorPosition(pos);
 	Colorize(start.mLine - 1, totalLines + 2);
+}
+
+ImVec2 TextEditor::CoordinatesToScreenPos(const Coordinates& aCoordinates) const
+{
+	const ImVec2 origin = ImGui::GetCursorScreenPos();
+
+	const int lineNo = std::clamp(
+		aCoordinates.mLine,
+		0,
+		static_cast<int>(mLines.size()) - 1);
+
+	const auto& line = mLines[lineNo];
+
+	float columnX = 0.0f;
+	int columnCoord = 0;
+	int columnIndex = 0;
+
+	const float spaceSize = ImGui::GetFont()->CalcTextSizeA(
+		ImGui::GetFontSize(), FLT_MAX, -1.0f, " ").x;
+
+	while (columnIndex < static_cast<int>(line.size()) &&
+		   columnCoord < aCoordinates.mColumn)
+	{
+		if (line[columnIndex].mChar == '\t')
+		{
+			const float tabWidth = static_cast<float>(mTabSize) * spaceSize;
+
+			const float newColumnX =
+				(1.0f + std::floor((1.0f + columnX) / tabWidth)) * tabWidth;
+
+			columnX = newColumnX;
+			columnCoord = (columnCoord / mTabSize) * mTabSize + mTabSize;
+			++columnIndex;
+		}
+		else
+		{
+			char buf[7];
+			const int charLength = UTF8CharLength(line[columnIndex].mChar);
+
+			int i = 0;
+			int remaining = charLength;
+
+			while (i < 6 && remaining-- > 0 &&
+				columnIndex < static_cast<int>(line.size()))
+			{
+				buf[i++] = line[columnIndex++].mChar;
+			}
+
+			buf[i] = '\0';
+
+			columnX += ImGui::GetFont()->CalcTextSizeA(
+				ImGui::GetFontSize(), FLT_MAX, -1.0f, buf).x;
+
+			++columnCoord;
+		}
+	}
+
+	return ImVec2(
+		origin.x + mTextStart + columnX,
+		origin.y + aCoordinates.mLine * mCharAdvance.y);
+}
+
+TextEditor::Coordinates TextEditor::InsertText(std::string_view aValue, PaletteIndex aColor)
+{
+	return InsertText(aValue.data(), aColor);
+}
+
+TextEditor::Coordinates TextEditor::InsertText(const char* aValue, PaletteIndex aColor)
+{
+	if (aValue == nullptr)
+		return {};
+
+	auto pos = GetActualCursorCoordinates();
+	auto start = std::min(pos, mState.mSelectionStart);
+	int totalLines = pos.mLine - start.mLine;
+
+	totalLines += InsertTextAt(pos, aValue, aColor);
+
+	SetSelection(pos, pos);
+	SetCursorPosition(pos);
+	Colorize(start.mLine - 1, totalLines + 2);
+
+	return GetCursorPosition();
+}
+
+std::pair<TextEditor::Coordinates, TextEditor::Coordinates>
+TextEditor::InsertGhostText(const std::string& aValue, PaletteIndex aColor)
+{
+	return InsertGhostText(aValue.c_str(), aColor);
+}
+
+std::pair<TextEditor::Coordinates, TextEditor::Coordinates> 
+TextEditor::InsertGhostText(const char* aValue, PaletteIndex aColor)
+{
+	if (aValue == nullptr)
+		return std::make_pair(Coordinates(), Coordinates());
+
+	auto pos = GetActualCursorCoordinates();
+	auto start = std::min(pos, mState.mSelectionStart);
+	int totalLines = pos.mLine - start.mLine;
+
+	totalLines += InsertTextAt(pos, aValue, aColor);
+
+	mTextChanged = false;
+
+	Colorize(start.mLine - 1, totalLines + 2);
+
+	return CalculateNormalSelectionCoordinates(pos, pos);
+}
+
+void TextEditor::SetKeyHandled(HandledKeys key, bool doHandle)
+{
+	if (doHandle)
+	{
+		mHandledKeys |= static_cast<uint32_t>(key);
+	}
+	else
+	{
+		mHandledKeys &= ~static_cast<uint32_t>(key);
+	}
+}
+
+void TextEditor::SetAllKeysHandled(bool doHandle)
+{
+	mHandledKeys = doHandle ? 0xFFFFFFFF : 0;
+}
+
+bool TextEditor::IsKeyHandled(HandledKeys key) const
+{
+	return (mHandledKeys & static_cast<uint32_t>(key)) != 0;
+}
+
+void TextEditor::SetColorRange(Coordinates aStart, Coordinates aEnd, PaletteIndex aColor)
+{
+	if (mLines.empty())
+		return;
+
+	aStart = SanitizeCoordinates(aStart);
+	aEnd = SanitizeCoordinates(aEnd);
+
+	if (aEnd < aStart)
+		std::swap(aStart, aEnd);
+
+	for (int lineNo = aStart.mLine;
+		lineNo <= aEnd.mLine;
+		++lineNo)
+	{
+		auto& line = mLines[lineNo];
+
+		const int startColumn =
+			lineNo == aStart.mLine ? aStart.mColumn : 0;
+
+		const int endColumn =
+			lineNo == aEnd.mLine
+			? aEnd.mColumn
+			: INT_MAX;
+
+		int visualColumn = 0;
+
+		for (auto& glyph : line)
+		{
+			const int nextColumn =
+				glyph.mChar == '\t'
+				? (visualColumn / mTabSize + 1) * mTabSize
+				: visualColumn + 1;
+
+			// Color glyphs whose visual-column span intersects
+			// the requested half-open range [start, end).
+			if (visualColumn < endColumn &&
+				nextColumn > startColumn)
+			{
+				glyph.mColorIndex = aColor;
+			}
+
+			visualColumn = nextColumn;
+
+			if (visualColumn >= endColumn)
+				break;
+		}
+	}
+}
+
+void TextEditor::RenderBegin(const char* aTitle, const ImVec2& aSize, bool aBorder)
+{
+	mWithinRender = true;
+	mTextChanged = false;
+	mCursorPositionChanged = false;
+
+	ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(mPalette[(int)PaletteIndex::Background]));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
+	if (!mIgnoreImGuiChild)
+		ImGui::BeginChild(aTitle, aSize, aBorder, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_NoMove);
+}
+
+void TextEditor::HandleInputs()
+{
+	if (mHandleKeyboardInputs)
+	{
+		HandleKeyboardInputs();
+		ImGui::PushItemFlag(ImGuiItemFlags_NoTabStop, false);
+	}
+
+	if (mHandleMouseInputs)
+		HandleMouseInputs();
+}
+
+void TextEditor::RenderEnd()
+{
+	ColorizeInternal();
+	Render();
+
+	if (mHandleKeyboardInputs)
+		ImGui::PopItemFlag();
+
+	if (!mIgnoreImGuiChild)
+		ImGui::EndChild();
+
+	ImGui::PopStyleVar();
+	ImGui::PopStyleColor();
+
+	mWithinRender = false;
 }
 
 void TextEditor::DeleteSelection()
