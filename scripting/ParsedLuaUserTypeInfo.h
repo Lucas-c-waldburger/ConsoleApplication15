@@ -1,8 +1,11 @@
 #pragma once
 #include <sol/sol.hpp>
+#include "LuaNativeTypeIdUtils.h"
 #include "../core/Dictionary.h"
 #include "../core/TypeInfo.h"
 #include "../core/TypeUtils.h"
+#include "../core/FuncTraits.h"
+#include "../core/SOAConcepts.h"
 
 namespace detail {
 
@@ -16,16 +19,59 @@ template <typename> struct is_sol_overload;
 template <typename...Fs>
 struct is_sol_overload<sol::overload_set<Fs...>> : std::true_type {};
 
+template <typename T, typename Fn, typename = void>
+struct is_lambda_based_method : std::false_type {};
+
+template <typename T, typename Fn>
+struct is_lambda_based_method<T, Fn, std::void_t<decltype(&Fn::operator())>>
+{
+	using traits = func_traits<Fn>;
+
+	template <typename F, size_t I, typename U> 
+	static constexpr bool arg_is_v = std::same_as<
+		std::remove_cvref_t<typename traits::template arg_at<I>>, 
+		std::remove_cvref_t<U>
+	>;
+
+	static constexpr bool value = [] {
+		if constexpr (traits::argCount > 0)
+		{
+			if constexpr (arg_is_v<Fn, 0, sol::this_state>)
+			{
+				if constexpr (traits::argCount > 1)
+				{
+					return arg_is_v<Fn, 1, T>;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else
+			{
+				return arg_is_v<Fn, 0, T>;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}();
+};
+
 } // detail
 
-template <typename T> concept SomeSolProperty =
-detail::is_sol_property<std::remove_cvref_t<T>>::value;
+template <typename V> concept SomeSolProperty =
+detail::is_sol_property<std::remove_cvref_t<V>>::value;
 
-template <typename T> concept SomeSolOverload =
-detail::is_sol_overload<std::remove_cvref_t<T>>::value;
+template <typename V> concept SomeSolOverload =
+detail::is_sol_overload<std::remove_cvref_t<V>>::value;
 
-template <typename T> concept ConvertibleToStringView = 
-std::convertible_to<std::remove_cvref_t<T>, std::string_view>;
+template <typename V> concept ConvertibleToStringView = 
+std::convertible_to<std::remove_cvref_t<V>, std::string_view>;
+
+template <typename T, typename V> concept SomeLambdaBasedMethod = 
+detail::is_lambda_based_method<T, V>::value;
 
 enum class LuaUsertypeMemberKind
 {
@@ -35,24 +81,29 @@ enum class LuaUsertypeMemberKind
 	Overload
 };
 
-template <typename T>
+template <typename T, typename V>
 inline constexpr LuaUsertypeMemberKind GetLuaUsertypeMemberKind()
 {
-	using Type = std::remove_cvref_t<T>;
+	using ObjType = std::remove_cvref_t<T>;
+	using ValueType = std::remove_cvref_t<V>;
 
-	if constexpr (std::is_member_object_pointer_v<Type>)
+	if constexpr (std::is_member_object_pointer_v<ValueType>)
 	{
 		return LuaUsertypeMemberKind::Field;
 	}
-	else if constexpr (std::is_member_function_pointer_v<Type>)
+	else if constexpr (std::is_member_function_pointer_v<ValueType>)
 	{
 		return LuaUsertypeMemberKind::Method;
 	}
-	else if constexpr (SomeSolProperty<Type>)
+	else if constexpr (SomeSolProperty<ValueType>)
 	{
 		return LuaUsertypeMemberKind::Property;
 	}
-	else if constexpr (SomeSolOverload<Type>)
+	else if constexpr (SomeLambdaBasedMethod<ObjType, ValueType>)
+	{
+		return LuaUsertypeMemberKind::Method;
+	}
+	else if constexpr (SomeSolOverload<ValueType>)
 	{
 		return LuaUsertypeMemberKind::Overload;
 	}
@@ -62,19 +113,50 @@ inline constexpr LuaUsertypeMemberKind GetLuaUsertypeMemberKind()
 	}
 }
 
+//template <typename V>
+//inline constexpr uint32_t TryGetLuaUsertypeFieldReturnType()
+//{
+//	using ValueType = std::remove_cvref_t<V>;
+//
+//	if constexpr (std::is_member_object_pointer_v<ValueType>)
+//	{
+//		using MemberType = std::remove_cvref_t<
+//			typename member_ptr_traits<ValueType>::value_type>;
+//
+//		return TypeInfo<MemberType>::hash32;
+//	}
+//	else if constexpr (HasFuncTraits<V>)
+//	{
+//		using RetType = typename func_traits<std::remove_cvref_t<V>>::return_type;
+//
+//		if constexpr (IsNativeLuaType<RetType>())
+//		{
+//			return GetNativeLuaTypeId<RetType>();
+//		}
+//		else
+//		{
+//			return TypeInfo<RetType>::hash32;
+//		}
+//	}
+//	else
+//	{
+//		return kInvalidLuaTypeId;
+//	}
+//}
+
 namespace detail {
 
-template <typename...Args> struct parse_lua_usertype_members;
+template <typename T, typename...Args> struct parse_lua_usertype_members;
 
-template <>
-struct parse_lua_usertype_members<>
+template <typename T>
+struct parse_lua_usertype_members<T>
 {
 	static void call(std::vector<std::string>&,
 					 std::vector<LuaUsertypeMemberKind>&) {}
 };
 
-template <typename K>
-struct parse_lua_usertype_members<K>
+template <typename T, typename K>
+struct parse_lua_usertype_members<T, K>
 {
 	static void call(std::vector<std::string>&,
 					 std::vector<LuaUsertypeMemberKind>&, const K&) 
@@ -83,8 +165,8 @@ struct parse_lua_usertype_members<K>
 	}
 };
 
-template <typename K, typename V, typename...Rest>
-struct parse_lua_usertype_members<K, V, Rest...>
+template <typename T, typename K, typename V, typename...Rest>
+struct parse_lua_usertype_members<T, K, V, Rest...>
 {
 	static void call(std::vector<std::string>& fieldNames,
 		std::vector<LuaUsertypeMemberKind>& memberKinds,
@@ -95,17 +177,17 @@ struct parse_lua_usertype_members<K, V, Rest...>
 			static_assert(!ConvertibleToStringView<V>);
 
 			fieldNames.emplace_back(k);
-			memberKinds.emplace_back(GetLuaUsertypeMemberKind<std::remove_cvref_t<V>>());
+			memberKinds.emplace_back(GetLuaUsertypeMemberKind<T, V>());
 		}
 
 		if constexpr (ConvertibleToStringView<V>)
 		{
-			parse_lua_usertype_members<V, Rest...>::call(
+			parse_lua_usertype_members<T, V, Rest...>::call(
 				fieldNames, memberKinds, v, rest...);
 		}
 		else
 		{
-			parse_lua_usertype_members<Rest...>::call(
+			parse_lua_usertype_members<T, Rest...>::call(
 				fieldNames, memberKinds, rest...);
 		}
 	}
@@ -229,7 +311,7 @@ public:
 		auto& fieldNames = userTypeFieldNames_.back();
 		auto& memberKinds = userTypeMemberKinds_.back();
 
-		detail::parse_lua_usertype_members<Args...>::call(fieldNames, memberKinds, args...);
+		detail::parse_lua_usertype_members<T, Args...>::call(fieldNames, memberKinds, args...);
 	}
 
 	bool IsCommitted() const { return committed_; }
@@ -251,6 +333,7 @@ private:
 	std::vector<uint32_t> userTypeIds_;
 	std::vector<std::vector<std::string>> userTypeFieldNames_;
 	std::vector<std::vector<LuaUsertypeMemberKind>> userTypeMemberKinds_;
+	//std::vector<uint32_t> userTypeFieldRawReturnTypeIds_;
 
 	std::unordered_map<std::string_view, size_t> userTypeNameToDataIndex_;
 	std::unordered_map<uint32_t, size_t> userTypeIdToDataIndex_;

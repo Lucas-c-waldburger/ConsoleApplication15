@@ -372,6 +372,7 @@
     <ClCompile Include="test\ui\InspectorEventPanel.cpp" />
     <ClCompile Include="test\ui\InspectorSystemPanel.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\AutoCompleteUtility.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\AutoCompleteUtility2.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceParser.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaTextEditor.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaTextEditorCommon.cpp" />
@@ -1002,6 +1003,7 @@
     <ClInclude Include="test\ui\InspectorCommon.h" />
     <ClInclude Include="test\ui\InspectorComponentPanel.h" />
     <ClInclude Include="test\ui\lua_text_editor\AutoCompleteUtility.h" />
+    <ClInclude Include="test\ui\lua_text_editor\AutoCompleteUtility2.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaSourceParser.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaTextEditor.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaTextEditorCommon.h" />

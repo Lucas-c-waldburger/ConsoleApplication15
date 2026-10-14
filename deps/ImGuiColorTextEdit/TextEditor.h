@@ -9,6 +9,7 @@
 #include <map>
 #include <regex>
 #include <string_view>
+#include <span>
 #include "imgui.h"
 
 class TextEditor
@@ -206,6 +207,28 @@ public:
 		static const LanguageDefinition& Lua();
 	};
 
+	struct GhostText
+	{
+		Coordinates position;
+		std::string text;
+		bool visible = false;
+
+		bool IsVisible() const noexcept { return visible && !text.empty(); }
+	};
+
+	struct TextDecoration
+	{
+		enum class Type : uint8_t
+		{
+			None,
+			ErrorUnderline
+		};
+
+		Coordinates position;
+		int columnSpan = 0;
+		Type type = Type::None;
+	};
+
 	TextEditor();
 	~TextEditor();
 
@@ -243,7 +266,7 @@ public:
 	void SetCursorPosition(const Coordinates& aPosition);
 
 	inline void SetHandleMouseInputs    (bool aValue){ mHandleMouseInputs    = aValue;}
-	inline bool IsHandleMouseInputsEnabled() const { return mHandleKeyboardInputs; }
+	inline bool IsHandleMouseInputsEnabled() const { return mHandleMouseInputs; }
 
 	inline void SetHandleKeyboardInputs (bool aValue){ mHandleKeyboardInputs = aValue;}
 	inline bool IsHandleKeyboardInputsEnabled() const { return mHandleKeyboardInputs; }
@@ -294,23 +317,30 @@ public:
 	std::string GetWordUnderCursor() const;
 	Coordinates ScreenPosToCoordinates(const ImVec2& aPosition) const;
 	void DeleteRange(const Coordinates& aStart, const Coordinates& aEnd);
+	int GetCharacterIndex(const Coordinates& aCoordinates) const;
 
 	// extensions
 	ImVec2 CoordinatesToScreenPos(const Coordinates& aCoordinates) const;
 	Coordinates InsertText(std::string_view aValue, PaletteIndex aColor);
 	Coordinates InsertText(const char* aValue, PaletteIndex aColor);
-	std::pair<Coordinates, Coordinates> InsertGhostText(const std::string& aValue, PaletteIndex aColor);
-	std::pair<Coordinates, Coordinates> InsertGhostText(const char* aValue, PaletteIndex aColor);
 	void SetKeyHandled(HandledKeys key, bool doHandle);
 	void SetAllKeysHandled(bool doHandle);
 	bool IsKeyHandled(HandledKeys key) const;
 	void SetIsTextChanged(bool aValue) { mTextChanged = aValue; }
 	void SetIsCursorPositionChanged(bool aValue) { mCursorPositionChanged = aValue; }
 	void SetColorRange(Coordinates aStart, Coordinates aEnd, PaletteIndex aColor);
+	float GetLineSpacing() const noexcept { return mLineSpacing; }
 
-	void RenderBegin(const char* aTitle, const ImVec2& aSize = ImVec2(), bool aBorder = false);
-	void HandleInputs();
-	void RenderEnd();
+	void SetGhostText(const Coordinates& aPosition, std::string_view aText);
+	void ClearGhostText();
+	const GhostText& GetGhostText() const { return mGhostText; }
+	void CommitGhostText();
+	void CommitGhostTextAsMethod();
+	bool IsGhostTextVisible() const noexcept { return mGhostText.IsVisible(); }
+
+	bool AddTextDecoration(const Coordinates& aPos, int colSpan, TextDecoration::Type aType);
+	void ClearTextDecorations();
+	const std::vector<TextDecoration>& GetTextDecorations() const { return mTextDecorations; }
 
 private:
 	typedef std::vector<std::pair<std::regex, PaletteIndex>> RegexList;
@@ -355,6 +385,28 @@ private:
 		EditorState mAfter;
 	};
 
+	struct TextDecorationRenderData
+	{
+		struct Entry
+		{
+			int glyphStart = 0;
+			int glyphEnd = 0;
+			float startX = -1.0f;
+			float endX = -1.0f;
+			TextDecoration::Type type = TextDecoration::Type::None;
+		};
+
+		std::vector<Entry> entries;
+
+		void InitializeForNewLine(const Line& line, int lineNo, const TextEditor& editor);
+		// Call before processing the glyph at glyphIdx (and once with line.size() at line end).
+		bool IsBoundary(int glyphIdx) const;
+		void Update(float currentX, int glyphIdx);
+		void DrawDecorations(const ImVec2& textScreenPos);
+		void Reset();
+
+	};
+
 	typedef std::vector<UndoRecord> UndoBuffer;
 
 	void ProcessInputs();
@@ -372,8 +424,7 @@ private:
 	void AddUndo(UndoRecord& aValue);
 	Coordinates FindWordStart(const Coordinates& aFrom) const;
 	Coordinates FindWordEnd(const Coordinates& aFrom) const;
-	Coordinates FindNextWord(const Coordinates& aFrom) const;
-	int GetCharacterIndex(const Coordinates& aCoordinates) const;
+	Coordinates FindNextWord(const Coordinates& aFrom) const;	
 	int GetCharacterColumn(int aLine, int aIndex) const;
 	int GetLineCharacterCount(int aLine) const;
 	int GetLineMaxColumn(int aLine) const;
@@ -390,7 +441,14 @@ private:
 	// extensions
 	std::pair<Coordinates, Coordinates> CalculateNormalSelectionCoordinates(const Coordinates& aStart,
 																			const Coordinates& aEnd) const;
+	void RenderColorizedText(const Line& line, ImVec2 textScreenPos, int lineNo, 
+							 int& columnNo, float spaceSize);
+	
+
 	uint32_t mHandledKeys = 0xFFFFFFFF;
+	GhostText mGhostText;
+	std::vector<TextDecoration> mTextDecorations;
+	TextDecorationRenderData mTextDecorationRenderData;
 
 	void HandleKeyboardInputs();
 	void HandleMouseInputs();

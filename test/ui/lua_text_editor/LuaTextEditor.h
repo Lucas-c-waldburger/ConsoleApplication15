@@ -7,6 +7,7 @@
 #include "../../core/commonObjects.h"
 #include "LuaSourceParser.h"
 #include "AutoCompleteUtility.h"
+#include "AutoCompleteUtility2.h"
 
 class ParsedLuaUserTypeInfo;
 
@@ -49,10 +50,12 @@ public:
 	TextEditor& GetTextEditor() noexcept { return textEditor_; }
 
 private:
+	void UpdateParserCompletionMarkers(std::string_view newSource);
+
 	TextEditor textEditor_;
 	LuaSourceParser parser_;
 	std::string loadedFilepath_;
-	AutoCompleteDisplay autoCompleteDisplay_;
+	AutoCompleteUtility autoCompleteUtility_;
 };
 
 

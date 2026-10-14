@@ -454,6 +454,27 @@ void AssetPreviewViewerChild::DrawScriptAssetPreview(ResourceContext& ctx, Scrip
 		}
 	}
 
+	if (ImGui::Button("Print Syntax Tree"))
+	{
+		scriptEditorDisplay_.textEditor.GetParser().PrintSyntaxTree();
+	}
+
+	if (ImGui::Button("Insert Ghost Text"))
+	{
+		if (!scriptEditorDisplay_.textEditor.IsReadOnly())
+		{
+			auto cursorPos = scriptEditorDisplay_.textEditor.GetTextEditor().GetCursorPosition();
+			scriptEditorDisplay_.textEditor.GetTextEditor().SetGhostText(cursorPos, "Ghost Text");
+		}
+	}
+	if (ImGui::Button("Clear Ghost Text"))
+	{
+		if (!scriptEditorDisplay_.textEditor.IsReadOnly())
+		{
+			scriptEditorDisplay_.textEditor.GetTextEditor().ClearGhostText();
+		}
+	}
+
 	auto nmOp = scriptSys.GetTableManager().GetTableInfo<
 		&ScriptTableInfo::name>(scriptEditorDisplay_.sourceTableId);
 

@@ -32,11 +32,17 @@ inline UniqueTSParserPtr CreateUniqueTSParserPtr()
 using UniqueTSTreePtr = std::unique_ptr<TSTree, 
 	decltype([](TSTree* t) { ts_tree_delete(t); })>;
 
-inline UniqueTSTreePtr CreateUniqueTSTreePtr(TSParser* parser, const TSTree* oldTree, std::string_view src)
+inline UniqueTSTreePtr CreateUniqueTSTreePtr(TSParser* parser, const TSTree* oldTree, 
+											 std::string_view src)
 {
 	const auto size = static_cast<uint32_t>(src.size());
-
 	return UniqueTSTreePtr(ts_parser_parse_string(parser, oldTree, src.data(), size));
+}
+
+inline UniqueTSTreePtr CreateUniqueTSTreePtr(TSParser* parser, const TSTree* oldTree,
+											 TSInput input)
+{
+	return UniqueTSTreePtr(ts_parser_parse(parser, oldTree, input));
 }
 
 struct TreeNode
@@ -143,12 +149,18 @@ struct ParsedLuaSourceDocument
 	std::vector<std::vector<std::string_view>> functionParameterNames;
 	std::vector<SourceDocumentError> errors;
 
+	bool HasErrors() const noexcept { return !errors.empty(); }
+
 	void Print() const;
 };
 
 class LuaSourceParser
 {
 public:
+	//static constexpr std::string_view kMethodIndexCompletionMarker = "__method_completion_marker__()";
+	//static constexpr std::string_view kDotIndexCompletionMarker = "__dot_completion_marker__";
+	//static constexpr std::string_view kCompletionMarkerText = "__completion_marker__";
+
     LuaSourceParser();
 	~LuaSourceParser() = default;
 	LuaSourceParser(const LuaSourceParser&) = delete;
@@ -175,6 +187,10 @@ public:
 
 	void PrintSyntaxTree();
 
+	bool AddCompletionMarker(size_t markerSourceOffset);
+	bool RemoveCompletionMarker(size_t markerSourceOffset);
+	void ClearCompletionMarkers();
+
 private:
 	TreeNode GetRootNode() const;
 	ParsedLuaSourceDocument ParseDocument();
@@ -186,6 +202,7 @@ private:
 	UniqueTSTreePtr tree_;
 	std::string source_;
 	ParsedLuaSourceDocument sourceDocument_;
+	std::vector<size_t> completionMarkerOffsets_;
 };
 
 } // ui

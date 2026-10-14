@@ -134,8 +134,8 @@ public:
     constexpr operator bool() const noexcept { return has_value(); }
     constexpr bool operator!() const noexcept { return !has_value(); }
 
-    template <typename U = std::remove_cv_t<T>>
-    constexpr T value_or(U&& fallback)
+    template <typename U = std::remove_cv_t<T>> requires std::convertible_to<U, T>
+    constexpr T value_or(const U& fallback)
     {
         if (has_value())
         {
@@ -143,8 +143,8 @@ public:
         }
         return fallback;
     }
-    template <typename U = std::remove_cv_t<T>>
-    constexpr T value_or(U&& fallback) const
+    template <typename U = std::remove_cv_t<T>> requires std::convertible_to<U, T>
+    constexpr T value_or(const U& fallback) const
     {
         if (has_value())
         {

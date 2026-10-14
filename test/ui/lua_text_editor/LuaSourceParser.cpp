@@ -4,6 +4,7 @@
 #include <cassert>
 #include <unordered_map>
 #include <ranges>
+#include <span>
 #include "TSEditorBridge.h"
 #include "../../core/Logger.h"
 
@@ -46,8 +47,138 @@ static constexpr std::string_view kFieldName = "field";
 static constexpr std::string_view kStringName = "string";
 static constexpr std::string_view kStringContentName = "string_content";
 
+static constexpr std::string_view kCompletionMarkerText = "__completion_marker__";
+
 static constexpr bool kContinueParsing = true;
 static constexpr bool kAbandonParsing = false;
+
+struct VirtualSource
+{
+    struct Offset
+    {
+        size_t original = 0;
+        size_t synthetic = 0;
+    };
+
+	std::vector<Offset> insertionOffsets;
+    size_t currentMarkerTextIndex = 0;
+	std::string_view source;
+
+    uint32_t Size() const noexcept
+    {
+        return static_cast<uint32_t>(
+            source.size() + insertionOffsets.size() * kCompletionMarkerText.size());
+    }
+
+    void PrepareOffsets(std::span<const uint32_t> positions)
+    {
+        insertionOffsets.clear();
+        insertionOffsets.reserve(positions.size());
+
+        const auto markerSize = static_cast<uint32_t>(kCompletionMarkerText.size());
+        uint32_t shift = 0;
+        uint32_t previous = 0;
+
+        for (uint32_t originalOffset : positions)
+        {
+            assert(originalOffset <= source.size());
+			assert(insertionOffsets.empty() || originalOffset >= previous);
+
+            if (originalOffset > source.size())
+            {
+                continue;
+            }
+
+            insertionOffsets.push_back({
+                .original = originalOffset,
+                .synthetic = originalOffset + shift
+            });
+            
+            previous = originalOffset;
+            shift += markerSize;
+        }
+    }
+
+    static const char* Read(void* payload, uint32_t byteOffset, TSPoint /* position */,
+                            uint32_t* bytesRead)
+    {
+
+        const auto& self = *static_cast<const VirtualSource*>(payload);
+
+        constexpr uint32_t markerSize =
+            static_cast<uint32_t>(kCompletionMarkerText.size());
+
+        const auto& insertions = self.insertionOffsets;
+        const auto source = self.source;
+
+        const size_t totalSize =
+            source.size() + insertions.size() * markerSize;
+
+        LOG_DEBUG_FMT(
+            "Read: offset={} total={} source={} insertions={}",
+            byteOffset,
+            totalSize,
+            source.size(),
+            insertions.size());
+
+        if (byteOffset >= totalSize)
+        {
+            *bytesRead = 0;
+            LOG_DEBUG("bytesRead=0 chunk=''");
+            return nullptr;
+        }
+
+        // First insertion whose virtual start is strictly after byteOffset.
+        const auto next = std::upper_bound(
+            insertions.begin(),
+            insertions.end(),
+            byteOffset,
+            [](uint32_t offset, const Offset& insertion)
+            {
+                return offset < insertion.synthetic;
+            });
+
+        // The byte may belong to the preceding marker.
+        if (next != insertions.begin())
+        {
+            const auto& previous = *std::prev(next);
+
+            const size_t markerEnd = previous.synthetic + markerSize;
+
+            if (byteOffset < markerEnd)
+            {
+                const auto offsetInMarker =
+                    static_cast<uint32_t>(byteOffset - previous.synthetic);
+
+                *bytesRead = markerSize - offsetInMarker;
+				const char* chunk = kCompletionMarkerText.data() + offsetInMarker;
+                
+                LOG_DEBUG_FMT("bytesRead={} chunk={}", *bytesRead, chunk);
+
+                return kCompletionMarkerText.data() + offsetInMarker;
+            }
+        }
+
+        // We're in original source text.
+        const size_t markersBefore = next - insertions.begin();
+        const size_t originalOffset =
+            static_cast<size_t>(byteOffset) - markersBefore * markerSize;
+
+        const size_t segmentEnd =
+            next != insertions.end()
+            ? next->original
+            : source.size();
+
+        assert(originalOffset < segmentEnd);
+
+        *bytesRead = static_cast<uint32_t>(segmentEnd - originalOffset);
+		const char* chunk = source.data() + originalOffset;
+
+        LOG_DEBUG_FMT("bytesRead={} chunk={}", *bytesRead, chunk);
+
+        return source.data() + originalOffset;
+    }
+};
 
 SourceLocation GetNodeSourceLocation(const TreeNode& node)
 {
@@ -693,12 +824,12 @@ bool ParseTableMemberFunctions(TreeCursor& cursor, ParsedLuaSourceDocument& pars
             continue;
 		}
 
+        SourceLocation functionDeclLocation = GetNodeSourceLocation(cursor.CurrentNode());
+
         if (!cursor.GoToFirstNamedChild())
         {
             continue;
         }
-
-        SourceLocation functionDeclLocation = GetNodeSourceLocation(cursor.CurrentNode());
 
         do // find 'dot_index_expression'
         {
@@ -722,7 +853,7 @@ bool ParseTableMemberFunctions(TreeCursor& cursor, ParsedLuaSourceDocument& pars
 			{
 				continue;
 			}
-
+            
 			auto fIt = std::ranges::find(parsedDoc.functionNames, fnName);
             if (fIt == parsedDoc.functionNames.end())
             {
@@ -734,18 +865,6 @@ bool ParseTableMemberFunctions(TreeCursor& cursor, ParsedLuaSourceDocument& pars
 			}
 
 			const auto fnDataIdx = std::distance(parsedDoc.functionNames.begin(), fIt);
-
-			//auto it = parsedDoc.functionDataIndex.find(fnName);
-			//if (it == parsedDoc.functionDataIndex.end())
-			//{
-			//	parsedDoc.errors.emplace_back(
-			//		std::format("Function '{}' not found in index", fnName),
-			//		GetNodeSourceLocation(cursor.CurrentNode()));
-
-			//	continue;
-			//}
-			// const auto fnDataIdx = it->second;
-
 			if (fnDataIdx >= parsedDoc.functionParameterNames.size())
 			{
 				parsedDoc.errors.emplace_back(
@@ -764,7 +883,7 @@ bool ParseTableMemberFunctions(TreeCursor& cursor, ParsedLuaSourceDocument& pars
 
                 continue;
 			}
-
+             
 			parsedDoc.functionBlockInfo[fnDataIdx].location = functionDeclLocation;
 
 			if (parsedDoc.functionArgumentTypes.size() != parsedDoc.functionParameterNames.size())
@@ -943,6 +1062,9 @@ void LuaSourceParser::Parse(std::string source)
 
 	source_ = std::move(source);
 	sourceDocument_ = ParseDocument();
+
+    LOG_DEBUG("LuaSourceParser::Parse");
+	sourceDocument_.Print();
 }
 
 ParsedLuaSourceDocument LuaSourceParser::ParseDocument()
@@ -979,12 +1101,22 @@ void LuaSourceParser::EditSource(std::string&& newSource)
 
     ts_tree_edit(tree_.get(), &tsEdit);
 
-    Reset();
+    VirtualSource virtualSource{ .source = newSource };
+	virtualSource.PrepareOffsets(completionMarkerOffsets_);
 
-    tree_ = CreateUniqueTSTreePtr(
-        parser_.get(),
-        tree_.get(),
-		newSource);
+    TSInput input{
+        .payload = &virtualSource,
+        .read = &VirtualSource::Read,
+        .encoding = TSInputEncodingUTF8,
+        .decode = nullptr
+    };
+
+    tree_ = CreateUniqueTSTreePtr(parser_.get(), nullptr, input);
+
+  //  tree_ = CreateUniqueTSTreePtr(
+  //      parser_.get(),
+  //      tree_.get(),
+		//newSource);
 
 	source_ = std::move(newSource);
     sourceDocument_ = ParseDocument();
@@ -1005,6 +1137,7 @@ void LuaSourceParser::Reset()
     tree_.reset();
     source_ = {};
 	sourceDocument_ = {};
+    completionMarkerOffsets_.clear();
 }
 
 std::optional<size_t> LuaSourceParser::GetEnclosingFunctionDataIndex(size_t byteOffset) const
@@ -1075,6 +1208,49 @@ void LuaSourceParser::PrintSyntaxTree()
     }
 
 	PrintSyntaxTreeImpl(ts_tree_root_node(tree_.get()), source_, 0);
+}
+
+bool LuaSourceParser::AddCompletionMarker(size_t markerSourceOffset)
+{
+    if (markerSourceOffset > source_.size())
+    {
+        return false;
+    }
+
+    auto it = std::lower_bound(completionMarkerOffsets_.begin(),
+                               completionMarkerOffsets_.end(),
+                               markerSourceOffset);
+
+    if (it != completionMarkerOffsets_.end() && *it == markerSourceOffset)
+    {
+        // dont allow duplicate insertion
+        return false;
+    }
+
+    completionMarkerOffsets_.insert(it, markerSourceOffset);
+
+    return true;
+}
+
+bool LuaSourceParser::RemoveCompletionMarker(size_t markerSourceOffset)
+{
+    auto [start, end] = std::equal_range(completionMarkerOffsets_.begin(), 
+                                         completionMarkerOffsets_.end(), 
+                                         markerSourceOffset);
+
+    if (start != end)
+    {
+        completionMarkerOffsets_.erase(start, end);
+
+        return true;
+    }
+
+    return false;
+}
+
+void LuaSourceParser::ClearCompletionMarkers()
+{
+    completionMarkerOffsets_.clear();
 }
 
 void LuaSourceParser::PrintSyntaxTreeImpl(TSNode node, std::string_view source, int depth)
@@ -1164,7 +1340,13 @@ bool TreeCursor::GoToNextNamedSibling()
 
 void ParsedLuaSourceDocument::Print() const
 {
-    std::cout << "metatable name: " << metaTableName << '\n'
+    for (const auto& info : functionBlockInfo)
+    {
+        LOG_INFO_FMT("function name: {}, location: [{} , {}]", 
+            functionNames[info.dataIndex], info.location.start, info.location.end);
+    }
+
+    /*std::cout << "metatable name: " << metaTableName << '\n'
               << "function table name: " << functionTableName << '\n';
 
     for (const auto& [fnName, idx] : functionDataIndex)
@@ -1197,7 +1379,7 @@ void ParsedLuaSourceDocument::Print() const
         std::cout << "error: " << error.message
                   << " at [" << error.location.start
 			      << ", " << error.location.end << "]\n";
-    }
+    }*/
 }
 
 } // ui

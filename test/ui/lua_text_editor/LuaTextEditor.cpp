@@ -5,7 +5,6 @@
 #include <fstream>
 #include "LuaTextEditorCommon.h"
 #include "TSEditorBridge.h"
-#include "AutoCompleteUtility.h"
 #include "../../scripting/ParsedLuaUserTypeInfo.h"
 
 namespace ui {
@@ -25,7 +24,6 @@ Result<Void> LuaTextEditor::LoadScriptString(std::string source,
     loadedFilepath_.clear();
     textEditor_.SetText(source);
 	parser_.Parse(std::move(source));
-	autoCompleteDisplay_.UpdateForNewText({ textEditor_, parser_, userTypeInfo });
 
     return kVoid;
 }
@@ -33,7 +31,6 @@ Result<Void> LuaTextEditor::LoadScriptString(std::string source,
 Result<Void> LuaTextEditor::LoadScriptFile(std::string filepath,
                                            const ParsedLuaUserTypeInfo& userTypeInfo)
 {
-    autoCompleteDisplay_.Reset(textEditor_);
     loadedFilepath_.clear();
     parser_.Reset();
 
@@ -59,8 +56,6 @@ Result<Void> LuaTextEditor::LoadScriptFile(std::string filepath,
 
     loadedFilepath_ = std::move(filepath);
 	parser_.Parse(std::move(content));
-    autoCompleteDisplay_.UpdateForNewText({ textEditor_, parser_, userTypeInfo });
-    //parser_.PrintSyntaxTree();
 
     return kVoid;
 }
@@ -110,31 +105,37 @@ void LuaTextEditor::Render(std::string_view title, const ImVec2& aSize, bool aBo
 void LuaTextEditor::Update(const ParsedLuaUserTypeInfo& userTypeInfo,
                            std::string_view title, const ImVec2& aSize, bool aBorder)
 {
-	AutoCompleteDisplay::ResourceContext autoCompleteCtx{ textEditor_, parser_, userTypeInfo };
+	AutoCompleteUtility::ResourceContext autoCompleteCtx{ textEditor_, parser_, userTypeInfo };
+
+    if (!textEditor_.IsGhostTextVisible())
+    {
+        parser_.ClearCompletionMarkers();
+    }
 
     if (textEditor_.IsTextChanged())
     {
-         auto newSource = textEditor_.GetText();
-         parser_.EditSource(std::move(newSource));
+        auto newSource = textEditor_.GetText();
+
+		UpdateParserCompletionMarkers(newSource);
+
+        parser_.EditSource(std::move(newSource));
     
-         autoCompleteDisplay_.UpdateForNewText(autoCompleteCtx);
+        autoCompleteUtility_.UpdateForNewText(autoCompleteCtx);
     }
     if (textEditor_.IsCursorPositionChanged())
     {
-        autoCompleteDisplay_.UpdateForNewCursorPos(autoCompleteCtx);
+        autoCompleteUtility_.UpdateForNewCursorPos(autoCompleteCtx);
     }
 
-	autoCompleteDisplay_.Render(autoCompleteCtx);
+    autoCompleteUtility_.Draw(autoCompleteCtx);
 
     textEditor_.Render(title.data(), aSize, aBorder);
 
-    autoCompleteDisplay_.Cleanup(autoCompleteCtx);
+    autoCompleteUtility_.Cleanup(autoCompleteCtx);
 }
 
 void LuaTextEditor::SetReadOnly(bool rOnly)
 {
-    //autoCompleteDisplay_.Reset(textEditor_);
-
     textEditor_.SetReadOnly(rOnly);
 }
 
@@ -145,7 +146,8 @@ bool LuaTextEditor::IsReadOnly() const
 
 void LuaTextEditor::Clear()
 {
-    //autoCompleteDisplay_.Reset(textEditor_);
+    autoCompleteUtility_.Reset(textEditor_);
+    textEditor_.SetAllKeysHandled(true);
     textEditor_.SetText("");
     loadedFilepath_.clear();
     parser_.Reset();
@@ -155,6 +157,58 @@ std::string LuaTextEditor::GetWordUnderCursor() const
 {
     return textEditor_.GetWordUnderCursor();
 }
+
+void LuaTextEditor::UpdateParserCompletionMarkers(std::string_view newSource)
+{
+    parser_.ClearCompletionMarkers();
+
+    const auto cursorByteOffset = TextPositionToByteOffset(newSource,
+                                                           textEditor_.GetCursorPosition(),
+                                                           textEditor_.GetTabSize());
+
+    auto autoCompData = ObjectFieldAutoCompleteData::Parse(newSource, cursorByteOffset);
+    if (autoCompData.IsValid())
+    {
+        parser_.AddCompletionMarker(autoCompData.expressionStartByte);
+    }
+}
+
+//void LuaTextEditor::ResolveDocumentParseErrors()
+//{
+//    if (!textEditor_.IsGhostTextVisible())
+//    {
+//        LOG_WARNING("Could not resolve document parse errors: "
+//            "ghost text is not visible");
+//
+//        return;
+//    }
+//
+//    const auto& autoCompData = autoCompleteUtility_.GetAutoCompleteData();
+//    if (!autoCompData.IsValid())
+//    {
+//        LOG_WARNING("Could not resolve document parse errors: "
+//            "auto-complete data is invalid");
+//
+//        return;
+//    }
+//
+//    const auto cursorByteOffset = TextPositionToByteOffset(parser_.GetSourceString(),
+//                                                           textEditor_.GetCursorPosition(),
+//                                                           textEditor_.GetTabSize());
+//    if (cursorByteOffset != autoCompData.expressionStartByte)
+//    {
+//        LOG_WARNING("Could not resolve document parse errors: "
+//            "text editor cursor is not at expression start byte");
+//
+//        return;
+//    }
+//
+//    auto& parsedDoc = parser_.GetSourceDocument(); 
+//    for (const auto& err : parsedDoc.errors)
+//    {
+//        
+//    }
+//}
 
 } // ui
 

@@ -34,7 +34,7 @@ constexpr TextEdit TextEdit::Calculate(std::string_view oldSource, std::string_v
 }
 
 size_t TextPositionToByteOffset(std::string_view source,
-                                          TextEditor::Coordinates pos, int tabSize)
+                                TextEditor::Coordinates pos, int tabSize)
 {
     if (source.empty())
     {
