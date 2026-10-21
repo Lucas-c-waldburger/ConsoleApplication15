@@ -7,40 +7,11 @@
 #include <imgui.h>
 #include "../../scripting/ParsedLuaUserTypeInfo.h"
 #include "../../deps/ImGuiColorTextEdit/TextEditor.h"
+#include "ObjectFieldAutoCompleteData.h"
 
 namespace ui {
 
-class LuaSourceParser;
-
-struct ObjectFieldAutoCompleteData
-{
-    size_t parameterStartByte = 0;
-    size_t parameterEndByte = 0;
-    size_t expressionStartByte = 0;
-    size_t expressionEndByte = 0;
-    char accessor = '\0';
-
-    bool IsValid() const noexcept;
-
-    std::string_view GetParameterName(std::string_view source) const;
-
-    std::string_view GetPartialExpressionText(std::string_view source,
-                                                        size_t cursorBytePos) const;
-
-    std::string_view GetFullExpressionText(std::string_view source) const;
-
-    bool MemberKindMatchesAccessor(LuaUsertypeMemberKind kind) const noexcept;
-
-    bool CursorInExpressionRange(size_t cursorBytePos) const noexcept;
-
-	ImVec2 GetAccessorScreenPos(std::string_view source, const TextEditor& textEditor) const;
-
-	static ObjectFieldAutoCompleteData Parse(std::string_view source, size_t cursorBytePos);
-};
-
-ObjectFieldAutoCompleteData ParseAutoCompleteData(std::string_view source, size_t cursorBytePos);
-
-class AutoCompleteDisplay
+class AutoCompleteUtility
 {
 public:
     struct ResourceContext
@@ -50,53 +21,100 @@ public:
         const ParsedLuaUserTypeInfo& userTypeInfo;
     };
 
-    void Update(ResourceContext& ctx);
-    void UpdateForNewText(ResourceContext& ctx);
-    void UpdateForNewText(ResourceContext&& ctx);
+	const ObjectFieldAutoCompleteData& 
+    ReparseAutoCompleteData(std::string_view newSource, const TextEditor& textEditor);
+	void UpdateForNewText(ResourceContext& ctx);
     void UpdateForNewCursorPos(ResourceContext& ctx);
-
-    void Render(ResourceContext& ctx);
-	//void Cleanup(ResourceContext& ctx);
-
+    bool Draw(ResourceContext& ctx);
+    void Cleanup(ResourceContext& ctx);
     void Reset(TextEditor& textEditor);
 
-    bool IsVisible() const;
+    const ObjectFieldAutoCompleteData& GetAutoCompleteData() const noexcept;
 
 private:
-	using GhostTextRange = Range<std::optional<TextEditor::Coordinates>>;
+    enum StateFlags : uint8_t
+    {
+        FillOptionsRegenerated = 1 << 0,
+		GhostTextCommitted = 1 << 1
+	};
 
-	static size_t GetCursorByteOffset(const ResourceContext& ctx);
+    struct AutoCompleteFillOptionsPopup
+    {
+        struct Option
+        {
+            enum : uint8_t
+            {
+                IsMethod = 1 << 0,
+                HasArguments = 1 << 1
+            };
 
-    static ObjectFieldAutoCompleteData 
+            std::string text;
+            uint8_t flags = 0;
+        };
+
+        std::vector<Option> options;
+        size_t selectedIndex = 0;
+        ImVec2 popupMenuItemSize = {};
+        ImVec2 popupMenuItemPos = {};
+		ImVec2 lastScrollPos = {};
+
+		bool HasSelection() const { return !options.empty() && selectedIndex < options.size(); }
+		void operator++() { selectedIndex = (selectedIndex + 1) % options.size(); }
+		void operator--() { selectedIndex = (selectedIndex + options.size() - 1) % options.size(); }
+
+		void Clear() 
+        { 
+            options.clear(); 
+            selectedIndex = 0; 
+            popupMenuItemSize = {};
+            popupMenuItemPos = {};
+			lastScrollPos = {};
+        }
+        void AssignOptions(std::vector<Option>&& newOptions)
+        {
+            options = std::move(newOptions);
+            selectedIndex = (options.empty()) ? 0 : std::min(selectedIndex, options.size() - 1);
+        }
+
+        void SetInitialPopupSize();
+        void SetInitialPopupPosition(const ObjectFieldAutoCompleteData& autoCompleteData, 
+                                     const ResourceContext& ctx);
+		void UpdatePopupPosition(const ResourceContext& ctx);
+
+        bool IsPopupInsideWindowBounds(const ResourceContext& ctx) const;
+	};
+
+    void Reparse(ResourceContext& ctx);
+
+    static size_t GetCursorByteOffset(const ResourceContext& ctx);
+
+    static ObjectFieldAutoCompleteData
     GetAutoCompleteData(size_t cursorByteOffset, const ResourceContext& ctx);
 
-    static ParsedLuaUserTypeInfo::DataIndex 
-    GetUserTypeDataIndexForCurrentParameter(size_t cursorByteOffset, 
-        const ObjectFieldAutoCompleteData& autoCompleteData, 
-        const ResourceContext& ctx);
+	static bool CursorInsideGhostTextRange(size_t cursorByteOffset, const ResourceContext& ctx,
+                                           const ObjectFieldAutoCompleteData& autoCompleteData);
 
-	static std::vector<std::string>
-    GetUpdatedStringFillOptions(const ObjectFieldAutoCompleteData& autoCompleteData,
-                                ParsedLuaUserTypeInfo::DataIndex userTypeDataIdx,
-                                const ResourceContext& ctx);
+    ParsedLuaUserTypeInfo::DataIndex
+    GetUserTypeDataIndexForCurrentParameter(size_t cursorByteOffset,
+                                            const ObjectFieldAutoCompleteData& autoCompleteData, 
+                                            const ResourceContext& ctx);
 
-    static GhostTextRange DrawGhostText(const std::string& autoFillStr, ResourceContext& ctx, 
-                                        const ObjectFieldAutoCompleteData& autoCompleteData);
+    static std::vector<AutoCompleteFillOptionsPopup::Option>
+    GetUpdatedFillOptions(size_t cursorByteOffset, 
+                          const ObjectFieldAutoCompleteData& autoCompleteData,
+                          ParsedLuaUserTypeInfo::DataIndex userTypeDataIdx,
+                          const ResourceContext& ctx);
 
-	void CommitText(ResourceContext& ctx, const std::string& autoFillStr);
+    static void OverrideTextEditorKeyInputs(TextEditor& textEditor);
 
-    static ImVec2 GetPopupContextItemSize(const std::vector<std::string>& stringFillOptions);
-    static ImVec2 GetPopupContextItemPos(ImVec2 accessorScreenPos, float lineSpacing);
+    void SetGhostTextFromCurrentSelection(TextEditor& textEditor);
 
-    size_t HandleArrowKeyPress() const;
-
-    std::vector<std::string> stringFillOptionsPopup_;
-	ObjectFieldAutoCompleteData autoCompleteData;
-    size_t currentSelectionIndex = 0;
-    ImVec2 popupContextItemSize_ = {};
-    ImVec2 popupContextItemPos_ = {};
-    GhostTextRange ghostTextRange_ = {};
+    AutoCompleteFillOptionsPopup autoCompleteFillOptionsPopup_;
+    ObjectFieldAutoCompleteData lastAutoCompleteData_;
+	uint8_t stateFlags_ = 0;
 };
+
+
 
 } // ui
 

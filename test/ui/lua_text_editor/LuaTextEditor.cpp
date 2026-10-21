@@ -107,20 +107,22 @@ void LuaTextEditor::Update(const ParsedLuaUserTypeInfo& userTypeInfo,
 {
 	AutoCompleteUtility::ResourceContext autoCompleteCtx{ textEditor_, parser_, userTypeInfo };
 
-    if (!textEditor_.IsGhostTextVisible())
-    {
-        parser_.ClearCompletionMarkers();
-    }
+    //if (!textEditor_.IsGhostTextVisible())
+    //{
+    //    parser_.ClearCompletionMarkers();
+    //}
 
     if (textEditor_.IsTextChanged())
     {
         auto newSource = textEditor_.GetText();
 
-		UpdateParserCompletionMarkers(newSource);
+		//UpdateParserCompletionMarkers(newSource);
 
         parser_.EditSource(std::move(newSource));
     
         autoCompleteUtility_.UpdateForNewText(autoCompleteCtx);
+
+		textDecorationUtility_.UpdateForNewText(parser_, textEditor_);
     }
     if (textEditor_.IsCursorPositionChanged())
     {
@@ -136,6 +138,13 @@ void LuaTextEditor::Update(const ParsedLuaUserTypeInfo& userTypeInfo,
 
 void LuaTextEditor::SetReadOnly(bool rOnly)
 {
+    if (rOnly)
+    {
+        autoCompleteUtility_.Reset(textEditor_);
+        textDecorationUtility_.Reset(textEditor_);
+        textEditor_.SetAllKeysHandled(true);
+    }
+
     textEditor_.SetReadOnly(rOnly);
 }
 
@@ -147,15 +156,11 @@ bool LuaTextEditor::IsReadOnly() const
 void LuaTextEditor::Clear()
 {
     autoCompleteUtility_.Reset(textEditor_);
+    textDecorationUtility_.Reset(textEditor_);
     textEditor_.SetAllKeysHandled(true);
     textEditor_.SetText("");
     loadedFilepath_.clear();
     parser_.Reset();
-}
-
-std::string LuaTextEditor::GetWordUnderCursor() const
-{
-    return textEditor_.GetWordUnderCursor();
 }
 
 void LuaTextEditor::UpdateParserCompletionMarkers(std::string_view newSource)

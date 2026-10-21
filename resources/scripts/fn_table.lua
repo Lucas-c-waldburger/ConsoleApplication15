@@ -1,14 +1,14 @@
 local table = {}
 
 function table.changeName(e)
-    if e:hasName() then
-        e:getName().value = "changed"
+    if e:hasComponent(ComponentId.Name) then
+        e:getComponent(ComponentId.Name).value = "changed"
     end
 end
 
 function table.changePos(e)
-    if e:hasTransform() then
-        local t = e:getTransform()
+    if e:hasComponent(ComponentId.Transform) then
+        local t = e:getComponent(ComponentId.Transform)
         local p = t.position
 
         p.x = 500.0
@@ -17,8 +17,8 @@ function table.changePos(e)
 end
 
 function table.setPos(e, newPos)
-    if e:hasTransform() then
-        local t = e:getTransform()
+    if e:hasComponent(ComponentId.Transform) then
+        local t = e:getComponent(ComponentId.Transform)
         local p = t.position
 
         p = newPos
@@ -26,8 +26,8 @@ function table.setPos(e, newPos)
 end
 
 function table.gameControllerCallback(e, ev)
-    if e:hasGameControllerState() then
-        local gc = e:getGameControllerState()
+    if e:hasComponent(ComponentId.GameControllerState) then
+        local gc = e:getComponent(ComponentId.GameControllerState)
         local id = gc.joystickID
 
         id = 69
@@ -35,8 +35,8 @@ function table.gameControllerCallback(e, ev)
 end
 
 function table.timerCallback(ev, e)
-    if e:hasSpriteAnimationComponent() then
-        local anim = e:getSpriteAnimationComponent()
+    if e:hasComponent(ComponentId.SpriteAnimationComponent) then
+        local anim = e:getComponent(ComponentId.SpriteAnimationComponent)
         local name = anim.spriteSeriesName
 
         name = "fired"

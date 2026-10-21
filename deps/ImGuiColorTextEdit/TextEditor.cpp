@@ -7,6 +7,7 @@
 #include "TextEditor.h"
 
 #include "imgui.h"
+#include "../imgui/imgui_internal.h"
 
 namespace {
 
@@ -705,6 +706,12 @@ std::string TextEditor::GetWordAt(const Coordinates & aCoords) const
 	return r;
 }
 
+std::pair<TextEditor::Coordinates, TextEditor::Coordinates> 
+TextEditor::GetWordCoordinatesAt(const Coordinates& aCoords) const
+{
+	return std::make_pair(FindWordStart(aCoords), FindWordEnd(aCoords));
+}
+
 ImU32 TextEditor::GetGlyphColor(const Glyph & aGlyph) const
 {
 	if (!mColorizerEnabled)
@@ -1093,6 +1100,12 @@ void TextEditor::HandleMouseInputs()
 
 void TextEditor::Render()
 {
+	mScreenOrigin = ImGui::GetCursorScreenPos();
+
+	auto* window = ImGui::GetCurrentWindow();
+	mWindowMin = window->InnerRect.Min;
+	mWindowMax = window->InnerRect.Max;
+
 	/* Compute mCharAdvance regarding to scaled font size (Ctrl + mouse wheel)*/
 	const float fontSize = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, "#", nullptr, nullptr).x;
 	mCharAdvance = ImVec2(fontSize, ImGui::GetTextLineHeightWithSpacing() * mLineSpacing);
@@ -1120,6 +1133,8 @@ void TextEditor::Render()
 	ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
 	auto scrollX = ImGui::GetScrollX();
 	auto scrollY = ImGui::GetScrollY();
+
+	mScroll = ImVec2(scrollX, scrollY);
 
 	auto lineNo = (int)floor(scrollY / mCharAdvance.y);
 	auto globalLineMax = (int)mLines.size();
@@ -1253,79 +1268,36 @@ void TextEditor::Render()
 			auto prevColor = line.empty() ? mPalette[(int)PaletteIndex::Default] : GetGlyphColor(line[0]);
 			ImVec2 bufferOffset;
 
-			/*for (int i = 0; i < line.size();)
-			{
-				auto& glyph = line[i];
-				auto color = GetGlyphColor(glyph);
-
-				if ((color != prevColor || glyph.mChar == '\t' || glyph.mChar == ' ') && !mLineBuffer.empty())
-				{
-					const ImVec2 newOffset(textScreenPos.x + bufferOffset.x, textScreenPos.y + bufferOffset.y);
-					drawList->AddText(newOffset, prevColor, mLineBuffer.c_str());
-					auto textSize = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, mLineBuffer.c_str(), nullptr, nullptr);
-					bufferOffset.x += textSize.x;
-					mLineBuffer.clear();
-				}
-				prevColor = color;
-
-				if (glyph.mChar == '\t')
-				{
-					auto oldX = bufferOffset.x;
-					bufferOffset.x = (1.0f + std::floor((1.0f + bufferOffset.x) / (float(mTabSize) * spaceSize))) * (float(mTabSize) * spaceSize);
-					++i;
-
-					if (mShowWhitespaces)
-					{
-						const auto s = ImGui::GetFontSize();
-						const auto x1 = textScreenPos.x + oldX + 1.0f;
-						const auto x2 = textScreenPos.x + bufferOffset.x - 1.0f;
-						const auto y = textScreenPos.y + bufferOffset.y + s * 0.5f;
-						const ImVec2 p1(x1, y);
-						const ImVec2 p2(x2, y);
-						const ImVec2 p3(x2 - s * 0.2f, y - s * 0.2f);
-						const ImVec2 p4(x2 - s * 0.2f, y + s * 0.2f);
-						drawList->AddLine(p1, p2, 0x90909090);
-						drawList->AddLine(p2, p3, 0x90909090);
-						drawList->AddLine(p2, p4, 0x90909090);
-					}
-				}
-				else if (glyph.mChar == ' ')
-				{
-					if (mShowWhitespaces)
-					{
-						const auto s = ImGui::GetFontSize();
-						const auto x = textScreenPos.x + bufferOffset.x + spaceSize * 0.5f;
-						const auto y = textScreenPos.y + bufferOffset.y + s * 0.5f;
-						drawList->AddCircleFilled(ImVec2(x, y), 1.5f, 0x80808080, 4);
-					}
-					bufferOffset.x += spaceSize;
-					i++;
-				}
-				else
-				{
-					auto l = UTF8CharLength(glyph.mChar);
-					while (l-- > 0)
-						mLineBuffer.push_back(line[i++].mChar);
-				}
-				++columnNo;
-			}
-
-			if (!mLineBuffer.empty())
-			{
-				const ImVec2 newOffset(textScreenPos.x + bufferOffset.x, textScreenPos.y + bufferOffset.y);
-				drawList->AddText(newOffset, prevColor, mLineBuffer.c_str());
-				mLineBuffer.clear();
-			}*/
-
 			RenderColorizedText(line, textScreenPos, lineNo, columnNo, spaceSize);
 
 			++lineNo;
 		}
 
+		mTextDecorationRenderData.Reset();
+
 		// Draw a tooltip on known identifiers/preprocessor symbols
-		if (ImGui::IsMousePosValid())
+		if (ImGui::IsWindowHovered() && ImGui::IsMousePosValid())
 		{
-			auto id = GetWordAt(ScreenPosToCoordinates(ImGui::GetMousePos()));
+			const auto mouseCoords = ScreenPosToCoordinates(ImGui::GetMousePos());
+
+			for (const auto& textTooltip : mTextTooltips)
+			{
+				auto wordCoords = GetWordCoordinatesAt(mouseCoords);
+				if (textTooltip.position >= wordCoords.first &&
+					textTooltip.position <= wordCoords.second)
+				{
+					textTooltip.PushColors();
+
+					ImGui::BeginTooltip();
+					ImGui::TextUnformatted(textTooltip.text.c_str());
+					ImGui::EndTooltip();
+
+					textTooltip.PopColors();
+				}
+			}
+
+			// user tooltips
+			auto id = GetWordAt(mouseCoords);
 			if (!id.empty())
 			{
 				auto it = mLanguageDefinition.mIdentifiers.find(id);
@@ -1713,21 +1685,38 @@ void TextEditor::InsertText(const char * aValue)
 	if (aValue == nullptr)
 		return;
 
+	UndoRecord u;
+	u.mBefore = mState;
+
 	auto pos = GetActualCursorCoordinates();
 	auto start = std::min(pos, mState.mSelectionStart);
 	int totalLines = pos.mLine - start.mLine;
+
+	u.mAddedStart = pos;
+	u.mAdded = aValue;
 
 	totalLines += InsertTextAt(pos, aValue);
 
 	SetSelection(pos, pos);
 	SetCursorPosition(pos);
+
+	u.mAddedEnd = pos;
+	u.mAfter = mState;
+	AddUndo(u);
+
 	Colorize(start.mLine - 1, totalLines + 2);
+}
+
+std::pair<TextEditor::Coordinates, TextEditor::Coordinates> 
+TextEditor::GetWordCoordinatesUnderCursor() const
+{
+	const auto cursor = GetCursorPosition();
+
+	return std::make_pair(FindWordStart(cursor), FindWordEnd(cursor));
 }
 
 ImVec2 TextEditor::CoordinatesToScreenPos(const Coordinates& aCoordinates) const
 {
-	const ImVec2 origin = ImGui::GetCursorScreenPos();
-
 	const int lineNo = std::clamp(
 		aCoordinates.mLine,
 		0,
@@ -1780,8 +1769,8 @@ ImVec2 TextEditor::CoordinatesToScreenPos(const Coordinates& aCoordinates) const
 	}
 
 	return ImVec2(
-		origin.x + mTextStart + columnX,
-		origin.y + aCoordinates.mLine * mCharAdvance.y);
+		mScreenOrigin.x + mTextStart + columnX,
+		mScreenOrigin.y + aCoordinates.mLine * mCharAdvance.y);
 }
 
 TextEditor::Coordinates TextEditor::InsertText(std::string_view aValue, PaletteIndex aColor)
@@ -1794,14 +1783,25 @@ TextEditor::Coordinates TextEditor::InsertText(const char* aValue, PaletteIndex 
 	if (aValue == nullptr)
 		return {};
 
+	UndoRecord u;
+	u.mBefore = mState;
+
 	auto pos = GetActualCursorCoordinates();
 	auto start = std::min(pos, mState.mSelectionStart);
 	int totalLines = pos.mLine - start.mLine;
+
+	u.mAddedStart = pos;
+	u.mAdded = aValue;
 
 	totalLines += InsertTextAt(pos, aValue, aColor);
 
 	SetSelection(pos, pos);
 	SetCursorPosition(pos);
+
+	u.mAddedEnd = pos;
+	u.mAfter = mState;
+	AddUndo(u);
+
 	Colorize(start.mLine - 1, totalLines + 2);
 
 	return GetCursorPosition();
@@ -1905,14 +1905,14 @@ void TextEditor::CommitGhostText()
 	ClearGhostText();
 }
 
-void TextEditor::CommitGhostTextAsMethod()
+void TextEditor::CommitGhostText(std::string_view appendText, int cursorBackPlacement)
 {
 	if (!mGhostText.visible || mGhostText.text.empty())
 	{
 		return;
 	}
 
-	mGhostText.text.append("()");
+	mGhostText.text.append(appendText);
 
 	CommitGhostText();
 
@@ -1922,33 +1922,43 @@ void TextEditor::CommitGhostTextAsMethod()
 		return;
 	}
 
-	--cursorPos.mColumn;
+	cursorPos.mColumn -= std::min(cursorBackPlacement, cursorPos.mColumn);
 
 	SetCursorPosition(cursorPos);
 }
 
 bool TextEditor::AddTextDecoration(const Coordinates& aStart, int colSpan, 
-								   TextDecoration::Type aType)
+								   TextDecoration::Type aType, ImColor aColor)
 {
 	if (aStart.mLine >= mLines.size() || colSpan <= 0 || aType == TextDecoration::Type::None)
 	{
 		return false;
 	}
 
-	//const TextDecoration newDecoration(aStart, colSpan, aType);
+	mTextDecorations.emplace_back(aStart, colSpan, aType, aColor);
 
-	//auto it = std::lower_bound(
-	//	mTextDecorations.begin(),
-	//	mTextDecorations.end(),
-	//	newDecoration,
-	//	[](const TextDecoration& a, const TextDecoration& b)
-	//	{
-	//		return a.position > b.position;
-	//	});
+	return true;
+}
 
-	//mTextDecorations.insert(it, newDecoration);
+bool TextEditor::AddTextDecoration(const Coordinates& aPosStart, const Coordinates& aPosEnd,
+								   TextDecoration::Type aType, ImColor aColor)
+{
+	if (aPosStart >= aPosEnd)
+	{
+		return false;
+	}
 
-	mTextDecorations.emplace_back(aStart, colSpan, aType);
+	int curLine = aPosStart.mLine;
+	while (curLine <= aPosEnd.mLine)
+	{
+		const int colStart = (curLine == aPosStart.mLine) ? aPosStart.mColumn : 0;
+		const int colEnd = (curLine == aPosEnd.mLine) ? aPosEnd.mColumn : GetLineMaxColumn(curLine);
+		if (colStart < colEnd)
+		{
+			AddTextDecoration(Coordinates{ curLine, colStart }, colEnd - colStart, aType, aColor);
+		}
+		++curLine;
+	}
 
 	return true;
 }
@@ -3658,6 +3668,7 @@ void TextEditor::TextDecorationRenderData::InitializeForNewLine(const Line& line
 		entry.glyphStart = start;
 		entry.glyphEnd = end;
 		entry.type = deco.type;
+		entry.color = deco.color;
 		entries.push_back(entry);
 	}
 }
@@ -3707,11 +3718,11 @@ void TextEditor::TextDecorationRenderData::DrawDecorations(const ImVec2& textScr
 
 		switch (e.type)
 		{
-		case TextDecoration::Type::ErrorUnderline:
+		case TextDecoration::Type::WavyUnderline:
 		{
 			const ImVec2 underlineStart{ textScreenPos.x + e.startX,
 										 textScreenPos.y + ImGui::GetFontSize() };
-			DrawWaveUnderline(underlineStart, e.endX - e.startX, IM_COL32(255, 0, 0, 255));
+			DrawWaveUnderline(underlineStart, e.endX - e.startX, e.color);
 			break;
 		}
 		default:
@@ -3723,4 +3734,54 @@ void TextEditor::TextDecorationRenderData::DrawDecorations(const ImVec2& textScr
 void TextEditor::TextDecorationRenderData::Reset()
 {
 	entries.clear();
+}
+
+bool TextEditor::MouseInsideWindow() const
+{
+	const ImVec2 mousePos = ImGui::GetMousePos();
+
+	return mousePos.x >= mWindowMin.x && mousePos.y >= mWindowMin.y &&
+		   mousePos.x < mWindowMax.x && mousePos.y < mWindowMax.y;
+}
+
+void TextEditor::TextTooltip::PushColors() const
+{
+	if (colors.textColor.Value.w > 0.0f)
+	{
+		ImGui::PushStyleColor(ImGuiCol_Text, colors.textColor.Value);
+	}
+	if (colors.bgColor.Value.w > 0.0f)
+	{
+		ImGui::PushStyleColor(ImGuiCol_PopupBg, colors.bgColor.Value);
+	}
+}
+
+void TextEditor::TextTooltip::PopColors() const
+{
+	if (colors.textColor.Value.w > 0.0f)
+	{
+		ImGui::PopStyleColor();
+	}
+	if (colors.bgColor.Value.w > 0.0f)
+	{
+		ImGui::PopStyleColor();
+	}
+}
+
+bool TextEditor::AddTextTooltip(const Coordinates& aPos, std::string_view aText, 
+								const TextTooltip::Colors& aColors)
+{
+	if (aPos.mLine < 0 || aPos.mLine >= mLines.size() || aText.empty())
+	{
+		return false;
+	}
+
+	mTextTooltips.emplace_back(aPos, std::string{ aText }, aColors);
+
+	return true;
+}
+
+void TextEditor::ClearTextTooltips()
+{
+	mTextTooltips.clear();
 }

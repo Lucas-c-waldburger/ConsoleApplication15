@@ -46,6 +46,7 @@ struct AssetViewerIcons
 	Sprite soundFileLargeSprite;
 	Sprite eventScriptFileLargeSprite;
 	Sprite systemScriptFileLargeSprite;
+	Sprite invalidScriptFileLargeSprite;
 	Sprite luaFileLargeSprite;
 	Sprite newFileLargeSprite;
 };

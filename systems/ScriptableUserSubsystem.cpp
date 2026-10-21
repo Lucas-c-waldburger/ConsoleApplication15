@@ -2,6 +2,11 @@
 
 Result<Void> ScriptableUserSubsystem::AddSystemScript(const ScriptTable& table, Phase phase)
 {
+	if (phase == Phase::Invalid)
+	{
+		return MAKE_ERROR("System Phase was invalid");
+	}
+
 	if (!table.IsValid())
 	{
 		return MAKE_ERROR("ScriptTable was invalid");

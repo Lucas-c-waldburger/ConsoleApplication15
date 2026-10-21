@@ -140,6 +140,7 @@ void DrawSpatialDataSliders(std::optional<AudioPlayerContext>& ctx)
 
 } // unnamed
 
+/** @defgroup AudioPlayer @{ */
 std::optional<AudioPlayerContext> 
 AssetPreviewViewerChild::AudioPlayer::MakePlayerContext(const AudioBank& audioBank)
 {
@@ -231,6 +232,26 @@ void AssetPreviewViewerChild::AudioPlayer::Reset()
 	state &= ~PlayerState::Playing;
 	musicVisualizer.Reset();
 }
+/** @} */
+
+/** @defgroup ScriptEditorDisplay @{ */
+void AssetPreviewViewerChild::ScriptEditorDisplay::Reset(
+	InProgressScriptStorage& inProgressScriptStorage)
+{
+	if (auto it = inProgressScriptStorage.inProgressIdToDataIndex.find(sourceCompoundId.inProgressId);
+		it != inProgressScriptStorage.inProgressIdToDataIndex.end())
+	{
+		assert(it->second < inProgressScriptStorage.Size());
+
+		inProgressScriptStorage.contents[it->second] = textEditor.GetText();
+	}
+
+	textEditor.Clear();
+	textEditor.SetReadOnly(true);
+	sourceCompoundId = {};
+}
+
+/** @} */
 
 void AssetPreviewViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx, 
 								   const DataRecord<AssetItem::Type>& assetGridTabType)
@@ -248,7 +269,7 @@ void AssetPreviewViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx,
 		case AssetItem::Type::Font:
 			break;
 		case AssetItem::Type::Script:
-			scriptEditorDisplay_.Reset();
+			scriptEditorDisplay_.Reset(ctx.inProgressScriptStorage);
 			break;
 		default:
 			break;
@@ -266,9 +287,7 @@ void AssetPreviewViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx,
 	else if (assetGridTabType.now == AssetItem::Type::Audio &&
 		     ctx.audioSelection.HasSelection())
 	{
-		DrawAudioAssetPreview(
-			ctx,
-			fixture.GetAudioBank());
+		DrawAudioAssetPreview(ctx, fixture.GetAudioBank());
 	}
 	else if (assetGridTabType.now == AssetItem::Type::Font &&
 			 ctx.fontSelection.HasSelection())
@@ -278,8 +297,7 @@ void AssetPreviewViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx,
 	else if (assetGridTabType.now == AssetItem::Type::Script &&
 		ctx.scriptSelection.HasSelection())
 	{
-		DrawScriptAssetPreview(ctx,
-			fixture.GetSystem<ScriptSystem>());
+		DrawScriptAssetPreview(ctx, fixture.GetSystem<ScriptSystem>());
 	}
 }
 
@@ -407,51 +425,125 @@ void AssetPreviewViewerChild::DrawScriptAssetPreview(ResourceContext& ctx, Scrip
 {
 	const auto& userTypeInfo = scriptSys.GetState().GetLuaUserTypeInfo();
 
-	if (ctx.scriptSelection.tableId != scriptEditorDisplay_.sourceTableId)
+	if (ctx.scriptSelection.compoundId != scriptEditorDisplay_.sourceCompoundId)
 	{
-		scriptEditorDisplay_.Reset();
+		const auto& selectionCompoundId = ctx.scriptSelection.compoundId;
+		auto& displayCompoundId = scriptEditorDisplay_.sourceCompoundId;
 
-		scriptEditorDisplay_.sourceTableId = ctx.scriptSelection.tableId;
+		scriptEditorDisplay_.Reset(ctx.inProgressScriptStorage);
 
-		auto fpOp = scriptSys.GetTableManager().GetTableInfo<
-			&ScriptTableInfo::filepath>(scriptEditorDisplay_.sourceTableId);
-		if (!fpOp.has_value())
+		if (selectionCompoundId.inProgressId != kInvalidInProgressScriptID)
 		{
-			return;
+			if (auto it = ctx.inProgressScriptStorage.inProgressIdToDataIndex.find(selectionCompoundId.inProgressId);
+				it != ctx.inProgressScriptStorage.inProgressIdToDataIndex.end())
+			{
+				assert(it->second < ctx.inProgressScriptStorage.Size());
+
+				auto& content = ctx.inProgressScriptStorage.contents[it->second];
+
+				auto loadResult = scriptEditorDisplay_.textEditor
+					.LoadScriptString(content, userTypeInfo);
+				if (!loadResult.Success())
+				{
+					LOG_ERROR(loadResult.GetError());
+					return;
+				}
+			}
+		}
+		else if (scriptSys.ContainsTable(selectionCompoundId.tableId))
+		{
+			auto fpOp = scriptSys.GetTableManager()
+				.GetTableInfo<&ScriptTableInfo::filepath>(selectionCompoundId.tableId);
+			if (!fpOp.has_value())
+			{
+				return;
+			}
+
+			auto loadResult = scriptEditorDisplay_.textEditor
+				.LoadScriptFile(*fpOp, userTypeInfo);
+			if (!loadResult.Success())
+			{
+				LOG_ERROR(loadResult.GetError());
+				return;
+			}		
 		}
 
-		auto loadResult = scriptEditorDisplay_.textEditor.LoadScriptFile(
-			*fpOp, userTypeInfo);
-		if (!loadResult.Success())
-		{
-			LOG_ERROR(loadResult.GetError());
-
-			return;
-		}
+		displayCompoundId = selectionCompoundId;
 	}
 
-	const bool isEditing = !scriptEditorDisplay_.textEditor.IsReadOnly();
+	const bool wasEditing = !scriptEditorDisplay_.textEditor.IsReadOnly();
+	const bool editToggled = ImGui::Button((wasEditing ? "Save" : "Edit"));
 
-	if (ImGui::Button((isEditing ? "Save" : "Edit")))
+	if (!wasEditing && editToggled)
 	{
-		if (isEditing)
+		if (!ctx.inProgressScriptStorage.inProgressIdToDataIndex.contains(
+			scriptEditorDisplay_.sourceCompoundId.inProgressId))
 		{
-			auto reloadResult = scriptSys.ReloadTable(scriptEditorDisplay_.sourceTableId);
+			// create new in-progress script entry for preexisting table
+			assert(scriptSys.ContainsTable(scriptEditorDisplay_.sourceCompoundId.tableId));
+
+			auto infoOp = scriptSys.GetTableManager().GetTableInfo<
+				&ScriptTableInfo::name,
+				&ScriptTableInfo::tableType>(scriptEditorDisplay_.sourceCompoundId.tableId);
+			assert(infoOp);
+
+			const auto [name, tableType] = *infoOp;
+
+			const auto newId = ctx.inProgressScriptStorage.AddEntry();
+			ctx.inProgressScriptStorage.names.back() = name;
+			ctx.inProgressScriptStorage.contents.back() = scriptEditorDisplay_.textEditor.GetText();
+			ctx.inProgressScriptStorage.tableTypes.back() = tableType;
+			ctx.inProgressScriptStorage.SetTableID(ctx.inProgressScriptStorage.Size() - 1, 
+												   scriptEditorDisplay_.sourceCompoundId.tableId);
+
+			scriptEditorDisplay_.sourceCompoundId.inProgressId = newId;
+		}
+
+		scriptEditorDisplay_.textEditor.SetReadOnly(false);
+	}
+	else if (wasEditing && editToggled)
+	{
+		if (scriptSys.ContainsTable(scriptEditorDisplay_.sourceCompoundId.tableId))
+		{
+			auto reloadResult = scriptSys.ReloadTable(scriptEditorDisplay_.sourceCompoundId.tableId);
 			if (!reloadResult.Success())
 			{
 				LOG_ERROR(reloadResult.GetError());
 			}
 			else
 			{
-				scriptEditorDisplay_.textEditor.SaveScriptFile();
-			}
+				auto saveResult = scriptEditorDisplay_.textEditor.SaveScriptFile();
+				if (!saveResult.Success())
+				{
+					LOG_ERROR(saveResult.GetError());
+				}
+				else
+				{
+					// reloaded and saved, can remove in-progress script
+					auto it = ctx.inProgressScriptStorage.inProgressIdToDataIndex.find(
+						scriptEditorDisplay_.sourceCompoundId.inProgressId);
 
-			scriptEditorDisplay_.textEditor.SetReadOnly(true);
+					assert(it != ctx.inProgressScriptStorage.inProgressIdToDataIndex.end());
+					assert(it->second < ctx.inProgressScriptStorage.Size());
+
+					ctx.inProgressScriptStorage.Erase(it->second);
+					scriptEditorDisplay_.sourceCompoundId.inProgressId = kInvalidInProgressScriptID;
+				}
+			}
 		}
-		else
+		else // script exists only as in-progress, update contents
 		{
-			scriptEditorDisplay_.textEditor.SetReadOnly(false);
+			auto it = ctx.inProgressScriptStorage.inProgressIdToDataIndex.find(
+				scriptEditorDisplay_.sourceCompoundId.inProgressId);
+
+			assert(it != ctx.inProgressScriptStorage.inProgressIdToDataIndex.end());
+			assert(it->second < ctx.inProgressScriptStorage.Size());
+
+			ctx.inProgressScriptStorage.contents[it->second] = 
+				scriptEditorDisplay_.textEditor.GetText();
 		}
+
+		scriptEditorDisplay_.textEditor.SetReadOnly(true);
 	}
 
 	if (ImGui::Button("Print Syntax Tree"))
@@ -474,11 +566,40 @@ void AssetPreviewViewerChild::DrawScriptAssetPreview(ResourceContext& ctx, Scrip
 			scriptEditorDisplay_.textEditor.GetTextEditor().ClearGhostText();
 		}
 	}
+	if (ImGui::Button("Set Error Underline"))
+	{
+		if (!scriptEditorDisplay_.textEditor.IsReadOnly())
+		{
+			const auto [wordStart, wordEnd] = 
+				scriptEditorDisplay_.textEditor.GetTextEditor().GetWordCoordinatesUnderCursor();
 
-	auto nmOp = scriptSys.GetTableManager().GetTableInfo<
-		&ScriptTableInfo::name>(scriptEditorDisplay_.sourceTableId);
+			scriptEditorDisplay_.textEditor.GetTextEditor().AddTextDecoration(
+				wordStart, wordEnd, TextEditor::TextDecoration::Type::WavyUnderline, ImColor(255, 0, 0, 225));
+		}
+	}
 
-	scriptEditorDisplay_.textEditor.Update(userTypeInfo, nmOp.value_or(""));
+	std::string_view editorWindowName;
+
+	if (auto it = ctx.inProgressScriptStorage.inProgressIdToDataIndex.find(
+		scriptEditorDisplay_.sourceCompoundId.inProgressId);
+		it != ctx.inProgressScriptStorage.inProgressIdToDataIndex.end())
+	{
+		assert(it->second < ctx.inProgressScriptStorage.Size());
+
+		editorWindowName = ctx.inProgressScriptStorage.names[it->second];
+	}
+	else if (scriptSys.ContainsTable(scriptEditorDisplay_.sourceCompoundId.tableId))
+	{
+		auto nameOp = scriptSys.GetTableManager().GetTableInfo<
+			&ScriptTableInfo::name>(scriptEditorDisplay_.sourceCompoundId.tableId);
+
+		if (nameOp)
+		{
+			editorWindowName = *nameOp;
+		}
+	}
+
+	scriptEditorDisplay_.textEditor.Update(userTypeInfo, editorWindowName);
 }
 
 

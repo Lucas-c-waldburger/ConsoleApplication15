@@ -221,12 +221,29 @@ public:
 		enum class Type : uint8_t
 		{
 			None,
-			ErrorUnderline
+			WavyUnderline
 		};
 
 		Coordinates position;
 		int columnSpan = 0;
 		Type type = Type::None;
+		ImColor color = ImColor(0, 0, 0, 255);
+	};
+
+	struct TextTooltip
+	{
+		struct Colors
+		{
+			ImColor textColor = ImColor(0, 0, 0, 0);
+			ImColor bgColor = ImColor(0, 0, 0, 0);
+		};
+
+		Coordinates position;
+		std::string text;
+		Colors colors;
+
+		void PushColors() const;
+		void PopColors() const;
 	};
 
 	TextEditor();
@@ -320,6 +337,7 @@ public:
 	int GetCharacterIndex(const Coordinates& aCoordinates) const;
 
 	// extensions
+	std::pair<Coordinates, Coordinates> GetWordCoordinatesUnderCursor() const;
 	ImVec2 CoordinatesToScreenPos(const Coordinates& aCoordinates) const;
 	Coordinates InsertText(std::string_view aValue, PaletteIndex aColor);
 	Coordinates InsertText(const char* aValue, PaletteIndex aColor);
@@ -335,12 +353,24 @@ public:
 	void ClearGhostText();
 	const GhostText& GetGhostText() const { return mGhostText; }
 	void CommitGhostText();
-	void CommitGhostTextAsMethod();
+	void CommitGhostText(std::string_view appendText, int cursorBackPlacement = 0);
 	bool IsGhostTextVisible() const noexcept { return mGhostText.IsVisible(); }
 
-	bool AddTextDecoration(const Coordinates& aPos, int colSpan, TextDecoration::Type aType);
+	bool AddTextDecoration(const Coordinates& aPos, int colSpan, TextDecoration::Type aType, ImColor aColor);
+	bool AddTextDecoration(const Coordinates& aPosStart, const Coordinates& aPosEnd, TextDecoration::Type aType,
+						   ImColor aColor);
 	void ClearTextDecorations();
 	const std::vector<TextDecoration>& GetTextDecorations() const { return mTextDecorations; }
+
+	bool AddTextTooltip(const Coordinates& aPos, std::string_view aText, 
+						const TextTooltip::Colors& aColors = {});
+	void ClearTextTooltips();
+
+	ImVec2 GetScroll() const noexcept { return mScroll; }
+	ImVec2 GetWindowMin() const noexcept { return mWindowMin; }
+	ImVec2 GetWindowMax() const noexcept { return mWindowMax; }
+
+	bool MouseInsideWindow() const;
 
 private:
 	typedef std::vector<std::pair<std::regex, PaletteIndex>> RegexList;
@@ -394,6 +424,7 @@ private:
 			float startX = -1.0f;
 			float endX = -1.0f;
 			TextDecoration::Type type = TextDecoration::Type::None;
+			ImU32 color = 0;
 		};
 
 		std::vector<Entry> entries;
@@ -443,12 +474,17 @@ private:
 																			const Coordinates& aEnd) const;
 	void RenderColorizedText(const Line& line, ImVec2 textScreenPos, int lineNo, 
 							 int& columnNo, float spaceSize);
-	
+	std::pair<Coordinates, Coordinates> GetWordCoordinatesAt(const Coordinates& aCoords) const;
 
 	uint32_t mHandledKeys = 0xFFFFFFFF;
 	GhostText mGhostText;
 	std::vector<TextDecoration> mTextDecorations;
 	TextDecorationRenderData mTextDecorationRenderData;
+	std::vector<TextTooltip> mTextTooltips;
+	ImVec2 mScreenOrigin = {};
+	ImVec2 mScroll = {};
+	ImVec2 mWindowMin = {};
+	ImVec2 mWindowMax = {};
 
 	void HandleKeyboardInputs();
 	void HandleMouseInputs();

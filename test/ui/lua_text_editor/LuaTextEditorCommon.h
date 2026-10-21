@@ -8,44 +8,46 @@
 namespace ui {
 
 static constexpr std::string_view kFunctionTableScriptTemplateText = R"(
-	local table = {}
+local table = {}
 
-	#functions...
+# -- table functions -- #
 
-	local meta = {
-		__signatures = { 
 
-		}
-	}
-	
-	setmetatable(table, meta)
+# --------------------- #
+
+local meta = {
+    __signatures = { 
+
+    }
+}
+
+setmetatable(table, meta)
 			
-	return table
+return table
 )";
 
 static constexpr std::string_view kSystemTableScriptTemplateText = R"(
-	local table = {}
+local table = {}
 
-	#init
-	function table.init()
+function table.init()
 
-	end
+end
 
-	#update
-	function table.update(dt)
+function table.update(dt)
 
-	end
+end
 
-	local meta = {
-		__signatures = { 
-			init = {},
-			update = {"number"}
-		}
-	}
+local meta = {
+    __signatures = { 
+        init = {},
+        update = {"number"}
+    },
+    __phase = Phase.Input
+}
 	
-	setmetatable(table, meta)
+setmetatable(table, meta)
 			
-	return table
+return table
 )";
 
 } // ui

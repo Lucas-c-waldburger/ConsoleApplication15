@@ -2,22 +2,14 @@
 #include "../../FeatureFlags.h"
 
 #if IMGUI_ENABLED
-#include <string_view>
 #include <vector>
 #include <unordered_map>
 #include <memory>
 #include <optional>
+#include "TreeCursor.h"
+#include "LuaSourceParserCommon.h"
 #include "../../core/Result.h"
 #include "../../core/commonObjects.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "../../../deps/tree-sitter-master/lib/include/tree_sitter/api.h"
-    const TSLanguage* tree_sitter_lua();
-#ifdef __cplusplus
-}
-#endif
 
 namespace ui {
 
@@ -44,87 +36,6 @@ inline UniqueTSTreePtr CreateUniqueTSTreePtr(TSParser* parser, const TSTree* old
 {
 	return UniqueTSTreePtr(ts_parser_parse(parser, oldTree, input));
 }
-
-struct TreeNode
-{
-	TreeNode() : node{0} {}
-	TreeNode(TSNode node, std::string_view src) : node(node), source(src) {}
-
-	operator TSNode& () { return node; }
-	operator const TSNode& () const { return node; }
-
-	operator bool() const { return !ts_node_is_null(node); }
-	bool operator!() const { return ts_node_is_null(node); }
-
-	bool HasErrors() const { return ts_node_has_error(node); }
-	bool IsMissing() const { return ts_node_is_missing(node); }
-	bool IsNamed() const { return ts_node_is_named(node); }
-
-	size_t GetChildCount() const { return ts_node_child_count(node); }
-	size_t GetNamedChildCount() const { return ts_node_named_child_count(node); }
-
-	std::string_view GetText() const;
-	std::string_view GetType() const;
-
-	size_t GetStartPos() const { return ts_node_start_byte(node); }
-	size_t GetEndPos() const { return ts_node_end_byte(node); }
-	TSPoint GetStartPoint() const { return ts_node_start_point(node); }
-	TSPoint GetEndPoint() const { return ts_node_end_point(node); }
-	
-	TSNode node;
-	std::string_view source;
-};
-
-struct TreeCursor
-{
-	TreeCursor() : cursor{}, source{} {}
-	TreeCursor(TSNode node, std::string_view src) : cursor(ts_tree_cursor_new(node)), source(src) {}
-	~TreeCursor() { ts_tree_cursor_delete(&cursor); }
-	TreeCursor(const TreeCursor&) = delete;
-	TreeCursor& operator=(const TreeCursor&) = delete;
-	TreeCursor(TreeCursor&& other) noexcept : cursor(other.cursor), source(other.source)
-	{
-		other.cursor = {};
-	}
-	TreeCursor& operator=(TreeCursor&& other) noexcept
-	{
-		if (this == &other) { return *this; }
-
-		cursor = other.cursor;
-		source = other.source;
-		other.cursor = {};
-		return *this;
-	}
-
-	operator bool() const { return !source.empty(); }
-	bool operator!() const { return source.empty(); }
-
-	TreeNode CurrentNode() const { return TreeNode(ts_tree_cursor_current_node(&cursor), source); }
-
-	bool GoToFirstChild() { return ts_tree_cursor_goto_first_child(&cursor); }
-	bool GoToNextSibling() { return ts_tree_cursor_goto_next_sibling(&cursor); }
-	bool GoToPrevSibling() { return ts_tree_cursor_goto_previous_sibling(&cursor); }
-	bool GoToParent() { return ts_tree_cursor_goto_parent(&cursor); }
-	bool GoToParent(size_t lvls);
-	void Reset() { while (GoToParent()) {} }
-	bool GoToFirstNamedChild();
-	bool GoToNextNamedSibling();
-
-	TSTreeCursor cursor;
-	std::string_view source;
-};
-
-struct SourceLocation
-{
-	size_t start = 0;
-	size_t end = 0;
-};
-
-struct SourceDocumentError
-{
-	std::string message;
-	SourceLocation location;
-};
 
 struct SourceLocationDataIndexPair
 {
@@ -157,10 +68,6 @@ struct ParsedLuaSourceDocument
 class LuaSourceParser
 {
 public:
-	//static constexpr std::string_view kMethodIndexCompletionMarker = "__method_completion_marker__()";
-	//static constexpr std::string_view kDotIndexCompletionMarker = "__dot_completion_marker__";
-	//static constexpr std::string_view kCompletionMarkerText = "__completion_marker__";
-
     LuaSourceParser();
 	~LuaSourceParser() = default;
 	LuaSourceParser(const LuaSourceParser&) = delete;
@@ -176,10 +83,8 @@ public:
 
 	void Reset();
 
-	std::optional<size_t> GetEnclosingFunctionDataIndex(size_t byteOffset) const;
-
+	TreeNode GetRootNode() const;
 	TreeNode GetNodeAtByteOffset(size_t byteOffset) const;
-
 	TreeNode GetNodeAtPoint(TSPoint point);
 
 	const std::string& GetSourceString() const { return source_; }
@@ -191,8 +96,10 @@ public:
 	bool RemoveCompletionMarker(size_t markerSourceOffset);
 	void ClearCompletionMarkers();
 
+	TreeCursor GetCursorAtRoot() const { return TreeCursor(GetRootNode(), source_); }
+	TreeCursor GetCursorAtNode(const TreeNode& node) const { return TreeCursor(node, source_); }
+
 private:
-	TreeNode GetRootNode() const;
 	ParsedLuaSourceDocument ParseDocument();
 	TreeCursor GetCursorAtByteOffset(size_t byteOffset) const;
 

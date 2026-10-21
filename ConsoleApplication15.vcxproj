@@ -371,11 +371,15 @@
     <ClCompile Include="test\ui\InspectorEntityPanel.cpp" />
     <ClCompile Include="test\ui\InspectorEventPanel.cpp" />
     <ClCompile Include="test\ui\InspectorSystemPanel.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentParser.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\ObjectFieldAutoCompleteData.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\AutoCompleteUtility.cpp" />
-    <ClCompile Include="test\ui\lua_text_editor\AutoCompleteUtility2.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceParser.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaTextEditor.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaTextEditorCommon.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\TextDecorationUtility.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\TreeCursor.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\TreeNode.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\TSEditorBridge.cpp" />
     <ClCompile Include="test\ui\MouseWorldNavigator.cpp" />
     <ClCompile Include="test\ui\panel\EditorComponentPanel.cpp" />
@@ -493,9 +497,11 @@
     <ClInclude Include="components\util\ComponentValidPreds.h" />
     <ClInclude Include="core\Anchor.h" />
     <ClInclude Include="core\DirtyValue.h" />
+    <ClInclude Include="core\EnumUtils.h" />
     <ClInclude Include="core\FixedString.h" />
     <ClInclude Include="core\formatters.h" />
     <ClInclude Include="core\PassKey.h" />
+    <ClInclude Include="core\QualifiedTypeIdentity.h" />
     <ClInclude Include="core\Reflection.h" />
     <ClInclude Include="core\TypeInfo.h" />
     <ClInclude Include="core\InlineStorage.h" />
@@ -911,6 +917,7 @@
     <ClInclude Include="scripting\register\NameUserType.h" />
     <ClInclude Include="scripting\register\PhysicsUserTypes.h" />
     <ClInclude Include="scripting\register\RegisterLuaUserTypes.h" />
+    <ClInclude Include="scripting\register\SystemUserTypes.h" />
     <ClInclude Include="scripting\register\UserTypeIncludesInternal.h" />
     <ClInclude Include="scripting\register\UserTypesCommon.h" />
     <ClInclude Include="scripting\register\RenderableUserTypes.h" />
@@ -973,6 +980,7 @@
     <ClInclude Include="test\ui\asset_viewer\AssetViewerCommon.h" />
     <ClInclude Include="test\ui\asset_viewer\AssetViewerUtil.h" />
     <ClInclude Include="test\ui\asset_viewer\AudioPlayerContext.h" />
+    <ClInclude Include="test\ui\asset_viewer\InProgressScriptStorage.h" />
     <ClInclude Include="test\ui\asset_viewer\MusicVisualizer.h" />
     <ClInclude Include="test\ui\asset_viewer\DirectoryViewerChild.h" />
     <ClInclude Include="test\ui\builder\EditorColliderBuilder.h" />
@@ -1002,11 +1010,16 @@
     <ClInclude Include="test\ui\gui_lua_api\GuiLuaApiRegistration.h" />
     <ClInclude Include="test\ui\InspectorCommon.h" />
     <ClInclude Include="test\ui\InspectorComponentPanel.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentParser.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceParserCommon.h" />
+    <ClInclude Include="test\ui\lua_text_editor\ObjectFieldAutoCompleteData.h" />
     <ClInclude Include="test\ui\lua_text_editor\AutoCompleteUtility.h" />
-    <ClInclude Include="test\ui\lua_text_editor\AutoCompleteUtility2.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaSourceParser.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaTextEditor.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaTextEditorCommon.h" />
+    <ClInclude Include="test\ui\lua_text_editor\TextDecorationUtility.h" />
+    <ClInclude Include="test\ui\lua_text_editor\TreeCursor.h" />
+    <ClInclude Include="test\ui\lua_text_editor\TreeNode.h" />
     <ClInclude Include="test\ui\lua_text_editor\TSEditorBridge.h" />
     <ClInclude Include="test\ui\panel\EditorComponentPanel.h" />
     <ClInclude Include="test\ui\panel\EditorEntityPanel.h" />
@@ -1674,6 +1687,7 @@
     <None Include="test\catch\test_scripts\fn_table.lua" />
     <None Include="test\catch\test_scripts\sys_table.lua" />
     <None Include="test\catch\test_scripts\sys_table_2.lua" />
+    <None Include="test\catch\test_scripts\sys_table_with_phase.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc" />

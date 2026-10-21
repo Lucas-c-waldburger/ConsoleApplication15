@@ -40,12 +40,14 @@ static constexpr std::string_view kExpressionListName = "expression_list";
 static constexpr std::string_view kTableConstructorName = "table_constructor";
 static constexpr std::string_view kFunctionDeclarationName = "function_declaration";
 static constexpr std::string_view kDotIndexExpressionName = "dot_index_expression";
+static constexpr std::string_view kMethodIndexExpressionName = "method_index_expression";
 static constexpr std::string_view kIdentifierName = "identifier";
 static constexpr std::string_view kArgumentsName = "arguments";
 static constexpr std::string_view kParametersName = "parameters";
 static constexpr std::string_view kFieldName = "field";
 static constexpr std::string_view kStringName = "string";
 static constexpr std::string_view kStringContentName = "string_content";
+static constexpr std::string_view kBlockName = "block";
 
 static constexpr std::string_view kCompletionMarkerText = "__completion_marker__";
 
@@ -54,129 +56,93 @@ static constexpr bool kAbandonParsing = false;
 
 struct VirtualSource
 {
-    struct Offset
+    struct Segment
     {
-        size_t original = 0;
-        size_t synthetic = 0;
+        uint32_t virtualStart;
+        uint32_t length;
+        const char* data;
     };
 
-	std::vector<Offset> insertionOffsets;
-    size_t currentMarkerTextIndex = 0;
-	std::string_view source;
+    std::string_view source;
+    std::vector<Segment> segments;
+    uint32_t totalSize = 0;
+    std::vector<std::string> test;
 
-    uint32_t Size() const noexcept
-    {
-        return static_cast<uint32_t>(
-            source.size() + insertionOffsets.size() * kCompletionMarkerText.size());
-    }
+    static constexpr std::string_view Marker = kCompletionMarkerText;
 
     void PrepareOffsets(std::span<const uint32_t> positions)
     {
-        insertionOffsets.clear();
-        insertionOffsets.reserve(positions.size());
+        segments.clear();
+        totalSize = 0;
+        test.clear();
 
-        const auto markerSize = static_cast<uint32_t>(kCompletionMarkerText.size());
-        uint32_t shift = 0;
-        uint32_t previous = 0;
-
-        for (uint32_t originalOffset : positions)
-        {
-            assert(originalOffset <= source.size());
-			assert(insertionOffsets.empty() || originalOffset >= previous);
-
-            if (originalOffset > source.size())
+        auto add = [this](std::string_view text)
             {
-                continue;
-            }
+                if (text.empty())
+                    return;
 
-            insertionOffsets.push_back({
-                .original = originalOffset,
-                .synthetic = originalOffset + shift
-            });
-            
-            previous = originalOffset;
-            shift += markerSize;
+                segments.push_back({
+                    totalSize,
+                    static_cast<uint32_t>(text.size()),
+                    text.data()
+                    });
+
+                totalSize += static_cast<uint32_t>(text.size());
+            };
+
+        uint32_t original = 0;
+
+        for (uint32_t position : positions)
+        {
+            assert(position >= original);
+            assert(position <= source.size());
+
+            add(source.substr(original, position - original));
+            add(Marker);
+
+            original = position;
         }
+
+        add(source.substr(original));
     }
 
-    static const char* Read(void* payload, uint32_t byteOffset, TSPoint /* position */,
-                            uint32_t* bytesRead)
+    static const char* Read(
+        void* payload,
+        uint32_t byteOffset,
+        TSPoint,
+        uint32_t* bytesRead)
     {
+        auto& self = *static_cast<VirtualSource*>(payload);
 
-        const auto& self = *static_cast<const VirtualSource*>(payload);
-
-        constexpr uint32_t markerSize =
-            static_cast<uint32_t>(kCompletionMarkerText.size());
-
-        const auto& insertions = self.insertionOffsets;
-        const auto source = self.source;
-
-        const size_t totalSize =
-            source.size() + insertions.size() * markerSize;
-
-        LOG_DEBUG_FMT(
-            "Read: offset={} total={} source={} insertions={}",
-            byteOffset,
-            totalSize,
-            source.size(),
-            insertions.size());
-
-        if (byteOffset >= totalSize)
+        if (byteOffset >= self.totalSize)
         {
             *bytesRead = 0;
-            LOG_DEBUG("bytesRead=0 chunk=''");
             return nullptr;
         }
 
-        // First insertion whose virtual start is strictly after byteOffset.
-        const auto next = std::upper_bound(
-            insertions.begin(),
-            insertions.end(),
+        auto it = std::upper_bound(
+            self.segments.begin(),
+            self.segments.end(),
             byteOffset,
-            [](uint32_t offset, const Offset& insertion)
+            [](uint32_t offset, const Segment& segment)
             {
-                return offset < insertion.synthetic;
+                return offset < segment.virtualStart;
             });
 
-        // The byte may belong to the preceding marker.
-        if (next != insertions.begin())
-        {
-            const auto& previous = *std::prev(next);
+        assert(it != self.segments.begin());
 
-            const size_t markerEnd = previous.synthetic + markerSize;
+        const Segment& segment = *std::prev(it);
+        const uint32_t offsetInSegment =
+            byteOffset - segment.virtualStart;
 
-            if (byteOffset < markerEnd)
-            {
-                const auto offsetInMarker =
-                    static_cast<uint32_t>(byteOffset - previous.synthetic);
+        assert(offsetInSegment < segment.length);
 
-                *bytesRead = markerSize - offsetInMarker;
-				const char* chunk = kCompletionMarkerText.data() + offsetInMarker;
-                
-                LOG_DEBUG_FMT("bytesRead={} chunk={}", *bytesRead, chunk);
+        *bytesRead = segment.length - offsetInSegment;
 
-                return kCompletionMarkerText.data() + offsetInMarker;
-            }
-        }
+		const char* data = segment.data + offsetInSegment;
+        self.test.emplace_back(data);
 
-        // We're in original source text.
-        const size_t markersBefore = next - insertions.begin();
-        const size_t originalOffset =
-            static_cast<size_t>(byteOffset) - markersBefore * markerSize;
-
-        const size_t segmentEnd =
-            next != insertions.end()
-            ? next->original
-            : source.size();
-
-        assert(originalOffset < segmentEnd);
-
-        *bytesRead = static_cast<uint32_t>(segmentEnd - originalOffset);
-		const char* chunk = source.data() + originalOffset;
-
-        LOG_DEBUG_FMT("bytesRead={} chunk={}", *bytesRead, chunk);
-
-        return source.data() + originalOffset;
+        return segment.data + offsetInSegment;
     }
 };
 
@@ -185,7 +151,7 @@ SourceLocation GetNodeSourceLocation(const TreeNode& node)
     return SourceLocation{ node.GetStartPos(), node.GetEndPos() };
 }
 
-bool IsMetaTableNode(const TreeNode& node)
+bool IsMetatableNode(const TreeNode& node)
 {
     return node.GetType() == kIdentifierName && node.GetText() == kSetMetaTableName;
 }
@@ -477,14 +443,10 @@ bool ParseSignatureTableFunctionAndArguments(TreeCursor& cursor, ParsedLuaSource
             cursor.GoToParent();
             continue;
         }
-
+         
 		if (!cursor.GoToFirstNamedChild())
 		{
-			parsedDoc.errors.emplace_back(
-				"Failed to go to first named child of signatures "
-				"function arguments table_constructor node",
-				GetNodeSourceLocation(node));
-
+			// assume no parameters for this function
 			cursor.GoToParent(2);
 			continue;
 		}
@@ -548,7 +510,7 @@ bool ParseMetaAndFunctionTableNames(TreeCursor& cursor, ParsedLuaSourceDocument&
         {
             node = cursor.CurrentNode();
 
-            if (!IsMetaTableNode(node))
+            if (!IsMetatableNode(node))
             {
                 continue;
             }
@@ -773,7 +735,6 @@ bool ParseSignaturesTable(TreeCursor& cursor, ParsedLuaSourceDocument& parsedDoc
 			continue;
 		}
 
-		bool foundField = false;
 		do
 		{
 			if (cursor.CurrentNode().GetType() == kFieldName)
@@ -1017,30 +978,33 @@ ParsedLuaSourceDocument ParseLuaSourceDocument(TreeCursor cursor)
 	return parsedDoc;
 }
 
-} // unnamed
-
-std::string_view TreeNode::GetText() const
+std::vector<TreeNode> GetFunctionDeclarationNodes(LuaSourceParser& parser)
 {
-    const uint32_t start = ts_node_start_byte(node);
-    const uint32_t end = ts_node_end_byte(node);
-
-    if (end >= start && end <= source.size())
+    auto cursor = parser.GetCursorAtRoot();
+    if (!cursor)
     {
-        return source.substr(start, end - start);
-    }
+        return {};
+	}
 
-    return {};
-}
-
-std::string_view TreeNode::GetType() const
-{
-    if (!ts_node_is_named(node))
+    if (!cursor.GoToFirstChild())
     {
         return {};
     }
+     
+	std::vector<TreeNode> functionDeclNodes;
+    do
+    {
+		auto node = cursor.CurrentNode();
+        if (node.GetType() == kFunctionDeclarationName)
+        {
+            functionDeclNodes.emplace_back(node);
+		}
+	} while (cursor.GoToNextSibling());
 
-	return ts_node_type(node);
+	return functionDeclNodes;
 }
+
+} // unnamed
 
 LuaSourceParser::LuaSourceParser() : parser_(CreateUniqueTSParserPtr()), tree_(nullptr)
 {
@@ -1062,9 +1026,6 @@ void LuaSourceParser::Parse(std::string source)
 
 	source_ = std::move(source);
 	sourceDocument_ = ParseDocument();
-
-    LOG_DEBUG("LuaSourceParser::Parse");
-	sourceDocument_.Print();
 }
 
 ParsedLuaSourceDocument LuaSourceParser::ParseDocument()
@@ -1090,6 +1051,59 @@ TreeCursor LuaSourceParser::GetCursorAtByteOffset(size_t byteOffset) const
         byteOffset), source_);
 }
 
+//void LuaSourceParser::EditSource(std::string&& newSource)
+//{
+//    if (!tree_ || source_.empty())
+//    {
+//        return;
+//    }
+//
+//    auto tsEdit = MakeTSInputEdit(source_, newSource);
+//
+//    ts_tree_edit(tree_.get(), &tsEdit);
+//
+//    VirtualSource virtualSource{ .source = newSource };
+//	virtualSource.PrepareOffsets(completionMarkerOffsets_);
+//
+//    TSInput input{
+//        .payload = &virtualSource,
+//        .read = &VirtualSource::Read,
+//        .encoding = TSInputEncodingUTF8,
+//        .decode = nullptr
+//    };
+//
+//    tree_ = CreateUniqueTSTreePtr(parser_.get(), nullptr, input);
+//
+//    if (!completionMarkerOffsets_.empty())
+//    {
+//        LOG_WARNING("\n======================================================================");
+//
+//        LOG_INFO("--- SEGMENTS ---");
+//        LOG_DEBUG_FMT("count: '{}'", virtualSource.segments.size());
+//        for (size_t i = 0; i < virtualSource.segments.size(); ++i)
+//        {
+//			const auto& seg = virtualSource.segments[i];
+//            LOG_DEBUG_FMT("virtualStart: '{}', length: '{}', data: '{}'",
+//                seg.virtualStart, seg.length, seg.data + seg.virtualStart);
+//        }
+//
+//        LOG_INFO("\n--- READ CALLBACK RETURNS ---");
+//        for (size_t i = 0; i < virtualSource.test.size(); ++i)
+//        {
+//			LOG_DEBUG_FMT("[{}] '{}'", i, virtualSource.test[i]);
+//        }
+//        LOG_WARNING("======================================================================\n");
+//    }
+//
+//  //  tree_ = CreateUniqueTSTreePtr(
+//  //      parser_.get(),
+//  //      tree_.get(),
+//		//newSource);
+//
+//	source_ = std::move(newSource);
+//    sourceDocument_ = ParseDocument();
+//}
+
 void LuaSourceParser::EditSource(std::string&& newSource)
 {
     if (!tree_ || source_.empty())
@@ -1101,24 +1115,12 @@ void LuaSourceParser::EditSource(std::string&& newSource)
 
     ts_tree_edit(tree_.get(), &tsEdit);
 
-    VirtualSource virtualSource{ .source = newSource };
-	virtualSource.PrepareOffsets(completionMarkerOffsets_);
+    tree_ = CreateUniqueTSTreePtr(
+          parser_.get(),
+          tree_.get(),
+          newSource);
 
-    TSInput input{
-        .payload = &virtualSource,
-        .read = &VirtualSource::Read,
-        .encoding = TSInputEncodingUTF8,
-        .decode = nullptr
-    };
-
-    tree_ = CreateUniqueTSTreePtr(parser_.get(), nullptr, input);
-
-  //  tree_ = CreateUniqueTSTreePtr(
-  //      parser_.get(),
-  //      tree_.get(),
-		//newSource);
-
-	source_ = std::move(newSource);
+    source_ = std::move(newSource);
     sourceDocument_ = ParseDocument();
 }
 
@@ -1138,39 +1140,6 @@ void LuaSourceParser::Reset()
     source_ = {};
 	sourceDocument_ = {};
     completionMarkerOffsets_.clear();
-}
-
-std::optional<size_t> LuaSourceParser::GetEnclosingFunctionDataIndex(size_t byteOffset) const
-{
-    auto cursor = GetCursorAtByteOffset(byteOffset);
-
-    while (cursor.GoToParent())
-    {
-        if (cursor.CurrentNode().GetType() != kFunctionDeclarationName)
-        {
-            continue;
-        }
-
-        if (!cursor.GoToFirstChild())
-        {
-            continue;
-        }
-
-        do 
-        {
-            if (cursor.CurrentNode().GetType() != kDotIndexExpressionName)
-            {
-                continue;
-            }
-
-            return GetDotIndexExpressionFunctionDataIndex(cursor, sourceDocument_);
-
-        } while (cursor.GoToNextNamedSibling());
-
-        cursor.GoToParent();
-    }
-
-    return std::nullopt;
 }
 
 TreeNode LuaSourceParser::GetNodeAtByteOffset(size_t byteOffset) const
@@ -1289,53 +1258,6 @@ void LuaSourceParser::PrintSyntaxTreeImpl(TSNode node, std::string_view source, 
             depth + 1
         );
     }
-}
-
-bool ui::TreeCursor::GoToParent(size_t lvls)
-{
-    for (size_t i = 0; i < lvls; ++i)
-    {
-        if (!GoToParent())
-        {
-            return false;
-        }
-	}
-
-	return true;
-}
-
-bool TreeCursor::GoToFirstNamedChild()
-{
-    if (!GoToFirstChild())
-    {
-        return false;
-    }
-    do
-    {
-        if (CurrentNode().IsNamed())
-        {
-            return true;
-        }
-    } while (GoToNextSibling());
-
-    return false;
-}
-
-bool TreeCursor::GoToNextNamedSibling()
-{
-    if (!GoToNextSibling())
-    {
-        return false;
-	}
-    do
-    {
-        if (CurrentNode().IsNamed())
-        {
-            return true;
-        }
-    } while (GoToNextSibling());
-
-	return false;
 }
 
 void ParsedLuaSourceDocument::Print() const

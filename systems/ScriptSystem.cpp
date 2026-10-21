@@ -5,6 +5,20 @@
 
 namespace {
 
+std::optional<Phase> TryParsePhaseFromMetatable(const sol::table& fnTable)
+{
+	sol::table meta = fnTable[sol::metatable_key];
+	if (!meta.valid())
+	{
+		return std::nullopt;
+	}
+
+	Phase phase = meta.get_or("__phase", Phase::Invalid);
+
+	return phase;
+}
+
+
 void InvalidateEntityScriptTables(ScriptTable::TableId tableId)
 {
 	auto es = ECS::GetAllEntitiesWith<Script>([tableId](const Script& script) {
@@ -60,11 +74,7 @@ Result<ScriptTable::TableId> ScriptSystem::AddTable(ScriptTableDescriptor&& desc
 
 	if (tableType == ScriptTable::TableType::SystemTable)
 	{
-		if (sysPhase == Phase::Invalid)
-		{
-			return MAKE_ERROR("Script table registered as a system script, but "
-				"Phase was invalid");
-		}
+		assert(sysPhase != Phase::Invalid);
 
 		auto* table = tables_.GetTable(tableId);
 		assert(table);
@@ -83,7 +93,43 @@ Result<ScriptTable::TableId> ScriptSystem::AddTable(ScriptTableDescriptor&& desc
 
 Result<Void> ScriptSystem::ReloadTable(ScriptTable::TableId tableId)
 {
+	if (!tables_.ContainsTable(tableId))
+	{
+		return MAKE_ERROR_FMT("Script table with Id '{}' not found", tableId);
+	}
+
+	auto oldInfoOp = tables_.GetTableInfo<&ScriptTableInfo::tableType, 
+										  &ScriptTableInfo::systemPhase>(tableId);
+	assert(oldInfoOp);
+
+	auto oldTableType = std::get<0>(*oldInfoOp);
+	auto oldSysPhase = std::get<1>(*oldInfoOp);
+
 	TRY(tables_.ReloadTable(tableId, state_));
+
+	auto newInfoOp = tables_.GetTableInfo<&ScriptTableInfo::tableType,
+										  &ScriptTableInfo::systemPhase>(tableId);
+	assert(newInfoOp);
+
+	auto newTableType = std::get<0>(*newInfoOp);
+	auto newSysPhase = std::get<1>(*newInfoOp);
+
+	if (oldTableType == ScriptTable::TableType::SystemTable)
+	{
+		if (newTableType != ScriptTable::TableType::SystemTable)
+		{
+			scriptableUserSubsystem_.RemoveSystemScript(tableId);
+		}
+		else if (oldSysPhase != newSysPhase)
+		{
+			scriptableUserSubsystem_.RemoveSystemScript(tableId);
+
+			auto* table = tables_.GetTable(tableId);
+			assert(table);
+
+			TRY(scriptableUserSubsystem_.AddSystemScript(*table, newSysPhase));
+		}
+	}
 
 	const auto tableName = tables_.GetTableInfo<&ScriptTableInfo::name>(tableId);
 	assert(tableName.has_value());

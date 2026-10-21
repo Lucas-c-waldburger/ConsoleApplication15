@@ -93,7 +93,8 @@ bool AssetViewer::Draw(SceneFixture& fixture)
 	AssetGridViewerChild::ResourceContext gridCtx{
 		.assetTree = directoryViewer_.GetAssetTree(),
 		.icons = icons_,
-		.uiTexturesConverter = uiTexturesConverter
+		.uiTexturesConverter = uiTexturesConverter,
+		.inProgressScriptStorage = inProgressScriptStorage_
 	};
 
 	assetGridViewer_.Draw(fixture, gridCtx);
@@ -148,7 +149,8 @@ bool AssetViewer::Draw(SceneFixture& fixture)
 		.scriptSelection = assetGridViewer_.GetScriptSelection(),
 		.icons = icons_,
 		.loadTargetConverter = loadTargetConverter,
-		.uiTexturesConverter = uiTexturesConverter
+		.uiTexturesConverter = uiTexturesConverter,
+		.inProgressScriptStorage = inProgressScriptStorage_
 	};
 
 	assetPreviewViewer_.Draw(fixture, previewCtx, openGridTabTypeRecord);

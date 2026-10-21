@@ -29,6 +29,7 @@ public:
 		const AssetViewerIcons& icons;
 		const GuiTextureConverter& loadTargetConverter;
 		const GuiTextureConverter& uiTexturesConverter;
+		InProgressScriptStorage& inProgressScriptStorage;
 	};
 
 	struct PlayerIcons
@@ -81,13 +82,9 @@ public:
 	struct ScriptEditorDisplay
 	{
 		LuaTextEditor textEditor;
-		ScriptTable::TableId sourceTableId = ScriptTable::kInvalidTableId;
+		CompoundScriptID sourceCompoundId = {};
 
-		void Reset() 
-		{ 
-			textEditor.Clear();
-			textEditor.SetReadOnly(true); 
-		}
+		void Reset(InProgressScriptStorage& inProgressScriptStorage);
 	};
 
 	const SpriteSeriesPlayer& GetSpriteSeriesAnimator() const { return spriteSeriesAnimator_; }

@@ -45,6 +45,11 @@ void RegisterComponentIds(LuaStateManager& m)
 		ComponentTypeList, ComponentLuaUserTypePred>>::call(cmpIdTable);
 }
 
+void RegisterSystemUserTypes(LuaStateManager& m)
+{
+	RegisterLuaUserType<Phase>(m);
+}
+
 void RegisterCoreUserTypes(LuaStateManager& m)
 {
 	RegisterLuaUserType<Dimensions<int>>(m);
@@ -162,6 +167,7 @@ void RegisterLuaUserTypes(LuaStateManager& m)
 	RegisterAudioUserTypes(m);
 	RegisterEventUserTypes(m);
 	RegisterLuaUserType<Entity>(m);
+	RegisterSystemUserTypes(m);
 	RegisterEngineObjectUserTypes(m);
 }
 

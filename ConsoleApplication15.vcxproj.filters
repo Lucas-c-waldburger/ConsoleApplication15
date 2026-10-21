@@ -651,10 +651,22 @@
     <ClCompile Include="test\ui\lua_text_editor\TSEditorBridge.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\ObjectFieldAutoCompleteData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="test\ui\lua_text_editor\AutoCompleteUtility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\ui\lua_text_editor\AutoCompleteUtility2.cpp">
+    <ClCompile Include="test\ui\lua_text_editor\TreeNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\TreeCursor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\TextDecorationUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentParser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -3470,10 +3482,37 @@
     <ClInclude Include="test\ui\lua_text_editor\TSEditorBridge.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\ObjectFieldAutoCompleteData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="test\ui\lua_text_editor\AutoCompleteUtility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test\ui\lua_text_editor\AutoCompleteUtility2.h">
+    <ClInclude Include="test\ui\lua_text_editor\TreeNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\TreeCursor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\TextDecorationUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\QualifiedTypeIdentity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\EnumUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceParserCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting\register\SystemUserTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\asset_viewer\InProgressScriptStorage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -4378,6 +4417,7 @@
     <None Include="resources\scripts\ui_edit_test.lua" />
     <None Include="resources\scripts\fn_table.lua" />
     <None Include="resources\scripts\incomplete_fn_table_test.lua" />
+    <None Include="test\catch\test_scripts\sys_table_with_phase.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

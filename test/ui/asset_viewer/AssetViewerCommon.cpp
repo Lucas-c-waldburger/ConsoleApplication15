@@ -38,6 +38,8 @@ Result<AssetViewerIcons> AssetViewerIcons::Load(SDL_Renderer* renderer, SpriteAt
 		eventScriptFileLargePath);
 	TRY(ResourcePath::Sprite("ui/editor/system_script_file_icon_large.png"),
 		systemScriptFileLargePath);
+	TRY(ResourcePath::Sprite("ui/editor/invalid_script_file_icon_large.png"),
+		invalidScriptFileLargePath);
 	TRY(ResourcePath::Sprite("ui/editor/lua_file_icon_large.png"),
 		luaFileLargePath);
 	TRY(ResourcePath::Sprite("ui/editor/new_file_icon_large.png"),
@@ -75,6 +77,8 @@ Result<AssetViewerIcons> AssetViewerIcons::Load(SDL_Renderer* renderer, SpriteAt
 		renderer, { .filepath = std::move(eventScriptFileLargePath) }));
 	TRY_ASSIGN(icons.systemScriptFileLargeSprite, atlas.LoadSprite(
 		renderer, { .filepath = std::move(systemScriptFileLargePath) }));
+	TRY_ASSIGN(icons.invalidScriptFileLargeSprite, atlas.LoadSprite(
+		renderer, { .filepath = std::move(invalidScriptFileLargePath) }));
 	TRY_ASSIGN(icons.luaFileLargeSprite, atlas.LoadSprite(
 		renderer, { .filepath = std::move(luaFileLargePath) }));
 	TRY_ASSIGN(icons.newFileLargeSprite, atlas.LoadSprite(

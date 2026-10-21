@@ -10,6 +10,7 @@
 #include "RenderableUserTypes.h"
 #include "SDLUserTypes.h"
 #include "SpriteAnimationLuaUserTypes.h"
+#include "SystemUserTypes.h"
 #include "TextureRepositoryLuaUserTypes.h"
 #include "TimerUserType.h"
 #include "TransformUserType.h"

@@ -3,6 +3,7 @@
 #if IMGUI_ENABLED
 #include "../../Fixtures.h"
 #include "../../../audio/AudioBank.h"
+#include "../lua_text_editor/LuaTextEditorCommon.h"
 
 namespace ui {
 
@@ -198,6 +199,22 @@ void ScrollWithMouse()
 	}
 }
 
+const Sprite& GetScriptSprite(const AssetGridViewerChild::ResourceContext& ctx,
+							  ScriptTable::TableType tableType)
+{
+	return (tableType == ScriptTable::TableType::SystemTable)
+		? ctx.icons.systemScriptFileLargeSprite
+		: (tableType == ScriptTable::TableType::FunctionTable)
+		? ctx.icons.eventScriptFileLargeSprite
+		: ctx.icons.invalidScriptFileLargeSprite;
+}
+
+bool ShouldOpenVacantGridspacePopupMenu(bool clickedOnCell)
+{
+	return ImGui::IsWindowHovered() && !clickedOnCell &&
+		   ImGui::IsMouseClicked(ImGuiMouseButton_Right);
+}
+
 } // unnamed
 
 void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
@@ -264,9 +281,13 @@ void AssetGridViewerChild::Draw(SceneFixture& fixture, ResourceContext& ctx)
 	{
 		auto& scriptSys = fixture.GetSystem<ScriptSystem>();
 
+		UpdateScriptSelection(scriptSys, ctx.inProgressScriptStorage);
+
 		DrawScriptAssetGrid(scriptSys, ctx);
 
-		ResolveScriptPopupContextActions(scriptSys);
+		ResolveScriptPopupContextActions(scriptSys, ctx.inProgressScriptStorage);
+
+		DrawScriptVacantGridspacePopupMenu(ctx.inProgressScriptStorage);
 
 		currentAssetTab_ = AssetItem::Type::Script;
 
@@ -780,11 +801,77 @@ void AssetGridViewerChild::DrawScriptAssetGrid(ScriptSystem& scriptSys, Resource
 		return;
 	}
 
+	int counter = 0;
+	bool clickedOnCell = false;
+
+	for (size_t i = 0; i < ctx.inProgressScriptStorage.Size(); ++i)
+	{
+		if (scriptSys.ContainsTable(ctx.inProgressScriptStorage.tableIds[i]))
+		{
+			// draw the script in the second loop below
+			++counter;
+			continue;
+		}
+
+		ImGui::TableNextColumn();
+		ImGui::PushID(counter);
+
+		const auto inProgressId = ctx.inProgressScriptStorage.inProgressIds[i];
+
+		auto gridCell = AssetGridCell::Place();
+
+		if (gridCell.Clicked())
+		{
+			clickedOnCell = true;
+			if (scriptSelection_.compoundId.inProgressId != inProgressId)
+			{
+				scriptSelection_.Reset();
+				scriptSelection_.compoundId.inProgressId = inProgressId;
+			}
+		}
+
+		bool alreadyRenaming = scriptSelection_.IsRenaming();
+
+		DrawScriptPopupContextMenu(ctx.inProgressScriptStorage.names[i]);
+
+		const bool currentCellSelected = scriptSelection_.compoundId.inProgressId == inProgressId;
+		if (currentCellSelected)
+		{
+			gridCell.DrawSelectedHighlight();
+
+			if (scriptSelection_.state & GridSelectionState::JustDragDroppedIntoGrid)
+			{
+				ImGui::SetScrollHereY();
+				scriptSelection_.state &= ~GridSelectionState::JustDragDroppedIntoGrid;
+			}
+		}
+
+		const auto& sprite = GetScriptSprite(ctx, ctx.inProgressScriptStorage.tableTypes[i]);
+
+		auto tx = ctx.uiTexturesConverter.FromSprite(sprite);
+		assert(tx.textureId != 0);
+
+		gridCell.DrawThumbnailTexture(tx);
+
+		if (currentCellSelected && scriptSelection_.IsRenaming())
+		{
+			HandleScriptSelectionRename(gridCell, scriptSys, ctx.inProgressScriptStorage,
+										!alreadyRenaming);
+		}
+		else
+		{
+			gridCell.DrawDisplayText(ctx.inProgressScriptStorage.names[i]);
+		}
+
+		ImGui::PopID();
+
+		++counter;
+	}
+
 	auto it = scriptSys.GetTableManager().IterTableInfo<&ScriptTableInfo::name, 
 														&ScriptTableInfo::filepath,
 														&ScriptTableInfo::tableType,
 														&ScriptTableInfo::tableId>();
-	int counter = 0;
 
 	for (auto [name, filepath, tableType, tableId] : it)
 	{
@@ -803,18 +890,19 @@ void AssetGridViewerChild::DrawScriptAssetGrid(ScriptSystem& scriptSys, Resource
 
 		if (gridCell.Clicked())
 		{
-			if (scriptSelection_.tableId != tableId)
+			clickedOnCell = true;
+			if (scriptSelection_.compoundId.tableId != tableId)
 			{
 				scriptSelection_.Reset();
-				scriptSelection_.tableId = tableId;
+				scriptSelection_.compoundId.tableId = tableId;
 			}
 		}
 
 		bool alreadyRenaming = scriptSelection_.IsRenaming();
 
-		DrawScriptPopupContextMenu(scriptSys);
+		DrawScriptPopupContextMenu(name);
 
-		const bool currentCellSelected = scriptSelection_.tableId == tableId;
+		const bool currentCellSelected = scriptSelection_.compoundId.tableId == tableId;
 		if (currentCellSelected)
 		{
 			gridCell.DrawSelectedHighlight();
@@ -826,9 +914,7 @@ void AssetGridViewerChild::DrawScriptAssetGrid(ScriptSystem& scriptSys, Resource
 			}
 		}
 
-		const auto& sprite = (tableType == ScriptTable::TableType::SystemTable)
-			? ctx.icons.systemScriptFileLargeSprite
-			: ctx.icons.eventScriptFileLargeSprite;
+		const auto& sprite = GetScriptSprite(ctx, tableType);
 
 		auto tx = ctx.uiTexturesConverter.FromSprite(sprite);
 		assert(tx.textureId != 0);
@@ -837,7 +923,8 @@ void AssetGridViewerChild::DrawScriptAssetGrid(ScriptSystem& scriptSys, Resource
 
 		if (currentCellSelected && scriptSelection_.IsRenaming())
 		{
-			HandleScriptSelectionRename(gridCell, scriptSys, !alreadyRenaming);
+			HandleScriptSelectionRename(gridCell, scriptSys, ctx.inProgressScriptStorage, 
+										!alreadyRenaming);
 		}
 		else
 		{
@@ -850,6 +937,11 @@ void AssetGridViewerChild::DrawScriptAssetGrid(ScriptSystem& scriptSys, Resource
 	}
 
 	ImGui::EndTable();
+
+	if (ShouldOpenVacantGridspacePopupMenu(clickedOnCell))
+	{
+		ImGui::OpenPopup("ScriptVacantGridspacePopup");
+	}
 }
 
 AssetItem::Type AssetGridViewerChild::HandleDirectoryAssetDragDropTarget(const AssetItem& item, 
@@ -1054,7 +1146,7 @@ AssetItem::Type AssetGridViewerChild::HandleScriptAssetDragDropTarget(const Asse
 	else
 	{
 		scriptSelection_.Reset();
-		scriptSelection_.tableId = tableResult.GetValue();
+		scriptSelection_.compoundId.tableId = tableResult.GetValue();
 		scriptSelection_.state |= GridSelectionState::JustDragDroppedIntoGrid;
 	}
 
@@ -1231,7 +1323,7 @@ void AssetGridViewerChild::DrawFontPopupContextMenu(FontAtlas& fontAtlas)
 	}
 }
 
-void AssetGridViewerChild::DrawScriptPopupContextMenu(ScriptSystem& scriptSys)
+void AssetGridViewerChild::DrawScriptPopupContextMenu(const std::string& scriptName)
 {
 	if (!scriptSelection_.HasSelection())
 	{
@@ -1249,11 +1341,7 @@ void AssetGridViewerChild::DrawScriptPopupContextMenu(ScriptSystem& scriptSys)
 		{
 			scriptSelection_.currentRename.clear();
 
-			auto scriptName = scriptSys.GetTableManager().GetTableInfo<
-				&ScriptTableInfo::name>(scriptSelection_.tableId);
-			assert(scriptName.has_value());
-
-			scriptSelection_.currentRename = *scriptName;
+			scriptSelection_.currentRename = scriptName;
 
 			scriptSelection_.state |= GridSelectionState::Renaming;
 		}
@@ -1281,6 +1369,45 @@ void AssetGridViewerChild::DrawSpriteTabItemMenu(SpriteAtlas& loadTargetAtlas)
 		}
 
 		LOG_IF_ERROR(loadTargetAtlas.DefineSpriteSeries(newSeriesDisplayName, {}));
+	}
+}
+
+void AssetGridViewerChild::DrawScriptVacantGridspacePopupMenu(InProgressScriptStorage& inProgressScriptStorage)
+{
+	if (ImGui::BeginPopup("ScriptVacantGridspacePopup"))
+	{
+		bool complete = false;
+
+		if (ImGui::BeginMenu("New Script"))
+		{
+			if (ImGui::MenuItem("Function Table"))
+			{
+				AddNewInProgressScript(inProgressScriptStorage, 
+									   ScriptTable::TableType::FunctionTable);
+				complete = true;
+			}
+			if (ImGui::MenuItem("System Table"))
+			{
+				AddNewInProgressScript(inProgressScriptStorage, 
+									  ScriptTable::TableType::SystemTable);
+				complete = true;
+			}
+			if (ImGui::MenuItem("Empty"))
+			{
+				AddNewInProgressScript(inProgressScriptStorage,
+									  ScriptTable::TableType::Invalid);
+				complete = true;
+			}
+
+			ImGui::EndMenu();
+		}
+
+		if (complete)
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
 	}
 }
 
@@ -1416,21 +1543,33 @@ void AssetGridViewerChild::ResolveFontPopupContextActions(FontAtlas& fontAtlas)
 	}
 }
 
-void AssetGridViewerChild::ResolveScriptPopupContextActions(ScriptSystem& scriptSys)
+void AssetGridViewerChild::ResolveScriptPopupContextActions(ScriptSystem& scriptSys,
+															InProgressScriptStorage& inProgressScriptStorage)
 {
 	if (scriptSelection_.state & GridSelectionState::RequestErase)
 	{
-		if (scriptSys.ContainsTable(scriptSelection_.tableId))
+		auto& [tableId, inProgressId] = scriptSelection_.compoundId;
+
+		if (inProgressId != kInvalidInProgressScriptID)
 		{
-			const bool erased = scriptSys.RemoveTable(scriptSelection_.tableId);
+			const bool erased = inProgressScriptStorage.Erase(inProgressId);
 			if (!erased)
 			{
-				LOG_ERROR("Failed to remove script table");
+				LOG_ERROR("Failed to erase in-progress script");
 			}
-			else
+
+			inProgressId = kInvalidInProgressScriptID;
+		}
+		
+		if (scriptSys.ContainsTable(scriptSelection_.compoundId.tableId))
+		{
+			const bool erased = scriptSys.RemoveTable(tableId);
+			if (!erased)
 			{
-				scriptSelection_.tableId = ScriptTable::kInvalidTableId;
+				LOG_ERROR("Failed to erase script table");
 			}
+
+			tableId = ScriptTable::kInvalidTableId;
 		}
 
 		scriptSelection_.currentRename.clear();
@@ -1526,7 +1665,9 @@ void AssetGridViewerChild::HandleFontSelectionRename(const AssetGridCell& gridCe
 }
 
 void AssetGridViewerChild::HandleScriptSelectionRename(const AssetGridCell& gridCell, 
-													   ScriptSystem& scriptSys, bool renameStartedThisFrame)
+													   ScriptSystem& scriptSys, 
+													   InProgressScriptStorage& inProgressScriptStorage,
+													   bool renameStartedThisFrame)
 {
 	assert(scriptSelection_.IsRenaming());
 
@@ -1540,15 +1681,77 @@ void AssetGridViewerChild::HandleScriptSelectionRename(const AssetGridCell& grid
 
 	if (outcome == AssetGridCell::RenameOutcome::Complete)
 	{
-		if (scriptSys.ContainsTable(scriptSelection_.tableId))
+		const auto [tableId, inProgressId] = scriptSelection_.compoundId;
+
+		if (inProgressId != kInvalidInProgressScriptID)
 		{
-			LOG_IF_ERROR(scriptSys.SetTableName(scriptSelection_.tableId,
-				scriptSelection_.currentRename));
+			if (auto it = inProgressScriptStorage.inProgressIdToDataIndex.find(inProgressId); 
+				it != inProgressScriptStorage.inProgressIdToDataIndex.end())
+			{
+				assert(it->second < inProgressScriptStorage.names.size());
+				inProgressScriptStorage.names[it->second] = scriptSelection_.currentRename;
+			}
+		}
+
+		if (scriptSys.ContainsTable(tableId))
+		{
+			LOG_IF_ERROR(scriptSys.SetTableName(tableId, scriptSelection_.currentRename));
 		}
 	}
 
 	scriptSelection_.currentRename.clear();
 	scriptSelection_.state &= ~GridSelectionState::Renaming;
+}
+
+void AssetGridViewerChild::AddNewInProgressScript(InProgressScriptStorage& inProgressScriptStorage,
+												  ScriptTable::TableType tableType)
+{
+	const auto inProgressId = inProgressScriptStorage.AddEntry();
+
+	switch (tableType)
+	{
+	case ScriptTable::TableType::FunctionTable:
+		inProgressScriptStorage.contents.back() = kFunctionTableScriptTemplateText;
+		break;
+	case ScriptTable::TableType::SystemTable:
+		inProgressScriptStorage.contents.back() = kSystemTableScriptTemplateText;
+		break;
+	default:
+		break;
+	}
+
+	inProgressScriptStorage.tableTypes.back() = tableType;
+
+	scriptSelection_.Reset();
+	scriptSelection_.compoundId.inProgressId = inProgressId;
+	scriptSelection_.state = GridSelectionState::JustDragDroppedIntoGrid;
+}
+
+void AssetGridViewerChild::UpdateScriptSelection(
+	ScriptSystem& scriptSys, const InProgressScriptStorage& inProgressScriptStorage)
+{
+	auto& [tableId, inProgressId] = scriptSelection_.compoundId;
+
+	if (auto it = inProgressScriptStorage.inProgressIdToDataIndex.find(inProgressId);
+		it != inProgressScriptStorage.inProgressIdToDataIndex.end())
+	{
+		assert(it->second < inProgressScriptStorage.Size());
+		assert(inProgressId == inProgressScriptStorage.inProgressIds[it->second]);
+
+		// update tableId if was only in progress and now exists in script sys
+		tableId = inProgressScriptStorage.tableIds[it->second];
+	}
+
+	if (auto it = inProgressScriptStorage.tableIdToDataIndex.find(tableId);
+		it != inProgressScriptStorage.tableIdToDataIndex.end())
+	{
+		assert(it->second < inProgressScriptStorage.Size());
+		assert(tableId == inProgressScriptStorage.tableIds[it->second]);
+		assert(scriptSys.ContainsTable(tableId));
+
+		// update inProgressId if was a read-only script table that is now in progress
+		inProgressId = inProgressScriptStorage.inProgressIds[it->second];
+	}
 }
 
 } // ui

@@ -66,11 +66,11 @@ TEST_CASE("Parsing UserTypes", "[script][k]")
 	const auto dataIdx2 = userTypeInfo.GetDataIndex<TestStructA>();
 	CHECK(dataIdx.value == dataIdx2.value);
 
-	CHECK(userTypeInfo.GetUserTypeNames()[dataIdx] == "TestStructA");
-	CHECK(userTypeInfo.GetUserTypeIds()[dataIdx] == TypeInfo<TestStructA>::hash32);
+	CHECK(userTypeInfo.GetAllUserTypeNames()[dataIdx] == "TestStructA");
+	CHECK(userTypeInfo.GetAllUserTypeIds()[dataIdx] == TypeInfo<TestStructA>::hash32);
 
-	const auto& fieldNames = userTypeInfo.GetUserTypeFieldNames()[dataIdx];
-	const auto& memberKinds = userTypeInfo.GetUserTypeMemberKinds()[dataIdx];
+	const auto& fieldNames = userTypeInfo.GetAllUserTypeFieldNames()[dataIdx];
+	const auto& memberKinds = userTypeInfo.GetAllUserTypeFieldMemberKinds()[dataIdx];
 
 	REQUIRE(fieldNames.size() == 4); // metafunction skipped
 	REQUIRE(fieldNames.size() == memberKinds.size());
@@ -118,11 +118,11 @@ TEST_CASE("Parsing Enums", "[script][k]")
 	const auto dataIdx2 = userTypeInfo.GetDataIndex<TestEnumA>();
 	CHECK(dataIdx.value == dataIdx2.value);
 
-	CHECK(userTypeInfo.GetUserTypeNames()[dataIdx] == "TestEnumA");
-	CHECK(userTypeInfo.GetUserTypeIds()[dataIdx] == TypeInfo<TestEnumA>::hash32);
+	CHECK(userTypeInfo.GetAllUserTypeNames()[dataIdx] == "TestEnumA");
+	CHECK(userTypeInfo.GetAllUserTypeIds()[dataIdx] == TypeInfo<TestEnumA>::hash32);
 
-	const auto& fieldNames = userTypeInfo.GetUserTypeFieldNames()[dataIdx];
-	const auto& memberKinds = userTypeInfo.GetUserTypeMemberKinds()[dataIdx];
+	const auto& fieldNames = userTypeInfo.GetAllUserTypeFieldNames()[dataIdx];
+	const auto& memberKinds = userTypeInfo.GetAllUserTypeFieldMemberKinds()[dataIdx];
 
 	REQUIRE(fieldNames.size() == 3);
 	REQUIRE(fieldNames.size() == memberKinds.size());

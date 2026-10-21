@@ -41,7 +41,7 @@ uint32_t LuaStateManager::GetRegisteredTypeId(std::string_view name) const
 
 	if (auto idx = GetLuaUserTypeInfo().GetDataIndex(name); idx.IsValid())
 	{
-		return userTypeInfo_.GetUserTypeIds()[idx];
+		return userTypeInfo_.GetAllUserTypeIds()[idx];
 	}
 
 	return kInvalidLuaTypeId;

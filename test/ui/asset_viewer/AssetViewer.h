@@ -1,6 +1,7 @@
 #pragma once
 #include "AssetPreviewViewerChild.h"
 #include "DirectoryViewerChild.h"
+#include "InProgressScriptStorage.h"
 
 #if IMGUI_ENABLED
 
@@ -30,6 +31,7 @@ private:
 	AssetGridViewerChild assetGridViewer_;
 	AssetPreviewViewerChild assetPreviewViewer_;
 	DirectoryViewerChildInfo dirChildInfo_;
+	InProgressScriptStorage inProgressScriptStorage_;
 };
 
 

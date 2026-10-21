@@ -1201,7 +1201,7 @@ struct TestMagicEnumHolder
 	TestMagicEnumB b = TestMagicEnumB::Invalid;
 };
 
-TEST_CASE("LuaStateManager::AutoRegister", "[script][b]")
+TEST_CASE("LuaStateManager::AutoRegister", "[script]")
 {
 	Logger::StartSession();
 	LuaStateManager state{};
@@ -1388,5 +1388,43 @@ TEST_CASE("LuaStateManager::AutoRegister", "[script][b]")
 
 		CHECK(holder.a == TestMagicEnumA::San);
 		CHECK(holder.b == TestMagicEnumB::Dos);
+	}
+}
+
+TEST_CASE("ScriptTableManager parses phase from System Table", "[script][p]")
+{
+	Logger::StartSession();
+	LuaStateManager state{};
+	state.InitWithEngineTypes();
+
+	ScriptTableManager tableManager{};
+
+	auto sysTableFilepath = MakeScriptTestPath("sys_table_with_phase.lua");
+	REQUIRE(std::filesystem::exists(sysTableFilepath));
+
+	SECTION("Specified System Table with no Phase in descriptor")
+	{
+		ScriptTableDescriptor desc{
+			.filepath = sysTableFilepath.string(),
+			.tableType = ScriptTable::TableType::SystemTable,
+			.systemPhase = Phase::Invalid
+		};
+
+		auto tableLoadResult = tableManager.AddTable(std::move(desc), state);
+		REQUIRE(tableLoadResult.Success());
+
+		const auto tableId = tableLoadResult.GetValue();
+
+		REQUIRE(tableManager.ContainsTable(tableId));
+
+		auto infoOp = tableManager.GetTableInfo(tableId);
+		REQUIRE(infoOp.has_value());
+
+		auto [nm, fp, tblType, sysPhase, id] = *infoOp;
+
+		CHECK(nm == "sys_table_with_phase");
+		CHECK(fp == sysTableFilepath.string());
+		CHECK(tblType == ScriptTable::TableType::SystemTable);
+		CHECK(sysPhase == Phase::Input);
 	}
 }

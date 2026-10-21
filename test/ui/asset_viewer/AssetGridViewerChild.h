@@ -4,6 +4,7 @@
 #if IMGUI_ENABLED
 #include "AssetGridCell.h"
 #include "AssetTree.h"
+#include "InProgressScriptStorage.h"
 
 class SceneFixture;
 class AudioBank;
@@ -118,17 +119,17 @@ public:
 
 	struct ScriptAssetGridSelection : GridSelection
 	{
-		ScriptTable::TableId tableId;
+		CompoundScriptID compoundId = {};
 
 		void Reset()
 		{
-			tableId = ScriptTable::kInvalidTableId;
+			compoundId = {};
 			ClearRename();
 		}
 
 		bool HasSelection() const
 		{
-			return tableId != ScriptTable::kInvalidTableId;
+			return !compoundId.Empty();
 		}
 	};
 
@@ -137,6 +138,7 @@ public:
 		const AssetTree& assetTree;
 		const AssetViewerIcons& icons;
 		const GuiTextureConverter& uiTexturesConverter;
+		InProgressScriptStorage& inProgressScriptStorage;
 	};
 
 	void Draw(SceneFixture& fixture, ResourceContext& ctx);
@@ -182,14 +184,16 @@ private:
 	void DrawSpritePopupContextMenu(SpriteAtlas& loadTargetAtlas);
 	void DrawAudioPopupContextMenu(AudioBank& audioBank);
 	void DrawFontPopupContextMenu(FontAtlas& fontAtlas);
-	void DrawScriptPopupContextMenu(ScriptSystem& scriptSys);
+	void DrawScriptPopupContextMenu(const std::string& scriptName);
 
 	void DrawSpriteTabItemMenu(SpriteAtlas& loadTargetAtlas);
+	void DrawScriptVacantGridspacePopupMenu(InProgressScriptStorage& inProgressScriptStorage);
 
 	void ResolveSpritePopupContextActions(SpriteAtlas& loadTargetAtlas);
 	void ResolveAudioPopupContextActions(AudioBank& audioBank);
 	void ResolveFontPopupContextActions(FontAtlas& fontAtlas);
-	void ResolveScriptPopupContextActions(ScriptSystem& scriptSys);
+	void ResolveScriptPopupContextActions(ScriptSystem& scriptSys, 
+										  InProgressScriptStorage& inProgressScriptStorage);
 
 	void HandleSpriteSelectionRename(const AssetGridCell& gridCell, SpriteAtlas& loadTargetAtlas,
 									 bool renameStartedThisFrame);
@@ -198,7 +202,14 @@ private:
 	void HandleFontSelectionRename(const AssetGridCell& gridCell, FontAtlas& fontAtlas,
 								   bool renameStartedThisFrame);
 	void HandleScriptSelectionRename(const AssetGridCell& gridCell, ScriptSystem& scriptSys,
+									 InProgressScriptStorage& inProgressScriptStorage,
 									 bool renameStartedThisFrame);
+
+	void AddNewInProgressScript(InProgressScriptStorage& inProgressScriptStorage, 
+								ScriptTable::TableType tableType);
+
+	void UpdateScriptSelection(ScriptSystem& scriptSys, 
+							   const InProgressScriptStorage& inProgressScriptStorage);
 
 	std::optional<AssetItem::Type> forceAssetTabOpen_;
 	SpriteAssetGridSelection spriteSelection_;

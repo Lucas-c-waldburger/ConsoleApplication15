@@ -6,13 +6,27 @@
 #include "../core/TypeUtils.h"
 #include "../core/FuncTraits.h"
 #include "../core/SOAConcepts.h"
+#include "../core/QualifiedTypeIdentity.h"
 
 namespace detail {
 
+template <typename T> struct member_ptr_ret_type;
+
+template <typename Class, typename T>
+struct member_ptr_ret_type<T Class::*> { using type = T; };
+
 template <typename> struct is_sol_property;
 
-template <typename F, typename G>
-struct is_sol_property<sol::property_wrapper<F, G>> : std::true_type {};
+template <typename R, typename W>
+struct is_sol_property<sol::property_wrapper<R, W>> : std::true_type {};
+
+template <typename> struct sol_property_getter;
+
+template <typename R, typename W>
+struct sol_property_getter<sol::property_wrapper<R, W>>
+{
+	using type = std::remove_cvref_t<typename func_traits<R>::return_type>;
+};
 
 template <typename> struct is_sol_overload;
 
@@ -58,6 +72,19 @@ struct is_lambda_based_method<T, Fn, std::void_t<decltype(&Fn::operator())>>
 		}
 	}();
 };
+
+template <typename T>
+static constexpr uint32_t GetResolvedLuaTypeId()
+{
+	if constexpr (IsNativeLuaType<T>())
+	{
+		return GetNativeLuaTypeId<T>();
+	}
+	else
+	{
+		return TypeInfo<T>::hash32;
+	}
+}
 
 } // detail
 
@@ -113,6 +140,76 @@ inline constexpr LuaUsertypeMemberKind GetLuaUsertypeMemberKind()
 	}
 }
 
+template <typename V>
+inline void FillLuaUsertypeFieldArgumentTypeIds(std::vector<uint32_t>& argTypeIds)
+{
+	using ValueType = std::remove_cvref_t<V>;
+
+	if constexpr (HasFuncTraits<ValueType>)
+	{
+		static constexpr size_t argCount = func_traits<ValueType>::argCount;
+
+		if constexpr (argCount == 0)
+		{
+			return;
+		}
+		else
+		{
+			argTypeIds.reserve(argCount);
+
+			static constexpr auto fillOne = []<size_t I>(std::vector<uint32_t>& ids) {
+				using ArgType = std::remove_cvref_t<
+					typename func_traits<ValueType>::template arg_at<I>
+				>;
+
+				if constexpr (IsNativeLuaType<ArgType>())
+				{
+					ids.emplace_back(GetNativeLuaTypeId<ArgType>());
+				}
+				else
+				{
+					ids.emplace_back(TypeInfo<ArgType>::hash32);
+				}
+			};
+
+			[]<size_t...Is>(std::vector<uint32_t>& ids, std::index_sequence<Is...>) {
+				(fillOne.template operator()<Is>(ids), ...);
+			}(argTypeIds, std::make_index_sequence<argCount>());
+		}
+	}
+}
+
+template <typename V>
+inline constexpr uint32_t GetLuaUsertypeFieldResultType()
+{
+	using ValueType = std::remove_cvref_t<V>;
+
+	if constexpr (std::is_member_object_pointer_v<ValueType>)
+	{
+		using MemberType = std::remove_cvref_t<
+			typename detail::member_ptr_ret_type<ValueType>::type>;
+
+		return detail::GetResolvedLuaTypeId<MemberType>();
+	}
+	else if constexpr (SomeSolProperty<ValueType>)
+	{
+		using GetterRetType = std::remove_cvref_t<
+			typename detail::sol_property_getter<ValueType>::type>;
+
+		return detail::GetResolvedLuaTypeId<GetterRetType>();
+	}
+	else if constexpr (HasFuncTraits<ValueType>)
+	{
+		using FnRetType = typename func_traits<ValueType>::return_type;
+
+		return detail::GetResolvedLuaTypeId<FnRetType>();
+	}
+	else
+	{
+		return kInvalidLuaTypeId;
+	}
+}
+
 //template <typename V>
 //inline constexpr uint32_t TryGetLuaUsertypeFieldReturnType()
 //{
@@ -152,14 +249,18 @@ template <typename T>
 struct parse_lua_usertype_members<T>
 {
 	static void call(std::vector<std::string>&,
-					 std::vector<LuaUsertypeMemberKind>&) {}
+					 std::vector<LuaUsertypeMemberKind>&,
+					 std::vector<std::vector<uint32_t>>&,
+					 std::vector<uint32_t>&) {}
 };
 
 template <typename T, typename K>
 struct parse_lua_usertype_members<T, K>
 {
 	static void call(std::vector<std::string>&,
-					 std::vector<LuaUsertypeMemberKind>&, const K&) 
+					 std::vector<LuaUsertypeMemberKind>&, 
+					 std::vector<std::vector<uint32_t>>&, 
+					 std::vector<uint32_t>&, const K&) 
 	{
 		static_assert(!ConvertibleToStringView<K>);
 	}
@@ -170,6 +271,8 @@ struct parse_lua_usertype_members<T, K, V, Rest...>
 {
 	static void call(std::vector<std::string>& fieldNames,
 		std::vector<LuaUsertypeMemberKind>& memberKinds,
+		std::vector<std::vector<uint32_t>>& argTypeIds,
+		std::vector<uint32_t>& resultTypeIds,
 		const K& k, const V& v, const Rest&...rest)
 	{
 		if constexpr (ConvertibleToStringView<K>)
@@ -178,17 +281,19 @@ struct parse_lua_usertype_members<T, K, V, Rest...>
 
 			fieldNames.emplace_back(k);
 			memberKinds.emplace_back(GetLuaUsertypeMemberKind<T, V>());
+			argTypeIds.emplace_back();
+			FillLuaUsertypeFieldArgumentTypeIds<V>(argTypeIds.back());
+			resultTypeIds.emplace_back(GetLuaUsertypeFieldResultType<V>());
 		}
-
 		if constexpr (ConvertibleToStringView<V>)
 		{
 			parse_lua_usertype_members<T, V, Rest...>::call(
-				fieldNames, memberKinds, v, rest...);
+				fieldNames, memberKinds, argTypeIds, resultTypeIds, v, rest...);
 		}
 		else
 		{
 			parse_lua_usertype_members<T, Rest...>::call(
-				fieldNames, memberKinds, rest...);
+				fieldNames, memberKinds, argTypeIds, resultTypeIds, rest...);
 		}
 	}
 };
@@ -220,7 +325,9 @@ public:
 		userTypeNames_(std::move(other.userTypeNames_)),
 		userTypeIds_(std::move(other.userTypeIds_)),
 		userTypeFieldNames_(std::move(other.userTypeFieldNames_)),
-		userTypeMemberKinds_(std::move(other.userTypeMemberKinds_))
+		userTypeFieldMemberKinds_(std::move(other.userTypeFieldMemberKinds_)),
+		userTypeFieldArgumentTypeIds_(std::move(other.userTypeFieldArgumentTypeIds_)),
+		userTypeFieldResultTypeIds_(std::move(other.userTypeFieldResultTypeIds_))
 	{
 		other.userTypeNameToDataIndex_.clear();
 		other.userTypeIdToDataIndex_.clear();
@@ -234,7 +341,9 @@ public:
 		userTypeNames_ = std::move(other.userTypeNames_);
 		userTypeIds_ = std::move(other.userTypeIds_);
 		userTypeFieldNames_ = std::move(other.userTypeFieldNames_);
-		userTypeMemberKinds_ = std::move(other.userTypeMemberKinds_);
+		userTypeFieldMemberKinds_ = std::move(other.userTypeFieldMemberKinds_);
+		userTypeFieldArgumentTypeIds_ = std::move(other.userTypeFieldArgumentTypeIds_);
+		userTypeFieldResultTypeIds_ = std::move(other.userTypeFieldResultTypeIds_);
 
 		other.userTypeNameToDataIndex_.clear();
 		other.userTypeIdToDataIndex_.clear();
@@ -254,16 +363,22 @@ public:
 	}
 
 	const std::vector<std::string>&
-	GetUserTypeNames() const { return userTypeNames_; }
+	GetAllUserTypeNames() const { return userTypeNames_; }
 
 	const std::vector<uint32_t>&
-	GetUserTypeIds() const { return userTypeIds_; }
+	GetAllUserTypeIds() const { return userTypeIds_; }
 
 	const std::vector<std::vector<std::string>>&
-	GetUserTypeFieldNames() const { return userTypeFieldNames_; }
+	GetAllUserTypeFieldNames() const { return userTypeFieldNames_; }
 
 	const std::vector<std::vector<LuaUsertypeMemberKind>>&
-	GetUserTypeMemberKinds() const { return userTypeMemberKinds_; }
+	GetAllUserTypeFieldMemberKinds() const { return userTypeFieldMemberKinds_; }
+	
+	const std::vector<std::vector<std::vector<uint32_t>>>&
+	GetAllUserTypeFieldArgumentTypeIds() const { return userTypeFieldArgumentTypeIds_; }
+
+	const std::vector<std::vector<uint32_t>>&
+	GetAllUserTypeFieldResultTypeIds() const { return userTypeFieldResultTypeIds_; }
 
 	template <typename T> requires std::same_as<raw_type_t<T>, T>
 	DataIndex GetDataIndex() const
@@ -273,6 +388,61 @@ public:
 		return (it != userTypeIdToDataIndex_.end())
 			? DataIndex{ it->second }
 			: DataIndex{ std::numeric_limits<size_t>::max() };
+	}
+
+	const std::string& GetUserTypeName(DataIndex idx) const
+	{
+		if (idx.IsValid() && idx.value < userTypeNames_.size())
+		{
+			return userTypeNames_[idx.value];
+		}
+		return Null<std::string>();
+	}
+	uint32_t GetUserTypeId(DataIndex idx) const
+	{
+		if (idx.IsValid() && idx.value < userTypeIds_.size())
+		{
+			return userTypeIds_[idx.value];
+		}
+		return kInvalidLuaTypeId;
+	}
+	const std::vector<std::string>& GetUserTypeFieldNames(DataIndex idx) const
+	{
+		if (idx.IsValid() && idx.value < userTypeFieldNames_.size())
+		{
+			return userTypeFieldNames_[idx.value];
+		}
+		return Null<std::vector<std::string>>();
+	}
+	const std::vector<LuaUsertypeMemberKind>& GetUserTypeFieldMemberKinds(DataIndex idx) const
+	{
+		if (idx.IsValid() && idx.value < userTypeFieldMemberKinds_.size())
+		{
+			return userTypeFieldMemberKinds_[idx.value];
+		}
+		return Null<std::vector<LuaUsertypeMemberKind>>();
+	}
+	const std::vector<std::vector<uint32_t>>& GetUserTypeFieldArgumentTypeIds(DataIndex idx) const
+	{
+		if (idx.IsValid() && idx.value < userTypeFieldArgumentTypeIds_.size())
+		{
+			return userTypeFieldArgumentTypeIds_[idx.value];
+		}
+		return Null<std::vector<std::vector<uint32_t>>>();
+	}
+	const std::vector<uint32_t>& GetUserTypeFieldResultTypeIds(DataIndex idx) const
+	{
+		if (idx.IsValid() && idx.value < userTypeFieldResultTypeIds_.size())
+		{
+			return userTypeFieldResultTypeIds_[idx.value];
+		}
+		return Null<std::vector<uint32_t>>();
+	}
+
+	template <auto...ptrs> requires (sizeof...(ptrs) > 0)
+	auto operator()(DataIndex idx) const
+	{
+		return std::tie((this->*ptrs)(idx)...);
 	}
 
 	void Commit()
@@ -309,9 +479,12 @@ public:
 		userTypeIds_.back() = TypeInfo<T>::hash32;
 
 		auto& fieldNames = userTypeFieldNames_.back();
-		auto& memberKinds = userTypeMemberKinds_.back();
+		auto& memberKinds = userTypeFieldMemberKinds_.back();
+		auto& argTypeIds = userTypeFieldArgumentTypeIds_.back();
+		auto& resultTypeIds = userTypeFieldResultTypeIds_.back();
 
-		detail::parse_lua_usertype_members<T, Args...>::call(fieldNames, memberKinds, args...);
+		detail::parse_lua_usertype_members<T, Args...>::call(
+			fieldNames, memberKinds, argTypeIds, resultTypeIds, args...);
 	}
 
 	bool IsCommitted() const { return committed_; }
@@ -324,7 +497,9 @@ private:
 		userTypeNames_.emplace_back();
 		userTypeIds_.emplace_back();
 		userTypeFieldNames_.emplace_back();
-		userTypeMemberKinds_.emplace_back();
+		userTypeFieldMemberKinds_.emplace_back();
+		userTypeFieldArgumentTypeIds_.emplace_back();
+		userTypeFieldResultTypeIds_.emplace_back();
 
 		return idx;
 	}
@@ -332,8 +507,9 @@ private:
 	std::vector<std::string> userTypeNames_;
 	std::vector<uint32_t> userTypeIds_;
 	std::vector<std::vector<std::string>> userTypeFieldNames_;
-	std::vector<std::vector<LuaUsertypeMemberKind>> userTypeMemberKinds_;
-	//std::vector<uint32_t> userTypeFieldRawReturnTypeIds_;
+	std::vector<std::vector<LuaUsertypeMemberKind>> userTypeFieldMemberKinds_;
+	std::vector<std::vector<std::vector<uint32_t>>> userTypeFieldArgumentTypeIds_;
+	std::vector<std::vector<uint32_t>> userTypeFieldResultTypeIds_;
 
 	std::unordered_map<std::string_view, size_t> userTypeNameToDataIndex_;
 	std::unordered_map<uint32_t, size_t> userTypeIdToDataIndex_;

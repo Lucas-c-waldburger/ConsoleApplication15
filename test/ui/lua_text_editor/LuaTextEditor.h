@@ -7,7 +7,7 @@
 #include "../../core/commonObjects.h"
 #include "LuaSourceParser.h"
 #include "AutoCompleteUtility.h"
-#include "AutoCompleteUtility2.h"
+#include "TextDecorationUtility.h"
 
 class ParsedLuaUserTypeInfo;
 
@@ -44,7 +44,7 @@ public:
 
 	const std::string& GetLoadedFilepath() const noexcept { return loadedFilepath_; }
 
-	std::string GetWordUnderCursor() const;
+	std::string GetText() const { return textEditor_.GetText(); }
 
 	LuaSourceParser& GetParser() noexcept { return parser_; }
 	TextEditor& GetTextEditor() noexcept { return textEditor_; }
@@ -56,6 +56,7 @@ private:
 	LuaSourceParser parser_;
 	std::string loadedFilepath_;
 	AutoCompleteUtility autoCompleteUtility_;
+	TextDecorationUtility textDecorationUtility_;
 };
 
 

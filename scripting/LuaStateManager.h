@@ -122,7 +122,7 @@ bool LuaStateManager::IsRegistered() const
 
 	if (auto idx = GetLuaUserTypeInfo().GetDataIndex<T>(); idx.IsValid())
 	{
-		return state_[userTypeInfo_.GetUserTypeNames()[idx]] != sol::lua_nil;
+		return state_[userTypeInfo_.GetAllUserTypeNames()[idx]] != sol::lua_nil;
 	}
 
 	return false;
@@ -140,7 +140,7 @@ std::string_view LuaStateManager::GetRegisteredName() const
 
 	if (auto idx = GetLuaUserTypeInfo().GetDataIndex<T>(); idx.IsValid())
 	{
-		return userTypeInfo_.GetUserTypeNames()[idx];
+		return userTypeInfo_.GetAllUserTypeNames()[idx];
 	}
 
 	return {};

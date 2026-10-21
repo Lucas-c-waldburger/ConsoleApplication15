@@ -2,136 +2,24 @@
 #include <filesystem>
 #include <ranges>
 
-//Result<ScriptTable*> 
-//ScriptTableManager::AddTable(const std::string& path, LuaStateManager& state, ScriptTable::TableType type)
-//{
-//	auto loadResult = state.LoadScriptFile(path);
-//	if (!loadResult.valid())
-//	{
-//		sol::error err = loadResult;
-//		return MAKE_ERROR(err.what());
-//	}
-//
-//	if (loadResult.get_type() != sol::type::table)
-//	{
-//		return MAKE_ERROR_FMT("Script at path '{}' did not return a sol::table", path);
-//	}
-//
-//	auto table = loadResult.get<sol::table>();
-//
-//	TRY(LuaFunctionTableParser::ParseLuaFunctionTableSignatures(table, state), parsed);
-//
-//	const auto it = tableMap_.emplace(
-//		ScriptTable::CreateTableEntry(std::filesystem::path(path).filename().string(),
-//			std::move(path), std::move(table), std::move(parsed), type)).first;
-//
-//	return &it->second.table;
-//}
-//
-//Result<Void> ScriptTableManager::ReloadTable(ScriptTable::TableId tableId, LuaStateManager& state)
-//{
-//	auto it = tableMap_.find(tableId);
-//	if (it == tableMap_.end())
-//	{
-//		return MAKE_ERROR("Table with provided Id not found");
-//	}
-//
-//	auto loadResult = state.LoadScriptFile(it->second.filepath);
-//	if (!loadResult.valid())
-//	{
-//		sol::error err = loadResult;
-//		return MAKE_ERROR(err.what());
-//	}
-//
-//	if (loadResult.get_type() != sol::type::table)
-//	{
-//		return MAKE_ERROR_FMT("Script at path '{}' did not return a sol::table",
-//			it->second.filepath);
-//	}
-//
-//	auto table = loadResult.get<sol::table>();
-//
-//	TRY(LuaFunctionTableParser::ParseLuaFunctionTableSignatures(table, state), parsed);
-//
-//	it->second.table.ReassignTableData(std::move(table), std::move(parsed));
-//
-//	return kVoid;
-//}
-//
-//bool ScriptTableManager::RemoveTable(ScriptTable::TableId tableId)
-//{
-//	auto it = tableMap_.find(tableId);
-//	if (it == tableMap_.end())
-//	{
-//		return false;
-//	}
-//
-//	tableMap_.erase(it);
-//
-//	return true;
-//}
-//
-//bool ScriptTableManager::ContainsTable(ScriptTable::TableId tableId) const
-//{
-//	return tableMap_.contains(tableId);
-//}
-//
-//ScriptTableView ScriptTableManager::GetTableView(ScriptTable::TableId tableId) const
-//{
-//	if (auto it = tableMap_.find(tableId); it != tableMap_.end())
-//	{
-//		return ScriptTableView{ &it->second.table };
-//	}
-//
-//	return ScriptTableView{};
-//}
-//
-//const std::string& ScriptTableManager::GetTableName(ScriptTable::TableId tableId) const
-//{
-//	if (auto it = tableMap_.find(tableId); it != tableMap_.end())
-//	{
-//		return it->second.name;
-//	}
-//
-//	return Null<std::string>();
-//}
-//
-//const std::string& ScriptTableManager::GetTableFilepath(ScriptTable::TableId tableId) const
-//{
-//	if (auto it = tableMap_.find(tableId); it != tableMap_.end())
-//	{
-//		return it->second.filepath;
-//	}
-//
-//	return Null<std::string>();
-//}
-//
-//ScriptTable::TableType ScriptTableManager::GetTableType(ScriptTable::TableId tableId) const
-//{
-//	if (auto it = tableMap_.find(tableId); it != tableMap_.end())
-//	{
-//		return it->second.type;
-//	}
-//
-//	return ScriptTable::TableType::Invalid;
-//}
-//
-//void ScriptTableManager::Clear()  
-//{ 
-//	tableMap_.clear(); 
-//}
-//
-//bool ScriptTableManager::SetTableName(ScriptTable::TableId tableId, std::string_view newName)
-//{
-//	if (auto it = tableMap_.find(tableId); it != tableMap_.end())
-//	{
-//		it->second.name = newName;
-//
-//		return true;
-//	}
-//
-//	return false;
-//}
+namespace {
+
+std::optional<Phase> TryParsePhaseFromMetatable(const sol::table& fnTable)
+{
+	sol::table meta = fnTable[sol::metatable_key];
+	if (!meta.valid())
+	{
+		return std::nullopt;
+	}
+
+	Phase phase = meta.get_or("__phase", Phase::Invalid);
+
+	return phase;
+}
+
+
+
+} // unnamed
 
 Result<ScriptTable::TableId> 
 ScriptTableManager::AddTable(ScriptTableDescriptor&& descriptor, LuaStateManager& state)
@@ -164,6 +52,24 @@ ScriptTableManager::AddTable(ScriptTableDescriptor&& descriptor, LuaStateManager
 	auto table = loadResult.get<sol::table>();
 
 	TRY(LuaFunctionTableParser::ParseLuaFunctionTableSignatures(table, state), parsed);
+
+	descriptor.tableType = ResolveTableType(parsed, descriptor.tableType);
+
+	if (descriptor.tableType == ScriptTable::TableType::SystemTable &&
+		descriptor.systemPhase == Phase::Invalid)
+	{
+		if (auto phase = TryParsePhaseFromMetatable(table))
+		{
+			descriptor.systemPhase = *phase;
+		}
+		else
+		{
+			return MAKE_ERROR_FMT(
+				"System table '{}' at path '{}' did not specify a system phase in its "
+				"descriptor, or provide a valid '__phase' in its metatable",
+				descriptor.name, path.string());
+		}
+	}
 
 	if (!freeSlots_.empty())
 	{
@@ -213,8 +119,10 @@ Result<Void> ScriptTableManager::ReloadTable(ScriptTable::TableId tableId, LuaSt
 
 	assert(it->second.resourceIndex < tableInfo_.Size());
 
-	const auto& fp = tableInfo_.GetView<&ScriptTableInfo::filepath>(it->second.resourceIndex);
-
+	auto [fp, tableType, sysPhase] = tableInfo_.GetView<&ScriptTableInfo::filepath,
+														&ScriptTableInfo::tableType,
+														&ScriptTableInfo::systemPhase>
+														(it->second.resourceIndex);
 	assert(!fp.empty());
 
 	auto loadResult = state.LoadScriptFile(fp);
@@ -232,6 +140,16 @@ Result<Void> ScriptTableManager::ReloadTable(ScriptTable::TableId tableId, LuaSt
 	auto table = loadResult.get<sol::table>();
 
 	TRY(LuaFunctionTableParser::ParseLuaFunctionTableSignatures(table, state), parsed);
+
+	tableType = ResolveTableType(parsed, tableType);
+
+	if (tableType == ScriptTable::TableType::SystemTable)
+	{
+		if (auto phase = TryParsePhaseFromMetatable(table))
+		{
+			sysPhase = *phase;
+		}
+	}
 
 	it->second.table.ReassignTableData(std::move(table), std::move(parsed));
 
