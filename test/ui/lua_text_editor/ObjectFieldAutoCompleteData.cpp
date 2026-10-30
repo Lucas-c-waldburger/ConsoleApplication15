@@ -7,20 +7,6 @@ namespace ui {
 
 namespace {
 
-constexpr bool IsMemberKindField(LuaUsertypeMemberKind kind) noexcept
-{
-    using enum LuaUsertypeMemberKind;
-
-    return kind == Field || kind == Property;
-}
-
-constexpr bool IsMemberKindFunction(LuaUsertypeMemberKind kind) noexcept
-{
-    using enum LuaUsertypeMemberKind;
-
-    return kind == Method || kind == Overload;
-}
-
 bool IsAlphaNumOrUnderscore(char c)
 {
     return std::isalnum(static_cast<unsigned char>(c)) || c == '_';

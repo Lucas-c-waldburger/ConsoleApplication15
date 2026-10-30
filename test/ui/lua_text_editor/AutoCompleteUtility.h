@@ -8,28 +8,23 @@
 #include "../../scripting/ParsedLuaUserTypeInfo.h"
 #include "../../deps/ImGuiColorTextEdit/TextEditor.h"
 #include "ObjectFieldAutoCompleteData.h"
+#include "UtilityCommon.h"
 
 namespace ui {
 
 class AutoCompleteUtility
 {
 public:
-    struct ResourceContext
-    {
-        TextEditor& textEditor;
-        const LuaSourceParser& parser;
-        const ParsedLuaUserTypeInfo& userTypeInfo;
-    };
-
 	const ObjectFieldAutoCompleteData& 
     ReparseAutoCompleteData(std::string_view newSource, const TextEditor& textEditor);
-	void UpdateForNewText(ResourceContext& ctx);
-    void UpdateForNewCursorPos(ResourceContext& ctx);
-    bool Draw(ResourceContext& ctx);
-    void Cleanup(ResourceContext& ctx);
+    void Update(LuaTextEditorResourceContext& ctx);
+	void UpdateForNewText(LuaTextEditorResourceContext& ctx);
+    void UpdateForNewCursorPos(LuaTextEditorResourceContext& ctx);
+    bool Draw(LuaTextEditorResourceContext& ctx);
+    void Cleanup(LuaTextEditorResourceContext& ctx);
     void Reset(TextEditor& textEditor);
 
-    const ObjectFieldAutoCompleteData& GetAutoCompleteData() const noexcept;
+    const ObjectFieldAutoCompleteData& GetAutoCompleteRegionData() const noexcept;
 
 private:
     enum StateFlags : uint8_t
@@ -78,32 +73,32 @@ private:
 
         void SetInitialPopupSize();
         void SetInitialPopupPosition(const ObjectFieldAutoCompleteData& autoCompleteData, 
-                                     const ResourceContext& ctx);
-		void UpdatePopupPosition(const ResourceContext& ctx);
+                                     const LuaTextEditorResourceContext& ctx);
+		void UpdatePopupPosition(const LuaTextEditorResourceContext& ctx);
 
-        bool IsPopupInsideWindowBounds(const ResourceContext& ctx) const;
+        bool IsPopupInsideWindowBounds(const LuaTextEditorResourceContext& ctx) const;
 	};
 
-    void Reparse(ResourceContext& ctx);
+    void Reparse(LuaTextEditorResourceContext& ctx);
 
-    static size_t GetCursorByteOffset(const ResourceContext& ctx);
+    static size_t GetCursorByteOffset(const LuaTextEditorResourceContext& ctx);
 
     static ObjectFieldAutoCompleteData
-    GetAutoCompleteData(size_t cursorByteOffset, const ResourceContext& ctx);
+    MakeAutoCompleteRegionData(size_t cursorByteOffset, const LuaTextEditorResourceContext& ctx);
 
-	static bool CursorInsideGhostTextRange(size_t cursorByteOffset, const ResourceContext& ctx,
+	static bool CursorInsideGhostTextRange(size_t cursorByteOffset, const LuaTextEditorResourceContext& ctx,
                                            const ObjectFieldAutoCompleteData& autoCompleteData);
 
     ParsedLuaUserTypeInfo::DataIndex
     GetUserTypeDataIndexForCurrentParameter(size_t cursorByteOffset,
                                             const ObjectFieldAutoCompleteData& autoCompleteData, 
-                                            const ResourceContext& ctx);
+                                            const LuaTextEditorResourceContext& ctx);
 
     static std::vector<AutoCompleteFillOptionsPopup::Option>
     GetUpdatedFillOptions(size_t cursorByteOffset, 
                           const ObjectFieldAutoCompleteData& autoCompleteData,
                           ParsedLuaUserTypeInfo::DataIndex userTypeDataIdx,
-                          const ResourceContext& ctx);
+                          const LuaTextEditorResourceContext& ctx);
 
     static void OverrideTextEditorKeyInputs(TextEditor& textEditor);
 

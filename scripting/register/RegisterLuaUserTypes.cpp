@@ -15,6 +15,33 @@ template <typename T> struct ComponentLuaUserTypePred :
 
 namespace detail {
 
+template <typename> struct register_component_ids;
+
+template <template <typename...> class TList, typename...Ts>
+struct register_component_ids<TList<Ts...>> {
+	static void call(LuaStateManager& m) {
+
+		static constexpr std::array<std::string_view, sizeof...(Ts)> componentNames = { 
+			register_lua_usertype<Ts>::name... 
+		};
+		static constexpr std::array<ComponentId, sizeof...(Ts)> componentIds = { 
+			MakeComponentId<Ts, TList<Ts...>>()... 
+		};
+
+		static constexpr auto tup = [&]<size_t...Is>(std::index_sequence<Is...>) {
+			return std::tuple_cat(
+				std::forward_as_tuple(componentNames[Is], componentIds[Is])
+			...);
+		}(std::make_index_sequence<sizeof...(Ts)>{});
+		
+		std::apply([&](auto&&...args) {
+			m.GetLuaUserTypeInfo().ParseUserTypeArgs<ComponentId>("ComponentId", 
+				std::forward<decltype(args)>(args)...);
+		}, tup);
+	}
+};
+
+
 template <typename> struct register_component_ids_on_table;
 
 template <template <typename...> class TList, typename...Ts>
@@ -23,11 +50,21 @@ struct register_component_ids_on_table<TList<Ts...>> {
 		static constexpr auto impl = []<typename T>(sol::table & cmpIdTable) {
 			cmpIdTable[register_lua_usertype<T>::name] = MakeComponentId<T, TList<Ts...>>();
 		};
-		((impl.template operator()<Ts> (cmpIdTable)), ...);
+		((impl.template operator()<Ts>(cmpIdTable)), ...);
 	}
 };
 
 } // detail
+
+template <> struct register_lua_usertype<ComponentId> 
+{
+	static void call(LuaStateManager& m) 
+	{
+		detail::register_component_ids<filter_types_t<
+			ComponentTypeList, ComponentLuaUserTypePred>>::call(m);
+	}
+	static constexpr std::string_view name = "ComponentId";
+};
 
 template <HasLuaUserTypeRegistration T>
 inline void RegisterLuaUserType(LuaStateManager& m)
@@ -39,10 +76,10 @@ void RegisterComponentIds(LuaStateManager& m)
 {
 	RegisterLuaUserType<ComponentId>(m);
 
-	sol::table cmpIdTable = m.Data().create_named_table("ComponentId");
+	//sol::table cmpIdTable = m.Data().create_named_table("ComponentId");
 
-	detail::register_component_ids_on_table<filter_types_t<
-		ComponentTypeList, ComponentLuaUserTypePred>>::call(cmpIdTable);
+	//detail::register_component_ids_on_table<filter_types_t<
+	//	ComponentTypeList, ComponentLuaUserTypePred>>::call(cmpIdTable);
 }
 
 void RegisterSystemUserTypes(LuaStateManager& m)

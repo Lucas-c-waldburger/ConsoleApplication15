@@ -5,7 +5,7 @@
 #include <vector>
 #include <string_view>
 #include <imgui.h>
-#include "../../scripting/ParsedLuaUserTypeInfo.h"
+#include "LuaSourceParserCommon.h"
 #include "../../deps/ImGuiColorTextEdit/TextEditor.h"
 
 namespace ui {

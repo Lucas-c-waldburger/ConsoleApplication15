@@ -113,4 +113,3 @@ struct TypeInfo
     static constexpr uint64_t hash64 = GetTypeHash64<T>();
     static constexpr uint32_t hash32 = GetTypeHash32<T>();
 };
-

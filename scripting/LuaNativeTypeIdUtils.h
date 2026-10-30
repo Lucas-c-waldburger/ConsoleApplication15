@@ -7,16 +7,19 @@ struct InvalidLuaType;
 struct LuaNativeBooleanType;
 struct LuaNativeNumberType;
 struct LuaNativeStringType;
+struct LuaNativeTableType;
 } // detail
 
 static constexpr uint32_t kInvalidLuaTypeId = TypeInfo<detail::InvalidLuaType>::hash32;
 static constexpr uint32_t kNativeBooleanLuaTypeId = TypeInfo<detail::LuaNativeBooleanType>::hash32;
 static constexpr uint32_t kNativeNumberLuaTypeId = TypeInfo<detail::LuaNativeNumberType>::hash32;
 static constexpr uint32_t kNativeStringLuaTypeId = TypeInfo<detail::LuaNativeStringType>::hash32;
+static constexpr uint32_t kNativeTableLuaTypeId = TypeInfo<detail::LuaNativeTableType>::hash32;
 
 inline constexpr bool IsNativeLuaType(std::string_view name) noexcept
 {
-	return name == "boolean" || name == "number" || name == "string";
+	return name == "boolean" || name == "number" || name == "string" ||
+		   name == "table";
 }
 
 template <typename T>
@@ -32,7 +35,12 @@ inline constexpr bool IsNativeLuaType() noexcept
 	{
 		return true;
 	}
-	else if constexpr (std::constructible_from<std::string, Raw> || std::same_as<Raw, char>)
+	else if constexpr (std::constructible_from<std::string, Raw> || 
+					   std::same_as<Raw, char>)
+	{
+		return true;
+	}
+	else if constexpr (std::same_as<Raw, sol::table>)
 	{
 		return true;
 	}
@@ -56,9 +64,13 @@ inline constexpr uint32_t GetNativeLuaTypeId() noexcept
 		return kNativeNumberLuaTypeId;
 	}
 	else if constexpr (std::constructible_from<std::string, Raw> ||
-		std::same_as<Raw, char>)
+					  std::same_as<Raw, char>)
 	{
 		return kNativeStringLuaTypeId;
+	}
+	else if constexpr (std::same_as<Raw, sol::table>)
+	{
+		return kNativeTableLuaTypeId;
 	}
 	else
 	{
@@ -80,6 +92,10 @@ inline uint32_t GetNativeLuaTypeId(std::string_view name)
 	{
 		return kNativeStringLuaTypeId;
 	}
+	if (name == "table")
+	{
+		return kNativeTableLuaTypeId;
+	}
 
 	return kInvalidLuaTypeId;
 }
@@ -100,6 +116,10 @@ inline constexpr std::string_view GetNativeLuaTypeName() noexcept
 	else if constexpr (std::constructible_from<std::string, Raw> || std::same_as<Raw, char>)
 	{
 		return "string";
+	}
+	else if constexpr (std::same_as<Raw, sol::table>)
+	{
+		return "table";
 	}
 	else
 	{

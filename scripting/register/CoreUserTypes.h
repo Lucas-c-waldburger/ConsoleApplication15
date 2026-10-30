@@ -3,7 +3,7 @@
 #include "../../components/ComponentConcepts.h"
 #include "../../core/commonObjects.h"
 
-DEF_REGISTER_LUA_USERTYPE(ComponentId, "ComponentId");
+//DEF_REGISTER_LUA_USERTYPE(ComponentId, "ComponentId");
 
 DEF_REGISTER_LUA_USERTYPE(Dimensions<int>, "IDimensions",
 	"w", &Dimensions<int>::w,

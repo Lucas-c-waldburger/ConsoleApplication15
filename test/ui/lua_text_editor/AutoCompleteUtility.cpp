@@ -1,8 +1,9 @@
 #include "AutoCompleteUtility.h"
 
 #if IMGUI_ENABLED
-#include "TSEditorBridge.h"
 #include <ctre/ctre.hpp>
+#include <ranges>
+#include "TSEditorBridge.h"
 #include "TextDecorationUtility.h"
 
 namespace ui {
@@ -38,31 +39,6 @@ constexpr std::string_view GetRawTypeName(std::string_view typeNameWithCvRefQual
 	return match.get<"type">().to_view();
 }
 
-size_t GetParsedFunctionIndex(size_t cursorByteOffset,
-							  const std::vector<SourceLocationDataIndexPair>& functionBlocks)
-{
-	if (functionBlocks.empty())
-	{
-		return std::numeric_limits<size_t>::max();
-	}
-
-	// pick the innermost block containing the cursor (latest start wins for nested blocks)
-	size_t result = std::numeric_limits<size_t>::max();
-	size_t bestStart = 0;
-	for (const auto& candidate : functionBlocks)
-	{
-		if (cursorByteOffset >= candidate.location.start &&
-			cursorByteOffset <= candidate.location.end &&
-			(result == std::numeric_limits<size_t>::max() || candidate.location.start >= bestStart))
-		{
-			result = candidate.dataIndex;
-			bestStart = candidate.location.start;
-		}
-	}
-
-	return result;
-}
-
 bool DoesAutoFillSelectionHaveArguments(std::string_view autoFillStr,
 										const ParsedLuaUserTypeInfo& userTypeInfo)
 {
@@ -81,7 +57,7 @@ bool DoesAutoFillSelectionHaveArguments(std::string_view autoFillStr,
 
 } // unnamed
 
-bool AutoCompleteUtility::Draw(ResourceContext& ctx)
+bool AutoCompleteUtility::Draw(LuaTextEditorResourceContext& ctx)
 {
 	if (ctx.textEditor.IsReadOnly() || !ctx.textEditor.IsGhostTextVisible())
 	{
@@ -202,7 +178,7 @@ bool AutoCompleteUtility::Draw(ResourceContext& ctx)
 	return false;
 }
 
-void AutoCompleteUtility::Cleanup(ResourceContext& ctx)
+void AutoCompleteUtility::Cleanup(LuaTextEditorResourceContext& ctx)
 {
 	ctx.textEditor.SetAllKeysHandled(true);
 
@@ -230,7 +206,19 @@ AutoCompleteUtility::ReparseAutoCompleteData(std::string_view newSource, const T
 	return lastAutoCompleteData_;
 }
 
-void AutoCompleteUtility::UpdateForNewText(ResourceContext& ctx)
+void AutoCompleteUtility::Update(LuaTextEditorResourceContext& ctx)
+{
+	if (ctx.textEditor.IsTextChanged())
+	{
+		UpdateForNewText(ctx);
+	}
+	else if (ctx.textEditor.IsCursorPositionChanged())
+	{
+		UpdateForNewCursorPos(ctx);
+	}
+}
+
+void AutoCompleteUtility::UpdateForNewText(LuaTextEditorResourceContext& ctx)
 {
 	Reparse(ctx);
 
@@ -242,7 +230,7 @@ void AutoCompleteUtility::UpdateForNewText(ResourceContext& ctx)
 	}
 }
 
-void AutoCompleteUtility::UpdateForNewCursorPos(ResourceContext& ctx)
+void AutoCompleteUtility::UpdateForNewCursorPos(LuaTextEditorResourceContext& ctx)
 {
 	const auto cursorByteOffset = GetCursorByteOffset(ctx);
 
@@ -257,35 +245,41 @@ void AutoCompleteUtility::UpdateForNewCursorPos(ResourceContext& ctx)
 
 ParsedLuaUserTypeInfo::DataIndex
 AutoCompleteUtility::GetUserTypeDataIndexForCurrentParameter(size_t cursorByteOffset,
-	const ObjectFieldAutoCompleteData& autoCompleteData, const ResourceContext& ctx)
+	const ObjectFieldAutoCompleteData& autoCompleteData, const LuaTextEditorResourceContext& ctx)
 {
 	assert(cursorByteOffset <= ctx.parser.GetSourceString().size());
 	assert(autoCompleteData.IsValid());
 
 	const auto& parsedDoc = ctx.parser.GetSourceDocument();
 
-	const size_t parsedFnIdx = GetParsedFunctionIndex(cursorByteOffset, 
-													  parsedDoc.functionBlockInfo);
-	if (parsedFnIdx >= parsedDoc.functionArgumentTypes.size())
+	auto fnBlock = std::ranges::find_if(parsedDoc.functionBlocks, 
+		[cursorByteOffset](const auto& fnBlock) { 
+			return cursorByteOffset >= fnBlock.location.start &&
+				   cursorByteOffset <= fnBlock.location.end;
+		});
+
+	if (fnBlock == parsedDoc.functionBlocks.end())
 	{
 		// not in a function block
 		return {};
 	}
 
-	const auto& fnArgTypes = parsedDoc.functionArgumentTypes[parsedFnIdx];
-	const auto& fnParamNames = parsedDoc.functionParameterNames[parsedFnIdx];
-	assert(fnArgTypes.size() == fnParamNames.size());
+	if (fnBlock->parameterNames.size() != fnBlock->parameterTypes.size())
+	{
+		// function block has mismatched parameter names and types
+		return {};
+	}
 
 	const auto paramName = autoCompleteData.GetParameterName(ctx.parser.GetSourceString());
 
-	for (size_t i = 0; i < fnArgTypes.size(); ++i)
+	for (size_t i = 0; i < fnBlock->parameterNames.size(); ++i)
 	{
-		if (fnParamNames[i] != paramName)
+		if (fnBlock->parameterNames[i] != paramName)
 		{
 			continue;
 		}
 
-		const auto rawTypeName = GetRawTypeName(fnArgTypes[i]);
+		const auto rawTypeName = GetRawTypeName(fnBlock->parameterTypes[i]);
 		if (rawTypeName.empty())
 		{
 			continue;
@@ -329,7 +323,7 @@ void AutoCompleteUtility::SetGhostTextFromCurrentSelection(TextEditor& textEdito
 	textEditor.SetGhostText(pos, ghostText);
 }
 
-void AutoCompleteUtility::Reparse(ResourceContext& ctx)
+void AutoCompleteUtility::Reparse(LuaTextEditorResourceContext& ctx)
 {
 	Reset(ctx.textEditor);
 
@@ -339,7 +333,7 @@ void AutoCompleteUtility::Reparse(ResourceContext& ctx)
 		return;
 	}
 
-	auto autoCompData = GetAutoCompleteData(cursorByteOffset, ctx);
+	auto autoCompData = MakeAutoCompleteRegionData(cursorByteOffset, ctx);
 	if (!autoCompData.IsValid())
 	{
 		return;
@@ -373,7 +367,7 @@ auto AutoCompleteUtility::GetUpdatedFillOptions(
 	size_t cursorByteOffset, 
 	const ObjectFieldAutoCompleteData& autoCompleteData,
 	ParsedLuaUserTypeInfo::DataIndex userTypeDataIdx,
-	const ResourceContext& ctx) -> std::vector<AutoCompleteFillOptionsPopup::Option>
+	const LuaTextEditorResourceContext& ctx) -> std::vector<AutoCompleteFillOptionsPopup::Option>
 {
 	using Option = AutoCompleteFillOptionsPopup::Option;
 
@@ -433,7 +427,7 @@ auto AutoCompleteUtility::GetUpdatedFillOptions(
 }
 
 ObjectFieldAutoCompleteData
-AutoCompleteUtility::GetAutoCompleteData(size_t cursorByteOffset, const ResourceContext& ctx)
+AutoCompleteUtility::MakeAutoCompleteRegionData(size_t cursorByteOffset, const LuaTextEditorResourceContext& ctx)
 {
 	return ObjectFieldAutoCompleteData::Parse(ctx.parser.GetSourceString(), cursorByteOffset);
 }
@@ -445,19 +439,19 @@ void AutoCompleteUtility::Reset(TextEditor& textEditor)
 	textEditor.ClearGhostText();
 }
 
-const ObjectFieldAutoCompleteData& AutoCompleteUtility::GetAutoCompleteData() const noexcept
+const ObjectFieldAutoCompleteData& AutoCompleteUtility::GetAutoCompleteRegionData() const noexcept
 {
 	return lastAutoCompleteData_;
 }
 
-size_t AutoCompleteUtility::GetCursorByteOffset(const ResourceContext& ctx)
+size_t AutoCompleteUtility::GetCursorByteOffset(const LuaTextEditorResourceContext& ctx)
 {
 	return TextPositionToByteOffset(ctx.parser.GetSourceString(),
 								    ctx.textEditor.GetCursorPosition(),
 								    ctx.textEditor.GetTabSize());
 }
 
-bool AutoCompleteUtility::CursorInsideGhostTextRange(size_t cursorByteOffset, const ResourceContext& ctx,
+bool AutoCompleteUtility::CursorInsideGhostTextRange(size_t cursorByteOffset, const LuaTextEditorResourceContext& ctx,
 												     const ObjectFieldAutoCompleteData& autoCompleteData)
 {
 	if (!ctx.textEditor.IsGhostTextVisible())
@@ -485,7 +479,7 @@ void AutoCompleteUtility::AutoCompleteFillOptionsPopup::SetInitialPopupSize()
 }
 
 void AutoCompleteUtility::AutoCompleteFillOptionsPopup::SetInitialPopupPosition(
-	const ObjectFieldAutoCompleteData& autoCompleteData, const ResourceContext& ctx)
+	const ObjectFieldAutoCompleteData& autoCompleteData, const LuaTextEditorResourceContext& ctx)
 {
 	const auto accessorScreenPos = autoCompleteData.GetAccessorScreenPos(ctx.parser.GetSourceString(),
 																		 ctx.textEditor);
@@ -498,7 +492,7 @@ void AutoCompleteUtility::AutoCompleteFillOptionsPopup::SetInitialPopupPosition(
 }
 
 void AutoCompleteUtility::AutoCompleteFillOptionsPopup::UpdatePopupPosition(
-	const ResourceContext& ctx)
+	const LuaTextEditorResourceContext& ctx)
 {
 	const auto currentScroll = ctx.textEditor.GetScroll();
 
@@ -509,7 +503,7 @@ void AutoCompleteUtility::AutoCompleteFillOptionsPopup::UpdatePopupPosition(
 }
 
 bool AutoCompleteUtility::AutoCompleteFillOptionsPopup::IsPopupInsideWindowBounds(
-	const ResourceContext& ctx) const
+	const LuaTextEditorResourceContext& ctx) const
 {
 	const ImVec2 windowMin = ctx.textEditor.GetWindowMin();
 	const ImVec2 windowMax = ctx.textEditor.GetWindowMax();

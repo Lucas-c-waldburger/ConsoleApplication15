@@ -2,34 +2,13 @@
 
 #if IMGUI_ENABLED
 #include <cassert>
+#include <ctre/ctre.hpp>
 #include "../../core/Result.h"
+#include "../../scripting/ParsedLuaUserTypeInfo.h"
 
 namespace ui {
 
 namespace {
-
-struct NodeName
-{
-    static constexpr std::string_view kFunctionCall = "function_call";
-    static constexpr std::string_view kAssignmentStatement = "assignment_statement";
-    static constexpr std::string_view kVariableDeclaration = "variable_declaration";
-    static constexpr std::string_view kVariableList = "variable_list";
-    static constexpr std::string_view kExpressionList = "expression_list";
-    static constexpr std::string_view kTableConstructor = "table_constructor";
-    static constexpr std::string_view kFunctionDeclaration = "function_declaration";
-    static constexpr std::string_view kDotIndexExpression = "dot_index_expression";
-    static constexpr std::string_view kMethodIndexExpression = "method_index_expression";
-    static constexpr std::string_view kIdentifier = "identifier";
-    static constexpr std::string_view kArguments = "arguments";
-    static constexpr std::string_view kParameters = "parameters";
-    static constexpr std::string_view kField = "field";
-    static constexpr std::string_view kString = "string";
-    static constexpr std::string_view kStringContent = "string_content";
-    static constexpr std::string_view kBlock = "block";
-};
-
-static constexpr std::string_view kSetMetatableName = "setmetatable";
-static constexpr std::string_view kSignaturesName = "__signatures";
 
 constexpr bool kContinueParsing = true;
 constexpr bool kAbandonParsing = false;
@@ -45,12 +24,6 @@ bool IsSignaturesNode(const TreeNode& node)
 {
 	return node.GetType() == NodeName::kIdentifier && node.GetText() == kSignaturesName;
 }
-
-struct GoToNodeArgs
-{
-    std::string_view name;
-    int childCount = -1;
-};
 
 struct IndexExpressionText
 {
@@ -138,7 +111,6 @@ bool GoToFirstChildIfChildNodeName(TreeCursor& cursor, std::string_view name)
 	return true;
 }
 
-//template <typename Fn> requires std::is_invocable_r_v<bool, Fn, const TreeNode&>
 bool GoToSiblingWithNodeNameAndText(TreeCursor& cursor, std::string_view name, std::string_view text)
 {
 	do
@@ -186,7 +158,6 @@ std::string_view GetFieldNodeStringContent(TreeCursor& cursor, LuaSourceDocument
 	if (text.empty())
 	{
 		doc.AddError(cursor.CurrentNode(), "'string_content' text in string node was empty");
-		return {};
 	}
 
 	return text;
@@ -203,10 +174,10 @@ bool ParseTableInfo(TreeCursor& cursor, LuaSourceDocument& doc)
 
     do
     {
-        if (!GoToFirstChildIfCurrentNodeName(cursor, NodeName::kFunctionCall))
-        {
-            continue;
-        }
+		if (!GoToFirstChildIfCurrentNodeName(cursor, NodeName::kFunctionCall))
+		{
+			continue;
+		}
 
         do
         {
@@ -281,6 +252,90 @@ bool ParseTableInfo(TreeCursor& cursor, LuaSourceDocument& doc)
     return kAbandonParsing;
 }
 
+bool ParseSignaturesTableImpl(TreeCursor& cursor, LuaSourceDocument& doc)
+{
+	auto node = cursor.CurrentNode();
+	assert(node.GetType() == NodeName::kTableConstructor);
+
+	if (!cursor.GoToFirstChild())
+	{
+		doc.AddError(node, "Failed to go to first child of signatures table constructor node");
+
+		return kAbandonParsing;
+	}
+
+	cursor.SetHomeDepth();
+
+	do
+	{
+		node = cursor.CurrentNode();
+		if (node.GetType() != NodeName::kField)
+		{
+			continue;
+		}
+
+		if (!GoToFirstChildIfChildNodeName(cursor, NodeName::kIdentifier))
+		{
+			doc.AddError(node, "Expected first child of signature field node to be identifier");
+			continue;
+		}
+
+		node = cursor.CurrentNode();
+
+		auto fnIdent = node.GetText();
+		if (fnIdent.empty())
+		{
+			doc.AddError(node, "Signature field identifier text was empty");
+			cursor.GoToHomeDepth();
+
+			continue;
+		}
+
+		if (!GoToSiblingWithNodeName(cursor, NodeName::kTableConstructor))
+		{
+			doc.AddError(cursor.CurrentNode(), "Expected second node in signatures table "
+				"field to be table_constructor (parameter types)");
+			cursor.GoToHomeDepth();
+
+			continue;
+		}
+
+		doc.tableInfo.signatures.functionNames.emplace_back(fnIdent);
+		auto& params = doc.tableInfo.signatures.parameterTypes.emplace_back();
+
+		auto paramCursor = cursor.Branch();
+		cursor.GoToHomeDepth();
+
+		if (!paramCursor.GoToFirstNamedChild())
+		{
+			// assume no parameters for function
+			continue;
+		}
+
+		paramCursor.SetHomeDepth();
+
+		do
+		{
+			if (paramCursor.CurrentNode().GetType() != NodeName::kField)
+			{
+				continue;
+			}
+
+			auto paramType = GetFieldNodeStringContent(paramCursor, doc);
+			if (!paramType.empty())
+			{
+				params.emplace_back(paramType);
+			}
+
+			paramCursor.GoToHomeDepth();
+
+		} while (paramCursor.GoToNextNamedSibling());
+
+	} while (cursor.GoToNextNamedSibling());
+
+	return kContinueParsing;
+}
+
 bool ParseSignaturesTableImpl(TreeCursor& cursor, LuaSourceDocument& doc,
 							  FunctionNameToBlockIndexMap& fnNameToBlockIdxMap)
 {
@@ -352,6 +407,8 @@ bool ParseSignaturesTableImpl(TreeCursor& cursor, LuaSourceDocument& doc,
 			// assume no parameters for function
 			continue;
 		}
+
+		paramCursor.SetHomeDepth();
 
 		do
 		{
@@ -643,16 +700,224 @@ void ValidateParsedDocument(LuaSourceDocument& doc,
 	}
 }
 
-} // unnamed
+std::optional<LuaSourceDocument::IndexExpressionInfo> 
+ExtractIndexExpressionInfo(const TreeNode& node)
+{
+	assert(IsIndexExpressionNode(node));
 
+	LuaSourceDocument::IndexExpressionInfo result;
+
+	result.location = node.GetSourceLocation();
+	result.type = (node.GetType() == NodeName::kDotIndexExpression) 
+		? LuaSourceDocument::IndexExpressionType::Dot 
+		: LuaSourceDocument::IndexExpressionType::Method;
+
+	if (node.GetNamedChildCount() != 2)
+	{
+		return std::nullopt;
+	}
+
+	auto lhsNode = node.GetNamedChild(0);
+	auto rhsNode = node.GetNamedChild(1);
+
+	if (lhsNode.GetType() != NodeName::kIdentifier || 
+		rhsNode.GetType() != NodeName::kIdentifier)
+	{
+		return std::nullopt;
+	}
+
+	if (result.lhsText = lhsNode.GetText(); result.lhsText.empty())
+	{
+		return std::nullopt;
+	}
+	if (result.rhsText = rhsNode.GetText(); result.rhsText.empty())
+	{
+		return std::nullopt;
+	}
+
+	return result;
+}
+
+bool ParseIndexExpressionInfoImpl(TreeCursor& cursor, LuaSourceDocument& doc)
+{
+	if (!cursor.GoToFirstChild())
+	{
+		return false;
+	}
+
+	do
+	{
+		auto node = cursor.CurrentNode();
+
+		if (IsIndexExpressionNode(node))
+		{
+			if (auto info = ExtractIndexExpressionInfo(node))
+			{
+				doc.indexExpressions.emplace_back(std::move(*info));
+			}
+		}
+		if (node.GetChildCount() > 0)
+		{
+			if (ParseIndexExpressionInfoImpl(cursor, doc))
+			{
+				cursor.GoToParent();
+			}
+		}
+	} while (cursor.GoToNextSibling());
+
+	return true;
+}
+
+bool ParseIndexExpressionInfo(TreeCursor& cursor, LuaSourceDocument& doc)
+{
+	auto node = cursor.CurrentNode();
+	if (node.GetChildCount() <= 0)
+	{
+		doc.AddError(node, "Failed to go to first child of root cursor");
+		return false;
+	}
+
+	return ParseIndexExpressionInfoImpl(cursor, doc);
+}
+
+std::vector<std::string_view> ExtractFunctionCallArguments(std::string_view indexExprRhsText)
+{
+	static constexpr ctll::fixed_string kGetArgsRegex = R"([a-zA-Z_][a-zA-Z0-9_]*\s*\((.*)\))";
+	static constexpr ctll::fixed_string kSingleArgRegex =
+		R"((?:"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|[^,]+))";
+
+	auto match = ctre::match<kGetArgsRegex>(indexExprRhsText);
+	if (!match)
+	{
+		return {};
+	}
+
+	auto argsPayload = match.get<1>().to_view(); 
+
+	std::vector<std::string_view> args;
+	size_t matchCount = 0;
+
+	for (auto match : ctre::search_all<kSingleArgRegex>(argsPayload))
+	{
+		++matchCount;
+
+		auto arg = match.to_view();
+
+		const size_t start = arg.find_first_not_of(" \t\r\n\v\f");
+		if (start == std::string_view::npos) 
+		{
+			continue;
+		}
+		arg.remove_prefix(start);
+
+		const size_t end = arg.find_last_not_of(" \t\r\n\v\f");
+		arg.remove_suffix(arg.size() - 1 - end);
+
+		args.emplace_back(arg);
+	}
+
+	return args;
+}
+
+//// TODO: Make it so the errors only popup if user is 'done' typing it out
+void EvaluateIndexExpressionInfoForUsertypes(LuaSourceDocument& doc,
+											 const ParsedLuaUserTypeInfo& userTypeInfo)
+{
+	static constexpr ctll::fixed_string kCallParensRegex = R"(^\s*\(.*\)$)";
+
+	static constexpr std::string_view kIndexExprErrorMsgFmt = "Type '{}' has no member '{}'";
+
+	auto addError = [&doc](const auto& indexExpr) {
+		doc.errors.emplace_back(std::format(
+			kIndexExprErrorMsgFmt, indexExpr.lhsText, indexExpr.rhsText),
+			indexExpr.location
+		);
+	};
+
+	for (auto& indexExpr : doc.indexExpressions)
+	{
+		if (IsNativeLuaType(indexExpr.lhsText))
+		{
+			addError(indexExpr);
+
+			continue;
+		}
+
+		const auto dataIdx = userTypeInfo.GetDataIndex(indexExpr.lhsText);
+		if (!dataIdx.IsValid())
+		{
+			continue;
+		}
+
+		const auto& fieldNames = userTypeInfo.GetAllUserTypeFieldNames()[dataIdx];
+		bool found = false;
+
+		for (const auto& fieldName : fieldNames)
+		{
+			if (fieldName == indexExpr.rhsText)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			addError(indexExpr);
+		}
+	}
+}
+
+
+//std::optional<LuaSourceDocument::SignaturesTableInfo>
+//ParseSignaturesTableInfo(TreeCursor& cursor)
+//{
+//
+//}
+}
+
+template struct FunctionBlockInfoTemplate<std::string_view>;
+template struct FunctionBlockInfoTemplate<std::string>;
 
 LuaSourceDocument ui::LuaSourceDocument::Parse(TreeCursor& rootCursor)
+{
+	LuaSourceDocument doc{};
+
+	if (!ParseTableInfo(rootCursor, doc))
+	{
+		return doc;
+	}
+	rootCursor.Reset();
+
+	FunctionNameToBlockIndexMap fnNameToBlockIdxMap;
+
+	if (!ParseSignaturesTable(rootCursor, doc, fnNameToBlockIdxMap))
+	{
+		return doc;
+	}
+	rootCursor.Reset();
+
+	if (!ParseTableFunctionBlocks(rootCursor, doc, fnNameToBlockIdxMap))
+	{
+		return doc;
+	}
+	rootCursor.Reset();
+
+	ParseIndexExpressionInfo(rootCursor, doc);
+
+	ValidateParsedDocument(doc, fnNameToBlockIdxMap);
+
+	return doc;
+}
+
+LuaSourceDocument ui::LuaSourceDocument::Parse(TreeCursor& rootCursor,
+											   const ParsedLuaUserTypeInfo& userTypeInfo)
 {
     LuaSourceDocument doc{};
 
     if (!ParseTableInfo(rootCursor, doc))
     {
-		return {};
+		return doc;
     }
 	rootCursor.Reset();
 
@@ -660,14 +925,19 @@ LuaSourceDocument ui::LuaSourceDocument::Parse(TreeCursor& rootCursor)
 
 	if (!ParseSignaturesTable(rootCursor, doc, fnNameToBlockIdxMap))
 	{
-		return {};
+		return doc;
 	}
 	rootCursor.Reset();
 
 	if (!ParseTableFunctionBlocks(rootCursor, doc, fnNameToBlockIdxMap))
 	{
-		return {};
+		return doc;
 	}
+	rootCursor.Reset();
+
+	ParseIndexExpressionInfo(rootCursor, doc);
+
+	EvaluateIndexExpressionInfoForUsertypes(doc, userTypeInfo);
 
 	ValidateParsedDocument(doc, fnNameToBlockIdxMap);
 

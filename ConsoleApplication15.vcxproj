@@ -305,6 +305,7 @@
     </ClCompile>
     <ClCompile Include="test\catch\systems\SpriteAnimationSystemTests.cpp" />
     <ClCompile Include="test\catch\systems\UserSystemSchedulerTests.cpp" />
+    <ClCompile Include="test\catch\ui\LuaSourceParsingTests.cpp" />
     <ClCompile Include="test\demo\audio_lounge\AudioLounge.cpp" />
     <ClCompile Include="test\demo\collider_maker\ColliderDrawSystem.cpp" />
     <ClCompile Include="test\demo\collider_maker\ColliderMaker.cpp" />
@@ -372,6 +373,8 @@
     <ClCompile Include="test\ui\InspectorEventPanel.cpp" />
     <ClCompile Include="test\ui\InspectorSystemPanel.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentParser.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentSymbol.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceParserCommon.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\ObjectFieldAutoCompleteData.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\AutoCompleteUtility.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceParser.cpp" />
@@ -400,12 +403,6 @@
     <ClCompile Include="test\catch\ecs\Entity_tTests.cpp" />
     <ClCompile Include="test\catch\events\EventBusTests.cpp" />
     <ClCompile Include="test\catch\render\RendererTests.cpp" />
-    <ClCompile Include="test\catch\scripting\LuaFunctionTests.cpp">
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
     <ClCompile Include="test\catch\test_utils\ImageUtilities.cpp" />
     <ClCompile Include="test\Fixtures.cpp" />
     <ClCompile Include="test\Premades.cpp" />
@@ -1011,6 +1008,7 @@
     <ClInclude Include="test\ui\InspectorCommon.h" />
     <ClInclude Include="test\ui\InspectorComponentPanel.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentParser.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentSymbol.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaSourceParserCommon.h" />
     <ClInclude Include="test\ui\lua_text_editor\ObjectFieldAutoCompleteData.h" />
     <ClInclude Include="test\ui\lua_text_editor\AutoCompleteUtility.h" />
@@ -1021,6 +1019,7 @@
     <ClInclude Include="test\ui\lua_text_editor\TreeCursor.h" />
     <ClInclude Include="test\ui\lua_text_editor\TreeNode.h" />
     <ClInclude Include="test\ui\lua_text_editor\TSEditorBridge.h" />
+    <ClInclude Include="test\ui\lua_text_editor\UtilityCommon.h" />
     <ClInclude Include="test\ui\panel\EditorComponentPanel.h" />
     <ClInclude Include="test\ui\panel\EditorEntityPanel.h" />
     <ClInclude Include="test\ui\panel\EditorEventPanel.h" />
@@ -1685,6 +1684,8 @@
     <None Include="test\catch\test_scripts\empty.lua" />
     <None Include="test\catch\test_scripts\entity_test.lua" />
     <None Include="test\catch\test_scripts\fn_table.lua" />
+    <None Include="test\catch\test_scripts\source_parser_test.lua" />
+    <None Include="test\catch\test_scripts\source_parser_test_bad_indexing.lua" />
     <None Include="test\catch\test_scripts\sys_table.lua" />
     <None Include="test\catch\test_scripts\sys_table_2.lua" />
     <None Include="test\catch\test_scripts\sys_table_with_phase.lua" />

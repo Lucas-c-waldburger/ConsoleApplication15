@@ -42,66 +42,13 @@ struct TreeCursor
 	void Reset();
 	bool GoToFirstNamedChild();
 	bool GoToNextNamedSibling();
+	bool GoToChildAtByte(uint32_t byte);
 
 	void SetHomeDepth() { homeDepth = 0; }
 	bool GoToHomeDepth();
 
 	TreeCursor Copy() const;
 	TreeCursor Branch() const;
-
-	/*std::vector<TreeNode> GatherChildren(std::string_view name);
-	std::vector<TreeNode> GatherChildren(std::string_view name, 
-										 std::vector<SourceDocumentError>& errors);
-	std::vector<TreeNode> GatherChildren(bool(*pred)(const TreeNode&));
-	std::vector<TreeNode> GatherChildren(bool(*pred)(const TreeNode&),
-											 std::vector<SourceDocumentError>& errors);
-
-	template <typename Pred>
-	std::vector<TreeNode> GatherChildren(Pred&& pred)
-	{
-		std::vector<TreeNode> matches;
-
-		if (!GoToFirstChild())
-		{
-			return matches;
-		}
-
-		do
-		{
-			auto node = CurrentNode();
-			if (pred(node))
-			{
-				matches.push_back(node);
-			}
-		} while (GoToNextSibling());
-
-		return matches;
-	}*/
-
-	/*template <auto...preds>
-	std::vector<TreeNode> Traverse() requires (sizeof...(preds) > 0)
-	{
-		static constexpr auto traverseOne = []<auto pred, size_t remaining>(
-			TreeCursor& c, std::vector<TreeNode>& matches) -> bool
-		{
-			if (!c.GoToFirstChild())
-			{
-				return false;
-			}
-
-			do
-			{
-				auto node = c.CurrentNode();
-
-				if (pred(node))
-				{
-					matches.push_back(node);
-				}
-			} while (c.GoToNextSibling());
-		};
-
-		return (traverseOne.template operator()<preds>(*this) || ...);
-	}*/
 
 	TSTreeCursor cursor;
 	std::string_view source;

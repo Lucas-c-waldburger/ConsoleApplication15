@@ -49,6 +49,8 @@ public:
 
 	sol::state_view Data() { return state_; }
 
+
+	ParsedLuaUserTypeInfo& GetLuaUserTypeInfo();
 	const ParsedLuaUserTypeInfo& GetLuaUserTypeInfo() const;
 
 private:

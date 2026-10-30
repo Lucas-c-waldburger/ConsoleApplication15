@@ -180,9 +180,6 @@
     <ClCompile Include="test\catch\events\EventBusTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test\catch\scripting\LuaFunctionTests.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="test\catch\render\RendererTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -667,6 +664,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\catch\ui\LuaSourceParsingTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceParserCommon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentSymbol.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -3515,6 +3521,12 @@
     <ClInclude Include="test\ui\asset_viewer\InProgressScriptStorage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\UtilityCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentSymbol.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -4418,6 +4430,8 @@
     <None Include="resources\scripts\fn_table.lua" />
     <None Include="resources\scripts\incomplete_fn_table_test.lua" />
     <None Include="test\catch\test_scripts\sys_table_with_phase.lua" />
+    <None Include="test\catch\test_scripts\source_parser_test.lua" />
+    <None Include="test\catch\test_scripts\source_parser_test_bad_indexing.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

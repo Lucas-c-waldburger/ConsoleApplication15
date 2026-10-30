@@ -423,8 +423,6 @@ void AssetPreviewViewerChild::DrawFontAssetPreview(ResourceContext& ctx)
 
 void AssetPreviewViewerChild::DrawScriptAssetPreview(ResourceContext& ctx, ScriptSystem& scriptSys)
 {
-	const auto& userTypeInfo = scriptSys.GetState().GetLuaUserTypeInfo();
-
 	if (ctx.scriptSelection.compoundId != scriptEditorDisplay_.sourceCompoundId)
 	{
 		const auto& selectionCompoundId = ctx.scriptSelection.compoundId;
@@ -441,8 +439,7 @@ void AssetPreviewViewerChild::DrawScriptAssetPreview(ResourceContext& ctx, Scrip
 
 				auto& content = ctx.inProgressScriptStorage.contents[it->second];
 
-				auto loadResult = scriptEditorDisplay_.textEditor
-					.LoadScriptString(content, userTypeInfo);
+				auto loadResult = scriptEditorDisplay_.textEditor.LoadScriptString(content);
 				if (!loadResult.Success())
 				{
 					LOG_ERROR(loadResult.GetError());
@@ -459,8 +456,7 @@ void AssetPreviewViewerChild::DrawScriptAssetPreview(ResourceContext& ctx, Scrip
 				return;
 			}
 
-			auto loadResult = scriptEditorDisplay_.textEditor
-				.LoadScriptFile(*fpOp, userTypeInfo);
+			auto loadResult = scriptEditorDisplay_.textEditor.LoadScriptFile(*fpOp);
 			if (!loadResult.Success())
 			{
 				LOG_ERROR(loadResult.GetError());
@@ -599,7 +595,9 @@ void AssetPreviewViewerChild::DrawScriptAssetPreview(ResourceContext& ctx, Scrip
 		}
 	}
 
-	scriptEditorDisplay_.textEditor.Update(userTypeInfo, editorWindowName);
+	scriptEditorDisplay_.textEditor.Update(
+		scriptSys.GetState().GetLuaUserTypeInfo(), 
+		editorWindowName);
 }
 
 

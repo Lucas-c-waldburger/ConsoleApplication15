@@ -720,6 +720,20 @@ ImU32 TextEditor::GetGlyphColor(const Glyph & aGlyph) const
 		return mPalette[(int)PaletteIndex::Comment];
 	if (aGlyph.mMultiLineComment)
 		return mPalette[(int)PaletteIndex::MultiLineComment];
+
+	if ((int)aGlyph.mColorIndex >= (int)PaletteIndex::Max)
+	{
+		const int userColorIndex = (int)aGlyph.mColorIndex - (int)PaletteIndex::Max;
+		if (mUserPaletteIndexingTypeId != 0 && userColorIndex < (int)mUserPalette.size())
+		{
+			return mUserPalette[userColorIndex];
+		}
+		else
+		{
+			return mPalette[(int)PaletteIndex::Default];
+		}
+	}
+
 	auto const color = mPalette[(int)aGlyph.mColorIndex];
 	if (aGlyph.mPreprocessor)
 	{
@@ -805,7 +819,7 @@ void TextEditor::RenderColorizedText(const Line& line, ImVec2 textScreenPos,
 			textScreenPos.y + bufferOffset.y);
 
 		// Dim gray, with partial transparency.
-		const ImU32 ghostColor = IM_COL32(160, 160, 160, 140);
+		constexpr ImU32 ghostColor = IM_COL32(160, 160, 160, 140);
 
 		drawList->AddText(
 			ghostPos,
@@ -1117,6 +1131,12 @@ void TextEditor::Render()
 		color.w *= ImGui::GetStyle().Alpha;
 		mPalette[i] = ImGui::ColorConvertFloat4ToU32(color);
 	}
+	for (size_t i = 0; i < mUserPaletteBase.size(); ++i)
+	{
+		auto color = ImGui::ColorConvertU32ToFloat4(mUserPaletteBase[i]);
+		color.w *= ImGui::GetStyle().Alpha;
+		mUserPalette[i] = ImGui::ColorConvertFloat4ToU32(color);
+	}
 
 	assert(mLineBuffer.empty());
 
@@ -1353,6 +1373,7 @@ void TextEditor::Render(const char* aTitle, const ImVec2& aSize, bool aBorder)
 		HandleMouseInputs();
 
 	ColorizeInternal();
+	ApplyTextColorRanges();
 	Render();
 
 	if (mHandleKeyboardInputs)
@@ -1829,52 +1850,67 @@ bool TextEditor::IsKeyHandled(HandledKeys key) const
 	return (mHandledKeys & static_cast<uint32_t>(key)) != 0;
 }
 
-void TextEditor::SetColorRange(Coordinates aStart, Coordinates aEnd, PaletteIndex aColor)
+bool TextEditor::AddTextColorRange(const Coordinates& aStart, const Coordinates& aEnd, PaletteIndex aColor)
+{
+	if (aStart >= aEnd)
+	{
+		return false;
+	}
+
+	mTextColorRanges.emplace_back(aStart, aEnd, aColor);
+
+	return true;
+}
+
+void TextEditor::ApplyTextColorRanges()
 {
 	if (mLines.empty())
 		return;
 
-	aStart = SanitizeCoordinates(aStart);
-	aEnd = SanitizeCoordinates(aEnd);
-
-	if (aEnd < aStart)
-		std::swap(aStart, aEnd);
-
-	for (int lineNo = aStart.mLine;
-		lineNo <= aEnd.mLine;
-		++lineNo)
+	for (const auto& colorRange : mTextColorRanges)
 	{
-		auto& line = mLines[lineNo];
+		auto aStart = SanitizeCoordinates(colorRange.start);
+		auto aEnd = SanitizeCoordinates(colorRange.end);
 
-		const int startColumn =
-			lineNo == aStart.mLine ? aStart.mColumn : 0;
+		if (aEnd < aStart)
+			std::swap(aStart, aEnd);
 
-		const int endColumn =
-			lineNo == aEnd.mLine
-			? aEnd.mColumn
-			: INT_MAX;
-
-		int visualColumn = 0;
-
-		for (auto& glyph : line)
+		for (int lineNo = aStart.mLine;
+			lineNo <= aEnd.mLine;
+			++lineNo)
 		{
-			const int nextColumn =
-				glyph.mChar == '\t'
-				? (visualColumn / mTabSize + 1) * mTabSize
-				: visualColumn + 1;
+			auto& line = mLines[lineNo];
 
-			// Color glyphs whose visual-column span intersects
-			// the requested half-open range [start, end).
-			if (visualColumn < endColumn &&
-				nextColumn > startColumn)
+			const int startColumn =
+				lineNo == aStart.mLine ? aStart.mColumn : 0;
+
+			const int endColumn =
+				lineNo == aEnd.mLine
+				? aEnd.mColumn
+				: INT_MAX;
+
+			int visualColumn = 0;
+
+			for (auto& glyph : line)
 			{
-				glyph.mColorIndex = aColor;
+				const int nextColumn =
+					glyph.mChar == '\t'
+					? (visualColumn / mTabSize + 1) * mTabSize
+					: visualColumn + 1;
+
+				// Color glyphs whose visual-column span intersects
+				// the requested half-open range [start, end).
+				if (visualColumn < endColumn &&
+					nextColumn > startColumn)
+				{
+					glyph.mColorIndex = colorRange.paletteIndex;
+				}
+
+				visualColumn = nextColumn;
+
+				if (visualColumn >= endColumn)
+					break;
 			}
-
-			visualColumn = nextColumn;
-
-			if (visualColumn >= endColumn)
-				break;
 		}
 	}
 }

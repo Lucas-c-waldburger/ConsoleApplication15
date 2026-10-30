@@ -11,6 +11,7 @@
 #include <string_view>
 #include <span>
 #include "imgui.h"
+#include "../../core/TypeInfo.h"
 
 class TextEditor
 {
@@ -207,6 +208,7 @@ public:
 		static const LanguageDefinition& Lua();
 	};
 
+	// extensions
 	struct GhostText
 	{
 		Coordinates position;
@@ -244,6 +246,13 @@ public:
 
 		void PushColors() const;
 		void PopColors() const;
+	};
+
+	struct TextColorRange
+	{
+		Coordinates start;
+		Coordinates end;
+		PaletteIndex paletteIndex = PaletteIndex::Default;
 	};
 
 	TextEditor();
@@ -346,31 +355,75 @@ public:
 	bool IsKeyHandled(HandledKeys key) const;
 	void SetIsTextChanged(bool aValue) { mTextChanged = aValue; }
 	void SetIsCursorPositionChanged(bool aValue) { mCursorPositionChanged = aValue; }
-	void SetColorRange(Coordinates aStart, Coordinates aEnd, PaletteIndex aColor);
 	float GetLineSpacing() const noexcept { return mLineSpacing; }
 
+	/** @defgroup GhostText @{ */
 	void SetGhostText(const Coordinates& aPosition, std::string_view aText);
 	void ClearGhostText();
 	const GhostText& GetGhostText() const { return mGhostText; }
 	void CommitGhostText();
 	void CommitGhostText(std::string_view appendText, int cursorBackPlacement = 0);
 	bool IsGhostTextVisible() const noexcept { return mGhostText.IsVisible(); }
+	/** @} */
 
+	/** @defgroup TextDecoration @{ */
 	bool AddTextDecoration(const Coordinates& aPos, int colSpan, TextDecoration::Type aType, ImColor aColor);
 	bool AddTextDecoration(const Coordinates& aPosStart, const Coordinates& aPosEnd, TextDecoration::Type aType,
 						   ImColor aColor);
 	void ClearTextDecorations();
 	const std::vector<TextDecoration>& GetTextDecorations() const { return mTextDecorations; }
+	/** @} */
 
+	/** @defgroup TextColorRange @{ */
+	bool AddTextColorRange(const Coordinates& aStart, const Coordinates& aEnd, PaletteIndex aColor);
+	template <typename T> requires std::is_enum_v<T>
+	bool AddTextColorRange(Coordinates aStart, Coordinates aEnd, T aColor)
+	{
+		if (aStart >= aEnd)
+		{
+			return false;
+		}
+
+		if (mUserPaletteIndexingTypeId != TypeInfo<T>::hash32)
+		{
+			return false;
+		}
+
+		const auto userColorIndex = static_cast<std::underlying_type_t<T>>(aColor);
+		if (userColorIndex < 0 || userColorIndex >= mUserPaletteBase.size())
+		{
+			return false;
+		}
+
+		mTextColorRanges.emplace_back(aStart, aEnd,
+			static_cast<PaletteIndex>(userColorIndex + static_cast<int>(PaletteIndex::Max)));
+
+		return true;
+	}
+	void ClearTextColorRanges() { mTextColorRanges.clear(); }
+	/** @} */
+
+	/** @defgroup TextTooltip @{ */
 	bool AddTextTooltip(const Coordinates& aPos, std::string_view aText, 
 						const TextTooltip::Colors& aColors = {});
 	void ClearTextTooltips();
+	/** @} */
 
 	ImVec2 GetScroll() const noexcept { return mScroll; }
 	ImVec2 GetWindowMin() const noexcept { return mWindowMin; }
 	ImVec2 GetWindowMax() const noexcept { return mWindowMax; }
 
 	bool MouseInsideWindow() const;
+
+	/** @defgroup UserPalette @{ */
+	template <typename T> requires std::is_enum_v<T>
+	void SetUserPalette(const Palette& aPalette)
+	{
+		mUserPaletteBase = aPalette;
+		mUserPaletteIndexingTypeId = TypeInfo<T>::hash32;
+	}
+	const Palette& GetUserPalette() const { return mUserPaletteBase; }
+	/** @} */
 
 private:
 	typedef std::vector<std::pair<std::regex, PaletteIndex>> RegexList;
@@ -415,6 +468,7 @@ private:
 		EditorState mAfter;
 	};
 
+	// extension
 	struct TextDecorationRenderData
 	{
 		struct Entry
@@ -470,6 +524,8 @@ private:
 	ImU32 GetGlyphColor(const Glyph& aGlyph) const;
 
 	// extensions
+	void ApplyTextColorRanges();
+
 	std::pair<Coordinates, Coordinates> CalculateNormalSelectionCoordinates(const Coordinates& aStart,
 																			const Coordinates& aEnd) const;
 	void RenderColorizedText(const Line& line, ImVec2 textScreenPos, int lineNo, 
@@ -485,6 +541,10 @@ private:
 	ImVec2 mScroll = {};
 	ImVec2 mWindowMin = {};
 	ImVec2 mWindowMax = {};
+	Palette mUserPaletteBase;
+	Palette mUserPalette;
+	uint32_t mUserPaletteIndexingTypeId = 0;
+	std::vector<TextColorRange> mTextColorRanges;
 
 	void HandleKeyboardInputs();
 	void HandleMouseInputs();

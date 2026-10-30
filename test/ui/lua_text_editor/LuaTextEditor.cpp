@@ -16,10 +16,10 @@ namespace {
 LuaTextEditor::LuaTextEditor()
 {
     textEditor_.SetLanguageDefinition(TextEditor::LanguageDefinition::Lua());
+	textEditor_.SetUserPalette<TextDecorationUtility::UserPaletteIndex>(TextDecorationUtility::kUserPalette);
 }
 
-Result<Void> LuaTextEditor::LoadScriptString(std::string source,
-                                             const ParsedLuaUserTypeInfo& userTypeInfo)
+Result<Void> LuaTextEditor::LoadScriptString(std::string source)
 {
     loadedFilepath_.clear();
     textEditor_.SetText(source);
@@ -28,8 +28,7 @@ Result<Void> LuaTextEditor::LoadScriptString(std::string source,
     return kVoid;
 }
 
-Result<Void> LuaTextEditor::LoadScriptFile(std::string filepath,
-                                           const ParsedLuaUserTypeInfo& userTypeInfo)
+Result<Void> LuaTextEditor::LoadScriptFile(std::string filepath)
 {
     loadedFilepath_.clear();
     parser_.Reset();
@@ -105,35 +104,23 @@ void LuaTextEditor::Render(std::string_view title, const ImVec2& aSize, bool aBo
 void LuaTextEditor::Update(const ParsedLuaUserTypeInfo& userTypeInfo,
                            std::string_view title, const ImVec2& aSize, bool aBorder)
 {
-	AutoCompleteUtility::ResourceContext autoCompleteCtx{ textEditor_, parser_, userTypeInfo };
-
-    //if (!textEditor_.IsGhostTextVisible())
-    //{
-    //    parser_.ClearCompletionMarkers();
-    //}
+	LuaTextEditorResourceContext ctx{ textEditor_, parser_, userTypeInfo };
 
     if (textEditor_.IsTextChanged())
     {
         auto newSource = textEditor_.GetText();
 
-		//UpdateParserCompletionMarkers(newSource);
-
-        parser_.EditSource(std::move(newSource));
-    
-        autoCompleteUtility_.UpdateForNewText(autoCompleteCtx);
-
-		textDecorationUtility_.UpdateForNewText(parser_, textEditor_);
-    }
-    if (textEditor_.IsCursorPositionChanged())
-    {
-        autoCompleteUtility_.UpdateForNewCursorPos(autoCompleteCtx);
+        parser_.EditSource(std::move(newSource), userTypeInfo);
     }
 
-    autoCompleteUtility_.Draw(autoCompleteCtx);
+	autoCompleteUtility_.Update(ctx);
+	textDecorationUtility_.Update(ctx);
+
+    autoCompleteUtility_.Draw(ctx);
 
     textEditor_.Render(title.data(), aSize, aBorder);
 
-    autoCompleteUtility_.Cleanup(autoCompleteCtx);
+    autoCompleteUtility_.Cleanup(ctx);
 }
 
 void LuaTextEditor::SetReadOnly(bool rOnly)
@@ -161,21 +148,6 @@ void LuaTextEditor::Clear()
     textEditor_.SetText("");
     loadedFilepath_.clear();
     parser_.Reset();
-}
-
-void LuaTextEditor::UpdateParserCompletionMarkers(std::string_view newSource)
-{
-    parser_.ClearCompletionMarkers();
-
-    const auto cursorByteOffset = TextPositionToByteOffset(newSource,
-                                                           textEditor_.GetCursorPosition(),
-                                                           textEditor_.GetTabSize());
-
-    auto autoCompData = ObjectFieldAutoCompleteData::Parse(newSource, cursorByteOffset);
-    if (autoCompData.IsValid())
-    {
-        parser_.AddCompletionMarker(autoCompData.expressionStartByte);
-    }
 }
 
 //void LuaTextEditor::ResolveDocumentParseErrors()

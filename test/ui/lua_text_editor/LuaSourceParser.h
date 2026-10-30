@@ -8,6 +8,7 @@
 #include <optional>
 #include "TreeCursor.h"
 #include "LuaSourceParserCommon.h"
+#include "LuaSourceDocumentParser.h"
 #include "../../core/Result.h"
 #include "../../core/commonObjects.h"
 
@@ -37,34 +38,6 @@ inline UniqueTSTreePtr CreateUniqueTSTreePtr(TSParser* parser, const TSTree* old
 	return UniqueTSTreePtr(ts_parser_parse(parser, oldTree, input));
 }
 
-struct SourceLocationDataIndexPair
-{
-	SourceLocation location;
-	size_t dataIndex = std::numeric_limits<size_t>::max();
-
-	friend constexpr bool operator<(const SourceLocationDataIndexPair& lhs, 
-									const SourceLocationDataIndexPair& rhs) noexcept
-	{
-		return lhs.location.start < rhs.location.start;
-	}
-};
-
-struct ParsedLuaSourceDocument
-{
-	std::string_view functionTableName;
-	std::string_view metaTableName;
-	std::unordered_map<std::string_view, size_t> functionDataIndex;
-	std::vector<SourceLocationDataIndexPair> functionBlockInfo;
-	std::vector<std::string_view> functionNames;
-	std::vector<std::vector<std::string_view>> functionArgumentTypes;
-	std::vector<std::vector<std::string_view>> functionParameterNames;
-	std::vector<SourceDocumentError> errors;
-
-	bool HasErrors() const noexcept { return !errors.empty(); }
-
-	void Print() const;
-};
-
 class LuaSourceParser
 {
 public:
@@ -78,8 +51,10 @@ public:
 	bool HasErrors() const;
 
 	void Parse(std::string source);
+	void Parse(std::string source, const ParsedLuaUserTypeInfo& userTypeInfo);
 
 	void EditSource(std::string&& newSource);
+	void EditSource(std::string&& newSource, const ParsedLuaUserTypeInfo& userTypeInfo);
 
 	void Reset();
 
@@ -88,19 +63,25 @@ public:
 	TreeNode GetNodeAtPoint(TSPoint point);
 
 	const std::string& GetSourceString() const { return source_; }
-	const ParsedLuaSourceDocument& GetSourceDocument() const { return sourceDocument_; }
+	const LuaSourceDocument& GetSourceDocument() const { return sourceDocument_; }
 
 	void PrintSyntaxTree();
-
-	bool AddCompletionMarker(size_t markerSourceOffset);
-	bool RemoveCompletionMarker(size_t markerSourceOffset);
-	void ClearCompletionMarkers();
 
 	TreeCursor GetCursorAtRoot() const { return TreeCursor(GetRootNode(), source_); }
 	TreeCursor GetCursorAtNode(const TreeNode& node) const { return TreeCursor(node, source_); }
 
 private:
-	ParsedLuaSourceDocument ParseDocument();
+	struct Backup
+	{
+		using FunctionBlockInfo = FunctionBlockInfoTemplate<std::string>;
+
+		std::vector<FunctionBlockInfo> functionBlocks;
+	};
+
+	void RefreshBackup();
+	void ApplyBackupBlocks(const TSInputEdit& edit);
+
+	LuaSourceDocument ParseDocument();
 	TreeCursor GetCursorAtByteOffset(size_t byteOffset) const;
 
 	static void PrintSyntaxTreeImpl(TSNode node, std::string_view source, int depth = 0);
@@ -108,8 +89,8 @@ private:
 	UniqueTSParserPtr parser_;
 	UniqueTSTreePtr tree_;
 	std::string source_;
-	ParsedLuaSourceDocument sourceDocument_;
-	std::vector<size_t> completionMarkerOffsets_;
+	LuaSourceDocument sourceDocument_;
+	Backup backup_;
 };
 
 } // ui

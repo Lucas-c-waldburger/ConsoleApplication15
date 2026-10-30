@@ -6,22 +6,6 @@
 
 namespace ui {
 
-//TreeCursor::TreeCursor(const TreeCursor& other) : 
-//    cursor(ts_tree_cursor_new(other.CurrentNode())), 
-//    source(other.source), homeDepth(0)
-//{}
-//
-//TreeCursor& TreeCursor::operator=(const TreeCursor& other)
-//{
-//    if (this == &other) { return *this; }
-//
-//    cursor = ts_tree_cursor_new(other.CurrentNode());
-//    source = other.source;
-//    homeDepth = 0;
-//
-//    return *this;
-//}
-
 bool TreeCursor::GoToFirstChild()
 {
     if (!ts_tree_cursor_goto_first_child(&cursor)) 
@@ -95,6 +79,18 @@ bool TreeCursor::GoToNextNamedSibling()
     return false;
 }
 
+bool TreeCursor::GoToChildAtByte(uint32_t byte)
+{
+    while (ts_tree_cursor_goto_first_child_for_byte(&cursor, byte) != -1) 
+    {
+        ++homeDepth;
+    }
+
+    auto node = CurrentNode();
+
+    return !ts_node_is_null(node) && ts_node_start_byte(node) == byte;
+}
+
 bool TreeCursor::GoToHomeDepth()
 {
     while (homeDepth != 0)
@@ -131,100 +127,6 @@ void TreeCursor::Reset()
 
     homeDepth = 0;
 }
-
-//std::vector<TreeNode> TreeCursor::GatherChildren(std::string_view name)
-//{
-//    std::vector<TreeNode> children;
-//    if (!GoToFirstNamedChild())
-//    {
-//        return children;
-//    }
-//    do
-//    {
-//        if (auto node = CurrentNode(); node.GetType() == name)
-//        {
-//            children.push_back(node);
-//        }
-//
-//    } while (GoToNextNamedSibling());
-//
-//    return children;
-//}
-//
-//std::vector<TreeNode> TreeCursor::GatherChildren(std::string_view name, 
-//                                                 std::vector<SourceDocumentError>& errors)
-//{
-//    std::vector<TreeNode> children;
-//
-//    if (!GoToFirstNamedChild())
-//    {
-//		auto node = CurrentNode();
-//
-//        errors.emplace_back(
-//            std::format("Failed to go to first child of node '{}'", node.GetType()),
-//            node.GetSourceLocation());
-//
-//		return children;
-//    }
-//    do
-//    {
-//        if (auto node = CurrentNode(); node.GetType() == name)
-//        {
-//            children.emplace_back(node);
-//        }
-//
-//    } while (GoToNextNamedSibling());
-//
-//    return children;
-//}
-//
-//std::vector<TreeNode> TreeCursor::GatherChildren(bool(*pred)(const TreeNode&))
-//{
-//    std::vector<TreeNode> children;
-//    if (!GoToFirstNamedChild())
-//    {
-//        return children;
-//    }
-//    do
-//    {
-//        if (auto node = CurrentNode(); pred(node))
-//        {
-//            children.push_back(node);
-//        }
-//
-//    } while (GoToNextNamedSibling());
-//
-//    return children;
-//}
-//
-//std::vector<TreeNode> TreeCursor::GatherChildren(bool(*pred)(const TreeNode&), 
-//                                                 std::vector<SourceDocumentError>& errors)
-//{
-//    std::vector<TreeNode> children;
-//    if (!GoToFirstNamedChild())
-//    {
-//        if (!GoToFirstNamedChild())
-//        {
-//            auto node = CurrentNode();
-//
-//            errors.emplace_back(
-//                std::format("Failed to go to first child of node '{}'", node.GetType()),
-//                node.GetSourceLocation());
-//
-//            return children;
-//        }
-//    }
-//    do
-//    {
-//        if (auto node = CurrentNode(); pred(node))
-//        {
-//            children.push_back(node);
-//        }
-//
-//    } while (GoToNextNamedSibling());
-//
-//    return children;
-//}
 
 } // ui
 

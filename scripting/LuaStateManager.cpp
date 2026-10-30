@@ -56,3 +56,13 @@ const ParsedLuaUserTypeInfo& LuaStateManager::GetLuaUserTypeInfo() const
 
 	return userTypeInfo_;
 }
+
+ParsedLuaUserTypeInfo& LuaStateManager::GetLuaUserTypeInfo()
+{
+	if (!userTypeInfo_.IsCommitted())
+	{
+		userTypeInfo_.Commit();
+	}
+
+	return userTypeInfo_;
+}

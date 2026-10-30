@@ -22,12 +22,10 @@ public:
 	LuaTextEditor& operator=(const LuaTextEditor&) = delete;
 	LuaTextEditor(LuaTextEditor&&) noexcept = default;
 	LuaTextEditor& operator=(LuaTextEditor&&) noexcept = default;
-	
-	Result<Void> LoadScriptString(std::string source, 
-								  const ParsedLuaUserTypeInfo& userTypeInfo);
 
-	Result<Void> LoadScriptFile(std::string filepath,
-								const ParsedLuaUserTypeInfo& userTypeInfo);
+	Result<Void> LoadScriptString(std::string source);
+
+	Result<Void> LoadScriptFile(std::string filepath);
 
 	Result<Void> SaveScriptFile(std::string_view destPath = "");
 
@@ -50,8 +48,6 @@ public:
 	TextEditor& GetTextEditor() noexcept { return textEditor_; }
 
 private:
-	void UpdateParserCompletionMarkers(std::string_view newSource);
-
 	TextEditor textEditor_;
 	LuaSourceParser parser_;
 	std::string loadedFilepath_;

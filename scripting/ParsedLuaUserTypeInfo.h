@@ -353,6 +353,14 @@ public:
 		return *this;
 	}
 
+	DataIndex GetDataIndex(uint32_t typeId) const
+	{
+		auto it = userTypeIdToDataIndex_.find(typeId);
+
+		return (it != userTypeIdToDataIndex_.end())
+			? DataIndex{ it->second }
+			: DataIndex{ std::numeric_limits<size_t>::max() };
+	}
 	DataIndex GetDataIndex(std::string_view userTypeName) const
 	{
 		auto it = userTypeNameToDataIndex_.find(userTypeName);
@@ -360,6 +368,11 @@ public:
 		return (it != userTypeNameToDataIndex_.end())
 			? DataIndex{ it->second }
 			: DataIndex{ std::numeric_limits<size_t>::max() };
+	}
+	template <typename T> requires std::same_as<raw_type_t<T>, T>
+	DataIndex GetDataIndex() const
+	{
+		return GetDataIndex(TypeInfo<T>::hash32);
 	}
 
 	const std::vector<std::string>&
@@ -379,16 +392,6 @@ public:
 
 	const std::vector<std::vector<uint32_t>>&
 	GetAllUserTypeFieldResultTypeIds() const { return userTypeFieldResultTypeIds_; }
-
-	template <typename T> requires std::same_as<raw_type_t<T>, T>
-	DataIndex GetDataIndex() const
-	{
-		auto it = userTypeIdToDataIndex_.find(TypeInfo<T>::hash32);
-
-		return (it != userTypeIdToDataIndex_.end())
-			? DataIndex{ it->second }
-			: DataIndex{ std::numeric_limits<size_t>::max() };
-	}
 
 	const std::string& GetUserTypeName(DataIndex idx) const
 	{
