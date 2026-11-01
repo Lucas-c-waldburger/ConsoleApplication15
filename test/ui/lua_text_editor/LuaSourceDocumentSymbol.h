@@ -36,6 +36,7 @@ struct LuaSourceDocumentScopeTree
 
 	bool PushScope(TreeCursor& cursor);
 	bool AtRoot() const noexcept { return current <= 0; }
+	bool AtLeaf() const noexcept { return current < nodes.size() && nodes[current].IsLeaf(); }
 	bool CurrentValid() const;
 	bool SetCurrent(size_t idx);
 
@@ -46,6 +47,7 @@ struct LuaSourceDocumentScopeTree
 
 	std::vector<SourceLocation> locations;
 	std::vector<std::string_view> names;
+	std::vector<uint32_t> returns;
 	std::vector<LuaSourceDocumentScope> nodes;
 };
 
@@ -61,8 +63,8 @@ struct LuaSourceDocumentSymbol
 	};
 
 	std::string_view name;
+	SourceLocation location;
 	SourceLocation scope;
-	SourceLocation assignment;
 	uint32_t type = std::numeric_limits<uint32_t>::max();
 	Kind kind = Kind::Unknown;
 
@@ -74,8 +76,8 @@ inline constexpr LuaSourceDocumentSymbol kInvalidSourceDocumentSymbol{};
 using LuaSourceDocumentSymbolSOA = StableSOA<
 	LuaSourceDocumentSymbol,
 	&LuaSourceDocumentSymbol::name,
+	&LuaSourceDocumentSymbol::location,
 	&LuaSourceDocumentSymbol::scope,
-	&LuaSourceDocumentSymbol::assignment,
 	&LuaSourceDocumentSymbol::type,
 	&LuaSourceDocumentSymbol::kind
 >;
@@ -111,15 +113,16 @@ struct LuaSourceDocumentSybolParseContext
 struct LuaSourceDocumentSymbolTable
 {
 	LuaSourceDocumentSymbolSOA symbols;
-	std::vector<SourceLocation> scopeLocations;
-	std::vector<size_t> scopeIndexRanges;
+	LuaSourceDocumentScopeTree scopeTree;
 };
 
-size_t GetLuaSourceDocumentSymbolIndex(std::string_view targetName, 
-									   const SourceLocation& usageLoc,
-									   const LuaSourceDocumentSymbolSOA& symbols);
+size_t FindMatchingSymbolIndex(std::string_view targetName, 
+							   size_t byteOffset,
+							   LuaSourceDocumentSymbolSOA& symbols);
 
-
+size_t FindMatchingSymbolIndex(std::string_view targetName,
+							   SourceLocation targetLoc,
+							   LuaSourceDocumentSymbolSOA& symbols);
 
 } // ui
 

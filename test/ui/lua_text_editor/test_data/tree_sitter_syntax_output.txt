@@ -1,0 +1,1205 @@
+chunk [0, 1299] `local table = {}
+
+function table.changeName(e)
+    if e:hasName() then
+        e:getName().value = "changed"
+    end
+end
+
+function table.changePos(e)
+    if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p.x = 500.0
+        p.y = 500.0
+    end
+end
+
+function table.setPos(e, newPos)
+    if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p = newPos
+    end
+end
+
+function table.gameControllerCallback(e, ev)
+    if e:hasGameControllerState() then
+        local gc = e:getGameControllerState()
+        local id = gc.joystickID
+
+        id = 69
+    end
+end
+
+function table.timerCallback(ev, e)
+    if e:hasSpriteAnimationComponent() then
+        local anim = e:getSpriteAnimationComponent()
+        local name = anim.spriteSeriesName
+
+        name = "fired"
+    end
+end
+
+local meta = {
+    __signatures = {
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }
+}
+
+setmetatable(table, meta)
+
+return table`
+
+--variable_declaration [0, 16] `local table = {}`
+----local [0, 5] `local`
+----assignment_statement [6, 16] `table = {}`
+------variable_list [6, 11] `table`
+--------identifier [6, 11] `table`
+------= [12, 13] `=`
+------expression_list [14, 16] `{}`
+--------table_constructor [14, 16] `{}`
+----------{ [14, 15] `{`
+----------} [15, 16] `}`
+--function_declaration [20, 126] `function table.changeName(e)
+    if e:hasName() then
+        e:getName().value = "changed"
+    end
+end`
+----function [20, 28] `function`
+----dot_index_expression [29, 45] `table.changeName`
+------identifier [29, 34] `table`
+------. [34, 35] `.`
+------identifier [35, 45] `changeName`
+----parameters [45, 48] `(e)`
+------( [45, 46] `(`
+------identifier [46, 47] `e`
+------) [47, 48] `)`
+----block [54, 121] `if e:hasName() then
+        e:getName().value = "changed"
+    end`
+------if_statement [54, 121] `if e:hasName() then
+        e:getName().value = "changed"
+    end`
+--------if [54, 56] `if`
+--------function_call [57, 68] `e:hasName()`
+----------method_index_expression [57, 66] `e:hasName`
+------------identifier [57, 58] `e`
+------------: [58, 59] `:`
+------------identifier [59, 66] `hasName`
+----------arguments [66, 68] `()`
+------------( [66, 67] `(`
+------------) [67, 68] `)`
+--------then [69, 73] `then`
+--------block [83, 112] `e:getName().value = "changed"`
+----------assignment_statement [83, 112] `e:getName().value = "changed"`
+------------variable_list [83, 100] `e:getName().value`
+--------------dot_index_expression [83, 100] `e:getName().value`
+----------------function_call [83, 94] `e:getName()`
+------------------method_index_expression [83, 92] `e:getName`
+--------------------identifier [83, 84] `e`
+--------------------: [84, 85] `:`
+--------------------identifier [85, 92] `getName`
+------------------arguments [92, 94] `()`
+--------------------( [92, 93] `(`
+--------------------) [93, 94] `)`
+----------------. [94, 95] `.`
+----------------identifier [95, 100] `value`
+------------= [101, 102] `=`
+------------expression_list [103, 112] `"changed"`
+--------------string [103, 112] `"changed"`
+----------------" [103, 104] `"`
+----------------string_content [104, 111] `changed`
+----------------" [111, 112] `"`
+--------end [118, 121] `end`
+----end [123, 126] `end`
+--function_declaration [130, 326] `function table.changePos(e)
+    if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p.x = 500.0
+        p.y = 500.0
+    end
+end`
+----function [130, 138] `function`
+----dot_index_expression [139, 154] `table.changePos`
+------identifier [139, 144] `table`
+------. [144, 145] `.`
+------identifier [145, 154] `changePos`
+----parameters [154, 157] `(e)`
+------( [154, 155] `(`
+------identifier [155, 156] `e`
+------) [156, 157] `)`
+----block [163, 306] `if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p.x = 500.0
+        p.y = 500.0
+    end`
+------if_statement [163, 306] `if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p.x = 500.0
+        p.y = 500.0
+    end`
+--------if [163, 165] `if`
+--------function_call [166, 182] `e:hasTransform()`
+----------method_index_expression [166, 180] `e:hasTransform`
+------------identifier [166, 167] `e`
+------------: [167, 168] `:`
+------------identifier [168, 180] `hasTransform`
+----------arguments [180, 182] `()`
+------------( [180, 181] `(`
+------------) [181, 182] `)`
+--------then [183, 187] `then`
+--------block [197, 297] `local t = e:getTransform()
+        local p = t.position
+
+        p.x = 500.0
+        p.y = 500.0`
+----------variable_declaration [197, 223] `local t = e:getTransform()`
+------------local [197, 202] `local`
+------------assignment_statement [203, 223] `t = e:getTransform()`
+--------------variable_list [203, 204] `t`
+----------------identifier [203, 204] `t`
+--------------= [205, 206] `=`
+--------------expression_list [207, 223] `e:getTransform()`
+----------------function_call [207, 223] `e:getTransform()`
+------------------method_index_expression [207, 221] `e:getTransform`
+--------------------identifier [207, 208] `e`
+--------------------: [208, 209] `:`
+--------------------identifier [209, 221] `getTransform`
+------------------arguments [221, 223] `()`
+--------------------( [221, 222] `(`
+--------------------) [222, 223] `)`
+----------variable_declaration [233, 253] `local p = t.position`
+------------local [233, 238] `local`
+------------assignment_statement [239, 253] `p = t.position`
+--------------variable_list [239, 240] `p`
+----------------identifier [239, 240] `p`
+--------------= [241, 242] `=`
+--------------expression_list [243, 253] `t.position`
+----------------dot_index_expression [243, 253] `t.position`
+------------------identifier [243, 244] `t`
+------------------. [244, 245] `.`
+------------------identifier [245, 253] `position`
+----------assignment_statement [265, 276] `p.x = 500.0`
+------------variable_list [265, 268] `p.x`
+--------------dot_index_expression [265, 268] `p.x`
+----------------identifier [265, 266] `p`
+----------------. [266, 267] `.`
+----------------identifier [267, 268] `x`
+------------= [269, 270] `=`
+------------expression_list [271, 276] `500.0`
+--------------number [271, 276] `500.0`
+----------assignment_statement [286, 297] `p.y = 500.0`
+------------variable_list [286, 289] `p.y`
+--------------dot_index_expression [286, 289] `p.y`
+----------------identifier [286, 287] `p`
+----------------. [287, 288] `.`
+----------------identifier [288, 289] `y`
+------------= [290, 291] `=`
+------------expression_list [292, 297] `500.0`
+--------------number [292, 297] `500.0`
+--------end [303, 306] `end`
+----end [323, 326] `end`
+--function_declaration [330, 509] `function table.setPos(e, newPos)
+    if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p = newPos
+    end
+end`
+----function [330, 338] `function`
+----dot_index_expression [339, 351] `table.setPos`
+------identifier [339, 344] `table`
+------. [344, 345] `.`
+------identifier [345, 351] `setPos`
+----parameters [351, 362] `(e, newPos)`
+------( [351, 352] `(`
+------identifier [352, 353] `e`
+------, [353, 354] `,`
+------identifier [355, 361] `newPos`
+------) [361, 362] `)`
+----block [368, 489] `if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p = newPos
+    end`
+------if_statement [368, 489] `if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p = newPos
+    end`
+--------if [368, 370] `if`
+--------function_call [371, 387] `e:hasTransform()`
+----------method_index_expression [371, 385] `e:hasTransform`
+------------identifier [371, 372] `e`
+------------: [372, 373] `:`
+------------identifier [373, 385] `hasTransform`
+----------arguments [385, 387] `()`
+------------( [385, 386] `(`
+------------) [386, 387] `)`
+--------then [388, 392] `then`
+--------block [402, 480] `local t = e:getTransform()
+        local p = t.position
+
+        p = newPos`
+----------variable_declaration [402, 428] `local t = e:getTransform()`
+------------local [402, 407] `local`
+------------assignment_statement [408, 428] `t = e:getTransform()`
+--------------variable_list [408, 409] `t`
+----------------identifier [408, 409] `t`
+--------------= [410, 411] `=`
+--------------expression_list [412, 428] `e:getTransform()`
+----------------function_call [412, 428] `e:getTransform()`
+------------------method_index_expression [412, 426] `e:getTransform`
+--------------------identifier [412, 413] `e`
+--------------------: [413, 414] `:`
+--------------------identifier [414, 426] `getTransform`
+------------------arguments [426, 428] `()`
+--------------------( [426, 427] `(`
+--------------------) [427, 428] `)`
+----------variable_declaration [438, 458] `local p = t.position`
+------------local [438, 443] `local`
+------------assignment_statement [444, 458] `p = t.position`
+--------------variable_list [444, 445] `p`
+----------------identifier [444, 445] `p`
+--------------= [446, 447] `=`
+--------------expression_list [448, 458] `t.position`
+----------------dot_index_expression [448, 458] `t.position`
+------------------identifier [448, 449] `t`
+------------------. [449, 450] `.`
+------------------identifier [450, 458] `position`
+----------assignment_statement [470, 480] `p = newPos`
+------------variable_list [470, 471] `p`
+--------------identifier [470, 471] `p`
+------------= [472, 473] `=`
+------------expression_list [474, 480] `newPos`
+--------------identifier [474, 480] `newPos`
+--------end [486, 489] `end`
+----end [506, 509] `end`
+--function_declaration [513, 711] `function table.gameControllerCallback(e, ev)
+    if e:hasGameControllerState() then
+        local gc = e:getGameControllerState()
+        local id = gc.joystickID
+
+        id = 69
+    end
+end`
+----function [513, 521] `function`
+----dot_index_expression [522, 550] `table.gameControllerCallback`
+------identifier [522, 527] `table`
+------. [527, 528] `.`
+------identifier [528, 550] `gameControllerCallback`
+----parameters [550, 557] `(e, ev)`
+------( [550, 551] `(`
+------identifier [551, 552] `e`
+------, [552, 553] `,`
+------identifier [554, 556] `ev`
+------) [556, 557] `)`
+----block [563, 706] `if e:hasGameControllerState() then
+        local gc = e:getGameControllerState()
+        local id = gc.joystickID
+
+        id = 69
+    end`
+------if_statement [563, 706] `if e:hasGameControllerState() then
+        local gc = e:getGameControllerState()
+        local id = gc.joystickID
+
+        id = 69
+    end`
+--------if [563, 565] `if`
+--------function_call [566, 592] `e:hasGameControllerState()`
+----------method_index_expression [566, 590] `e:hasGameControllerState`
+------------identifier [566, 567] `e`
+------------: [567, 568] `:`
+------------identifier [568, 590] `hasGameControllerState`
+----------arguments [590, 592] `()`
+------------( [590, 591] `(`
+------------) [591, 592] `)`
+--------then [593, 597] `then`
+--------block [607, 697] `local gc = e:getGameControllerState()
+        local id = gc.joystickID
+
+        id = 69`
+----------variable_declaration [607, 644] `local gc = e:getGameControllerState()`
+------------local [607, 612] `local`
+------------assignment_statement [613, 644] `gc = e:getGameControllerState()`
+--------------variable_list [613, 615] `gc`
+----------------identifier [613, 615] `gc`
+--------------= [616, 617] `=`
+--------------expression_list [618, 644] `e:getGameControllerState()`
+----------------function_call [618, 644] `e:getGameControllerState()`
+------------------method_index_expression [618, 642] `e:getGameControllerState`
+--------------------identifier [618, 619] `e`
+--------------------: [619, 620] `:`
+--------------------identifier [620, 642] `getGameControllerState`
+------------------arguments [642, 644] `()`
+--------------------( [642, 643] `(`
+--------------------) [643, 644] `)`
+----------variable_declaration [654, 678] `local id = gc.joystickID`
+------------local [654, 659] `local`
+------------assignment_statement [660, 678] `id = gc.joystickID`
+--------------variable_list [660, 662] `id`
+----------------identifier [660, 662] `id`
+--------------= [663, 664] `=`
+--------------expression_list [665, 678] `gc.joystickID`
+----------------dot_index_expression [665, 678] `gc.joystickID`
+------------------identifier [665, 667] `gc`
+------------------. [667, 668] `.`
+------------------identifier [668, 678] `joystickID`
+----------assignment_statement [690, 697] `id = 69`
+------------variable_list [690, 692] `id`
+--------------identifier [690, 692] `id`
+------------= [693, 694] `=`
+------------expression_list [695, 697] `69`
+--------------number [695, 697] `69`
+--------end [703, 706] `end`
+----end [708, 711] `end`
+--function_declaration [715, 933] `function table.timerCallback(ev, e)
+    if e:hasSpriteAnimationComponent() then
+        local anim = e:getSpriteAnimationComponent()
+        local name = anim.spriteSeriesName
+
+        name = "fired"
+    end
+end`
+----function [715, 723] `function`
+----dot_index_expression [724, 743] `table.timerCallback`
+------identifier [724, 729] `table`
+------. [729, 730] `.`
+------identifier [730, 743] `timerCallback`
+----parameters [743, 750] `(ev, e)`
+------( [743, 744] `(`
+------identifier [744, 746] `ev`
+------, [746, 747] `,`
+------identifier [748, 749] `e`
+------) [749, 750] `)`
+----block [756, 928] `if e:hasSpriteAnimationComponent() then
+        local anim = e:getSpriteAnimationComponent()
+        local name = anim.spriteSeriesName
+
+        name = "fired"
+    end`
+------if_statement [756, 928] `if e:hasSpriteAnimationComponent() then
+        local anim = e:getSpriteAnimationComponent()
+        local name = anim.spriteSeriesName
+
+        name = "fired"
+    end`
+--------if [756, 758] `if`
+--------function_call [759, 790] `e:hasSpriteAnimationComponent()`
+----------method_index_expression [759, 788] `e:hasSpriteAnimationComponent`
+------------identifier [759, 760] `e`
+------------: [760, 761] `:`
+------------identifier [761, 788] `hasSpriteAnimationComponent`
+----------arguments [788, 790] `()`
+------------( [788, 789] `(`
+------------) [789, 790] `)`
+--------then [791, 795] `then`
+--------block [805, 919] `local anim = e:getSpriteAnimationComponent()
+        local name = anim.spriteSeriesName
+
+        name = "fired"`
+----------variable_declaration [805, 849] `local anim = e:getSpriteAnimationComponent()`
+------------local [805, 810] `local`
+------------assignment_statement [811, 849] `anim = e:getSpriteAnimationComponent()`
+--------------variable_list [811, 815] `anim`
+----------------identifier [811, 815] `anim`
+--------------= [816, 817] `=`
+--------------expression_list [818, 849] `e:getSpriteAnimationComponent()`
+----------------function_call [818, 849] `e:getSpriteAnimationComponent()`
+------------------method_index_expression [818, 847] `e:getSpriteAnimationComponent`
+--------------------identifier [818, 819] `e`
+--------------------: [819, 820] `:`
+--------------------identifier [820, 847] `getSpriteAnimationComponent`
+------------------arguments [847, 849] `()`
+--------------------( [847, 848] `(`
+--------------------) [848, 849] `)`
+----------variable_declaration [859, 893] `local name = anim.spriteSeriesName`
+------------local [859, 864] `local`
+------------assignment_statement [865, 893] `name = anim.spriteSeriesName`
+--------------variable_list [865, 869] `name`
+----------------identifier [865, 869] `name`
+--------------= [870, 871] `=`
+--------------expression_list [872, 893] `anim.spriteSeriesName`
+----------------dot_index_expression [872, 893] `anim.spriteSeriesName`
+------------------identifier [872, 876] `anim`
+------------------. [876, 877] `.`
+------------------identifier [877, 893] `spriteSeriesName`
+----------assignment_statement [905, 919] `name = "fired"`
+------------variable_list [905, 909] `name`
+--------------identifier [905, 909] `name`
+------------= [910, 911] `=`
+------------expression_list [912, 919] `"fired"`
+--------------string [912, 919] `"fired"`
+----------------" [912, 913] `"`
+----------------string_content [913, 918] `fired`
+----------------" [918, 919] `"`
+--------end [925, 928] `end`
+----end [930, 933] `end`
+--variable_declaration [937, 1254] `local meta = {
+    __signatures = {
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }
+}`
+----local [937, 942] `local`
+----assignment_statement [943, 1254] `meta = {
+    __signatures = {
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }
+}`
+------variable_list [943, 947] `meta`
+--------identifier [943, 947] `meta`
+------= [948, 949] `=`
+------expression_list [950, 1254] `{
+    __signatures = {
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }
+}`
+--------table_constructor [950, 1254] `{
+    __signatures = {
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }
+}`
+----------{ [950, 951] `{`
+----------field [957, 1251] `__signatures = {
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }`
+------------identifier [957, 969] `__signatures`
+------------= [970, 971] `=`
+------------table_constructor [972, 1251] `{
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }`
+--------------{ [972, 973] `{`
+--------------field [984, 1009] `changeName = { "Entity" }`
+----------------identifier [984, 994] `changeName`
+----------------= [995, 996] `=`
+----------------table_constructor [997, 1009] `{ "Entity" }`
+------------------{ [997, 998] `{`
+------------------field [999, 1007] `"Entity"`
+--------------------string [999, 1007] `"Entity"`
+----------------------" [999, 1000] `"`
+----------------------string_content [1000, 1006] `Entity`
+----------------------" [1006, 1007] `"`
+------------------} [1008, 1009] `}`
+--------------, [1009, 1010] `,`
+--------------field [1020, 1044] `changePos = { "Entity" }`
+----------------identifier [1020, 1029] `changePos`
+----------------= [1030, 1031] `=`
+----------------table_constructor [1032, 1044] `{ "Entity" }`
+------------------{ [1032, 1033] `{`
+------------------field [1034, 1042] `"Entity"`
+--------------------string [1034, 1042] `"Entity"`
+----------------------" [1034, 1035] `"`
+----------------------string_content [1035, 1041] `Entity`
+----------------------" [1041, 1042] `"`
+------------------} [1043, 1044] `}`
+--------------, [1044, 1045] `,`
+--------------field [1055, 1091] `setPos = { "Entity&", "SDL_FPoint" }`
+----------------identifier [1055, 1061] `setPos`
+----------------= [1062, 1063] `=`
+----------------table_constructor [1064, 1091] `{ "Entity&", "SDL_FPoint" }`
+------------------{ [1064, 1065] `{`
+------------------field [1066, 1075] `"Entity&"`
+--------------------string [1066, 1075] `"Entity&"`
+----------------------" [1066, 1067] `"`
+----------------------string_content [1067, 1074] `Entity&`
+----------------------" [1074, 1075] `"`
+------------------, [1075, 1076] `,`
+------------------field [1077, 1089] `"SDL_FPoint"`
+--------------------string [1077, 1089] `"SDL_FPoint"`
+----------------------" [1077, 1078] `"`
+----------------------string_content [1078, 1088] `SDL_FPoint`
+----------------------" [1088, 1089] `"`
+------------------} [1090, 1091] `}`
+--------------, [1091, 1092] `,`
+--------------field [1102, 1178] `gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"}`
+----------------identifier [1102, 1124] `gameControllerCallback`
+----------------= [1125, 1126] `=`
+----------------table_constructor [1127, 1178] `{ "Entity", "const GameControllerConnectedEvent &"}`
+------------------{ [1127, 1128] `{`
+------------------field [1129, 1137] `"Entity"`
+--------------------string [1129, 1137] `"Entity"`
+----------------------" [1129, 1130] `"`
+----------------------string_content [1130, 1136] `Entity`
+----------------------" [1136, 1137] `"`
+------------------, [1137, 1138] `,`
+------------------field [1139, 1177] `"const GameControllerConnectedEvent &"`
+--------------------string [1139, 1177] `"const GameControllerConnectedEvent &"`
+----------------------" [1139, 1140] `"`
+----------------------string_content [1140, 1176] `const GameControllerConnectedEvent &`
+----------------------" [1176, 1177] `"`
+------------------} [1177, 1178] `}`
+--------------, [1178, 1179] `,`
+--------------field [1189, 1244] `timerCallback = { "const  TimerFiredEvent&", "Entity" }`
+----------------identifier [1189, 1202] `timerCallback`
+----------------= [1203, 1204] `=`
+----------------table_constructor [1205, 1244] `{ "const  TimerFiredEvent&", "Entity" }`
+------------------{ [1205, 1206] `{`
+------------------field [1207, 1232] `"const  TimerFiredEvent&"`
+--------------------string [1207, 1232] `"const  TimerFiredEvent&"`
+----------------------" [1207, 1208] `"`
+----------------------string_content [1208, 1231] `const  TimerFiredEvent&`
+----------------------" [1231, 1232] `"`
+------------------, [1232, 1233] `,`
+------------------field [1234, 1242] `"Entity"`
+--------------------string [1234, 1242] `"Entity"`
+----------------------" [1234, 1235] `"`
+----------------------string_content [1235, 1241] `Entity`
+----------------------" [1241, 1242] `"`
+------------------} [1243, 1244] `}`
+--------------} [1250, 1251] `}`
+----------} [1253, 1254] `}`
+--function_call [1258, 1283] `setmetatable(table, meta)`
+----identifier [1258, 1270] `setmetatable`
+----arguments [1270, 1283] `(table, meta)`
+------( [1270, 1271] `(`
+------identifier [1271, 1276] `table`
+------, [1276, 1277] `,`
+------identifier [1278, 1282] `meta`
+------) [1282, 1283] `)`
+--return_statement [1287, 1299] `return table`
+----return [1287, 1293] `return`
+----expression_list [1294, 1299] `table`
+------identifier [1294, 1299] `table`
+chunk [0, 1299] `local table = {}
+
+function table.changeName(e)
+    if e:hasName() then
+        e:getName().value = "changed"
+    end
+end
+
+function table.changePos(e)
+    if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p.x = 500.0
+        p.y = 500.0
+    end
+end
+
+function table.setPos(e, newPos)
+    if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p = newPos
+    end
+end
+
+function table.gameControllerCallback(e, ev)
+    if e:hasGameControllerState() then
+        local gc = e:getGameControllerState()
+        local id = gc.joystickID
+
+        id = 69
+    end
+end
+
+function table.timerCallback(ev, e)
+    if e:hasSpriteAnimationComponent() then
+        local anim = e:getSpriteAnimationComponent()
+        local name = anim.spriteSeriesName
+
+        name = "fired"
+    end
+end
+
+local meta = {
+    __signatures = {
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }
+}
+
+setmetatable(table, meta)
+
+return table`
+--variable_declaration [0, 16] `local table = {}`
+----local [0, 5] `local`
+----assignment_statement [6, 16] `table = {}`
+------variable_list [6, 11] `table`
+--------identifier [6, 11] `table`
+------= [12, 13] `=`
+------expression_list [14, 16] `{}`
+--------table_constructor [14, 16] `{}`
+----------{ [14, 15] `{`
+----------} [15, 16] `}`
+--function_declaration [20, 126] `function table.changeName(e)
+    if e:hasName() then
+        e:getName().value = "changed"
+    end
+end`
+----function [20, 28] `function`
+----dot_index_expression [29, 45] `table.changeName`
+------identifier [29, 34] `table`
+------. [34, 35] `.`
+------identifier [35, 45] `changeName`
+----parameters [45, 48] `(e)`
+------( [45, 46] `(`
+------identifier [46, 47] `e`
+------) [47, 48] `)`
+----block [54, 121] `if e:hasName() then
+        e:getName().value = "changed"
+    end`
+------if_statement [54, 121] `if e:hasName() then
+        e:getName().value = "changed"
+    end`
+--------if [54, 56] `if`
+--------function_call [57, 68] `e:hasName()`
+----------method_index_expression [57, 66] `e:hasName`
+------------identifier [57, 58] `e`
+------------: [58, 59] `:`
+------------identifier [59, 66] `hasName`
+----------arguments [66, 68] `()`
+------------( [66, 67] `(`
+------------) [67, 68] `)`
+--------then [69, 73] `then`
+--------block [83, 112] `e:getName().value = "changed"`
+----------assignment_statement [83, 112] `e:getName().value = "changed"`
+------------variable_list [83, 100] `e:getName().value`
+--------------dot_index_expression [83, 100] `e:getName().value`
+----------------function_call [83, 94] `e:getName()`
+------------------method_index_expression [83, 92] `e:getName`
+--------------------identifier [83, 84] `e`
+--------------------: [84, 85] `:`
+--------------------identifier [85, 92] `getName`
+------------------arguments [92, 94] `()`
+--------------------( [92, 93] `(`
+--------------------) [93, 94] `)`
+----------------. [94, 95] `.`
+----------------identifier [95, 100] `value`
+------------= [101, 102] `=`
+------------expression_list [103, 112] `"changed"`
+--------------string [103, 112] `"changed"`
+----------------" [103, 104] `"`
+----------------string_content [104, 111] `changed`
+----------------" [111, 112] `"`
+--------end [118, 121] `end`
+----end [123, 126] `end`
+--function_declaration [130, 326] `function table.changePos(e)
+    if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p.x = 500.0
+        p.y = 500.0
+    end
+end`
+----function [130, 138] `function`
+----dot_index_expression [139, 154] `table.changePos`
+------identifier [139, 144] `table`
+------. [144, 145] `.`
+------identifier [145, 154] `changePos`
+----parameters [154, 157] `(e)`
+------( [154, 155] `(`
+------identifier [155, 156] `e`
+------) [156, 157] `)`
+----block [163, 306] `if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p.x = 500.0
+        p.y = 500.0
+    end`
+------if_statement [163, 306] `if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p.x = 500.0
+        p.y = 500.0
+    end`
+--------if [163, 165] `if`
+--------function_call [166, 182] `e:hasTransform()`
+----------method_index_expression [166, 180] `e:hasTransform`
+------------identifier [166, 167] `e`
+------------: [167, 168] `:`
+------------identifier [168, 180] `hasTransform`
+----------arguments [180, 182] `()`
+------------( [180, 181] `(`
+------------) [181, 182] `)`
+--------then [183, 187] `then`
+--------block [197, 297] `local t = e:getTransform()
+        local p = t.position
+
+        p.x = 500.0
+        p.y = 500.0`
+----------variable_declaration [197, 223] `local t = e:getTransform()`
+------------local [197, 202] `local`
+------------assignment_statement [203, 223] `t = e:getTransform()`
+--------------variable_list [203, 204] `t`
+----------------identifier [203, 204] `t`
+--------------= [205, 206] `=`
+--------------expression_list [207, 223] `e:getTransform()`
+----------------function_call [207, 223] `e:getTransform()`
+------------------method_index_expression [207, 221] `e:getTransform`
+--------------------identifier [207, 208] `e`
+--------------------: [208, 209] `:`
+--------------------identifier [209, 221] `getTransform`
+------------------arguments [221, 223] `()`
+--------------------( [221, 222] `(`
+--------------------) [222, 223] `)`
+----------variable_declaration [233, 253] `local p = t.position`
+------------local [233, 238] `local`
+------------assignment_statement [239, 253] `p = t.position`
+--------------variable_list [239, 240] `p`
+----------------identifier [239, 240] `p`
+--------------= [241, 242] `=`
+--------------expression_list [243, 253] `t.position`
+----------------dot_index_expression [243, 253] `t.position`
+------------------identifier [243, 244] `t`
+------------------. [244, 245] `.`
+------------------identifier [245, 253] `position`
+----------assignment_statement [265, 276] `p.x = 500.0`
+------------variable_list [265, 268] `p.x`
+--------------dot_index_expression [265, 268] `p.x`
+----------------identifier [265, 266] `p`
+----------------. [266, 267] `.`
+----------------identifier [267, 268] `x`
+------------= [269, 270] `=`
+------------expression_list [271, 276] `500.0`
+--------------number [271, 276] `500.0`
+----------assignment_statement [286, 297] `p.y = 500.0`
+------------variable_list [286, 289] `p.y`
+--------------dot_index_expression [286, 289] `p.y`
+----------------identifier [286, 287] `p`
+----------------. [287, 288] `.`
+----------------identifier [288, 289] `y`
+------------= [290, 291] `=`
+------------expression_list [292, 297] `500.0`
+--------------number [292, 297] `500.0`
+--------end [303, 306] `end`
+----end [323, 326] `end`
+--function_declaration [330, 509] `function table.setPos(e, newPos)
+    if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p = newPos
+    end
+end`
+----function [330, 338] `function`
+----dot_index_expression [339, 351] `table.setPos`
+------identifier [339, 344] `table`
+------. [344, 345] `.`
+------identifier [345, 351] `setPos`
+----parameters [351, 362] `(e, newPos)`
+------( [351, 352] `(`
+------identifier [352, 353] `e`
+------, [353, 354] `,`
+------identifier [355, 361] `newPos`
+------) [361, 362] `)`
+----block [368, 489] `if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p = newPos
+    end`
+------if_statement [368, 489] `if e:hasTransform() then
+        local t = e:getTransform()
+        local p = t.position
+
+        p = newPos
+    end`
+--------if [368, 370] `if`
+--------function_call [371, 387] `e:hasTransform()`
+----------method_index_expression [371, 385] `e:hasTransform`
+------------identifier [371, 372] `e`
+------------: [372, 373] `:`
+------------identifier [373, 385] `hasTransform`
+----------arguments [385, 387] `()`
+------------( [385, 386] `(`
+------------) [386, 387] `)`
+--------then [388, 392] `then`
+--------block [402, 480] `local t = e:getTransform()
+        local p = t.position
+
+        p = newPos`
+----------variable_declaration [402, 428] `local t = e:getTransform()`
+------------local [402, 407] `local`
+------------assignment_statement [408, 428] `t = e:getTransform()`
+--------------variable_list [408, 409] `t`
+----------------identifier [408, 409] `t`
+--------------= [410, 411] `=`
+--------------expression_list [412, 428] `e:getTransform()`
+----------------function_call [412, 428] `e:getTransform()`
+------------------method_index_expression [412, 426] `e:getTransform`
+--------------------identifier [412, 413] `e`
+--------------------: [413, 414] `:`
+--------------------identifier [414, 426] `getTransform`
+------------------arguments [426, 428] `()`
+--------------------( [426, 427] `(`
+--------------------) [427, 428] `)`
+----------variable_declaration [438, 458] `local p = t.position`
+------------local [438, 443] `local`
+------------assignment_statement [444, 458] `p = t.position`
+--------------variable_list [444, 445] `p`
+----------------identifier [444, 445] `p`
+--------------= [446, 447] `=`
+--------------expression_list [448, 458] `t.position`
+----------------dot_index_expression [448, 458] `t.position`
+------------------identifier [448, 449] `t`
+------------------. [449, 450] `.`
+------------------identifier [450, 458] `position`
+----------assignment_statement [470, 480] `p = newPos`
+------------variable_list [470, 471] `p`
+--------------identifier [470, 471] `p`
+------------= [472, 473] `=`
+------------expression_list [474, 480] `newPos`
+--------------identifier [474, 480] `newPos`
+--------end [486, 489] `end`
+----end [506, 509] `end`
+--function_declaration [513, 711] `function table.gameControllerCallback(e, ev)
+    if e:hasGameControllerState() then
+        local gc = e:getGameControllerState()
+        local id = gc.joystickID
+
+        id = 69
+    end
+end`
+----function [513, 521] `function`
+----dot_index_expression [522, 550] `table.gameControllerCallback`
+------identifier [522, 527] `table`
+------. [527, 528] `.`
+------identifier [528, 550] `gameControllerCallback`
+----parameters [550, 557] `(e, ev)`
+------( [550, 551] `(`
+------identifier [551, 552] `e`
+------, [552, 553] `,`
+------identifier [554, 556] `ev`
+------) [556, 557] `)`
+----block [563, 706] `if e:hasGameControllerState() then
+        local gc = e:getGameControllerState()
+        local id = gc.joystickID
+
+        id = 69
+    end`
+------if_statement [563, 706] `if e:hasGameControllerState() then
+        local gc = e:getGameControllerState()
+        local id = gc.joystickID
+
+        id = 69
+    end`
+--------if [563, 565] `if`
+--------function_call [566, 592] `e:hasGameControllerState()`
+----------method_index_expression [566, 590] `e:hasGameControllerState`
+------------identifier [566, 567] `e`
+------------: [567, 568] `:`
+------------identifier [568, 590] `hasGameControllerState`
+----------arguments [590, 592] `()`
+------------( [590, 591] `(`
+------------) [591, 592] `)`
+--------then [593, 597] `then`
+--------block [607, 697] `local gc = e:getGameControllerState()
+        local id = gc.joystickID
+
+        id = 69`
+----------variable_declaration [607, 644] `local gc = e:getGameControllerState()`
+------------local [607, 612] `local`
+------------assignment_statement [613, 644] `gc = e:getGameControllerState()`
+--------------variable_list [613, 615] `gc`
+----------------identifier [613, 615] `gc`
+--------------= [616, 617] `=`
+--------------expression_list [618, 644] `e:getGameControllerState()`
+----------------function_call [618, 644] `e:getGameControllerState()`
+------------------method_index_expression [618, 642] `e:getGameControllerState`
+--------------------identifier [618, 619] `e`
+--------------------: [619, 620] `:`
+--------------------identifier [620, 642] `getGameControllerState`
+------------------arguments [642, 644] `()`
+--------------------( [642, 643] `(`
+--------------------) [643, 644] `)`
+----------variable_declaration [654, 678] `local id = gc.joystickID`
+------------local [654, 659] `local`
+------------assignment_statement [660, 678] `id = gc.joystickID`
+--------------variable_list [660, 662] `id`
+----------------identifier [660, 662] `id`
+--------------= [663, 664] `=`
+--------------expression_list [665, 678] `gc.joystickID`
+----------------dot_index_expression [665, 678] `gc.joystickID`
+------------------identifier [665, 667] `gc`
+------------------. [667, 668] `.`
+------------------identifier [668, 678] `joystickID`
+----------assignment_statement [690, 697] `id = 69`
+------------variable_list [690, 692] `id`
+--------------identifier [690, 692] `id`
+------------= [693, 694] `=`
+------------expression_list [695, 697] `69`
+--------------number [695, 697] `69`
+--------end [703, 706] `end`
+----end [708, 711] `end`
+--function_declaration [715, 933] `function table.timerCallback(ev, e)
+    if e:hasSpriteAnimationComponent() then
+        local anim = e:getSpriteAnimationComponent()
+        local name = anim.spriteSeriesName
+
+        name = "fired"
+    end
+end`
+----function [715, 723] `function`
+----dot_index_expression [724, 743] `table.timerCallback`
+------identifier [724, 729] `table`
+------. [729, 730] `.`
+------identifier [730, 743] `timerCallback`
+----parameters [743, 750] `(ev, e)`
+------( [743, 744] `(`
+------identifier [744, 746] `ev`
+------, [746, 747] `,`
+------identifier [748, 749] `e`
+------) [749, 750] `)`
+----block [756, 928] `if e:hasSpriteAnimationComponent() then
+        local anim = e:getSpriteAnimationComponent()
+        local name = anim.spriteSeriesName
+
+        name = "fired"
+    end`
+------if_statement [756, 928] `if e:hasSpriteAnimationComponent() then
+        local anim = e:getSpriteAnimationComponent()
+        local name = anim.spriteSeriesName
+
+        name = "fired"
+    end`
+--------if [756, 758] `if`
+--------function_call [759, 790] `e:hasSpriteAnimationComponent()`
+----------method_index_expression [759, 788] `e:hasSpriteAnimationComponent`
+------------identifier [759, 760] `e`
+------------: [760, 761] `:`
+------------identifier [761, 788] `hasSpriteAnimationComponent`
+----------arguments [788, 790] `()`
+------------( [788, 789] `(`
+------------) [789, 790] `)`
+--------then [791, 795] `then`
+--------block [805, 919] `local anim = e:getSpriteAnimationComponent()
+        local name = anim.spriteSeriesName
+
+        name = "fired"`
+----------variable_declaration [805, 849] `local anim = e:getSpriteAnimationComponent()`
+------------local [805, 810] `local`
+------------assignment_statement [811, 849] `anim = e:getSpriteAnimationComponent()`
+--------------variable_list [811, 815] `anim`
+----------------identifier [811, 815] `anim`
+--------------= [816, 817] `=`
+--------------expression_list [818, 849] `e:getSpriteAnimationComponent()`
+----------------function_call [818, 849] `e:getSpriteAnimationComponent()`
+------------------method_index_expression [818, 847] `e:getSpriteAnimationComponent`
+--------------------identifier [818, 819] `e`
+--------------------: [819, 820] `:`
+--------------------identifier [820, 847] `getSpriteAnimationComponent`
+------------------arguments [847, 849] `()`
+--------------------( [847, 848] `(`
+--------------------) [848, 849] `)`
+----------variable_declaration [859, 893] `local name = anim.spriteSeriesName`
+------------local [859, 864] `local`
+------------assignment_statement [865, 893] `name = anim.spriteSeriesName`
+--------------variable_list [865, 869] `name`
+----------------identifier [865, 869] `name`
+--------------= [870, 871] `=`
+--------------expression_list [872, 893] `anim.spriteSeriesName`
+----------------dot_index_expression [872, 893] `anim.spriteSeriesName`
+------------------identifier [872, 876] `anim`
+------------------. [876, 877] `.`
+------------------identifier [877, 893] `spriteSeriesName`
+----------assignment_statement [905, 919] `name = "fired"`
+------------variable_list [905, 909] `name`
+--------------identifier [905, 909] `name`
+------------= [910, 911] `=`
+------------expression_list [912, 919] `"fired"`
+--------------string [912, 919] `"fired"`
+----------------" [912, 913] `"`
+----------------string_content [913, 918] `fired`
+----------------" [918, 919] `"`
+--------end [925, 928] `end`
+----end [930, 933] `end`
+--variable_declaration [937, 1254] `local meta = {
+    __signatures = {
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }
+}`
+----local [937, 942] `local`
+----assignment_statement [943, 1254] `meta = {
+    __signatures = {
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }
+}`
+------variable_list [943, 947] `meta`
+--------identifier [943, 947] `meta`
+------= [948, 949] `=`
+------expression_list [950, 1254] `{
+    __signatures = {
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }
+}`
+--------table_constructor [950, 1254] `{
+    __signatures = {
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }
+}`
+----------{ [950, 951] `{`
+----------field [957, 1251] `__signatures = {
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }`
+------------identifier [957, 969] `__signatures`
+------------= [970, 971] `=`
+------------table_constructor [972, 1251] `{
+        changeName = { "Entity" },
+        changePos = { "Entity" },
+        setPos = { "Entity&", "SDL_FPoint" },
+        gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"},
+        timerCallback = { "const  TimerFiredEvent&", "Entity" }
+    }`
+--------------{ [972, 973] `{`
+--------------field [984, 1009] `changeName = { "Entity" }`
+----------------identifier [984, 994] `changeName`
+----------------= [995, 996] `=`
+----------------table_constructor [997, 1009] `{ "Entity" }`
+------------------{ [997, 998] `{`
+------------------field [999, 1007] `"Entity"`
+--------------------string [999, 1007] `"Entity"`
+----------------------" [999, 1000] `"`
+----------------------string_content [1000, 1006] `Entity`
+----------------------" [1006, 1007] `"`
+------------------} [1008, 1009] `}`
+--------------, [1009, 1010] `,`
+--------------field [1020, 1044] `changePos = { "Entity" }`
+----------------identifier [1020, 1029] `changePos`
+----------------= [1030, 1031] `=`
+----------------table_constructor [1032, 1044] `{ "Entity" }`
+------------------{ [1032, 1033] `{`
+------------------field [1034, 1042] `"Entity"`
+--------------------string [1034, 1042] `"Entity"`
+----------------------" [1034, 1035] `"`
+----------------------string_content [1035, 1041] `Entity`
+----------------------" [1041, 1042] `"`
+------------------} [1043, 1044] `}`
+--------------, [1044, 1045] `,`
+--------------field [1055, 1091] `setPos = { "Entity&", "SDL_FPoint" }`
+----------------identifier [1055, 1061] `setPos`
+----------------= [1062, 1063] `=`
+----------------table_constructor [1064, 1091] `{ "Entity&", "SDL_FPoint" }`
+------------------{ [1064, 1065] `{`
+------------------field [1066, 1075] `"Entity&"`
+--------------------string [1066, 1075] `"Entity&"`
+----------------------" [1066, 1067] `"`
+----------------------string_content [1067, 1074] `Entity&`
+----------------------" [1074, 1075] `"`
+------------------, [1075, 1076] `,`
+------------------field [1077, 1089] `"SDL_FPoint"`
+--------------------string [1077, 1089] `"SDL_FPoint"`
+----------------------" [1077, 1078] `"`
+----------------------string_content [1078, 1088] `SDL_FPoint`
+----------------------" [1088, 1089] `"`
+------------------} [1090, 1091] `}`
+--------------, [1091, 1092] `,`
+--------------field [1102, 1178] `gameControllerCallback = { "Entity", "const GameControllerConnectedEvent &"}`
+----------------identifier [1102, 1124] `gameControllerCallback`
+----------------= [1125, 1126] `=`
+----------------table_constructor [1127, 1178] `{ "Entity", "const GameControllerConnectedEvent &"}`
+------------------{ [1127, 1128] `{`
+------------------field [1129, 1137] `"Entity"`
+--------------------string [1129, 1137] `"Entity"`
+----------------------" [1129, 1130] `"`
+----------------------string_content [1130, 1136] `Entity`
+----------------------" [1136, 1137] `"`
+------------------, [1137, 1138] `,`
+------------------field [1139, 1177] `"const GameControllerConnectedEvent &"`
+--------------------string [1139, 1177] `"const GameControllerConnectedEvent &"`
+----------------------" [1139, 1140] `"`
+----------------------string_content [1140, 1176] `const GameControllerConnectedEvent &`
+----------------------" [1176, 1177] `"`
+------------------} [1177, 1178] `}`
+--------------, [1178, 1179] `,`
+--------------field [1189, 1244] `timerCallback = { "const  TimerFiredEvent&", "Entity" }`
+----------------identifier [1189, 1202] `timerCallback`
+----------------= [1203, 1204] `=`
+----------------table_constructor [1205, 1244] `{ "const  TimerFiredEvent&", "Entity" }`
+------------------{ [1205, 1206] `{`
+------------------field [1207, 1232] `"const  TimerFiredEvent&"`
+--------------------string [1207, 1232] `"const  TimerFiredEvent&"`
+----------------------" [1207, 1208] `"`
+----------------------string_content [1208, 1231] `const  TimerFiredEvent&`
+----------------------" [1231, 1232] `"`
+------------------, [1232, 1233] `,`
+------------------field [1234, 1242] `"Entity"`
+--------------------string [1234, 1242] `"Entity"`
+----------------------" [1234, 1235] `"`
+----------------------string_content [1235, 1241] `Entity`
+----------------------" [1241, 1242] `"`
+------------------} [1243, 1244] `}`
+--------------} [1250, 1251] `}`
+----------} [1253, 1254] `}`
+--function_call [1258, 1283] `setmetatable(table, meta)`
+----identifier [1258, 1270] `setmetatable`
+----arguments [1270, 1283] `(table, meta)`
+------( [1270, 1271] `(`
+------identifier [1271, 1276] `table`
+------, [1276, 1277] `,`
+------identifier [1278, 1282] `meta`
+------) [1282, 1283] `)`
+--return_statement [1287, 1299] `return table`
+----return [1287, 1293] `return`
+----expression_list [1294, 1299] `table`
+------identifier [1294, 1299] `table`

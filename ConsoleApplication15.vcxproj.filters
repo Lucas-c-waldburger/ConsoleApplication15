@@ -4401,6 +4401,7 @@
     <Text Include="resources\scripts\b2body_test.lua" />
     <Text Include="docs\reference.txt" />
     <Text Include="docs\todo.txt" />
+    <Text Include="test\ui\lua_text_editor\test_data\tree_sitter_syntax_output.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\scripts\game_controller_test.lua" />

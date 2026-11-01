@@ -35,6 +35,10 @@ struct SourceLocation
 	{
 		return start >= rhs.start && end <= rhs.end;
 	}
+	constexpr bool Contains(size_t byteOffset) const noexcept
+	{
+		return start <= byteOffset && byteOffset <= end;
+	}
 };
 
 struct SourceDocumentError
@@ -75,6 +79,7 @@ struct NodeName
 	static constexpr std::string_view kStringContent = "string_content";
 	static constexpr std::string_view kBlock = "block";
 	static constexpr std::string_view kChunk = "chunk";
+	static constexpr std::string_view kReturnStatement = "return_statement";
 };
 
 static constexpr std::string_view kSetMetatableName = "setmetatable";

@@ -1658,6 +1658,7 @@
     <Text Include="docs\reference.txt" />
     <Text Include="docs\todo.txt" />
     <Text Include="resources\scripts\b2body_test.lua" />
+    <Text Include="test\ui\lua_text_editor\test_data\tree_sitter_syntax_output.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="deps\imgui-master\examples\libs\emscripten\shell_minimal.html" />
