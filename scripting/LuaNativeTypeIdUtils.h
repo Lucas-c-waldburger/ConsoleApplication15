@@ -1,6 +1,7 @@
 #pragma once
 #include "../core/TypeUtils.h"
 #include "../core/TypeInfo.h"
+#include <sol/sol.hpp>
 
 namespace detail {
 struct InvalidLuaType;

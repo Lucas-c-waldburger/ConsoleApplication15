@@ -282,14 +282,14 @@ void LuaSourceParser::EditSource(std::string&& newSource)
     auto cursor = GetCursorAtRoot();
     sourceDocument_ = LuaSourceDocument::Parse(cursor);
 
-    if (HasErrors())
-    {
-		ApplyBackupBlocks(tsEdit);
-    }
-    else
-    {
-        RefreshBackup();
-    }
+  //  if (HasErrors())
+  //  {
+		//ApplyBackupBlocks(tsEdit);
+  //  }
+  //  else
+  //  {
+  //      RefreshBackup();
+  //  }
 }
 
 void LuaSourceParser::EditSource(std::string&& newSource, const ParsedLuaUserTypeInfo& userTypeInfo)

@@ -2,7 +2,7 @@
 
 #if IMGUI_ENABLED
 #include <cassert>
-#include "TreeNode.h"
+#include "TreeCursor.h"
 
 namespace ui {
 
@@ -10,6 +10,16 @@ bool IsIndexExpressionNode(const TreeNode& node)
 {
 	return node.GetType() == NodeName::kDotIndexExpression ||
 		   node.GetType() == NodeName::kMethodIndexExpression;
+}
+bool IsMetatableNode(const TreeNode& node)
+{
+	return node.GetType() == NodeName::kIdentifier && 
+		   node.GetText() == kSetMetatableName;
+}
+bool IsSignaturesNode(const TreeNode& node)
+{
+	return node.GetType() == NodeName::kIdentifier && 
+		   node.GetText() == kSignaturesName;
 }
 
 std::optional<IndexExpressionInfo>
@@ -48,6 +58,49 @@ ExtractIndexExpressionInfo(const TreeNode& node)
 	}
 
 	return result;
+}
+
+bool GoToSiblingWithNodeName(TreeCursor& cursor, std::string_view name)
+{
+	do
+	{
+		if (cursor.CurrentNode().GetType() == name)
+		{
+			return true;
+		}
+	} while (cursor.GoToNextNamedSibling());
+
+	return false;
+}
+
+bool GoToSiblingWithNodeNameAndText(TreeCursor& cursor, std::string_view name, 
+									std::string_view text)
+{
+	do
+	{
+		auto node = cursor.CurrentNode();
+		if (node.GetType() == name && node.GetText() == text)
+		{
+			return true;
+		}
+	} while (cursor.GoToNextNamedSibling());
+
+	return false;
+}
+
+bool GoToSiblingWithNodeNameAndNamedChildCount(
+	TreeCursor& cursor, std::string_view name, size_t count)
+{
+	do
+	{
+		auto node = cursor.CurrentNode();
+		if (node.GetType() == name && node.GetNamedChildCount() == count)
+		{
+			return true;
+		}
+	} while (cursor.GoToNextNamedSibling());
+
+	return false;
 }
 
 } // ui

@@ -675,6 +675,24 @@
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentSymbol.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentParseSignaturesTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentParseTableInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceParserTypeHints.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentSymbol2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentScopeTree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentSymbolParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -3527,6 +3545,27 @@
     <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentSymbol.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentParseSignaturesTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\CursorDive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentParseTableInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceParserTypeHints.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentSymbol2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentScopeTree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentSymbolParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\sprites\knight\walk_anim\knight_walk_0.png">
@@ -4402,6 +4441,7 @@
     <Text Include="docs\reference.txt" />
     <Text Include="docs\todo.txt" />
     <Text Include="test\ui\lua_text_editor\test_data\tree_sitter_syntax_output.txt" />
+    <Text Include="tmp_new_assign.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\scripts\game_controller_test.lua" />
@@ -4433,6 +4473,7 @@
     <None Include="test\catch\test_scripts\sys_table_with_phase.lua" />
     <None Include="test\catch\test_scripts\source_parser_test.lua" />
     <None Include="test\catch\test_scripts\source_parser_test_bad_indexing.lua" />
+    <None Include="test\catch\test_scripts\symbol_parser_test.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConsoleApplication15.rc">

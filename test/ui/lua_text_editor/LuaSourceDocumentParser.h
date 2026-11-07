@@ -36,19 +36,22 @@ struct LuaSourceDocument
 		SignaturesTableInfo signatures;
 	};
 
-	enum class IndexExpressionType
-	{
-		Dot,
-		Method
-	};
+	using IndexExpressionType = IndexExpressionType;
+	using IndexExpressionInfo = IndexExpressionInfo;
 
-	struct IndexExpressionInfo
-	{
-		SourceLocation location;
-		std::string_view lhsText;
-		std::string_view rhsText;
-		IndexExpressionType type = IndexExpressionType::Dot;
-	};
+	//enum class IndexExpressionType
+	//{
+	//	Dot,
+	//	Method
+	//};
+
+	//struct IndexExpressionInfo
+	//{
+	//	SourceLocation location;
+	//	std::string_view lhsText;
+	//	std::string_view rhsText;
+	//	IndexExpressionType type = IndexExpressionType::Dot;
+	//};
 
 	enum class AssignmentStatementRhsType
 	{

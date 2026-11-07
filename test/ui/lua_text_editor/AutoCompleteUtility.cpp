@@ -10,20 +10,6 @@ namespace ui {
 
 namespace {
 
-constexpr bool IsMemberKindField(LuaUsertypeMemberKind kind) noexcept
-{
-	using enum LuaUsertypeMemberKind;
-
-	return kind == Field || kind == Property;
-}
-
-constexpr bool IsMemberKindFunction(LuaUsertypeMemberKind kind) noexcept
-{
-	using enum LuaUsertypeMemberKind;
-
-	return kind == Method || kind == Overload;
-}
-
 constexpr std::string_view GetRawTypeName(std::string_view typeNameWithCvRefQualifiers)
 {
 	static constexpr auto regex = ctll::fixed_string{

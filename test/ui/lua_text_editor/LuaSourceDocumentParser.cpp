@@ -15,15 +15,15 @@ constexpr bool kAbandonParsing = false;
 
 using FunctionNameToBlockIndexMap = std::unordered_map<std::string_view, size_t>;
 
-bool IsMetatableNode(const TreeNode& node)
-{
-    return node.GetType() == NodeName::kIdentifier && node.GetText() == kSetMetatableName;
-}
-
-bool IsSignaturesNode(const TreeNode& node)
-{
-	return node.GetType() == NodeName::kIdentifier && node.GetText() == kSignaturesName;
-}
+//bool IsMetatableNode(const TreeNode& node)
+//{
+//    return node.GetType() == NodeName::kIdentifier && node.GetText() == kSetMetatableName;
+//}
+//
+//bool IsSignaturesNode(const TreeNode& node)
+//{
+//	return node.GetType() == NodeName::kIdentifier && node.GetText() == kSignaturesName;
+//}
 
 struct IndexExpressionText
 {
@@ -109,33 +109,6 @@ bool GoToFirstChildIfChildNodeName(TreeCursor& cursor, std::string_view name)
 	}
 
 	return true;
-}
-
-bool GoToSiblingWithNodeNameAndText(TreeCursor& cursor, std::string_view name, std::string_view text)
-{
-	do
-	{
-		auto node = cursor.CurrentNode();
-		if (node.GetType() == name && node.GetText() == text)
-		{
-			return true;
-		}
-	} while (cursor.GoToNextNamedSibling());
-
-	return false;
-}
-
-bool GoToSiblingWithNodeName(TreeCursor& cursor, std::string_view name)
-{
-	do
-	{
-		if (cursor.CurrentNode().GetType() == name)
-		{
-			return true;
-		}
-	} while (cursor.GoToNextNamedSibling());
-
-	return false;
 }
 
 std::string_view GetFieldNodeStringContent(TreeCursor& cursor, LuaSourceDocument& doc)
@@ -700,43 +673,43 @@ void ValidateParsedDocument(LuaSourceDocument& doc,
 	}
 }
 
-std::optional<LuaSourceDocument::IndexExpressionInfo> 
-ExtractIndexExpressionInfo(const TreeNode& node)
-{
-	assert(IsIndexExpressionNode(node));
-
-	LuaSourceDocument::IndexExpressionInfo result;
-
-	result.location = node.GetSourceLocation();
-	result.type = (node.GetType() == NodeName::kDotIndexExpression) 
-		? LuaSourceDocument::IndexExpressionType::Dot 
-		: LuaSourceDocument::IndexExpressionType::Method;
-
-	if (node.GetNamedChildCount() != 2)
-	{
-		return std::nullopt;
-	}
-
-	auto lhsNode = node.GetNamedChild(0);
-	auto rhsNode = node.GetNamedChild(1);
-
-	if (lhsNode.GetType() != NodeName::kIdentifier || 
-		rhsNode.GetType() != NodeName::kIdentifier)
-	{
-		return std::nullopt;
-	}
-
-	if (result.lhsText = lhsNode.GetText(); result.lhsText.empty())
-	{
-		return std::nullopt;
-	}
-	if (result.rhsText = rhsNode.GetText(); result.rhsText.empty())
-	{
-		return std::nullopt;
-	}
-
-	return result;
-}
+//std::optional<LuaSourceDocument::IndexExpressionInfo> 
+//ExtractIndexExpressionInfo(const TreeNode& node)
+//{
+//	assert(IsIndexExpressionNode(node));
+//
+//	LuaSourceDocument::IndexExpressionInfo result;
+//
+//	result.location = node.GetSourceLocation();
+//	result.type = (node.GetType() == NodeName::kDotIndexExpression) 
+//		? LuaSourceDocument::IndexExpressionType::Dot 
+//		: LuaSourceDocument::IndexExpressionType::Method;
+//
+//	if (node.GetNamedChildCount() != 2)
+//	{
+//		return std::nullopt;
+//	}
+//
+//	auto lhsNode = node.GetNamedChild(0);
+//	auto rhsNode = node.GetNamedChild(1);
+//
+//	if (lhsNode.GetType() != NodeName::kIdentifier || 
+//		rhsNode.GetType() != NodeName::kIdentifier)
+//	{
+//		return std::nullopt;
+//	}
+//
+//	if (result.lhsText = lhsNode.GetText(); result.lhsText.empty())
+//	{
+//		return std::nullopt;
+//	}
+//	if (result.rhsText = rhsNode.GetText(); result.rhsText.empty())
+//	{
+//		return std::nullopt;
+//	}
+//
+//	return result;
+//}
 
 bool ParseIndexExpressionInfoImpl(TreeCursor& cursor, LuaSourceDocument& doc)
 {
@@ -797,7 +770,7 @@ std::vector<std::string_view> ExtractFunctionCallArguments(std::string_view inde
 	std::vector<std::string_view> args;
 	size_t matchCount = 0;
 
-	for (auto match : ctre::search_all<kSingleArgRegex>(argsPayload))
+	for (const auto& match : ctre::search_all<kSingleArgRegex>(argsPayload))
 	{
 		++matchCount;
 

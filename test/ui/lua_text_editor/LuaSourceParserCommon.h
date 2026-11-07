@@ -3,12 +3,17 @@
 
 #if IMGUI_ENABLED
 #include <string>
+#include <string_view>
 #include <optional>
 #include "../../scripting/ParsedLuaUserTypeInfo.h"
 
 namespace ui {
 
 struct TreeNode;
+struct TreeCursor;
+
+static constexpr std::string_view kChunkScopeName = "__chunk";
+static constexpr std::string_view kBlockScopeName = "__block";
 
 struct SourceLocation
 {
@@ -66,7 +71,6 @@ struct NodeName
 	static constexpr std::string_view kExpressionList = "expression_list";
 	static constexpr std::string_view kTableConstructor = "table_constructor";
 	static constexpr std::string_view kFunctionDeclaration = "function_declaration";
-	static constexpr std::string_view kFunctionCall = "function_call";
 	static constexpr std::string_view kDotIndexExpression = "dot_index_expression";
 	static constexpr std::string_view kMethodIndexExpression = "method_index_expression";
 	static constexpr std::string_view kIdentifier = "identifier";
@@ -80,12 +84,17 @@ struct NodeName
 	static constexpr std::string_view kBlock = "block";
 	static constexpr std::string_view kChunk = "chunk";
 	static constexpr std::string_view kReturnStatement = "return_statement";
+	static constexpr std::string_view kTypedIdentifier = "typed_identifier";
 };
 
+static constexpr std::string_view kLocalName = "local";
+static constexpr std::string_view kGlobalName = "global";
 static constexpr std::string_view kSetMetatableName = "setmetatable";
 static constexpr std::string_view kSignaturesName = "__signatures";
 
 bool IsIndexExpressionNode(const TreeNode& node);
+bool IsMetatableNode(const TreeNode& node);
+bool IsSignaturesNode(const TreeNode& node);
 
 enum class IndexExpressionType
 {
@@ -106,17 +115,23 @@ ExtractIndexExpressionInfo(const TreeNode& node);
 
 inline constexpr bool IsMemberKindField(LuaUsertypeMemberKind kind) noexcept
 {
-	using enum LuaUsertypeMemberKind;
-
-	return kind == Field || kind == Property;
+	return kind == LuaUsertypeMemberKind::Field || 
+		   kind == LuaUsertypeMemberKind::Property;
 }
-
 inline constexpr bool IsMemberKindFunction(LuaUsertypeMemberKind kind) noexcept
 {
-	using enum LuaUsertypeMemberKind;
-
-	return kind == Method || kind == Overload;
+	return kind == LuaUsertypeMemberKind::Method || 
+		   kind == LuaUsertypeMemberKind::Overload;
 }
+
+bool GoToSiblingWithNodeName(TreeCursor& cursor, std::string_view name);
+
+bool GoToSiblingWithNodeNameAndText(TreeCursor& cursor, std::string_view name, 
+									std::string_view text);
+
+bool GoToSiblingWithNodeNameAndNamedChildCount(TreeCursor& cursor, 
+											   std::string_view name, size_t count);
+
 
 } // ui
 

@@ -5,18 +5,12 @@
 #include "LuaSourceParserCommon.h"
 #include "../../core/StableSOA.h"
 #include "../../scripting/ParsedLuaUserTypeInfo.h"
+#include "ObjectFieldAutoCompleteData.h"
 #include <vector>
 
 namespace ui {
 
-class TreeCursor;
-
-enum class LuaSourceDocumentScopeType : uint8_t
-{
-	FunctionDeclaration,
-	TableFunctionDeclaration,
-	Block
-};
+struct TreeCursor;
 
 struct LuaSourceDocumentScope
 {
@@ -44,6 +38,7 @@ struct LuaSourceDocumentScopeTree
 
 	SourceLocation GetCurrentScopeLocation() const;
 	std::string_view GetCurrentScopeName() const;
+	size_t GetDocumentEnd() const;
 
 	std::vector<SourceLocation> locations;
 	std::vector<std::string_view> names;
@@ -91,30 +86,25 @@ struct LuaSourceDocumentTableInfo
 struct LuaSourceDocumentSignaturesTable
 {
 	std::vector<std::string_view> functionNames;
+	// may not actually need parameter names
 	std::vector<std::vector<std::string_view>> parameterNames;
 	std::vector<std::vector<uint32_t>> parameterTypes;
 };
 
-struct LuaSourceDocumentSybolParseContext
-{
-	LuaSourceDocumentSymbolSOA& symbols;
-	ParsedLuaUserTypeInfo& userTypeInfo;
-	LuaSourceDocumentTableInfo& tableInfo;
-	LuaSourceDocumentSignaturesTable& signaturesTable;
-	//std::vector<SourceLocation> scopeLocations;
-	//std::vector<std::string_view> scopeNames;
-	//std::vector<LuaSourceDocumentScopeType> scopeTypes;
-	LuaSourceDocumentScopeTree scopeTree;
-
-	//void PushScope(TreeCursor& cursor);
-	//void PopScope();
-};
-
-struct LuaSourceDocumentSymbolTable
+struct LuaSourceDocumentSymbolParseContext
 {
 	LuaSourceDocumentSymbolSOA symbols;
+	const ParsedLuaUserTypeInfo& userTypeInfo;
+	LuaSourceDocumentTableInfo tableInfo;
+	LuaSourceDocumentSignaturesTable signaturesTable;
 	LuaSourceDocumentScopeTree scopeTree;
+	std::vector<SourceDocumentError> errors;
+
+	void AddError(const TreeNode& node, std::string_view msg);
 };
+
+bool ParseLuaSourceDocumentSymbols(TreeCursor& cursor,
+	LuaSourceDocumentSymbolParseContext& ctx);
 
 size_t FindMatchingSymbolIndex(std::string_view targetName, 
 							   size_t byteOffset,

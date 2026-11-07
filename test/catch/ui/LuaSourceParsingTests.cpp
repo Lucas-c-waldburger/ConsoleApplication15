@@ -1,6 +1,9 @@
 #include "../CatchUtils.h"
 #include "../../ui/lua_text_editor/LuaSourceParser.h"
+#include "../../ui/lua_text_editor/LuaSourceDocumentSymbol.h"
 #include "../../ui/lua_text_editor/LuaSourceDocumentParser.h"
+#include "../../ui/lua_text_editor/LuaSourceDocumentParseSignaturesTable.h"
+#include "../../ui/lua_text_editor/LuaSourceDocumentParseTableInfo.h"
 #include "../../../scripting/LuaStateManager.h"
 #include "../../../file/FilePathUtility.h"
 
@@ -125,7 +128,7 @@ void RegisterTestTypes(LuaStateManager& stateManager)
 
 } // unnamed
 
-TEST_CASE("Lua Source Parsing Test", "[ui][script][o]")
+TEST_CASE("Lua Source Parsing Test", "[ui][script]")
 {
 	LuaStateManager stateManager;
 	RegisterTestTypes(stateManager);
@@ -274,4 +277,80 @@ TEST_CASE("Lua Source Parsing Test", "[ui][script][o]")
 	{
 		CHECK(sourceDoc.errors.empty());
 	}
+}
+
+TEST_CASE("LuaSourceDocumentSymbol Tests", "[ui][script][o]")
+{
+	LuaStateManager stateManager;
+	RegisterTestTypes(stateManager);
+
+	const auto& userTypeInfo = stateManager.GetLuaUserTypeInfo();
+
+	const auto instrumentTypeIdx = userTypeInfo.GetDataIndex("InstrumentType");
+	REQUIRE(instrumentTypeIdx.IsValid());
+
+	const auto venueSizeIdx = userTypeInfo.GetDataIndex("VenueSize");
+	REQUIRE(venueSizeIdx.IsValid());
+	const auto instrumentIdx = userTypeInfo.GetDataIndex("Instrument");
+	REQUIRE(instrumentIdx.IsValid());
+	const auto venueIdx = userTypeInfo.GetDataIndex("Venue");
+	REQUIRE(venueIdx.IsValid());
+	const auto gigIdx = userTypeInfo.GetDataIndex("Gig");
+	REQUIRE(gigIdx.IsValid());
+	auto scriptStrResult = LoadTestScript("symbol_parser_test.lua");
+	REQUIRE(scriptStrResult.Success());
+
+	const auto& source = scriptStrResult.GetValue();
+
+	auto parser = ui::CreateUniqueTSParserPtr();
+	REQUIRE(parser);
+	const auto* language = tree_sitter_lua();
+	REQUIRE(ts_parser_set_language(parser.get(), language));
+
+	auto tree = ui::CreateUniqueTSTreePtr(
+		parser.get(),
+		nullptr,
+		source);
+	REQUIRE(tree);
+
+	auto cursor = ui::TreeCursor(ts_tree_root_node(tree.get()), source);
+	REQUIRE(cursor);
+
+	ui::LuaSourceDocumentSymbolParseContext ctx{
+		.userTypeInfo = userTypeInfo
+	};
+
+	const bool tableInfoSuccess = ui::ParseTableInfo(cursor, ctx);
+	CHECK(tableInfoSuccess);
+
+	CHECK(ctx.tableInfo.functionTableName == "music_table");
+	CHECK(ctx.tableInfo.metaTableName == "meta_stuff");
+
+	cursor.Reset();
+	const bool sigTableSuccess = ui::ParseSignaturesTable(cursor, ctx);
+	CHECK(sigTableSuccess);
+
+	const auto& sigTable = ctx.signaturesTable;
+	REQUIRE(sigTable.functionNames.size() == 3);
+	CHECK(sigTable.functionNames[0] == "isGuitar");
+	CHECK(sigTable.functionNames[1] == "addKeyboard");
+	CHECK(sigTable.functionNames[2] == "setSizeForSmoking");
+
+	REQUIRE(sigTable.parameterTypes.size() == 3);
+	const auto& isGuitarParams = sigTable.parameterTypes[0];
+	REQUIRE(isGuitarParams.size() == 1);
+	CHECK(isGuitarParams[0] == TypeInfo<Instrument>::hash32);
+
+	const auto& addKeyboardParams = sigTable.parameterTypes[1];
+	REQUIRE(addKeyboardParams.size() == 1);
+	CHECK(addKeyboardParams[0] == TypeInfo<Gig>::hash32);
+
+	const auto& setSizeForSmokingParams = sigTable.parameterTypes[2];
+	REQUIRE(setSizeForSmokingParams.size() == 2);
+	CHECK(setSizeForSmokingParams[0] == TypeInfo<Venue>::hash32);
+	CHECK(setSizeForSmokingParams[1] == TypeInfo<VenueSize>::hash32);
+
+	cursor.Reset();
+	const bool symbolsSuccess = ui::ParseLuaSourceDocumentSymbols(cursor, ctx);
+	CHECK(symbolsSuccess);
 }

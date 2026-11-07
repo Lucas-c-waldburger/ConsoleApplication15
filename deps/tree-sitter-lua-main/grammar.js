@@ -308,7 +308,7 @@ export default grammar({
         optional(field('attribute', alias($._attrib, $.attribute))),
         list_seq(
           seq(
-            field('name', $.identifier),
+            field('name', $.typed_identifier),
             optional(field('attribute', alias($._attrib, $.attribute)))
           ),
           ','
@@ -473,7 +473,10 @@ export default grammar({
     // parlist ::= namelist [‘,’ varargparam] | varargparam
     _parameter_list: ($) =>
       choice(
-        seq(name_list($), optional(seq(',', $._vararg_parameter))),
+        seq(
+          list_seq(field('name', $.typed_identifier), ','),
+          optional(seq(',', $._vararg_parameter))
+        ),
         $._vararg_parameter
       ),
     // varargparam ::= ‘...’ [Name]
@@ -526,6 +529,13 @@ export default grammar({
 
     // '(' exp ')'
     parenthesized_expression: ($) => seq('(', $.expression, ')'),
+
+    // type hint
+    typed_identifier: ($) =>
+      seq(
+        field('identifier', $.identifier),
+        optional(seq(':', field('type', $.identifier)))
+      ),
 
     // tableconstructor ::= '{' [fieldlist] '}'
     table_constructor: ($) => seq('{', optional($._field_list), '}'),

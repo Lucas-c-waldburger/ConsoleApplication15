@@ -373,8 +373,14 @@
     <ClCompile Include="test\ui\InspectorEventPanel.cpp" />
     <ClCompile Include="test\ui\InspectorSystemPanel.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentParser.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentParseSignaturesTable.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentParseTableInfo.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentScopeTree.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentSymbol.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentSymbol2.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentSymbolParser.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceParserCommon.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceParserTypeHints.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\ObjectFieldAutoCompleteData.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\AutoCompleteUtility.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceParser.cpp" />
@@ -1007,9 +1013,16 @@
     <ClInclude Include="test\ui\gui_lua_api\GuiLuaApiRegistration.h" />
     <ClInclude Include="test\ui\InspectorCommon.h" />
     <ClInclude Include="test\ui\InspectorComponentPanel.h" />
+    <ClInclude Include="test\ui\lua_text_editor\CursorDive.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentParser.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentParseSignaturesTable.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentParseTableInfo.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentScopeTree.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentSymbol.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentSymbol2.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentSymbolParser.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaSourceParserCommon.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceParserTypeHints.h" />
     <ClInclude Include="test\ui\lua_text_editor\ObjectFieldAutoCompleteData.h" />
     <ClInclude Include="test\ui\lua_text_editor\AutoCompleteUtility.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaSourceParser.h" />
@@ -1659,6 +1672,7 @@
     <Text Include="docs\todo.txt" />
     <Text Include="resources\scripts\b2body_test.lua" />
     <Text Include="test\ui\lua_text_editor\test_data\tree_sitter_syntax_output.txt" />
+    <Text Include="tmp_new_assign.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="deps\imgui-master\examples\libs\emscripten\shell_minimal.html" />
@@ -1687,6 +1701,7 @@
     <None Include="test\catch\test_scripts\fn_table.lua" />
     <None Include="test\catch\test_scripts\source_parser_test.lua" />
     <None Include="test\catch\test_scripts\source_parser_test_bad_indexing.lua" />
+    <None Include="test\catch\test_scripts\symbol_parser_test.lua" />
     <None Include="test\catch\test_scripts\sys_table.lua" />
     <None Include="test\catch\test_scripts\sys_table_2.lua" />
     <None Include="test\catch\test_scripts\sys_table_with_phase.lua" />
