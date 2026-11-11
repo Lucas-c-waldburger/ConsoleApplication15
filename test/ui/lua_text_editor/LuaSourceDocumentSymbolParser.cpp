@@ -11,9 +11,8 @@ using Sym = LuaSourceDocumentSymbol;
 
 struct TypedIdentifierInfo
 {
-	std::string_view nameText;
+	Sym symbol;
 	std::string_view typeText;
-	Sym::Kind kind = Sym::Kind::Invalid;
 	SourceLocation typeSpan;
 	TreeCursor rhsCursor;
 
@@ -24,9 +23,17 @@ struct TypedIdentifierInfo
 
 	bool HasRhs() const noexcept
 	{
-		return rhsCursor;
+		return rhsCursor && rhsCursor.CurrentNode().GetType() == NodeName::kExpressionList;
 	}
 };
+
+//struct TypedIdentifierParseResult
+//{
+//	Sym symbol;
+//	std::string_view typeText;
+//	SourceLocation typeSpan;
+//
+//};
 
 bool NodeStartsNewScope(const TreeNode& node)
 {
@@ -102,10 +109,14 @@ Sym::Kind GetSymKindAndAdvance(TreeCursor& cursor,
 std::optional<TypedIdentifierInfo>
 ParseVariableDeclaration(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
 {
-	std::optional<TypedIdentifierInfo> info{std::in_place};
-
 	auto node = cursor.CurrentNode();
 	assert(node.GetType() == NodeName::kVariableDeclaration);
+
+	const auto nodeLoc = node.GetSourceLocation();
+
+	std::optional<TypedIdentifierInfo> info{std::in_place};
+
+	const size_t varDeclLocEnd = node.GetSourceLocation().end;
 
 	if (!cursor.GoToFirstChild())
 	{
@@ -115,14 +126,21 @@ ParseVariableDeclaration(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
 
 	size_t depth = 1;
 
-	info->kind = GetSymKindAndAdvance(cursor, ctx.scopeTree);
-	if (info->kind == Sym::Kind::Invalid)
+	info->symbol.kind = GetSymKindAndAdvance(cursor, ctx.scopeTree);
+	if (info->symbol.kind == Sym::Kind::Invalid)
 	{
 		ctx.AddError(cursor, "Failed to go to node after local/global");
 		cursor.GoToParent(depth);
 
 		return std::nullopt;
 	}
+
+	info->symbol.scope = {
+		node.GetSourceLocation().end + 1,
+		(info->symbol.kind == Sym::Kind::UnscopedGlobal
+			? ctx.scopeTree.GetDocumentEnd()
+			: ctx.scopeTree.GetCurrentScopeLocation().end)
+	};
 
 	bool isAssignStmt = false;
 
@@ -245,14 +263,16 @@ ParseVariableDeclaration(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
 		return std::nullopt;
 	}
 
-	info->nameText = node.GetText();
-	if (info->nameText.empty())
+	info->symbol.name = node.GetText();
+	if (info->symbol.name.empty())
 	{
 		ctx.AddError(node, "identifier text was empty");
 
 		cursor.GoToParent(depth);
 		return std::nullopt;
 	}
+
+	info->symbol.location = node.GetSourceLocation();
 
 	if (cursor.GoToNextSibling()) // check for type hint
 	{
@@ -356,7 +376,7 @@ ParseSingleParameter(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
 	assert(cursor.CurrentNode().GetType() == NodeName::kTypedIdentifier);
 
 	std::optional<TypedIdentifierInfo> info{std::in_place};
-	info->kind = Sym::Kind::Parameter;
+	info->symbol.kind = Sym::Kind::Local;
 
 	if (!cursor.GoToFirstChild())
 	{
@@ -374,8 +394,8 @@ ParseSingleParameter(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
 		return std::nullopt;
 	}
 
-	info->nameText = node.GetText();
-	if (info->nameText.empty())
+	info->symbol.name = node.GetText();
+	if (info->symbol.name.empty())
 	{
 		ctx.AddError(node, "identifier text was empty");
 
@@ -438,7 +458,13 @@ ParseSingleParameter(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
 std::vector<TypedIdentifierInfo>
 ParseParameters(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
 {
-	assert(cursor.CurrentNode().GetType() == NodeName::kParameters);
+	auto node = cursor.CurrentNode();
+	assert(node.GetType() == NodeName::kParameters);
+
+	const SourceLocation paramScope{
+		.start = node.GetSourceLocation().end + 1,
+		.end = ctx.scopeTree.GetCurrentScopeLocation().end
+	};
 
 	if (!cursor.GoToFirstChild())
 	{
@@ -459,7 +485,7 @@ ParseParameters(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
 
 	while (cursor.GoToNextSibling())
 	{
-		auto node = cursor.CurrentNode();
+		node = cursor.CurrentNode();
 		if (node.GetType() == ")")
 		{
 			break;
@@ -473,7 +499,8 @@ ParseParameters(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
 		}
 		if (auto paramInfo = ParseSingleParameter(cursor, ctx))
 		{
-			params.emplace_back(std::move(*paramInfo));
+			auto& param = params.emplace_back(std::move(*paramInfo));
+			param.symbol.scope = paramScope;
 		}
 		else
 		{
@@ -487,21 +514,14 @@ ParseParameters(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
 	return params;
 }
 
-enum OutFlag
+struct ExpressionListInfo
 {
-	FunctionCall = 1 << 0,
-};
-
-struct ResolvedListInfo
-{
-	enum Flag
-	{
-		FunctionCall = 1 << 0,
-	};
+	static constexpr std::string_view kFunctionCallIdentifier = "*__fn_call";
+	static constexpr IndexExpressionType kInvalidIndexExprType =
+		std::numeric_limits<IndexExpressionType>::max();
 
 	std::vector<std::string_view> identifiers;
 	std::vector<IndexExpressionType> indexExprTypes;
-	uint8_t flags = 0;
 
 	bool MaybeEnum() const noexcept
 	{
@@ -519,9 +539,45 @@ struct ResolvedListInfo
 		}
 		return false;
 	}
+
+	bool Empty() const noexcept
+	{
+		if (identifiers.empty())
+		{
+			assert(indexExprTypes.empty());
+			return true;
+		}
+		return false;
+	}
 };
 
-bool GetResolvedListInfoImpl(TreeCursor& cursor, ResolvedListInfo& info)
+uint32_t GetResolvedExpressionListType(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx,
+									   IndexExpressionType currentIdxExpr, uint32_t currentType)
+{
+	auto node = cursor.CurrentNode();
+	if (node.GetType() == NodeName::kIdentifier)
+	{
+		if (currentType == kInvalidLuaTypeId)
+		{
+			const size_t symIndex = GetSymIndexForIdentifier(
+				node.GetText(), node.GetSourceLocation(), ctx);
+
+			return (symIndex < ctx.symbols.Size())
+				? ctx.symbols.GetView<&Sym::type>(symIndex)
+				: kInvalidLuaTypeId;
+		}
+		else
+		{
+			if (currentIdxExpr == IndexExpressionType::Dot)
+			{
+
+			}
+		}
+	}
+}
+
+bool GetExpressionListInfoImpl(TreeCursor& cursor, ExpressionListInfo& info, 
+							 LuaSourceDocumentParseContext& ctx)
 {
 	auto node = cursor.CurrentNode();
 	if (node.GetType() == NodeName::kIdentifier)
@@ -541,7 +597,7 @@ bool GetResolvedListInfoImpl(TreeCursor& cursor, ResolvedListInfo& info)
 			return false;
 		}
 
-		if (!GetResolvedListInfoImpl(cursor, info))
+		if (!GetExpressionListInfoImpl(cursor, info, ctx))
 		{
 			cursor.GoToParent();
 			return false;
@@ -565,63 +621,141 @@ bool GetResolvedListInfoImpl(TreeCursor& cursor, ResolvedListInfo& info)
 
 		return true;
 	}
+	else if (node.GetType() == NodeName::kFunctionCall)
+	{
+		info.identifiers.emplace_back();
+		//info.indexExprTypes.emplace_back(ExpressionListInfo::kFunctionExprType);
+
+		if (!cursor.GoToFirstChild())
+		{
+			return false;
+		}
+
+		const bool success = GetExpressionListInfoImpl(cursor, info, ctx);
+
+		cursor.GoToParent();
+
+		return success;
+	}
 	else
 	{
-		if (node.GetType() == NodeName::kFunctionCall)
-		{
-			if (!cursor.GoToFirstChild())
-			{
-				return false;
-			}
+		info.identifiers.emplace_back(node.GetType());
 
-			info.flags |= ResolvedListInfo::FunctionCall;
-
-			const bool success = GetResolvedListInfoImpl(cursor, info);
-
-			cursor.GoToParent();
-
-			return success;
-		}
+		return true;
 	}
 
 	return false;
 }
 
-ResolvedListInfo GetResolvedListInfo(TreeCursor& cursor)
+ExpressionListInfo GetExpressionListInfo(TreeCursor& cursor, 
+										 LuaSourceDocumentParseContext& ctx)
 {
-	ResolvedListInfo info{};
+	assert(cursor.CurrentNode().GetType() == NodeName::kExpressionList);
 
-	if (!GetResolvedListInfoImpl(cursor, info))
+	ExpressionListInfo info{};
+
+	if (!GetExpressionListInfoImpl(cursor, info, ctx))
 	{
 		info.identifiers.clear();
 		info.indexExprTypes.clear();
-		info.flags = 0;
 	}
+
+	assert(cursor.CurrentNode().GetType() == NodeName::kExpressionList);
 
 	return info;
 }
 
-uint32_t GetSymTypeForListNode(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
+size_t GetFunctionCallScopeIndex(std::string_view fnName,
+								 const LuaSourceDocumentScopeTree& scopeTree)
 {
-	auto node = cursor.CurrentNode();
-	assert(node.GetType() == NodeName::kVariableList || 
-		   node.GetType() == NodeName::kExpressionList);
+	if (!scopeTree.CurrentValid() || fnName.empty())
+	{
+		return std::numeric_limits<size_t>::max();
+	}
 
-	auto resolvedInfo = GetResolvedListInfo(cursor);
+	for (size_t i = 0; i < scopeTree.names.size(); ++i)
+	{
+		if (fnName == scopeTree.names[i])
+		{
+			return i;
+		}
+	}
 
-	if (resolvedInfo.identifiers.empty())
+	return std::numeric_limits<size_t>::max();
+}
+
+uint32_t GetFunctionScopeReturnType(std::string_view fnName,
+									const LuaSourceDocumentScopeTree& scopeTree)
+{
+	const size_t fnScope = GetFunctionCallScopeIndex(fnName, scopeTree);
+	if (fnScope < scopeTree.Size())
+	{
+		return scopeTree.returns[fnScope];
+	}
+
+	return kInvalidLuaTypeId;
+}
+
+uint32_t GetSymTypeForExpressionListInfo(ExpressionListInfo& listInfo, 
+										 SourceLocation listLoc,
+										 bool isFunctionCall,
+										 LuaSourceDocumentParseContext& ctx)
+{
+	assert(!listInfo.Empty());
+	assert(listInfo.identifiers.size() == listInfo.indexExprTypes.size() - 1);
+
+	auto rootIdent = listInfo.identifiers[0];
+	if (rootIdent.empty())
 	{
 		return kInvalidLuaTypeId;
 	}
 
-	assert(resolvedInfo.identifiers.size() == resolvedInfo.indexExprTypes.size() - 1);
+	if (listInfo.IsSingleIdentifier())
+	{
+		if (isFunctionCall)
+		{
+			return GetFunctionScopeReturnType(rootIdent, ctx.scopeTree);
+		}
+		else if (rootIdent == NodeName::kNumber)
+		{
+			return kNativeNumberLuaTypeId;
+		}
+		else if (rootIdent == NodeName::kBoolean)
+		{
+			return kNativeBooleanLuaTypeId;
+		}
+		else if (rootIdent == NodeName::kString)
+		{
+			return kNativeStringLuaTypeId;
+		}
+		else if (rootIdent == NodeName::kTableConstructor)
+		{
+			return kNativeTableLuaTypeId;
+		}
+		else
+		{
+			const size_t symIndex = GetSymIndexForIdentifier(rootIdent, listLoc, ctx);
 
-	const auto rootIdent = resolvedInfo.identifiers[0];
-	assert(!rootIdent.empty());
+			return (symIndex < ctx.symbols.Size())
+				? ctx.symbols.GetView<&Sym::type>(symIndex)
+				: kInvalidLuaTypeId;
+		}
+	}
 
-	const size_t symIndex = GetSymIndexForIdentifier(
-		rootIdent, node.GetSourceLocation(), ctx);
+	// has at least one index expression
+	if (listInfo.MaybeEnum())
+	{
+		// try to get type immediately from userTypeInfo if lhs is actually just an enum
+		if (auto dataIdx = ctx.userTypeInfo.GetDataIndex(rootIdent);
+			dataIdx.IsValid())
+		{
+			return ctx.userTypeInfo.GetUserTypeId(dataIdx);
+		}
+	}
 
+	// not an enum, is def a single or multi-level index expression
+	// get the root identifier's sym type and go from there
+	size_t symIndex = GetSymIndexForIdentifier(rootIdent, listLoc, ctx);
 	if (symIndex >= ctx.symbols.Size())
 	{
 		return kInvalidLuaTypeId;
@@ -629,31 +763,15 @@ uint32_t GetSymTypeForListNode(TreeCursor& cursor, LuaSourceDocumentParseContext
 
 	auto symType = ctx.symbols.GetView<&Sym::type>(symIndex);
 
-	if (resolvedInfo.IsSingleIdentifier() || symType == kInvalidLuaTypeId)
-	{
-		return symType;
-	}
-
-	if (resolvedInfo.MaybeEnum())
-	{
-		// try to get type immediately from userTypeInfo if lhs is actually just an enum
-		if (auto dataIdx = ctx.userTypeInfo.GetDataIndex(rootIdent); 
-			dataIdx.IsValid())
-		{
-			return ctx.userTypeInfo.GetUserTypeId(dataIdx);
-		}
-	}
-
-	// not an enum but a single or multi-level index expression
-	for (size_t i = 1; i < resolvedInfo.identifiers.size(); ++i)
+	for (size_t i = 1; i < listInfo.identifiers.size(); ++i)
 	{
 		if (symType == kInvalidLuaTypeId)
 		{
 			return kInvalidLuaTypeId;
 		}
 
-		const auto rhsIdent = resolvedInfo.identifiers[i];
-		const auto idxExprType = resolvedInfo.indexExprTypes[i - 1];
+		const auto rhsIdent = listInfo.identifiers[i];
+		const auto idxExprType = listInfo.indexExprTypes[i - 1];
 
 		assert(!rhsIdent.empty());
 
@@ -681,7 +799,7 @@ uint32_t GetSymTypeForListNode(TreeCursor& cursor, LuaSourceDocumentParseContext
 			{
 				return kInvalidLuaTypeId;
 			}
-			
+
 			symType = fieldResults[i];
 			break;
 		}
@@ -690,7 +808,355 @@ uint32_t GetSymTypeForListNode(TreeCursor& cursor, LuaSourceDocumentParseContext
 	return symType;
 }
 
+void AddGlobalSymsForFunctionCall(std::string_view fnName,
+								  SourceLocation callLoc,
+								  LuaSourceDocumentParseContext& ctx)
+{
+	const size_t fnScopeIdx = GetFunctionCallScopeIndex(fnName, ctx.scopeTree);
+	if (fnScopeIdx >= ctx.scopeTree.Size())
+	{
+		return;
+	}
 
+	const auto& scopeLoc = ctx.scopeTree.locations[fnScopeIdx];
+
+	// find all symbols inside the called function's declaration
+	// if any were scoped globals, add them as unscoped globals at this location
+	const size_t origSymbolsSize = ctx.symbols.Size();
+	for (size_t i = 0; i < origSymbolsSize; ++i)
+	{
+		const auto [symName, symLoc, _, symType, symKind] =
+			ctx.symbols.GetView(i);
+
+		if (symLoc.start >= scopeLoc.end)
+		{
+			break;
+		}
+		if (symLoc.start < scopeLoc.start || symKind != Sym::Kind::ScopedGlobal)
+		{
+			continue;
+		}
+
+		ctx.symbols.PushBack(Sym{
+			.name = symName,
+			.location = callLoc,
+			.scope = { callLoc.end + 1, ctx.scopeTree.GetDocumentEnd() },
+			.type = symType,
+			.kind = Sym::Kind::UnscopedGlobal
+		});
+	}
+}
+
+void AddSymForVariableDeclaration(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
+{
+	auto typedIdentInfo = ParseVariableDeclaration(cursor, ctx);
+	if (!typedIdentInfo)
+	{
+		return;
+	}
+
+	if (typedIdentInfo->HasTypeHint())
+	{
+		ctx.eraseLocations.emplace_back(typedIdentInfo->typeSpan);
+
+		if (auto dataIdx = ctx.userTypeInfo.GetDataIndex(typedIdentInfo->typeText);
+			dataIdx.IsValid())
+		{
+			typedIdentInfo->symbol.type = ctx.userTypeInfo.GetUserTypeId(dataIdx);
+		}
+	}
+
+	std::string_view fnCallText;
+	SourceLocation fnCallLoc;
+
+	if (typedIdentInfo->HasRhs())
+	{
+		if (!typedIdentInfo->rhsCursor.GoToFirstChild())
+		{
+			ctx.AddError(typedIdentInfo->rhsCursor, 
+						"Failed to go to first child of expression_list node");
+
+			ctx.symbols.PushBack(std::move(typedIdentInfo->symbol));
+			return;
+		}
+
+		auto node = typedIdentInfo->rhsCursor.CurrentNode();
+		if (node.GetType() == NodeName::kFunctionCall)
+		{
+			if (!typedIdentInfo->rhsCursor.GoToFirstChild())
+			{
+				ctx.AddError(typedIdentInfo->rhsCursor, 
+					"Failed to go to first child of function_call node");
+
+				ctx.symbols.PushBack(std::move(typedIdentInfo->symbol));
+				return;
+			}
+
+			fnCallText = node.GetText();
+			fnCallLoc = node.GetSourceLocation();
+		}
+
+		const auto exprListLoc = typedIdentInfo->rhsCursor.CurrentNode().GetSourceLocation();
+
+		auto exprListInfo = GetExpressionListInfo(typedIdentInfo->rhsCursor, ctx);
+		if (exprListInfo.Empty())
+		{
+			ctx.AddError(typedIdentInfo->rhsCursor, 
+				"Failed to get expression_list info for rhs of variable_declaration");
+
+			ctx.symbols.PushBack(std::move(typedIdentInfo->symbol));
+			return;
+		}
+
+		const auto evaluatedType = GetSymTypeForExpressionListInfo(
+			exprListInfo, exprListLoc, !fnCallText.empty(), ctx
+		);
+
+		if (evaluatedType != kInvalidLuaTypeId)
+		{
+			if (typedIdentInfo->symbol.type != kInvalidLuaTypeId &&
+				typedIdentInfo->symbol.type != evaluatedType)
+			{
+				ctx.AddError(typedIdentInfo->rhsCursor,
+					"Assigned type differs from hinted type");
+			}
+
+			typedIdentInfo->symbol.type = evaluatedType;
+		}
+	}
+
+	ctx.symbols.PushBack(std::move(typedIdentInfo->symbol));
+
+	if (!fnCallText.empty())
+	{
+		AddGlobalSymsForFunctionCall(fnCallText, fnCallLoc, ctx);
+	}
+}
+
+void AddSymsForParameters(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
+{
+	auto node = cursor.CurrentNode();
+	assert(node.GetType() == NodeName::kParameters);
+
+	const SourceLocation paramScope{
+		.start = node.GetSourceLocation().end + 1,
+		.end = ctx.scopeTree.GetCurrentScopeLocation().end
+	};
+
+	if (!cursor.GoToFirstChild())
+	{
+		return;
+	}
+
+	if (cursor.CurrentNode().GetType() != "(")
+	{
+		ctx.AddError(cursor,
+			std::format("Expected '(' node, got {}", cursor.CurrentNode().GetType()));
+
+		cursor.GoToParent();
+		return;
+	}
+
+	size_t posCounter = 0;
+	while (cursor.GoToNextSibling())
+	{
+		node = cursor.CurrentNode();
+		if (node.GetType() == ")")
+		{
+			break;
+		}
+
+		if (node.GetType() != NodeName::kTypedIdentifier)
+		{
+			ctx.AddError(node,
+				std::format("Expected typed_identifier node, got {}", node.GetType()));
+
+			++posCounter;
+			continue;
+		}
+
+		auto paramInfo = ParseSingleParameter(cursor, ctx);
+		if (!paramInfo)
+		{
+			ctx.AddError(cursor,
+				std::format("Failed to parse parameter at position {}", posCounter));
+
+			++posCounter;
+			continue;
+		}
+
+		if (paramInfo->HasTypeHint())
+		{
+			if (paramInfo->typeText == NodeName::kNumber)
+			{
+				paramInfo->symbol.type = kNativeNumberLuaTypeId;
+			}
+			else if (paramInfo->typeText == NodeName::kBoolean)
+			{
+				paramInfo->symbol.type = kNativeBooleanLuaTypeId;
+			}
+			else if (paramInfo->typeText == NodeName::kString)
+			{
+				paramInfo->symbol.type = kNativeStringLuaTypeId;
+			}
+			else if (node.GetType() == NodeName::kTableConstructor)
+			{
+				paramInfo->symbol.type = kNativeTableLuaTypeId;
+			}
+			else if (auto dataIdx = ctx.userTypeInfo.GetDataIndex(paramInfo->typeText);
+					dataIdx.IsValid())
+			{
+				paramInfo->symbol.type = ctx.userTypeInfo.GetUserTypeId(dataIdx);
+			}
+		}
+
+		paramInfo->symbol.scope = paramScope;
+
+		ctx.symbols.PushBack(std::move(paramInfo->symbol));
+
+		++posCounter;
+	}
+}
+
+bool IsFunctionScope(std::string_view scopeName)
+{
+	return !scopeName.empty() && scopeName != kBlockScopeName;
+}
+
+size_t GetCurrentParentFunctionScopeIndex(LuaSourceDocumentScopeTree& scopeTree)
+{
+	if (!scopeTree.CurrentValid())
+	{
+		return std::numeric_limits<size_t>::max();
+	}
+
+	const size_t origScopeIdx = scopeTree.current;
+	size_t result = std::numeric_limits<size_t>::max();
+	do
+	{
+		auto scopeName = scopeTree.GetCurrentScopeName();
+		if (IsFunctionScope(scopeName))
+		{
+			result = scopeTree.current;
+			break;
+		}
+
+	} while (scopeTree.GoToParent());
+
+	scopeTree.SetCurrent(origScopeIdx);
+
+	return result;
+}
+
+void ParseFunctionDeclarations(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
+{
+	if (!cursor.GoToFirstChild())
+	{
+		ctx.AddError(cursor, "Failed to go to first child of root node");
+	}
+
+
+}
+
+void AddScopeReturnType(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
+{
+	//assert(cursor.CurrentNode().GetType() == NodeName::kReturnStatement);
+
+	//// if inside inner fn block, get the function scope that it's inside
+	//const size_t parentFnScopeIdx = GetCurrentParentFunctionScopeIndex(ctx.scopeTree);
+	//if (parentFnScopeIdx >= ctx.scopeTree.Size())
+	//{
+	//	return;
+	//}
+
+	//if (cursor.CurrentNode().GetNamedChildCount() != 1)
+	//{
+	//	return;
+	//}
+	//if (!cursor.GoToFirstNamedChild())
+	//{
+	//	return;
+	//}
+
+	//// return_statement -> expression_list -> expression
+	//auto node = cursor.CurrentNode();
+	//if (node.GetType() == NodeName::kExpressionList)
+	//{
+	//	const auto exprNodeLoc = node.GetSourceLocation();
+
+	//	auto exprListInfo = GetExpressionListInfo(cursor, ctx);
+	//	if (exprListInfo.Empty())
+	//	{
+	//		return;
+	//	}
+
+	//	auto retType = GetSymTypeForExpressionListInfo(
+	//		exprListInfo, exprNodeLoc, false, ctx
+	//	);
+
+	//	auto exprNode = cursor.CurrentNode();
+
+	//	const uint32_t retType = GetSymTypeForRhsExpression(
+	//		cursor, exprNode.GetSourceLocation(), ctx);
+
+	//	if (exprNode.GetType() == NodeName::kFunctionCall)
+	//	{
+	//		AddGlobalSymbolsForFunctionCall(cursor, ctx);
+	//	}
+
+	//	ctx.scopeTree.returns[parentFnScopeIdx] = retType;
+
+	//	cursor.GoToParent();
+	//}
+
+	//cursor.GoToParent();
+}
+
+void AddSymForFunctionDeclaration(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
+{
+	assert(cursor.CurrentNode().GetType() == NodeName::kFunctionDeclaration);
+
+	if (!cursor.GoToFirstChild())
+	{
+		ctx.AddError(cursor, "Failed to go to first child of function_declaration");
+	}
+
+	Sym sym{
+		.kind = GetSymKindAndAdvance(cursor, ctx.scopeTree)
+	};
+
+	if (sym.kind == Sym::Kind::Invalid)
+	{
+		ctx.AddError(cursor, "Failed to go to node after local/global");
+
+		cursor.GoToParent();
+		return;
+	}
+
+	auto node = cursor.CurrentNode();
+	if (node.GetType() != kFunctionName)
+	{
+		ctx.AddError(cursor, std::format(
+			"Expected node type {}, got {}", kFunctionName, node.GetType()));
+
+		cursor.GoToParent();
+		return;
+	}
+
+	if (!cursor.GoToNextSibling())
+	{
+		ctx.AddError(cursor, "Failed to go to node after function");
+
+		cursor.GoToParent();
+		return;
+	}
+
+	node = cursor.CurrentNode();
+	if (node.GetType() == NodeName::kIdentifier)
+	{
+		// free function
+	}
+}
 
 } // unnamed
 
@@ -702,6 +1168,68 @@ void LuaSourceDocumentParseContext::AddError(const TreeNode& node, std::string_v
 void LuaSourceDocumentParseContext::AddError(const TreeCursor& cursor, std::string_view msg)
 {
 	AddError(cursor.CurrentNode(), msg);
+}
+
+bool ParseLuaSourceDocumentSymbols(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx)
+{
+	/*if (!cursor.GoToFirstChild())
+	{
+		return false;
+	}
+
+	do
+	{
+		auto node = cursor.CurrentNode();
+
+		while (NodeEndsCurrentScope(node, ctx.scopeTree))
+		{
+			ctx.scopeTree.GoToParent();
+		}
+
+		bool handled = false;
+
+		if (NodeStartsNewScope(node))
+		{
+			ctx.scopeTree.PushScope(cursor);
+		}
+
+		if (node.GetType() == NodeName::kFunctionDeclaration)
+		{
+
+		}
+		else if (node.GetType() == NodeName::kVariableDeclaration)
+		{
+			AddSymForVariableDeclaration(cursor, ctx);
+			handled = true;
+		}
+		else if (node.GetType() == NodeName::kFunctionCall)
+		{
+			AddGlobalSymsForFunctionCall(node.GetText(), node.GetSourceLocation(), ctx);
+		}
+		else if (node.GetType() == NodeName::kAssignmentStatement)
+		{
+			AddSymForAssignmentStatement(cursor, ctx);
+			handled = true;
+		}
+		else if (node.GetType() == NodeName::kReturnStatement)
+		{
+			AddScopeReturnType(cursor, ctx);
+		}
+		else if (node.GetType() == NodeName::kParameters)
+		{
+			AddFunctionParameterSymbols(cursor, ctx);
+		}
+
+		if (!handled && node.GetChildCount() > 0)
+		{
+			ParseLuaSourceDocumentSymbolsImpl(cursor, ctx);
+		}
+
+	} while (cursor.GoToNextSibling());
+
+	cursor.GoToParent();*/
+
+	return true;
 }
 
 } // ui::lua

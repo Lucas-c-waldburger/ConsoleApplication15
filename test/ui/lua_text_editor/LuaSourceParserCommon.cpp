@@ -22,6 +22,12 @@ bool IsSignaturesNode(const TreeNode& node)
 		   node.GetText() == kSignaturesName;
 }
 
+bool IsListNode(const TreeNode& node)
+{
+	return node.GetType() == NodeName::kVariableList ||
+		   node.GetType() == NodeName::kExpressionList;
+}
+
 std::optional<IndexExpressionInfo>
 ExtractIndexExpressionInfo(const TreeNode& node)
 {

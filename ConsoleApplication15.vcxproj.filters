@@ -693,6 +693,9 @@
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentSymbolParser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentExpiriments.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deps\include\sol\compatibility\compat-5.3.c.h">
@@ -3564,6 +3567,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentSymbolParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentExpiriments.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

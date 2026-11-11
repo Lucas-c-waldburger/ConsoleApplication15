@@ -27,6 +27,16 @@ std::string_view TreeNode::GetType() const
     return ts_node_type(node);
 }
 
+TSSymbol TreeNode::GetSymbol() const
+{
+    return ts_node_symbol(node);
+}
+
+bool TreeNode::operator==(const TreeNode& other) const
+{
+    return ts_node_eq(node, other.node);
+}
+
 TreeNode TreeNode::FindChild(std::string_view name) const
 {
     for (uint32_t i = 0; i < ts_node_child_count(node); ++i)

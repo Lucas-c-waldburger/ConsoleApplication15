@@ -168,10 +168,24 @@ private:
 };
 
 // NULL
-template <typename T> requires std::is_default_constructible_v<T>
+template <typename T> 
+    requires (std::is_default_constructible_v<T> && !std::is_arithmetic_v<T>)
 inline constexpr const T& Null()
 {
     static const T nullValue{};
     return nullValue;
 }
 
+template <typename T> requires (std::is_arithmetic_v<T> && std::is_signed_v<T>)
+inline constexpr const T Null()
+{
+    static const T nullValue = std::numeric_limits<T>::min();
+    return nullValue;
+}
+
+template <typename T> requires (std::is_arithmetic_v<T> && std::is_unsigned_v<T>)
+inline constexpr const T Null()
+{
+    static const T nullValue = std::numeric_limits<T>::max();
+    return nullValue;
+}

@@ -71,6 +71,7 @@ struct NodeName
 	static constexpr std::string_view kExpressionList = "expression_list";
 	static constexpr std::string_view kTableConstructor = "table_constructor";
 	static constexpr std::string_view kFunctionDeclaration = "function_declaration";
+	static constexpr std::string_view kFunctionDefinition = "function_definition";
 	static constexpr std::string_view kDotIndexExpression = "dot_index_expression";
 	static constexpr std::string_view kMethodIndexExpression = "method_index_expression";
 	static constexpr std::string_view kIdentifier = "identifier";
@@ -85,16 +86,23 @@ struct NodeName
 	static constexpr std::string_view kChunk = "chunk";
 	static constexpr std::string_view kReturnStatement = "return_statement";
 	static constexpr std::string_view kTypedIdentifier = "typed_identifier";
+	static constexpr std::string_view kForStatement = "for_statement";
+	static constexpr std::string_view kWhileStatement = "while_statement";
+	static constexpr std::string_view kRepeatStatement = "repeat_statement";
+	static constexpr std::string_view kDoStatement = "do_statement";
+	static constexpr std::string_view kIfStatement = "if_statement";
 };
 
 static constexpr std::string_view kLocalName = "local";
 static constexpr std::string_view kGlobalName = "global";
+static constexpr std::string_view kFunctionName = "global";
 static constexpr std::string_view kSetMetatableName = "setmetatable";
 static constexpr std::string_view kSignaturesName = "__signatures";
 
 bool IsIndexExpressionNode(const TreeNode& node);
 bool IsMetatableNode(const TreeNode& node);
 bool IsSignaturesNode(const TreeNode& node);
+bool IsListNode(const TreeNode& node);
 
 enum class IndexExpressionType
 {
@@ -134,5 +142,16 @@ bool GoToSiblingWithNodeNameAndNamedChildCount(TreeCursor& cursor,
 
 
 } // ui
+
+namespace std {
+
+template <>
+struct hash<ui::SourceLocation> {
+	size_t operator()(ui::SourceLocation loc) const noexcept {
+		return MakeHash(loc.start, loc.end);
+	}
+};
+
+} // std
 
 #endif

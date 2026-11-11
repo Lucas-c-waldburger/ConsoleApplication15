@@ -9,12 +9,15 @@ namespace ui {
 struct TreeCursor
 {
 	TreeCursor() : cursor{}, source{} {}
-	TreeCursor(TSNode node, std::string_view src) : cursor(ts_tree_cursor_new(node)), source(src) {}
+	explicit TreeCursor(const TreeNode& treeNode) : 
+		cursor(ts_tree_cursor_new(treeNode.node)), source(treeNode.source) {}
+	TreeCursor(TSNode node, std::string_view src) :
+		cursor(ts_tree_cursor_new(node)), source(src) {}
 	~TreeCursor() { ts_tree_cursor_delete(&cursor); }
 	TreeCursor(const TreeCursor& other) = delete;
 	TreeCursor& operator=(const TreeCursor& other) = delete;
-	TreeCursor(TreeCursor&& other) noexcept : cursor(other.cursor), source(other.source), 
-		homeDepth(other.homeDepth)
+	TreeCursor(TreeCursor&& other) noexcept : 
+		cursor(other.cursor), source(other.source), homeDepth(other.homeDepth)
 	{
 		other.cursor = {};
 	}

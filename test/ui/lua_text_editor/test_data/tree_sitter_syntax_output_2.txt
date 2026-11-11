@@ -1,0 +1,84 @@
+chunk [0, 17] `function a()
+end
+`
+--function_declaration [0, 16] `function a()
+end`
+----function [0, 8] `function`
+----identifier [9, 10] `a`
+----parameters [10, 12] `()`
+------( [10, 11] `(`
+------) [11, 12] `)`
+----end [13, 16] `end`
+
+============================
+
+--function_declaration [0, 22] `local function a()
+end`
+----local [0, 5] `local`
+----function [6, 14] `function`
+----identifier [15, 16] `a`
+----parameters [16, 18] `()`
+------( [16, 17] `(`
+------) [17, 18] `)`
+----end [19, 22] `end`
+
+
+
+--function_declaration [0, 32] `local function a(x : string)
+end`
+----local [0, 5] `local`
+----function [6, 14] `function`
+----identifier [15, 16] `a`
+----parameters [16, 28] `(x : string)`
+------( [16, 17] `(`
+------typed_identifier [17, 27] `x : string`
+--------identifier [17, 18] `x`
+--------: [19, 20] `:`
+--------identifier [21, 27] `string`
+------) [27, 28] `)`
+----end [29, 32] `end`
+
+============================
+
+--function_declaration [1, 49] `function b()
+a = function () local x = 1 end
+end`
+----function [1, 9] `function`
+----identifier [10, 11] `b`
+----parameters [11, 13] `()`
+------( [11, 12] `(`
+------) [12, 13] `)`
+----block [14, 45] `a = function () local x = 1 end`
+------assignment_statement [14, 45] `a = function () local x = 1 end`
+--------variable_list [14, 15] `a`
+----------identifier [14, 15] `a`
+--------= [16, 17] `=`
+--------expression_list [18, 45] `function () local x = 1 end`
+----------function_definition [18, 45] `function () local x = 1 end`
+------------function [18, 26] `function`
+------------parameters [27, 29] `()`
+--------------( [27, 28] `(`
+--------------) [28, 29] `)`
+------------block [30, 41] `local x = 1`
+--------------variable_declaration [30, 41] `local x = 1`
+----------------local [30, 35] `local`
+----------------assignment_statement [36, 41] `x = 1`
+------------------variable_list [36, 37] `x`
+--------------------typed_identifier [36, 37] `x`
+----------------------identifier [36, 37] `x`
+------------------= [38, 39] `=`
+------------------expression_list [40, 41] `1`
+--------------------number [40, 41] `1`
+------------end [42, 45] `end`
+----end [46, 49] `end`
+--function_call [51, 54] `b()`
+----identifier [51, 52] `b`
+----arguments [52, 54] `()`
+------( [52, 53] `(`
+------) [53, 54] `)`
+--assignment_statement [56, 61] `a = 4`
+----variable_list [56, 57] `a`
+------identifier [56, 57] `a`
+----= [58, 59] `=`
+----expression_list [60, 61] `4`
+------number [60, 61] `4`

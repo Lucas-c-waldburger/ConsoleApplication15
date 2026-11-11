@@ -9,10 +9,9 @@ namespace ui::lua {
 
 struct LuaSourceDocumentSymbol
 {
-	enum class Kind
+	enum class Kind : uint8_t
 	{
 		Invalid,
-		Parameter,
 		Local,
 		ScopedGlobal,
 		UnscopedGlobal

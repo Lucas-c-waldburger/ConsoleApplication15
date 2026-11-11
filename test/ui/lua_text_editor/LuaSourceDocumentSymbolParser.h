@@ -5,8 +5,14 @@
 #include "LuaSourceDocumentScopeTree.h"
 #include "LuaSourceDocumentSymbol2.h"
 #include "../../scripting/ParsedLuaUserTypeInfo.h"
+#include "TreeCursor.h"
 
 namespace ui::lua {
+
+//struct LuaSourceDocumentFunctionInfo
+//{
+//
+//};
 
 struct LuaSourceDocumentParseContext
 {
@@ -20,6 +26,7 @@ struct LuaSourceDocumentParseContext
 	void AddError(const TreeCursor& cursor, std::string_view msg);
 };
 
+bool ParseLuaSourceDocumentSymbols(TreeCursor& cursor, LuaSourceDocumentParseContext& ctx);
 
 } // ui::lua
 

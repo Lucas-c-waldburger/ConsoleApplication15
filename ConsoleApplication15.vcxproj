@@ -372,6 +372,7 @@
     <ClCompile Include="test\ui\InspectorEntityPanel.cpp" />
     <ClCompile Include="test\ui\InspectorEventPanel.cpp" />
     <ClCompile Include="test\ui\InspectorSystemPanel.cpp" />
+    <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentExpiriments.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentParser.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentParseSignaturesTable.cpp" />
     <ClCompile Include="test\ui\lua_text_editor\LuaSourceDocumentParseTableInfo.cpp" />
@@ -1014,6 +1015,7 @@
     <ClInclude Include="test\ui\InspectorCommon.h" />
     <ClInclude Include="test\ui\InspectorComponentPanel.h" />
     <ClInclude Include="test\ui\lua_text_editor\CursorDive.h" />
+    <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentExpiriments.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentParser.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentParseSignaturesTable.h" />
     <ClInclude Include="test\ui\lua_text_editor\LuaSourceDocumentParseTableInfo.h" />
